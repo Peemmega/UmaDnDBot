@@ -6,7 +6,7 @@ from utils.game_manager import (
     is_owner,
     start_game,
 )
-from utils.dice_presets import DICE_PRESET
+from utils.dice_presets import DICE_PRESET, MAX_DICE_VALUE
 import math
 
 STYLES = ["Front", "Pace", "Late", "End"]
@@ -33,7 +33,7 @@ def format_rule(rule: dict) -> str:
     d = rule["d"]
     kh = rule.get("kh")
 
-    text = "d30" if d == 1 else f"{d}d30"
+    text = f"d{MAX_DICE_VALUE}" if d == 1 else f"{d}d{MAX_DICE_VALUE}"
     if kh is not None:
         text += f"kh{kh}"
     return text

@@ -1,9 +1,7 @@
 import random
 import math
-from utils.dice_presets import DICE_PRESET
+from utils.dice_presets import DICE_PRESET, MAX_DICE_VALUE
 from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
-
-MAX_DICE_VALUE = 30
 
 def get_stat_emoji(value: int) -> str:
     value = max(1, min(value, 8))
@@ -190,9 +188,9 @@ def format_rule(rule: dict) -> str:
         kh = rule.get("kh")
 
         if d == 1:
-            base = "d30"
+            base = f"d{MAX_DICE_VALUE}"
         else:
-            base = f"{d}d30"
+            base = f"{d}d{MAX_DICE_VALUE}"
 
         if kh is not None:
             base += f"kh{kh}"

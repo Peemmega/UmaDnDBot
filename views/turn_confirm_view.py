@@ -7,9 +7,31 @@ from utils.game_manager import (
 
 class TurnConfirmView(discord.ui.View):
     def __init__(self, cog, channel_id: int):
-        super().__init__(timeout=120)
+        super().__init__(timeout=10)
         self.cog = cog
         self.channel_id = channel_id
+        self.message = None 
+
+    async def on_timeout(self):
+        game = get_game(self.channel_id)
+        if game is None:
+            return
+
+        reset_turn_confirmations(self.channel_id)
+
+        channel = self.cog.bot.get_channel(self.channel_id)
+        if channel is None:
+            return
+
+        if self.message:
+            try:
+                await self.message.delete()
+            except:
+                pass
+
+        await channel.send("⏳ หมดเวลา ยืนยันไม่ครบ → ข้ามเทิร์นอัตโนมัติ")
+
+        await self.cog.process_next_turn_from_timeout(channel)
 
     @discord.ui.button(label="ยืนยัน", style=discord.ButtonStyle.success, emoji="✅")
     async def confirm_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -34,13 +56,16 @@ class TurnConfirmView(discord.ui.View):
                 item.disabled = True
 
             await interaction.response.edit_message(
-                content=f"✅ ยืนยันครบแล้ว ({confirmed_count}/{total_players}) กำลังไปเทิร์นถัดไป",
+                content=f"✅ ยืนยันครบแล้ว ({confirmed_count}/{total_players})",
                 view=self
             )
 
             reset_turn_confirmations(self.channel_id)
 
-            await interaction.followup.send("ทุกคนยืนยันครบแล้ว กำลังเข้าสู่เทิร์นถัดไป")
+            # 🔥 ลบ message เก่า
+            if self.message:
+                await self.message.delete()
+
             await self.cog.process_next_turn(interaction)
             self.stop()
             return

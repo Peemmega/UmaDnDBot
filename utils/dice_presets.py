@@ -56,3 +56,5 @@ DICE_PRESET = {
         },
     },
 }
+
+MAX_DICE_VALUE = 20

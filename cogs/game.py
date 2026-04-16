@@ -41,72 +41,6 @@ PATH_EMOJI = {
 def render_path(path: list[int]) -> str:
     return "".join(PATH_EMOJI.get(x, "⬜") for x in path)
 
-
-async def process_next_turn(self, interaction: discord.Interaction):
-    game = get_game(interaction.channel_id)
-    if game is None:
-        await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
-        return
-
-    new_turn = next_turn(interaction.channel_id)
-
-    if new_turn > game["max_turn"]:
-        ranked_players = get_ranked_players(interaction.channel_id)
-
-        rank_lines = []
-        for index, (user_id, info) in enumerate(ranked_players, start=1):
-            rank_lines.append(
-                f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
-            )
-
-        if not rank_lines:
-            rank_lines.append("ยังไม่มีผู้เล่น")
-
-        winner_text = "ไม่มีผู้ชนะ"
-        if ranked_players:
-            winner_id, winner_info = ranked_players[0]
-            winner_text = (
-                f"🏆 ผู้ชนะ: <@{winner_id}>\n"
-                f"Style: {winner_info['style']}\n"
-                f"Score: {winner_info['score']}"
-            )
-
-        embed = discord.Embed(
-            title="🏁 เกมจบแล้ว",
-            color=discord.Color.red(),
-            description=(
-                f"{winner_text}\n\n"
-                f"อันดับสุดท้าย:\n" + "\n".join(rank_lines)
-            )
-        )
-
-        await interaction.followup.send(embed=embed)
-        delete_game(interaction.channel_id)
-        return
-
-    phase = get_phase_from_turn(new_turn, game["max_turn"])
-    ranked_players = get_ranked_players(interaction.channel_id)
-
-    rank_lines = []
-    for index, (user_id, info) in enumerate(ranked_players, start=1):
-        rank_lines.append(
-            f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
-        )
-
-    if not rank_lines:
-        rank_lines.append("ยังไม่มีผู้เล่น")
-
-    embed = discord.Embed(
-        title=f"เข้าสู่เทิร์น {new_turn}",
-        color=discord.Color.green(),
-        description=(
-            f"Phase: {phase}\n\n"
-            f"อันดับคะแนน:\n" + "\n".join(rank_lines)
-        )
-    )
-
-    await interaction.followup.send(embed=embed)
-
 class GameCog(commands.GroupCog, name="game"):
     def __init__(self, bot):
         self.bot = bot
@@ -169,6 +103,120 @@ class GameCog(commands.GroupCog, name="game"):
             embed=embed,
             view=LobbyView(channel_id)
         )
+
+    async def process_next_turn(self, interaction: discord.Interaction):
+        game = get_game(interaction.channel_id)
+        if game is None:
+            await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
+            return
+
+        new_turn = next_turn(interaction.channel_id)
+
+        if new_turn > game["max_turn"]:
+            ranked_players = get_ranked_players(interaction.channel_id)
+
+            rank_lines = []
+            for index, (user_id, info) in enumerate(ranked_players, start=1):
+                rank_lines.append(
+                    f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
+                )
+
+            if not rank_lines:
+                rank_lines.append("ยังไม่มีผู้เล่น")
+
+            winner_text = "ไม่มีผู้ชนะ"
+            if ranked_players:
+                winner_id, winner_info = ranked_players[0]
+                winner_text = (
+                    f"🏆 ผู้ชนะ: <@{winner_id}>\n"
+                    f"Style: {winner_info['style']}\n"
+                    f"Score: {winner_info['score']}"
+                )
+
+            embed = discord.Embed(
+                title="🏁 เกมจบแล้ว",
+                color=discord.Color.red(),
+                description=(
+                    f"{winner_text}\n\n"
+                    f"อันดับสุดท้าย:\n" + "\n".join(rank_lines)
+                )
+            )
+
+            await interaction.followup.send(embed=embed)
+            delete_game(interaction.channel_id)
+            return
+
+        phase = get_phase_from_turn(new_turn, game["max_turn"])
+        ranked_players = get_ranked_players(interaction.channel_id)
+
+        rank_lines = []
+        for index, (user_id, info) in enumerate(ranked_players, start=1):
+            rank_lines.append(
+                f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
+            )
+
+        if not rank_lines:
+            rank_lines.append("ยังไม่มีผู้เล่น")
+
+        embed = discord.Embed(
+            title=f"เข้าสู่เทิร์น {new_turn}",
+            color=discord.Color.green(),
+            description=(
+                f"Phase: {phase}\n\n"
+                f"อันดับคะแนน:\n" + "\n".join(rank_lines)
+            )
+        )
+
+        await interaction.followup.send(embed=embed)
+
+    async def process_next_turn_from_timeout(self, channel: discord.TextChannel):
+        game = get_game(channel.id)
+        if game is None:
+            return
+
+        new_turn = next_turn(channel.id)
+
+        # 🏁 เกมจบ
+        if new_turn > game["max_turn"]:
+            ranked_players = get_ranked_players(channel.id)
+
+            rank_lines = []
+            for index, (user_id, info) in enumerate(ranked_players, start=1):
+                rank_lines.append(
+                    f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
+                )
+
+            embed = discord.Embed(
+                title="🏁 เกมจบแล้ว (Auto)",
+                color=discord.Color.red(),
+                description="\n".join(rank_lines)
+            )
+
+            await channel.send(embed=embed)
+            delete_game(channel.id)
+            return
+
+        # 👉 เทิร์นถัดไป
+        phase = get_phase_from_turn(new_turn, game["max_turn"])
+        ranked_players = get_ranked_players(channel.id)
+
+        rank_lines = []
+        for index, (user_id, info) in enumerate(ranked_players, start=1):
+            rank_lines.append(
+                f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
+            )
+
+        embed = discord.Embed(
+            title=f"⏭️ เข้าสู่เทิร์น {new_turn} (Auto)",
+            color=discord.Color.orange(),
+            description=(
+                f"Phase: {phase}\n\n"
+                f"อันดับคะแนน:\n" + "\n".join(rank_lines)
+            )
+        )
+
+        await channel.send(embed=embed)
+
 
     @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
     async def myinfo(self, interaction: discord.Interaction):
@@ -369,7 +417,7 @@ class GameCog(commands.GroupCog, name="game"):
                 rank_lines = []
                 for index, (user_id, info) in enumerate(ranked_players, start=1):
                     rank_lines.append(
-                        f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
+                        f"#{index} <@{user_id}> | {info['style']} | Score: {info['score']}"
                     )
 
                 if not rank_lines:
@@ -390,32 +438,37 @@ class GameCog(commands.GroupCog, name="game"):
 
                 from views.turn_confirm_view import TurnConfirmView
 
-                await interaction.followup.send(
+                view = TurnConfirmView(self, interaction.channel_id)
+                msg = await interaction.followup.send(
                     embed=confirm_embed,
-                    view=TurnConfirmView(self, interaction.channel_id)
+                    view=view
                 )
 
-    @app_commands.command(name="next_turn", description="ไปเทิร์นถัดไป")
-    async def next_turn_command(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+                view.message = msg  
 
-        game = get_game(interaction.channel_id)
-        if game is None:
-            await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
-            return
 
-        if not game["started"]:
-            await interaction.followup.send("เกมยังไม่เริ่ม", ephemeral=True)
-            return
 
-        if not is_owner(interaction.channel_id, interaction.user.id):
-            await interaction.followup.send(
-                "มีแค่ผู้สร้างเกมเท่านั้นที่ใช้คำสั่งนี้ได้",
-                ephemeral=True
-            )
-            return
+    # @app_commands.command(name="next_turn", description="ไปเทิร์นถัดไป")
+    # async def next_turn_command(self, interaction: discord.Interaction):
+    #     await interaction.response.defer()
 
-        await self.process_next_turn(interaction)
+    #     game = get_game(interaction.channel_id)
+    #     if game is None:
+    #         await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
+    #         return
+
+    #     if not game["started"]:
+    #         await interaction.followup.send("เกมยังไม่เริ่ม", ephemeral=True)
+    #         return
+
+    #     if not is_owner(interaction.channel_id, interaction.user.id):
+    #         await interaction.followup.send(
+    #             "มีแค่ผู้สร้างเกมเท่านั้นที่ใช้คำสั่งนี้ได้",
+    #             ephemeral=True
+    #         )
+    #         return
+
+    #     await self.process_next_turn(interaction)
 
     @discord.app_commands.command(name="dice_table", description="ดูตารางเต๋า")
     async def dice_table(self, interaction: discord.Interaction):
