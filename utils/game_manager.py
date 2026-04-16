@@ -23,8 +23,67 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
         "started": False,
         "players": {},
         "turn_snapshot_scores": {},
+
+        "turn_confirmations": set(),
+        "awaiting_turn_confirm": False,
     }
     return True
+
+def have_all_players_rolled(channel_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False
+
+    players = game["players"]
+    if not players:
+        return False
+
+    current_turn = game["turn"]
+    return all(player["last_roll_turn"] == current_turn for player in players.values())
+
+def reset_turn_confirmations(channel_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False
+
+    game["turn_confirmations"] = set()
+    game["awaiting_turn_confirm"] = False
+    return True
+
+
+def start_turn_confirmation(channel_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False
+
+    game["turn_confirmations"] = set()
+    game["awaiting_turn_confirm"] = True
+    return True
+
+
+def confirm_turn(channel_id: int, user_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+
+    if not game["awaiting_turn_confirm"]:
+        return False, "ตอนนี้ยังไม่อยู่ในช่วงยืนยันจบเทิร์น"
+
+    if user_id not in game["players"]:
+        return False, "คุณไม่ได้อยู่ในเกมนี้"
+
+    game["turn_confirmations"].add(user_id)
+
+    confirmed_count = len(game["turn_confirmations"])
+    total_players = len(game["players"])
+
+    all_confirmed = confirmed_count >= total_players
+
+    return True, {
+        "confirmed_count": confirmed_count,
+        "total_players": total_players,
+        "all_confirmed": all_confirmed,
+    }
 
 def refresh_turn_snapshot(channel_id: int):
     game = get_game(channel_id)
