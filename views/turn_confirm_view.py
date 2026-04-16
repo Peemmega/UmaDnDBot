@@ -2,15 +2,17 @@ import discord
 from utils.game_manager import (
     get_game,
     confirm_turn,
+    use_block,
+    use_rush,
     reset_turn_confirmations,
 )
 
 class TurnConfirmView(discord.ui.View):
     def __init__(self, cog, channel_id: int):
-        super().__init__(timeout=10)
+        super().__init__(timeout=20)
         self.cog = cog
         self.channel_id = channel_id
-        self.message = None 
+        self.message = None
 
     async def on_timeout(self):
         game = get_game(self.channel_id)
@@ -74,3 +76,26 @@ class TurnConfirmView(discord.ui.View):
             f"ยืนยันแล้ว ({confirmed_count}/{total_players})",
             ephemeral=True
         )
+
+    @discord.ui.button(label="Block", style=discord.ButtonStyle.danger, emoji="🛡️")
+    async def block_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        success, result = use_block(self.channel_id, interaction.user.id)
+        if not success:
+            await interaction.response.send_message(result, ephemeral=True)
+            return
+
+        await interaction.response.send_message(
+            f"ใช้ Block ใส่ <@{result['target_id']}> สำเร็จ\n"
+            f"ถอยหลัง {result['move_back']} แต้ม",
+        )
+    @discord.ui.button(label="Rush", style=discord.ButtonStyle.primary, emoji="⚡")
+    async def rush_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        success, result = use_rush(self.channel_id, interaction.user.id)
+        if not success:
+            await interaction.response.send_message(result, ephemeral=True)
+            return
+
+        await interaction.response.send_message(
+            f"ใช้ Rush เข้าหา <@{result['target_id']}> สำเร็จ\n"
+            f"ขยับไป {result['move_forward']} แต้ม",
+         )     

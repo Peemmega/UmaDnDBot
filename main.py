@@ -18,7 +18,7 @@ class Client(commands.Bot):
         await self.load_extension("cogs.profile")
         await self.load_extension("cogs.training")
         await self.load_extension("cogs.game")
-
+        await self.load_extension("cogs.skill")
         await self.tree.sync()
 
     async def on_ready(self):

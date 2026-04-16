@@ -6,6 +6,7 @@ from utils.database import ensure_player, update_player_username
 from views.profile_stat_view import ProfileStatView, build_stat_embed
 from utils.player_card import create_stats_card
 from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
+from utils.skill_manager import SKILLS, build_skill_description
 
 def get_stat_emoji(value: int) -> str:
     value = max(1, min(value, 8))
@@ -89,7 +90,6 @@ class ProfileCog(commands.Cog):
         await interaction.response.send_message(
             f"เปลี่ยนชื่อโปรไฟล์เป็น **{new_name.strip()}** เรียบร้อยแล้ว"
         )
-
 
 
     # @discord.app_commands.command(name="profile", description="ดูข้อมูลผู้เล่น")

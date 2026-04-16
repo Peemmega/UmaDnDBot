@@ -77,7 +77,12 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     d = rule["d"]
     kh = rule.get("kh")
 
-    rolls = [random.randint(player.get("power", 1), MAX_DICE_VALUE) for _ in range(d)]
+    path_effect = context.get("path_effect", {})
+
+    max_dice_value = path_effect.get("max_dice_value", MAX_DICE_VALUE)
+    max_dice_value += path_effect.get("extra_max_from_wit", 0)
+
+    rolls = [random.randint(player.get("power", 1), max_dice_value) for _ in range(d)]
     original_rolls = rolls.copy()
 
     if kh is not None:
@@ -88,13 +93,17 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     modified_selected = []
     bonus_log = []
 
-    total_spd_bonus = 0
+    spd_multiplier = path_effect.get("spd_multiplier", 1.0)
+    power_total_multiplier = path_effect.get("power_total_multiplier", 1.0)
 
-    spd_bonus = player.get("speed", 0)
+    spd_bonus_raw = player.get("speed", 0)
+    spd_bonus = int(spd_bonus_raw * spd_multiplier)
+
     power_bonus = player.get("power", 1)
+    nearby_count = min(context.get("nearby_count", 0), 3)
+    gut_bonus = (player.get("gut", 1) * nearby_count * 3) if context.get("distance_color") == "Gold" else 0
 
-    nearby_count = min(context.get("nearby_count", 0), 2)
-    gut_bonus = (player.get("gut", 1) * nearby_count * 2) if context.get("distance_color") == "Gold" else 0
+    total_spd_bonus = 0
 
     for r in selected:
         value = r
@@ -110,24 +119,19 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
 
     base_total = sum(selected)
 
-    # SPD ยังนับจากลูกเต๋า
-    # POW / GUT บวกทีเดียวตอนรวม
-    total = sum(modified_selected) + power_bonus + gut_bonus
+    final_power_bonus = int(power_bonus * power_total_multiplier)
+    total = sum(modified_selected) + gut_bonus + final_power_bonus
 
     bonus_parts = []
     if total_spd_bonus > 0:
-        bonus_parts.append(f"{get_stat_icon('SPD')}+{total_spd_bonus}")
-
+        bonus_parts.append(f"{get_stat_icon("SPD")}+{total_spd_bonus}")
     if gut_bonus > 0:
-        bonus_parts.append(f"{get_stat_icon('GUT')}+{gut_bonus}")
+        bonus_parts.append(f"{get_stat_icon("GUT")}+{gut_bonus}")
+    if final_power_bonus > 0:
+        bonus_parts.append(f"{get_stat_icon("POW")}+{final_power_bonus}")
 
-    if power_bonus > 0:
-        bonus_parts.append(f"{get_stat_icon('POW')}+{power_bonus}")
-
-    if bonus_parts:
-        total_display = f"{base_total} " + " ".join(bonus_parts)
-    else:
-        total_display = str(base_total)
+    bonus_display = " ".join(bonus_parts) if bonus_parts else "-"
+    total_display = str(total)
 
     display_parts = []
     temp_selected = selected.copy()
@@ -148,6 +152,7 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
         "base_total": base_total,
         "total": total,
         "total_display": total_display,
+        "bonus_display": bonus_display,
     }
 
 def roll_race_dice(
@@ -156,7 +161,8 @@ def roll_race_dice(
     player_id: int,
     score_map: dict[int, int],
     turn: int,
-    max_turn: int
+    max_turn: int,
+    path_effect: dict | None = None,
 ) -> dict:
     phase = get_phase_from_turn(turn, max_turn)
     distance_color = get_distance_color(player_id, score_map)
@@ -165,13 +171,13 @@ def roll_race_dice(
 
     dice_result = roll_by_rule(rule, player, {
         "distance_color": distance_color,
-        "nearby_count": nearby_count
+        "nearby_count": nearby_count,
+        "path_effect": path_effect or {},
     })
 
     return {
         "phase": phase,
         "distance_color": distance_color,
-        "nearby_count": nearby_count,
         "rule": rule,
         "rolls": dice_result["rolls"],
         "selected": dice_result["selected"],
@@ -181,6 +187,7 @@ def roll_race_dice(
         "base_total": dice_result["base_total"],
         "total": dice_result["total"],
         "total_display": dice_result["total_display"],
+        "bonus_display": dice_result["bonus_display"],
     }
 
 def format_rule(rule: dict) -> str:

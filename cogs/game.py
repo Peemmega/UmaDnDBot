@@ -8,6 +8,14 @@ from views.join_view import LobbyView
 from utils.database import ensure_player
 from utils.dice_presets import DICE_PRESET
 from utils.race_presets import RACE_PRESET
+from utils.icon_presets import Status_Icon_Type
+
+from utils.race_presets import (
+    get_path_effect,
+    get_current_path_type, 
+    build_path_effect_text, 
+    PATH_TYPE_TEXT
+)
 
 from utils.race_dice import (
     roll_race_dice,
@@ -40,6 +48,43 @@ PATH_EMOJI = {
 
 def render_path(path: list[int]) -> str:
     return "".join(PATH_EMOJI.get(x, "⬜") for x in path)
+
+def build_game_end_embed(ranked_players):
+        rank_lines = []
+        for index, (user_id, info) in enumerate(ranked_players, start=1):
+            rank_lines.append(
+                f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
+            )
+
+        if not rank_lines:
+            rank_lines.append("ยังไม่มีผู้เล่น")
+
+        winner_text = "ไม่มีผู้ชนะ"
+        if ranked_players:
+            winner_id, winner_info = ranked_players[0]
+            winner_text = (
+                f"🏆 ผู้ชนะ: <@{winner_id}>\n"
+                f"Style: {winner_info['style']}\n"
+                f"Score: {winner_info['score']}"
+            )
+
+        embed = discord.Embed(
+            title="🏁 เกมจบแล้ว",
+            color=discord.Color.red(),
+            description=(
+                f"{winner_text}\n\n"
+                f"อันดับสุดท้าย:\n" + "\n".join(rank_lines)
+            )
+        )
+
+        embed.set_image(
+            url="https://media.discordapp.net/attachments/1493575422007447622/1493676112952426629/i-won-taurus-cup-with-tm-opera-o-v0-w2a0zxpycglf1.gif"
+        )
+        embed.set_thumbnail(
+            url="https://media.discordapp.net/attachments/1493575422007447622/1493678180702355568/utx_txt_order_00.png"
+        )
+
+        return embed
 
 class GameCog(commands.GroupCog, name="game"):
     def __init__(self, bot):
@@ -76,8 +121,7 @@ class GameCog(commands.GroupCog, name="game"):
         embed.set_thumbnail(url=stage_data["thumnail"])
 
         embed.add_field(name="👑 ผู้ดูแล", value=interaction.user.mention, inline=False)
-        embed.add_field(name="จำนวนเทิร์น", value= f"⏱️ {stage_data["turn"]}", inline=False)
-
+        embed.add_field(name="จำนวนเทิร์น", value=f"⏱️ {stage_data['turn']}", inline=False)
         embed.add_field(
             name="🗺️ เส้นทาง",
             value=render_path(stage_data["path"]),
@@ -114,33 +158,7 @@ class GameCog(commands.GroupCog, name="game"):
 
         if new_turn > game["max_turn"]:
             ranked_players = get_ranked_players(interaction.channel_id)
-
-            rank_lines = []
-            for index, (user_id, info) in enumerate(ranked_players, start=1):
-                rank_lines.append(
-                    f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
-                )
-
-            if not rank_lines:
-                rank_lines.append("ยังไม่มีผู้เล่น")
-
-            winner_text = "ไม่มีผู้ชนะ"
-            if ranked_players:
-                winner_id, winner_info = ranked_players[0]
-                winner_text = (
-                    f"🏆 ผู้ชนะ: <@{winner_id}>\n"
-                    f"Style: {winner_info['style']}\n"
-                    f"Score: {winner_info['score']}"
-                )
-
-            embed = discord.Embed(
-                title="🏁 เกมจบแล้ว",
-                color=discord.Color.red(),
-                description=(
-                    f"{winner_text}\n\n"
-                    f"อันดับสุดท้าย:\n" + "\n".join(rank_lines)
-                )
-            )
+            embed = build_game_end_embed(ranked_players)
 
             await interaction.followup.send(embed=embed)
             delete_game(interaction.channel_id)
@@ -158,14 +176,21 @@ class GameCog(commands.GroupCog, name="game"):
         if not rank_lines:
             rank_lines.append("ยังไม่มีผู้เล่น")
 
+
+        path_type = get_current_path_type(game)
+        path_label = PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง")
+
         embed = discord.Embed(
             title=f"เข้าสู่เทิร์น {new_turn}",
             color=discord.Color.green(),
             description=(
-                f"Phase: {phase}\n\n"
+                f"Phase: {phase}\n"
+                f"เส้นทางเทิร์นนี้: {path_label}\n\n"
                 f"อันดับคะแนน:\n" + "\n".join(rank_lines)
             )
         )
+
+        embed.add_field(name="Effect", value=build_path_effect_text(path_type), inline=False)
 
         await interaction.followup.send(embed=embed)
 
@@ -179,18 +204,7 @@ class GameCog(commands.GroupCog, name="game"):
         # 🏁 เกมจบ
         if new_turn > game["max_turn"]:
             ranked_players = get_ranked_players(channel.id)
-
-            rank_lines = []
-            for index, (user_id, info) in enumerate(ranked_players, start=1):
-                rank_lines.append(
-                    f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
-                )
-
-            embed = discord.Embed(
-                title="🏁 เกมจบแล้ว (Auto)",
-                color=discord.Color.red(),
-                description="\n".join(rank_lines)
-            )
+            embed = build_game_end_embed(ranked_players)
 
             await channel.send(embed=embed)
             delete_game(channel.id)
@@ -206,14 +220,21 @@ class GameCog(commands.GroupCog, name="game"):
                 f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
             )
 
+        path_type = get_current_path_type(game)
+        path_label = PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง")
+
         embed = discord.Embed(
-            title=f"⏭️ เข้าสู่เทิร์น {new_turn} (Auto)",
-            color=discord.Color.orange(),
+            title=f"เข้าสู่เทิร์น {new_turn} (Auto)",
+            color=discord.Color.green(),
             description=(
-                f"Phase: {phase}\n\n"
+                f"Phase: {phase}\n"
+                f"เส้นทางเทิร์นนี้: {path_label}\n\n"
                 f"อันดับคะแนน:\n" + "\n".join(rank_lines)
             )
         )
+
+        embed.add_field(name="Effect", value=build_path_effect_text(path_type), inline=False)
+
 
         await channel.send(embed=embed)
 
@@ -324,6 +345,8 @@ class GameCog(commands.GroupCog, name="game"):
             return
 
         db_player = ensure_player(interaction.user.id, interaction.user.name)
+        path_type = get_current_path_type(game)
+        path_effect = get_path_effect(path_type, db_player)
 
         can_roll, message = can_player_roll(interaction.channel_id, interaction.user.id)
         if not can_roll:
@@ -339,19 +362,48 @@ class GameCog(commands.GroupCog, name="game"):
             player_id=interaction.user.id,
             score_map=snapshot_scores,
             turn=game["turn"],
-            max_turn=game["max_turn"]
+            max_turn=game["max_turn"],
+            path_effect=path_effect,
         )
+
+        flat_bonus = game_player.get("next_roll_flat_bonus", 0)
+        if flat_bonus != 0:
+            result["total"] += flat_bonus
+
+            if result["bonus_display"] == "-":
+                result["bonus_display"] = str(flat_bonus)
+            else:
+                sign = "+" if flat_bonus > 0 else ""
+                result["bonus_display"] += f" {sign}{flat_bonus}"
+
+            result["total_display"] = str(result["total"])
+            game_player["next_roll_flat_bonus"] = 0
 
         # 💨 STAMINA SYSTEM
         stamina_note = None
-        if game["turn"] > 8:
-            if game_player["stamina_left"] > 0:
-                game_player["stamina_left"] -= 1
-                stamina_note = f"STA -1 เหลือ {game_player['stamina_left']}"
+
+        stamina_gain = path_effect.get("stamina_gain", 0)
+        stamina_cost = path_effect.get("stamina_cost", 0)
+
+        if stamina_gain > 0:
+            game_player["stamina_left"] += stamina_gain
+
+        if game_player["stamina_left"] >= stamina_cost:
+            game_player["stamina_left"] -= stamina_cost
+            if stamina_gain > 0:
+                stamina_note = f"{Status_Icon_Type["STA"]} +{stamina_gain} / -{stamina_cost} เหลือ {game_player['stamina_left']}"
             else:
-                result["total"] -= 30
-                result["total_display"] += " -30 STA"
-                stamina_note = "STA หมด: โดนหัก 30"
+                stamina_note = f"{Status_Icon_Type["STA"]} -{stamina_cost} เหลือ {game_player['stamina_left']}"
+        else:
+            result["total"] -= 30
+
+            if result["bonus_display"] == "-":
+                result["bonus_display"] = f"{Status_Icon_Type['STA']}-30"
+            else:
+                result["bonus_display"] += f" {Status_Icon_Type['STA']}-30"
+
+            result["total_display"] = str(result["total"])
+            stamina_note = f"{Status_Icon_Type["STA"]} ไม่พอ (ต้องใช้ {stamina_cost}) โดนหัก 30"
 
         # 🏁 update score
         success, new_score = update_player_score(
@@ -376,32 +428,45 @@ class GameCog(commands.GroupCog, name="game"):
             color=discord.Color.gold()
         )
 
-        embed.add_field(name="Style", value=game_player["style"], inline=True)
         embed.add_field(name="Phase", value=result["phase"], inline=True)
-        embed.add_field(name="Distance", value=result["distance_color"], inline=True)
+        embed.add_field(name="Style", value= f"{game_player["style"]} {result["distance_color"]}", inline=True)
+        embed.add_field(name="Path", value=path_effect["label"], inline=True)
 
         embed.add_field(name="🎲 Dice", value=result["display"], inline=False)
-        embed.add_field(name="✨ Total", value=result["total_display"], inline=True)
-        embed.add_field(name="🏁 Score ใหม่", value=new_score, inline=True)
+        embed.add_field(name="📈 Stats Bonus", value=result["bonus_display"], inline=False)
 
-        embed.add_field(name="STA คงเหลือ", value=game_player["stamina_left"], inline=True)
+        embed.add_field(name="✨ Total", value=str(result["total"]), inline=True)
+        embed.add_field(name="🏁 Score ใหม่", value=new_score, inline=True)
+        embed.add_field(name=f"{Status_Icon_Type["STA"]} คงเหลือ", value=game_player["stamina_left"], inline=False)
+
         embed.set_footer(text=f"Reroll คงเหลือ {game_player['reroll_left']}")
 
         if stamina_note:
-            embed.add_field(name="Stamina Effect", value=stamina_note, inline=False)
+            embed.add_field(name="----------------------", value=stamina_note, inline=False)
 
         # 🎯 reroll view
-        view = RunRerollView(
-            owner_id=interaction.user.id,
-            channel_id=interaction.channel_id,
-            old_total=result["total"],
-        )
+        allow_reroll = not game_player.get("no_reroll_this_turn", False)
+        view = None
 
-        await interaction.followup.send(
-            content=f"🎯 <@{interaction.user.id}> กำลังวิ่ง!",
-            embed=embed,
-            view=view
-        )
+        if not game_player.get("no_reroll_this_turn", False):
+            view = RunRerollView(
+                owner_id=interaction.user.id,
+                channel_id=interaction.channel_id,
+                old_total=result["total"],
+            )
+
+        if view is not None:
+            await interaction.followup.send(
+                content=f"🎯 <@{interaction.user.id}> กำลังวิ่ง!",
+                embed=embed,
+                view=view
+            )
+        else:
+            await interaction.followup.send(
+                content=f"🎯 <@{interaction.user.id}> กำลังวิ่ง!",
+                embed=embed
+            )
+        
 
         # ===============================
         # 🔥 ถ้าทุกคน roll ครบ → เปิด confirm

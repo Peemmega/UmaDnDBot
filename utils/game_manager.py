@@ -164,9 +164,8 @@ def start_game(channel_id: int):
 
     for user_id, player in game["players"].items():
         db_player = get_player(user_id)
-
         player["reroll_left"] = 2
-        player["stamina_left"] = db_player["stamina"] if db_player is not None else 0
+        player["stamina_left"] = 8 + (db_player["stamina"] if db_player else 0)
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
 
@@ -226,6 +225,107 @@ def get_player_stamina_left(channel_id: int, user_id: int):
 
     return player["stamina_left"]
 
+def get_players_ahead(channel_id: int, user_id: int):
+    game = get_game(channel_id)
+    if game is None or user_id not in game["players"]:
+        return []
+
+    my_score = game["players"][user_id]["score"]
+
+    result = []
+    for uid, info in game["players"].items():
+        if uid == user_id:
+            continue
+        gap = info["score"] - my_score
+        if gap > 0:
+            result.append((uid, gap, info))
+
+    return sorted(result, key=lambda x: x[1])
+
+def get_players_behind(channel_id: int, user_id: int):
+    game = get_game(channel_id)
+    if game is None or user_id not in game["players"]:
+        return []
+
+    my_score = game["players"][user_id]["score"]
+
+    result = []
+    for uid, info in game["players"].items():
+        if uid == user_id:
+            continue
+        gap = my_score - info["score"]
+        if gap > 0:
+            result.append((uid, gap, info))
+
+    return sorted(result, key=lambda x: x[1])
+
+def use_block(channel_id: int, user_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+
+    player = game["players"].get(user_id)
+    if player is None:
+        return False, "ไม่พบผู้เล่น"
+
+    if player["used_block"]:
+        return False, "คุณใช้ Block ไปแล้ว"
+
+    behind_players = get_players_behind(channel_id, user_id)
+    valid_targets = [(uid, gap, info) for uid, gap, info in behind_players if gap > 10]
+
+    if not valid_targets:
+        return False, "ไม่มีคนด้านหลังที่ห่างเกิน 10"
+
+    target_id, gap, target_info = valid_targets[0]
+
+    move_back = gap - 10
+    player["score"] -= move_back
+
+    target_info["next_roll_flat_bonus"] -= 10
+    player["used_block"] = True
+    player["action_locked"] = True
+
+    return True, {
+        "target_id": target_id,
+        "move_back": move_back,
+        "new_score": player["score"],
+    }
+
+def use_rush(channel_id: int, user_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+
+    player = game["players"].get(user_id)
+    if player is None:
+        return False, "ไม่พบผู้เล่น"
+
+    if player["used_rush"]:
+        return False, "คุณใช้ Rush ไปแล้ว"
+
+    ahead_players = get_players_ahead(channel_id, user_id)
+    valid_targets = [(uid, gap, info) for uid, gap, info in ahead_players if gap <= 30]
+
+    if not valid_targets:
+        return False, "ไม่มีคนด้านหน้าที่อยู่ในระยะ 30"
+
+    target_id, gap, target_info = valid_targets[0]
+
+    move_forward = max(gap - 10, 0)
+    player["score"] += move_forward
+
+    player["next_roll_flat_bonus"] -= 10
+    player["no_reroll_this_turn"] = True
+    player["used_rush"] = True
+    player["action_locked"] = True
+
+    return True, {
+        "target_id": target_id,
+        "move_forward": move_forward,
+        "new_score": player["score"],
+    }
+
 def use_reroll(channel_id: int, user_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -284,6 +384,14 @@ def add_player(channel_id: int, user_id: int, style: str):
         "last_roll_turn": -1,
         "reroll_left": 0,
         "stamina_left": 0,
+
+        "used_rush": False,
+        "used_block": False,
+        "action_locked": False,
+
+        "next_roll_flat_bonus": 0,
+        "no_reroll_this_turn": False,
+        "no_reroll_next_turn": False,
     }
     return True, "เข้าร่วมเกมสำเร็จ"
 
