@@ -24,3 +24,4 @@ def build_style_table(color_type: str) -> str:
             f"**{row[0]}** | {row[1]} | {row[2]} | {row[3]} | {row[4]}"
         )
     return "\n".join(lines)
+
