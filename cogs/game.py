@@ -255,7 +255,7 @@ class GameCog(commands.GroupCog, name="game"):
             ephemeral=True
         )
 
-    @game.command(name="run", description="ทอยเต๋าเดินในเทิร์นนี้")
+    @app_commands.command(name="run", description="ทอยเต๋าเดินในเทิร์นนี้")
     async def run(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
