@@ -1,7 +1,8 @@
 import random
 import math
-from utils.dice_presets import DICE_PRESET, MAX_DICE_VALUE
+from utils.dice.dice_presets import DICE_PRESET, MAX_DICE_VALUE
 from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
+from utils.skill.skill_presets import ICON
 
 def get_stat_emoji(value: int) -> str:
     value = max(1, min(value, 8))
@@ -77,15 +78,42 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     d = rule["d"]
     kh = rule.get("kh")
 
+    skill_effects = context.get("skill_effects", [])
+
+    extra_d = 0
+    extra_kh = 0
+    extra_floor = 0
+    flat_velocity_bonus = 0
+    selected_die_bonus = 0
+
+    for effect in skill_effects:
+        effect_type = effect.get("type")
+        value = effect.get("value", 0)
+
+        if effect_type == "add_d":
+            extra_d += value
+        elif effect_type == "add_kh":
+            extra_kh += value
+        elif effect_type == "modify_roll_floor":
+            extra_floor += value
+        elif effect_type == "modify_velocity":
+            flat_velocity_bonus += value
+        elif effect_type == "modify_selected_die":
+            selected_die_bonus += value
+
+    d += extra_d
+
     path_effect = context.get("path_effect", {})
 
     max_dice_value = path_effect.get("max_dice_value", MAX_DICE_VALUE)
     max_dice_value += path_effect.get("extra_max_from_wit", 0)
 
-    rolls = [random.randint(player.get("power", 1), max_dice_value) for _ in range(d)]
+    roll_min = player.get("power", 1) + extra_floor
+    rolls = [random.randint(roll_min, max_dice_value) for _ in range(d)]
     original_rolls = rolls.copy()
 
     if kh is not None:
+        kh = min(d, kh + extra_kh)
         selected = sorted(rolls, reverse=True)[:kh]
     else:
         selected = rolls.copy()
@@ -114,13 +142,17 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
             total_spd_bonus += spd_bonus
             bonuses.append(f"SPD+{spd_bonus}")
 
+        if selected_die_bonus > 0:
+            value += selected_die_bonus
+            bonuses.append(f"SKILL+{selected_die_bonus}")
+
         modified_selected.append(value)
         bonus_log.append(bonuses)
 
     base_total = sum(selected)
 
     final_power_bonus = int(power_bonus * power_total_multiplier)
-    total = sum(modified_selected) + gut_bonus + final_power_bonus
+    total = sum(modified_selected) + power_bonus + gut_bonus + flat_velocity_bonus
 
     bonus_parts = []
     if total_spd_bonus > 0:
@@ -129,6 +161,8 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
         bonus_parts.append(f"{get_stat_icon("GUT")}+{gut_bonus}")
     if final_power_bonus > 0:
         bonus_parts.append(f"{get_stat_icon("POW")}+{final_power_bonus}")
+    if flat_velocity_bonus > 0:
+        bonus_parts.append(f"{ICON["Velocity"]}+{flat_velocity_bonus}")
 
     bonus_display = " ".join(bonus_parts) if bonus_parts else "-"
     total_display = str(total)
@@ -163,6 +197,7 @@ def roll_race_dice(
     turn: int,
     max_turn: int,
     path_effect: dict | None = None,
+    skill_effects: list | None = None,
 ) -> dict:
     phase = get_phase_from_turn(turn, max_turn)
     distance_color = get_distance_color(player_id, score_map)
@@ -173,6 +208,7 @@ def roll_race_dice(
         "distance_color": distance_color,
         "nearby_count": nearby_count,
         "path_effect": path_effect or {},
+        "skill_effects": skill_effects or [],
     })
 
     return {

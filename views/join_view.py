@@ -6,7 +6,7 @@ from utils.game_manager import (
     is_owner,
     start_game,
 )
-from utils.dice_presets import DICE_PRESET, MAX_DICE_VALUE
+from utils.dice.dice_presets import DICE_PRESET, MAX_DICE_VALUE
 import math
 
 STYLES = ["Front", "Pace", "Late", "End"]

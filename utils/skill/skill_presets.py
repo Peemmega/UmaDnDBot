@@ -69,7 +69,7 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 8,
+                "value": 50,
                 "duration": "this_roll"
             }
         ],
@@ -200,7 +200,7 @@ SKILLS = {
             {
                 "type": "apply_debuff_next_turn",
                 "stat": "flat_total",
-                "value": -5
+                "value": -20
             }
         ],
         "active_roll": False,
@@ -237,7 +237,7 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_gold_range", "value": 5, "duration": "this_turn"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 4, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 20, "duration": "this_roll"},
         ],
         "active_roll": True,
         "tags": ["medium", "positioning", "back"],
@@ -256,7 +256,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 6, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["front", "long", "lead"],
@@ -294,7 +294,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 5, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["medium", "front", "velocity"],
@@ -364,7 +364,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 6, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["straight", "velocity"],
@@ -398,7 +398,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 6, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["medium", "straight", "velocity"],
@@ -415,7 +415,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 6, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["long", "straight", "velocity"],
@@ -585,7 +585,7 @@ SKILLS = {
         },
         "target": {"scope": "all_front", "limit": 3},
         "effects": [
-            {"type": "apply_debuff_next_turn", "stat": "flat_total", "value": -5}
+            {"type": "apply_debuff_next_turn", "stat": "flat_total", "value": -30}
         ],
         "active_roll": False,
         "tags": ["debuff", "medium", "late_race"],

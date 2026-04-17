@@ -1,6 +1,6 @@
 import discord
 
-from utils.race_dice import roll_race_dice
+from utils.dice.race_dice import roll_race_dice
 from utils.game_manager import get_game, get_player_in_game, update_player_score, use_reroll
 from utils.database import ensure_player
 

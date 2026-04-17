@@ -1,6 +1,7 @@
 from typing import Optional
 
-from utils.skill_presets import SKILLS, ICON
+from utils.skill.skill_presets import SKILLS, ICON
+from utils.icon_presets import Status_Icon_Type
 
 PATH_TEXT = {
     1: "ทางตรง",
@@ -25,10 +26,38 @@ TARGET_TEXT = {
     "random_enemy": "ศัตรูแบบสุ่ม",
 }
 
+from utils.skill.skill_presets import SKILLS, ICON
+
+def get_skill_display(skill_id: str) -> str:
+    skill = SKILLS.get(skill_id)
+    if not skill:
+        return f"❓ `{skill_id}`"
+
+    icon_key = skill.get("icon")
+    emoji = ICON.get(icon_key, "❓")
+
+    return f"{emoji} `{skill_id}` - **{skill['name']}**"
+
+def get_skill_short(skill_id: str) -> str:
+    skill = SKILLS.get(skill_id)
+    if not skill:
+        return "❓"
+
+    emoji = ICON.get(skill.get("icon"), "❓")
+    return f"{emoji} **{skill['name']}**"
+
 
 def get_all_skills() -> dict:
     return SKILLS
 
+def normalize_duration(duration: str | None) -> str:
+    if duration == "this_roll":
+        return "รอบนี้"
+    if duration == "this_turn":
+        return "เทิร์นนี้"
+    if duration == "next_turn":
+        return "เทิร์นหน้า"
+    return ""
 
 def get_skill(skill_key: str) -> Optional[dict]:
     return SKILLS.get(skill_key)
@@ -68,6 +97,39 @@ def get_skills_by_active_roll(active_roll: bool) -> dict:
         if skill.get("active_roll", False) == active_roll
     }
 
+def get_skill_emoji(skill_id: str) -> str:
+    skill = SKILLS.get(skill_id)
+    if not skill:
+        return "❓"
+    return ICON.get(skill.get("icon"), "❓")
+
+def build_skill_card_text(skill_id: str | None) -> str:
+    if not skill_id:
+        return "➖ **ว่าง**"
+
+    skill = SKILLS.get(skill_id)
+    if not skill:
+        return f"❓ `{skill_id}` ไม่พบข้อมูล"
+
+    emoji = ICON.get(skill.get("icon"), "❓")
+    name = skill["name"]
+    cooldown = skill.get("cooldown", 0)
+    cost = skill.get("cost", 0)
+    active_text = "ใช้แทน Run" if skill.get("active_roll") else "ใช้ได้ทันที"
+
+    trigger_text = describe_trigger(skill.get("trigger", {}))
+    target_text = describe_target(skill.get("target", {}))
+    effect_texts = [describe_effect(effect) for effect in skill.get("effects", [])]
+    effect_text = "\n".join(f"• {text}" for text in effect_texts)
+
+    return (
+        f"{emoji} `{skill_id}` **{name}**\n"
+        f"⏱️ {cooldown} | {Status_Icon_Type["WIT"]} {cost} | {active_text}\n"
+        f"**เป้าหมาย:** {target_text}\n"
+        f"**เงื่อนไข:** {trigger_text}\n"
+        f"ผล: {effect_text}\n"
+        f"--------------------------------------"
+    )
 
 def describe_trigger(trigger: dict) -> str:
     parts = []
@@ -100,36 +162,35 @@ def describe_trigger(trigger: dict) -> str:
 
     return " • ".join(parts) if parts else "ไม่มีเงื่อนไขพิเศษ"
 
-
 def describe_target(target: dict) -> str:
-    scope = target.get("scope", "self")
-    return TARGET_TEXT.get(scope, scope)
-
+    return TARGET_TEXT.get(target.get("scope", "self"), target.get("scope", "self"))
 
 def describe_effect(effect: dict) -> str:
     effect_type = effect["type"]
     value = effect.get("value")
     duration = effect.get("duration")
 
+    dur = normalize_duration(duration)
+
     if effect_type == "modify_velocity":
-        return f"เพิ่มผลรวมการวิ่ง +{value}" + (f" ({duration})" if duration else "")
+        return f"เพิ่มผลรวมการวิ่ง +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "modify_selected_die":
-        return f"เพิ่มแต้มเต๋าที่ถูกเลือกทุกลูก +{value}" + (f" ({duration})" if duration else "")
+        return f"เพิ่มแต้มเต๋าที่ถูกเลือกทุกลูก +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "modify_roll_floor":
-        return f"เพิ่มแต้มขั้นต่ำของลูกเต๋า +{value}" + (f" ({duration})" if duration else "")
+        return f"เพิ่มแต้มขั้นต่ำของลูกเต๋า +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "modify_roll_cap":
         sign = "+" if value >= 0 else ""
-        return f"ปรับแต้มสูงสุดลูกเต๋า {sign}{value}" + (f" ({duration})" if duration else "")
+        return f"ปรับแต้มสูงสุดลูกเต๋า {sign}{value}" + (f" ({dur})" if dur else "")
     if effect_type == "add_dkh":
-        return f"เพิ่มจำนวนลูกเต๋าและจำนวนลูกที่เลือก +{value}" + (f" ({duration})" if duration else "")
+        return f"เพิ่มจำนวนลูกเต๋าและจำนวนลูกที่เลือก +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "add_d":
-        return f"เพิ่มจำนวนลูกเต๋า +{value}" + (f" ({duration})" if duration else "")
+        return f"เพิ่มจำนวนลูกเต๋า +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "add_kh":
-        return f"เพิ่มจำนวนลูกที่เลือก +{value}" + (f" ({duration})" if duration else "")
+        return f"เพิ่มจำนวนลูกที่เลือก +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "recover_stamina":
-        return f"ฟื้นฟู Stamina +{value}"
+        return f"ฟื้นฟู {Status_Icon_Type["STA"]} +{value}"
     if effect_type == "reduce_stamina":
-        return f"ลด Stamina เป้าหมาย -{value}"
+        return f"ลด {Status_Icon_Type["STA"]} เป้าหมาย -{value}"
     if effect_type == "flat_score_change":
         sign = "+" if value >= 0 else ""
         return f"ปรับคะแนนทันที {sign}{value}"
@@ -150,38 +211,28 @@ def describe_effect(effect: dict) -> str:
     if effect_type == "modify_start_loss":
         return f"ลดผลเสียช่วงออกตัว {value}"
 
-    return f"{effect_type}: {effect}"
+    return str(effect)
 
+def build_skill_description(skill_id: str) -> str:
+    skill = SKILLS.get(skill_id)
+    if not skill:
+        return f"❓ `{skill_id}`"
 
-def build_skill_description(skill_key: str) -> Optional[str]:
-    skill = get_skill(skill_key)
-    if skill is None:
-        return None
-
-    icon = ICON.get(skill["icon"], "")
-    name = skill["name"]
-    cooldown = skill.get("cooldown", 0)
-    cost = skill.get("cost", 0)
-    active_roll = "ใช้งานตอนทอยวิ่ง" if skill.get("active_roll") else "ทำงานอัตโนมัติ"
-
+    emoji = get_skill_emoji(skill_id)
     trigger_text = describe_trigger(skill.get("trigger", {}))
     target_text = describe_target(skill.get("target", {}))
-    effect_texts = [describe_effect(effect) for effect in skill.get("effects", [])]
+    effects = "\n".join(
+        f"• {describe_effect(effect)}"
+        for effect in skill.get("effects", [])
+    )
 
-    lines = [
-        f"{icon} **{name}**",
-        f"CD: {cooldown} เทิร์น | Cost: {cost}",
-        f"ประเภท: {active_roll}",
-        f"เป้าหมาย: {target_text}",
-        f"เงื่อนไข: {trigger_text}",
-        "ผลของสกิล:",
-    ]
-
-    for effect_text in effect_texts:
-        lines.append(f"- {effect_text}")
-
-    return "\n".join(lines)
-
+    return (
+        f"{emoji} `{skill_id}` **{skill['name']}**\n"
+        f"CD: {skill.get('cooldown', 0)} | Cost: {skill.get('cost', 0)}\n"
+        f"เป้าหมาย: {target_text}\n"
+        f"เงื่อนไข: {trigger_text}\n"
+        f"ผล:\n{effects}"
+    )
 
 def build_skill_list_text(skills: dict) -> str:
     if not skills:

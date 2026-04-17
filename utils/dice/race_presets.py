@@ -1,4 +1,4 @@
-from utils.dice_presets import MAX_DICE_VALUE
+from utils.dice.dice_presets import MAX_DICE_VALUE
 from utils.icon_presets import Status_Icon_Type
 
 PATH_TYPE = {
@@ -88,6 +88,6 @@ RACE_PRESET = {
         "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219631861432391/thum_race_rt_000_1006_00.png?ex=69e1cff9&is=69e07e79&hm=c8eb47ad4d7d54d2369332b321100cd08b37b014505a00f27b2f046e6f3be98e&=&format=webp&quality=lossless&width=192&height=96",
         "image": "https://media.discordapp.net/attachments/1493695524812095489/1494219666858704996/10811.png?ex=69e1d001&is=69e07e81&hm=2753992d6a484e9b83f1311b9e0c6488fa1108828c537d6ec3e1156d3beee76d&=&format=webp&quality=lossless&width=1532&height=890",
         "turn": 16,
-        "path": [1, 3, 3, 4, 2, 2, 1, 1, 2, 2, 1, 3, 3, 4, 2, 2, 1, 1]
+        "path": [1, 3, 3, 4, 2, 2, 1, 1, 2, 3, 3, 4, 2, 2, 1, 1]
     },
 }

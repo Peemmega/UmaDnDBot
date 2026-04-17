@@ -1,5 +1,5 @@
-from utils.race_presets import RACE_PRESET
-from utils.database import get_player
+from utils.dice.race_presets import RACE_PRESET
+from utils.database import get_player, get_player_skill_slots
 
 VALID_STYLES = {"Front", "Pace", "Late", "End"}
 games = {}
@@ -142,6 +142,8 @@ def have_all_players_rolled(channel_id: int):
     current_turn = game["turn"]
     return all(player["last_roll_turn"] == current_turn for player in players.values())
 
+
+
 def start_game(channel_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -164,10 +166,92 @@ def start_game(channel_id: int):
 
     for user_id, player in game["players"].items():
         db_player = get_player(user_id)
+
         player["reroll_left"] = 2
         player["stamina_left"] = 8 + (db_player["stamina"] if db_player else 0)
 
+        player["race_profile"] = db_player.copy() if db_player else {}
+
+        slots = get_player_skill_slots(user_id)
+
+        player["skills"] = {
+            1: slots["slot_1"],
+            2: slots["slot_2"],
+            3: slots["slot_3"],
+        }
+
+        # optional (ไว้ใช้ต่อ)
+        player["skill_cooldowns"] = {}
+
     return True, "เริ่มเกมเรียบร้อยแล้ว"
+
+def get_player_skill_cd(channel_id: int, user_id: int, skill_id: str) -> int:
+    game = get_game(channel_id)
+    if game is None:
+        return 0
+
+    player = game["players"].get(user_id)
+    if player is None:
+        return 0
+
+    return player.get("skill_cooldowns", {}).get(skill_id, 0)
+
+
+def set_player_skill_cd(channel_id: int, user_id: int, skill_id: str, cooldown: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False
+
+    player = game["players"].get(user_id)
+    if player is None:
+        return False
+
+    player.setdefault("skill_cooldowns", {})
+    player["skill_cooldowns"][skill_id] = cooldown
+    return True
+
+
+def is_skill_on_cooldown(channel_id: int, user_id: int, skill_id: str):
+    cd = get_player_skill_cd(channel_id, user_id, skill_id)
+    return cd > 0, cd
+
+
+def tick_skill_cooldowns(channel_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False
+
+    for player in game["players"].values():
+        cooldowns = player.setdefault("skill_cooldowns", {})
+        expired = []
+
+        for skill_id, cd in cooldowns.items():
+            new_cd = cd - 1
+            if new_cd <= 0:
+                expired.append(skill_id)
+            else:
+                cooldowns[skill_id] = new_cd
+
+        for skill_id in expired:
+            del cooldowns[skill_id]
+
+    return True
+
+
+def initialize_player_skills(channel_id: int):
+    game = get_game(channel_id)
+
+    for user_id, player in game["players"].items():
+        slots = get_player_skill_slots(user_id)
+
+        player["skills"] = {
+            1: slots["slot_1"],
+            2: slots["slot_2"],
+            3: slots["slot_3"],
+        }
+
+        # optional (ไว้ใช้ต่อ)
+        player["skill_cooldowns"] = {}
 
 def use_player_stamina(channel_id: int, user_id: int, amount: int = 1):
     game = get_game(channel_id)
@@ -347,6 +431,14 @@ def next_turn(channel_id: int):
         return None
 
     game["turn"] += 1
+
+    tick_skill_cooldowns(channel_id)
+
+    for player in game["players"].values():
+        player["no_reroll_this_turn"] = player.get("no_reroll_next_turn", False)
+        player["no_reroll_next_turn"] = False
+        player["action_locked"] = False
+
     game["turn_snapshot_scores"] = {
         user_id: info["score"]
         for user_id, info in game["players"].items()

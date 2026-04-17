@@ -18,35 +18,95 @@ def init_db():
     CREATE TABLE IF NOT EXISTS players (
         user_id INTEGER PRIMARY KEY,
         username TEXT NOT NULL,
-
         speed INTEGER NOT NULL DEFAULT 1,
         stamina INTEGER NOT NULL DEFAULT 1,
         power INTEGER NOT NULL DEFAULT 1,
         gut INTEGER NOT NULL DEFAULT 1,
         wit INTEGER NOT NULL DEFAULT 1,
-
         turf INTEGER NOT NULL DEFAULT 1,
         dirt INTEGER NOT NULL DEFAULT 1,
-
         sprint INTEGER NOT NULL DEFAULT 1,
         mile INTEGER NOT NULL DEFAULT 1,
         medium INTEGER NOT NULL DEFAULT 1,
         long INTEGER NOT NULL DEFAULT 1,
-
         front INTEGER NOT NULL DEFAULT 1,
         pace INTEGER NOT NULL DEFAULT 1,
         late INTEGER NOT NULL DEFAULT 1,
         end_style INTEGER NOT NULL DEFAULT 1,
-
-        stats_point INTEGER NOT NULL DEFAULT 12,
+        stats_point INTEGER NOT NULL DEFAULT 5,
         uma_coin INTEGER NOT NULL DEFAULT 0,
-        skill_point INTEGER NOT NULL DEFAULT 0
+        skill_point INTEGER NOT NULL DEFAULT 12,
+        skill_slot_1 TEXT,
+        skill_slot_2 TEXT,
+        skill_slot_3 TEXT
     )
     """)
+
+    # migration กันกรณี table เก่ามีอยู่แล้ว
+    for col in ["skill_slot_1", "skill_slot_2", "skill_slot_3"]:
+        try:
+            cursor.execute(f"ALTER TABLE players ADD COLUMN {col} TEXT")
+        except Exception:
+            pass
 
     conn.commit()
     conn.close()
 
+def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
+    if slot not in (1, 2, 3):
+        return False, "slot ต้องเป็น 1-3"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    column = f"skill_slot_{slot}"
+    cursor.execute(
+        f"UPDATE players SET {column} = ? WHERE user_id = ?",
+        (skill_id, user_id)
+    )
+
+    conn.commit()
+    conn.close()
+    return True, f"ติดตั้งสกิล {skill_id} ลงช่อง {slot} เรียบร้อย"
+
+def clear_player_skill_slot(user_id: int, slot: int):
+    if slot not in (1, 2, 3):
+        return False, "slot ต้องเป็น 1-3"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    column = f"skill_slot_{slot}"
+    cursor.execute(
+        f"UPDATE players SET {column} = NULL WHERE user_id = ?",
+        (user_id,)
+    )
+
+    conn.commit()
+    conn.close()
+    return True, f"ลบสกิลในช่อง {slot} เรียบร้อย"
+
+def get_player_skill_slots(user_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT skill_slot_1, skill_slot_2, skill_slot_3
+    FROM players
+    WHERE user_id = ?
+    """, (user_id,))
+    row = cursor.fetchone()
+
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        "slot_1": row[0],
+        "slot_2": row[1],
+        "slot_3": row[2],
+    }
 
 def create_player(user_id: int, username: str):
     conn = get_connection()
@@ -140,6 +200,27 @@ def add_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     conn.close()
 
     return get_player(user_id)
+
+
+def get_player_skill_in_slot(user_id: int, slot: int):
+    if slot not in (1, 2, 3):
+        return None
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    column = f"skill_slot_{slot}"
+    cursor.execute(
+        f"SELECT {column} FROM players WHERE user_id = ?",
+        (user_id,)
+    )
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+
+    return row[0]
 
 def get_player(user_id: int) -> Optional[dict]:
     conn = get_connection()

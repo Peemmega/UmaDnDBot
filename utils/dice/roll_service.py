@@ -9,12 +9,12 @@ from utils.game_manager import (
 )
 from utils.icon_presets import Status_Icon_Type
 from views.run_reroll_view import RunRerollView
-from utils.race_presets import (
+from utils.dice.race_presets import (
     get_path_effect,
     get_current_path_type, 
 )
 
-from utils.race_dice import (
+from utils.dice.race_dice import (
     roll_race_dice,
 )
 
@@ -41,7 +41,7 @@ def build_run_embed(
 
     embed.add_field(name="✨ Total", value=str(result["total"]), inline=True)
     embed.add_field(name="🏁 Score ใหม่", value=str(new_score), inline=True)
-    embed.add_field(name="🩷 คงเหลือ", value=str(game_player["stamina_left"]), inline=True)
+    embed.add_field(name=f"{Status_Icon_Type['STA']} คงเหลือ", value=str(game_player["stamina_left"]), inline=True)
 
     if stamina_note:
         embed.add_field(name="Stamina", value=stamina_note, inline=False)
@@ -64,17 +64,19 @@ async def execute_player_roll(
     if game_player is None:
         return False, {"message": "คุณยังไม่ได้เข้าร่วมเกมนี้"}
 
-    db_player = ensure_player(interaction.user.id, interaction.user.name)
+    race_player = game_player.get("race_profile")
+    if race_player is None:
+        return False, {"message": "ไม่พบข้อมูล stat ตอนเริ่มเกม"}
     snapshot_scores = game["turn_snapshot_scores"]
 
     # path effect
     path_type = get_current_path_type(game)
-    path_effect = get_path_effect(path_type, db_player)
+    path_effect = get_path_effect(path_type, race_player)
 
     # roll
     result = roll_race_dice(
         style=game_player["style"],
-        player=db_player,
+        player=race_player,
         player_id=interaction.user.id,
         score_map=snapshot_scores,
         turn=game["turn"],
@@ -158,7 +160,7 @@ async def use_active_roll_skill(self, interaction: discord.Interaction, skill: d
         interaction,
         title_prefix=f"ใช้สกิล {skill['name']}",
         mark_roll=True,
-        allow_reroll_view=False,  # ถ้า active skill ใช้โควต้าทอยเดียวกัน
+        allow_reroll_view=False,
     )
 
     if not success:
@@ -171,3 +173,6 @@ async def use_active_roll_skill(self, interaction: discord.Interaction, skill: d
     }
 
     await interaction.response.send_message(**send_kwargs)
+
+    game = payload["game"]
+    await self.handle_after_roll(interaction, game)
