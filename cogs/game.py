@@ -4,7 +4,7 @@ from discord import app_commands
 
 from views.confirmDeleteGameView import ConfirmDeleteView
 from views.join_view import LobbyView
-from utils.dice.dice_presets import DICE_PRESET
+
 from utils.dice.race_presets import RACE_PRESET
 from utils.dice.roll_service import (
     execute_player_roll
@@ -12,17 +12,17 @@ from utils.dice.roll_service import (
 from views.use_skill_view import UseSkillView
 from utils.database import ensure_player, get_player_skill_slots
 from utils.skill.skill_presets import SKILLS, ICON
-
+from utils.icon_presets import Status_Icon_Type
 from utils.dice.race_presets import (
     get_current_path_type, 
     build_path_effect_text, 
+    get_path_effect,
     PATH_TYPE_TEXT
 )
 
 from utils.dice.race_dice import (
     roll_race_dice,
     get_phase_from_turn,
-    build_dice_table_text
 )
 
 from utils.game_manager import (
@@ -99,59 +99,6 @@ class GameCog(commands.GroupCog, name="game"):
         if not can_roll:
             return False, "คุณใช้สิทธิ์ทอยในเทิร์นนี้ไปแล้ว จึงใช้สกิลประเภท Active Roll ไม่ได้"
         return True, None
-    
-    async def execute_skill_roll(self, interaction: discord.Interaction, skill_id: str, skill: dict):
-        game = get_game(interaction.channel_id)
-        if game is None:
-            return False, "ยังไม่มีเกมในห้องนี้"
-
-        game_player = get_player_in_game(interaction.channel_id, interaction.user.id)
-        if game_player is None:
-            return False, "คุณยังไม่ได้เข้าร่วมเกมนี้"
-
-        race_player = game_player.get("race_profile")
-        if race_player is None:
-            return False, {"message": "ไม่พบข้อมูล stat ตอนเริ่มเกม"}    
-        snapshot_scores = game["turn_snapshot_scores"]
-
-        # ส่ง effects ของสกิลเข้า roll
-        result = roll_race_dice(
-            style=game_player["style"],
-            player=race_player,
-            player_id=interaction.user.id,
-            score_map=snapshot_scores,
-            turn=game["turn"],
-            max_turn=game["max_turn"],
-            skill_effects=skill.get("effects", [])
-        )
-
-        success, new_score = update_player_score(
-            interaction.channel_id,
-            interaction.user.id,
-            result["total"]
-        )
-        if not success:
-            return False, "ไม่สามารถอัปเดตคะแนนได้"
-
-        mark_player_rolled(interaction.channel_id, interaction.user.id)
-
-        embed = discord.Embed(
-            title=f"{interaction.user.display_name} ใช้สกิล {skill['name']}",
-            color=discord.Color.gold()
-        )
-        embed.add_field(name="Phase", value=result["phase"], inline=True)
-        embed.add_field(name="Style", value=game_player["style"], inline=True)
-        embed.add_field(name="Distance", value=result["distance_color"], inline=True)
-        embed.add_field(name="🎲 Dice", value=result["display"], inline=False)
-        embed.add_field(name="📈 Bonus", value=result["bonus_display"], inline=False)
-        embed.add_field(name="✨ Total", value=str(result["total"]), inline=True)
-        embed.add_field(name="🏁 Score ใหม่", value=str(new_score), inline=True)
-
-        return True, {
-            "embed": embed,
-            "result": result,
-            "new_score": new_score,
-        }
 
     async def handle_after_roll(self, interaction: discord.Interaction, game: dict):
         if have_all_players_rolled(interaction.channel_id):
@@ -208,9 +155,10 @@ class GameCog(commands.GroupCog, name="game"):
         stage_data = RACE_PRESET[stage_key]
 
         embed = discord.Embed(
-            title="📍Race: " + stage_data["name"],
+            title="สนาม: " + stage_data["name"],
             description="เตรียมตัวเข้าสู่สนามแข่ง 🏇",
             color=discord.Color.green()
+
         )
 
         embed.set_thumbnail(url=stage_data["thumnail"])
@@ -456,7 +404,29 @@ class GameCog(commands.GroupCog, name="game"):
     async def skill(self, interaction: discord.Interaction):
         ensure_player(interaction.user.id, interaction.user.name)
 
-        slots = get_player_skill_slots(interaction.user.id)
+        playerInGame = get_player_in_game(
+            interaction.channel_id,
+            interaction.user.id
+        )
+
+        slots = None
+        wit_mana = "ยังไม่อยู่ในเกม"
+
+        if playerInGame:
+            game_skills = playerInGame.get("skills", {})
+            has_any_skill = any(game_skills.get(i) for i in (1, 2, 3))
+
+            if has_any_skill:
+                slots = {
+                    "slot_1": game_skills.get(1),
+                    "slot_2": game_skills.get(2),
+                    "slot_3": game_skills.get(3),
+                }
+                wit_mana = playerInGame.get("wit_mana", 0)
+
+        if slots is None:
+            slots = get_player_skill_slots(interaction.user.id)
+
         if not slots:
             await interaction.response.send_message(
                 "ไม่พบข้อมูลสกิลของคุณ",
@@ -473,10 +443,16 @@ class GameCog(commands.GroupCog, name="game"):
                 return f"❓ `{skill_id}`"
 
             emoji = ICON.get(skill.get("icon"), "❓")
-            cd_left = get_player_skill_cd(interaction.channel_id, interaction.user.id, skill_id)
 
-            if cd_left > 0:
-                return f"{emoji} `{skill_id}` **{skill['name']}** ⏳ {cd_left}"
+            if playerInGame:
+                cd_left = get_player_skill_cd(
+                    interaction.channel_id,
+                    interaction.user.id,
+                    skill_id
+                )
+                if cd_left > 0:
+                    return f"{emoji} `{skill_id}` **{skill['name']}** ⏳ {cd_left}"
+
             return f"{emoji} `{skill_id}` **{skill['name']}** ✅"
 
         embed = discord.Embed(
@@ -490,41 +466,17 @@ class GameCog(commands.GroupCog, name="game"):
             color=discord.Color.blurple()
         )
 
+        embed.add_field(
+            name=f"{Status_Icon_Type.get('WIT', '🔮')} skill pt",
+            value=f"{wit_mana}",
+            inline=True
+        )
+
         await interaction.response.send_message(
             embed=embed,
             view=UseSkillView(self, interaction.user.id, interaction.channel_id),
             ephemeral=True
         )
-
-    # @app_commands.command(name="next_turn", description="ไปเทิร์นถัดไป")
-    # async def next_turn_command(self, interaction: discord.Interaction):
-    #     await interaction.response.defer()
-
-    #     game = get_game(interaction.channel_id)
-    #     if game is None:
-    #         await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
-    #         return
-
-    #     if not game["started"]:
-    #         await interaction.followup.send("เกมยังไม่เริ่ม", ephemeral=True)
-    #         return
-
-    #     if not is_owner(interaction.channel_id, interaction.user.id):
-    #         await interaction.followup.send(
-    #             "มีแค่ผู้สร้างเกมเท่านั้นที่ใช้คำสั่งนี้ได้",
-    #             ephemeral=True
-    #         )
-    #         return
-
-    #     await self.process_next_turn(interaction)
-
-    @discord.app_commands.command(name="dice_table", description="ดูตารางเต๋า")
-    async def dice_table(self, interaction: discord.Interaction):
-        table_text = build_dice_table_text(DICE_PRESET)
-
-        await interaction.response.send_message(
-            f"```markdown\n{table_text}\n```"
-        )
-
+   
 async def setup(bot: commands.Bot):
     await bot.add_cog(GameCog(bot))

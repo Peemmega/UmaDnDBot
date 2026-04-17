@@ -117,13 +117,14 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "modify_start_loss",
-                "value": -1,
-                "duration": "this_turn"
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 15,
+                "duration": "this_roll"
             },
             {
                 "type": "modify_roll_floor",
-                "value": 3,
+                "value": 5,
                 "duration": "this_roll"
             }
         ],

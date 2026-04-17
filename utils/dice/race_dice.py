@@ -3,6 +3,7 @@ import math
 from utils.dice.dice_presets import DICE_PRESET, MAX_DICE_VALUE
 from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
 from utils.skill.skill_presets import ICON
+from utils.dice.dice_table import format_rule
 
 def get_stat_emoji(value: int) -> str:
     value = max(1, min(value, 8))
@@ -152,7 +153,7 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     base_total = sum(selected)
 
     final_power_bonus = int(power_bonus * power_total_multiplier)
-    total = sum(modified_selected) + power_bonus + gut_bonus + flat_velocity_bonus
+    total = sum(modified_selected) + final_power_bonus + gut_bonus + flat_velocity_bonus
 
     bonus_parts = []
     if total_spd_bonus > 0:
@@ -226,45 +227,43 @@ def roll_race_dice(
         "bonus_display": dice_result["bonus_display"],
     }
 
-def format_rule(rule: dict) -> str:
-        d = rule["d"]
-        kh = rule.get("kh")
+def build_dice_table_grid(dice_preset: dict, color: str) -> str:
+    styles = ["Front", "Pace", "Late", "End"]
+    phases = [1, 2, 3, 4]
 
-        if d == 1:
-            base = f"d{MAX_DICE_VALUE}"
-        else:
-            base = f"{d}d{MAX_DICE_VALUE}"
+    # header
+    lines = []
+    header = f"{'Style':<7} {'P1':<6} {'P2':<6} {'P3':<6} {'P4':<6}"
+    lines.append(header)
+    lines.append("-" * len(header))
 
-        if kh is not None:
-            base += f"kh{kh}"
+    for style in styles:
+        row = [f"{style:<7}"]
 
-        return base
+        for phase in phases:
+            rule = format_rule(dice_preset[style][color][phase])
+            row.append(f"{rule:<6}")
 
-def build_dice_table_text(dice_preset: dict) -> str:
-        styles = ["Front", "Pace", "Late", "End"]
-        phases = [1, 2, 3, 4]
+        lines.append(" ".join(row))
 
+    return "\n".join(lines)
+
+def build_dice_table_text(dice_preset: dict) -> tuple[str, str]:
+    styles = ["Front", "Pace", "Late", "End"]
+    phases = [1, 2, 3, 4]
+
+    def build_section(color: str) -> str:
         lines = []
 
-        lines.append("WHITE")
-        lines.append("| Style | Phase1 | Phase2 | Phase3 | Phase4 |")
-        lines.append("|---|---|---|---|---|")
-
         for style in styles:
-            row = [style]
+            parts = [f"**{style}**"]
             for phase in phases:
-                row.append(format_rule(dice_preset[style]["White"][phase]))
-            lines.append("| " + " | ".join(row) + " |")
-
-        lines.append("")
-        lines.append("GOLD")
-        lines.append("| Style | Phase1 | Phase2 | Phase3 | Phase4 |")
-        lines.append("|---|---|---|---|---|")
-
-        for style in styles:
-            row = [style]
-            for phase in phases:
-                row.append(format_rule(dice_preset[style]["Gold"][phase]))
-            lines.append("| " + " | ".join(row) + " |")
+                rule = format_rule(dice_preset[style][color][phase])
+                parts.append(f"P{phase} `{rule}`")
+            lines.append(" • ".join(parts))
 
         return "\n".join(lines)
+
+    white_text = build_section("White")
+    gold_text = build_section("Gold")
+    return white_text, gold_text

@@ -143,7 +143,6 @@ def have_all_players_rolled(channel_id: int):
     return all(player["last_roll_turn"] == current_turn for player in players.values())
 
 
-
 def start_game(channel_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -167,12 +166,37 @@ def start_game(channel_id: int):
     for user_id, player in game["players"].items():
         db_player = get_player(user_id)
 
+        if db_player is None:
+            db_player = {
+                "speed": 1,
+                "stamina": 1,
+                "power": 1,
+                "gut": 1,
+                "wit": 1,
+                "turf": 1,
+                "dirt": 1,
+                "sprint": 1,
+                "mile": 1,
+                "medium": 1,
+                "long": 1,
+                "front": 1,
+                "pace": 1,
+                "late": 1,
+                "end_style": 1,
+            }
+
         player["reroll_left"] = 2
-        player["stamina_left"] = 8 + (db_player["stamina"] if db_player else 0)
+        player["stamina_left"] = 8 + db_player["stamina"]
 
-        player["race_profile"] = db_player.copy() if db_player else {}
+        player["race_profile"] = db_player.copy()
 
-        slots = get_player_skill_slots(user_id)
+        slots = get_player_skill_slots(user_id) or {
+            "slot_1": None,
+            "slot_2": None,
+            "slot_3": None,
+        }
+
+        # print("START GAME SKILL SNAPSHOT", user_id, slots)
 
         player["skills"] = {
             1: slots["slot_1"],
@@ -180,8 +204,19 @@ def start_game(channel_id: int):
             3: slots["slot_3"],
         }
 
-        # optional (ไว้ใช้ต่อ)
+        # print("PLAYER SKILLS IN GAME", user_id, player["skills"])
+
         player["skill_cooldowns"] = {}
+
+        player["wit_mana"] = 100
+
+        player["used_rush"] = False
+        player["used_block"] = False
+        player["action_locked"] = False
+        player["next_roll_flat_bonus"] = 0
+        player["no_reroll_this_turn"] = False
+        player["no_reroll_next_turn"] = False
+        player["last_roll_turn"] = -1
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
 
@@ -443,7 +478,21 @@ def next_turn(channel_id: int):
         user_id: info["score"]
         for user_id, info in game["players"].items()
     }
+
+    apply_wit_regen(channel_id)
+
     return game["turn"]
+
+def apply_wit_regen(channel_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return
+
+    for _, player in game["players"].items():
+        race_profile = player.get("race_profile", {})
+        wit_stat = race_profile.get("wit", 0)
+        regen = 10 + (wit_stat * 5)
+        player["wit_mana"] = player.get("wit_mana", 0) + regen
 
 def get_ranked_players(channel_id: int):
     game = get_game(channel_id)
@@ -476,6 +525,16 @@ def add_player(channel_id: int, user_id: int, style: str):
         "last_roll_turn": -1,
         "reroll_left": 0,
         "stamina_left": 0,
+
+        "wit_mana": 100,
+
+        "skills": {
+            1: None,
+            2: None,
+            3: None,
+        },
+        "skill_cooldowns": {},
+        "race_profile": {},
 
         "used_rush": False,
         "used_block": False,

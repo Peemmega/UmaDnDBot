@@ -14,6 +14,8 @@ from utils.skill.skill_runtime import (
     apply_non_active_skill,
     check_skill_trigger 
 )
+
+from utils.dice.roll_service import execute_player_roll
 from utils.skill.skill_presets import SKILLS, ICON
 
 class UseSkillView(discord.ui.View):
@@ -34,13 +36,24 @@ class UseSkillView(discord.ui.View):
 
     async def use_slot(self, interaction: discord.Interaction, slot: int):
         game = get_game(self.channel_id)
-        player = game["players"].get(interaction.user.id)
-
-        if game is None or player is None:
-            await interaction.response.send_message("ไม่พบเกมหรือผู้เล่น", ephemeral=True)
+        if game is None:
+            await interaction.response.send_message("ไม่พบเกม", ephemeral=True)
             return
 
-        skill_id = player["skills"].get(slot)
+        player = game["players"].get(interaction.user.id)
+        if player is None:
+            await interaction.response.send_message("ไม่พบผู้เล่น", ephemeral=True)
+            return
+
+        skills = player.get("skills")
+        if not skills:
+            await interaction.response.send_message(
+                "ยังไม่มีข้อมูลสกิลในเกมนี้ กรุณาเริ่มเกมใหม่อีกครั้ง",
+                ephemeral=True
+            )
+            return
+
+        skill_id = skills.get(slot)
         if not skill_id:
             await interaction.response.send_message(f"Slot {slot} ว่าง", ephemeral=True)
             return
@@ -61,6 +74,7 @@ class UseSkillView(discord.ui.View):
             )
             return
         
+        
         path_type = get_current_path_type(game)
         phase = get_phase_from_turn(game["turn"], game["max_turn"])
 
@@ -75,6 +89,14 @@ class UseSkillView(discord.ui.View):
             await interaction.response.send_message(reason, ephemeral=True)
             return
 
+        cost = skill.get("cost", 0)
+        if player["wit_mana"] < cost:
+            await interaction.response.send_message(
+                f"Wit ไม่พอ (ต้องใช้ {cost})",
+                ephemeral=True
+            )
+            return
+
         # active_roll = ใช้โควต้าทอยเดียวกับ /run
         if skill.get("active_roll", False):
             can_roll, message = self.cog.can_use_roll_skill(
@@ -85,22 +107,35 @@ class UseSkillView(discord.ui.View):
                 await interaction.response.send_message(message, ephemeral=True)
                 return
 
-            success, payload = await self.cog.execute_skill_roll(
-                interaction=interaction,
-                skill_id=skill_id,
-                skill=skill,
+            # หัก mana ก่อน เพื่อให้ embed ที่สร้างหลังจากนี้ใช้ค่าปัจจุบัน
+            player["wit_mana"] -= cost
+
+            success, payload = await execute_player_roll(
+                interaction,
+                title_prefix=f"ใช้สกิล {skill['name']}",
+                mark_roll=True,
+                allow_reroll_view=False,
+                skill_effects=skill.get("effects", []), 
             )
             if not success:
-                await interaction.response.send_message(payload, ephemeral=True)
+                # rollback ถ้าทอยไม่สำเร็จ
+                player["wit_mana"] += cost
+                await interaction.response.send_message(payload["message"], ephemeral=True)
                 return
+
+            set_player_skill_cd(
+                self.channel_id,
+                interaction.user.id,
+                skill_id,
+                skill.get("cooldown", 0)
+            )
 
             await interaction.response.send_message(
                 content=f"✨ <@{interaction.user.id}> ใช้สกิล {ICON.get(skill.get('icon'), '❓')} **{skill['name']}**!",
                 embed=payload["embed"]
             )
 
-            set_player_skill_cd(self.channel_id, interaction.user.id, skill_id, skill.get("cooldown", 0))
-            game = get_game(self.channel_id)
+            game = payload["game"]
             await self.cog.handle_after_roll(interaction, game)
 
             self.stop()
@@ -118,19 +153,15 @@ class UseSkillView(discord.ui.View):
             await interaction.response.send_message(result_text, ephemeral=True)
             return
 
-        set_player_skill_cd(
-            self.channel_id,
-            interaction.user.id,
-            skill_id,
-            skill.get("cooldown", 0)
-        )
-
         set_player_skill_cd(self.channel_id, interaction.user.id, skill_id, skill.get("cooldown", 0))
         embed = discord.Embed(
             title=f"{ICON.get(skill.get('icon'), '❓')} ใช้สกิล {skill['name']}",
             description=result_text,
             color=discord.Color.green()
         )
+
+        player["wit_mana"] -= cost
+        
         await interaction.response.send_message(embed=embed)
         self.stop()
 

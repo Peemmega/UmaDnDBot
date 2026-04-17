@@ -11,11 +11,11 @@ from utils.skill.skill_manager import (
     find_skill_by_name,
     get_skill_display,
     build_skill_card_text,
-    get_skill_short
 )
 
 from utils.database import ensure_player, set_player_skill_slot, clear_player_skill_slot, get_player_skill_slots
 from utils.skill.skill_presets import SKILLS
+from utils.icon_presets import Status_Icon_Type
 
 class SkillCog(commands.Cog):
     def __init__(self, bot):
@@ -23,20 +23,22 @@ class SkillCog(commands.Cog):
 
     skill_group = app_commands.Group(name="skill", description="จัดการข้อมูลสกิล")
 
-    @skill_group.command(name="list", description="ดูรายชื่อสกิลทั้งหมด")
-    async def skill_list(self, interaction: discord.Interaction):
-        skills = get_all_skills()
-
-        embed = discord.Embed(
-            title="📘 รายชื่อสกิลทั้งหมด",
-            description=build_skill_list_text(skills),
-            color=discord.Color.blurple()
-        )
-        await interaction.response.send_message(embed=embed)
-
-    @skill_group.command(name="type", description="ดูสกิลตามประเภทไอคอน")
-    @app_commands.describe(icon_type="ประเภทสกิล")
-    @app_commands.choices(icon_type=[
+    @skill_group.command(name="check", description="ตรวจสอบข้อมูลสกิล")
+    @app_commands.describe(
+        mode="โหมดที่ต้องการดู",
+        type="ประเภทสกิล",
+        tag="แท็กของสกิล",
+        info="รหัสหรือชื่อสกิล"
+    )
+    @app_commands.choices(mode=[
+        app_commands.Choice(name="list", value="list"),
+        app_commands.Choice(name="active", value="active"),
+        app_commands.Choice(name="passive", value="passive"),
+        app_commands.Choice(name="type", value="type"),
+        app_commands.Choice(name="tag", value="tag"),
+        app_commands.Choice(name="info", value="info"),
+    ])
+    @app_commands.choices(type=[
         app_commands.Choice(name="Concentration", value="Concentration"),
         app_commands.Choice(name="Acceleration", value="Acceleration"),
         app_commands.Choice(name="Velocity", value="Velocity"),
@@ -46,61 +48,11 @@ class SkillCog(commands.Cog):
         app_commands.Choice(name="LookUp", value="LookUp"),
         app_commands.Choice(name="Blind", value="Blind"),
     ])
-    async def skill_type(self, interaction: discord.Interaction, icon_type: app_commands.Choice[str]):
-        skills = get_skills_by_icon(icon_type.value)
-
-        embed = discord.Embed(
-            title=f"📂 สกิลประเภท {icon_type.value}",
-            description=build_skill_list_text(skills),
-            color=discord.Color.green()
-        )
-        await interaction.response.send_message(embed=embed)
-
-    @skill_group.command(name="active", description="ดูสกิลที่กดใช้ตอนทอย")
-    async def skill_active(self, interaction: discord.Interaction):
-        skills = get_skills_by_active_roll(True)
-
-        embed = discord.Embed(
-            title="🎲 สกิลที่ใช้งานตอนทอยวิ่ง",
-            description=build_skill_list_text(skills),
-            color=discord.Color.orange()
-        )
-        await interaction.response.send_message(embed=embed)
-
-    @skill_group.command(name="passive", description="ดูสกิลที่ทำงานอัตโนมัติ")
-    async def skill_passive(self, interaction: discord.Interaction):
-        skills = get_skills_by_active_roll(False)
-
-        embed = discord.Embed(
-            title="⚙️ สกิลที่ทำงานอัตโนมัติ",
-            description=build_skill_list_text(skills),
-            color=discord.Color.purple()
-        )
-        await interaction.response.send_message(embed=embed)
-
-    @skill_group.command(name="info", description="ดูข้อมูลสกิล")
-    @app_commands.describe(skill_name="ชื่อหรือ key ของสกิล")
-    async def skill_info(self, interaction: discord.Interaction, skill_name: str):
-        result = find_skill_by_name(skill_name)
-        if result is None:
-            await interaction.response.send_message("ไม่พบสกิลนี้", ephemeral=True)
-            return
-
-        skill_key, skill = result
-        description = build_skill_description(skill_key)
-
-        embed = discord.Embed(
-            title=f"🔎 Skill Info: {skill['name']}",
-            description=description,
-            color=discord.Color.gold()
-        )
-        await interaction.response.send_message(embed=embed)
-
-
-    @skill_group.command(name="tag", description="ดูสกิลตาม tag")
     @app_commands.choices(tag=[
         app_commands.Choice(name="corner", value="corner"),
         app_commands.Choice(name="straight", value="straight"),
+        app_commands.Choice(name="uphill", value="uphill"),
+        app_commands.Choice(name="downhill", value="downhill"),
         app_commands.Choice(name="velocity", value="velocity"),
         app_commands.Choice(name="acceleration", value="acceleration"),
         app_commands.Choice(name="recovery", value="recovery"),
@@ -109,18 +61,110 @@ class SkillCog(commands.Cog):
         app_commands.Choice(name="pace", value="pace"),
         app_commands.Choice(name="late", value="late"),
         app_commands.Choice(name="end", value="end"),
+        app_commands.Choice(name="start", value="start"),
+        app_commands.Choice(name="late_race", value="late_race"),
+        app_commands.Choice(name="mid_race", value="mid_race"),
     ])
-    @app_commands.describe(tag="ชื่อ tag")
-    async def skill_tag(self, interaction: discord.Interaction, tag: str):
-        from utils.skill.skill_manager import get_skills_by_tag
-        skills = get_skills_by_tag(tag)
+    async def skill_check(
+        self,
+        interaction: discord.Interaction,
+        mode: app_commands.Choice[str],
+        type: app_commands.Choice[str] | None = None,
+        tag: app_commands.Choice[str] | None = None,
+        info: str | None = None,
+    ):
+        mode_value = mode.value
 
-        embed = discord.Embed(
-            title=f"🏷️ สกิล tag: {tag}",
-            description=build_skill_list_text(skills),
-            color=discord.Color.teal()
-        )
-        await interaction.response.send_message(embed=embed)
+        if mode_value == "list":
+            skills = get_all_skills()
+            embed = discord.Embed(
+                title="📘 รายชื่อสกิลทั้งหมด",
+                description=build_skill_list_text(skills),
+                color=discord.Color.blurple()
+            )
+            await interaction.response.send_message(embed=embed)
+            return
+
+        if mode_value == "active":
+            skills = get_skills_by_active_roll(True)
+            embed = discord.Embed(
+                title="🎲 สกิลที่ใช้งานตอนทอยวิ่ง",
+                description=build_skill_list_text(skills),
+                color=discord.Color.orange()
+            )
+            await interaction.response.send_message(embed=embed)
+            return
+
+        if mode_value == "passive":
+            skills = get_skills_by_active_roll(False)
+            embed = discord.Embed(
+                title="⚙️ สกิลที่ทำงานอัตโนมัติ",
+                description=build_skill_list_text(skills),
+                color=discord.Color.purple()
+            )
+            await interaction.response.send_message(embed=embed)
+            return
+
+        if mode_value == "type":
+            if type is None:
+                await interaction.response.send_message(
+                    "กรุณาเลือก type",
+                    ephemeral=True
+                )
+                return
+
+            skills = get_skills_by_icon(type.value)
+            embed = discord.Embed(
+                title=f"📂 สกิลประเภท {type.value}",
+                description=build_skill_list_text(skills),
+                color=discord.Color.green()
+            )
+            await interaction.response.send_message(embed=embed)
+            return
+
+        if mode_value == "tag":
+            if tag is None:
+                await interaction.response.send_message(
+                    "กรุณาเลือก tag",
+                    ephemeral=True
+                )
+                return
+
+            skills = get_skills_by_tag(tag.value)
+            embed = discord.Embed(
+                title=f"🏷️ สกิล tag: {tag.value}",
+                description=build_skill_list_text(skills),
+                color=discord.Color.teal()
+            )
+            await interaction.response.send_message(embed=embed)
+            return
+
+        if mode_value == "info":
+            if not info:
+                await interaction.response.send_message(
+                    "กรุณาใส่รหัสหรือชื่อสกิล เช่น s001",
+                    ephemeral=True
+                )
+                return
+
+            result = find_skill_by_name(info)
+            if result is None:
+                await interaction.response.send_message(
+                    "ไม่พบสกิลนี้",
+                    ephemeral=True
+                )
+                return
+
+            skill_key, skill = result
+            description = build_skill_description(skill_key)
+
+            embed = discord.Embed(
+                title=f"🔎 Skill Info: {skill['name']}",
+                description=description,
+                color=discord.Color.gold()
+            )
+            await interaction.response.send_message(embed=embed)
+            return
 
     @skill_group.command(name="equip", description="ติดตั้งสกิลลงช่อง")
     @app_commands.describe(slot="ช่องสกิล", skill_id="รหัสสกิล เช่น s001")

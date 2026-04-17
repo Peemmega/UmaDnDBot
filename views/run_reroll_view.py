@@ -2,7 +2,10 @@ import discord
 
 from utils.dice.race_dice import roll_race_dice
 from utils.game_manager import get_game, get_player_in_game, update_player_score, use_reroll
-from utils.database import ensure_player
+from utils.dice.race_presets import (
+    get_path_effect,
+    get_current_path_type, 
+)
 
 class RunRerollView(discord.ui.View):
     def __init__(
@@ -37,8 +40,8 @@ class RunRerollView(discord.ui.View):
             )
             return
 
-        player = get_player_in_game(self.channel_id, self.owner_id)
-        if player is None:
+        game_player = get_player_in_game(self.channel_id, self.owner_id)
+        if game_player is None:
             await interaction.response.send_message(
                 "ไม่พบผู้เล่นในเกม",
                 ephemeral=True
@@ -53,8 +56,14 @@ class RunRerollView(discord.ui.View):
             )
             return
 
+        game_player = get_player_in_game(interaction.channel_id, interaction.user.id)
+        if game_player is None:
+            return False, {"message": "คุณยังไม่ได้เข้าร่วมเกมนี้"}
+
+        race_player = game_player.get("race_profile")
+        if race_player is None:
+            return False, {"message": "ไม่พบข้อมูล stat ตอนเริ่มเกม"}
         snapshot_scores = game["turn_snapshot_scores"]
-        db_player = ensure_player(self.owner_id, interaction.user.name)
 
         success, _ = update_player_score(
             self.channel_id,
@@ -68,13 +77,18 @@ class RunRerollView(discord.ui.View):
             )
             return
 
+        path_type = get_current_path_type(game)
+        path_effect = get_path_effect(path_type, race_player)
+
+
         result = roll_race_dice(
-            style=player["style"],
-            player=db_player,
-            player_id=self.owner_id,
+            style=game_player["style"],
+            player=race_player,
+            player_id=interaction.user.id,
             score_map=snapshot_scores,
             turn=game["turn"],
-            max_turn=game["max_turn"]
+            max_turn=game["max_turn"],
+            path_effect=path_effect,
         )
 
         success, new_score = update_player_score(

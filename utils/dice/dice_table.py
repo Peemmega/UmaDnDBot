@@ -8,11 +8,9 @@ def format_rule(rule: dict) -> str:
     d = rule["d"]
     kh = rule.get("kh")
 
-    text = f"d{MAX_DICE_VALUE}" if d == 1 else f"{d}d{MAX_DICE_VALUE}"
-    if kh is not None:
-        text += f"kh{kh}"
-    return text
-
+    if kh:
+        return f"{d}dkh{kh}"
+    return f"{d}d"
 
 def build_style_table(color_type: str) -> str:
     lines = []

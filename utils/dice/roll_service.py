@@ -1,5 +1,4 @@
 import discord
-from utils.database import ensure_player
 from utils.game_manager import (
     get_game,
     get_player_in_game,
@@ -18,8 +17,16 @@ from utils.dice.race_dice import (
     roll_race_dice,
 )
 
+def build_single_wit_regen_text(game_player: dict) -> str:
+    race_profile = game_player.get("race_profile", {})
+    wit_stat = race_profile.get("wit", 0)
+    regen = 10 + (wit_stat * 5)
+    current_mana = game_player.get("wit_mana", 0)
+    return f"{Status_Icon_Type['WIT']} {current_mana} → {current_mana + regen}"
+
 def build_run_embed(
     interaction: discord.Interaction,
+    game: dict,
     game_player: dict,
     result: dict,
     new_score: int,
@@ -46,6 +53,12 @@ def build_run_embed(
     if stamina_note:
         embed.add_field(name="Stamina", value=stamina_note, inline=False)
 
+    embed.add_field(
+        name=f"{Status_Icon_Type["WIT"]} ฟื้นฟูจากค่า stats",
+        value=build_single_wit_regen_text(game_player),
+        inline=False
+    )
+
     embed.set_footer(text=f"Reroll คงเหลือ {game_player['reroll_left']}")
     return embed
 
@@ -55,6 +68,7 @@ async def execute_player_roll(
     title_prefix: str = "วิ่งในเทิร์นนี้",
     mark_roll: bool = True,
     allow_reroll_view: bool = True,
+    skill_effects: list | None = None,
 ) -> tuple[bool, dict]:
     game = get_game(interaction.channel_id)
     if game is None:
@@ -82,6 +96,7 @@ async def execute_player_roll(
         turn=game["turn"],
         max_turn=game["max_turn"],
         path_effect=path_effect,
+        skill_effects=skill_effects or [],
     )
 
     # stamina
@@ -121,6 +136,7 @@ async def execute_player_roll(
 
     embed = build_run_embed(
         interaction=interaction,
+        game=game,
         game_player=game_player,
         result=result,
         new_score=new_score,
@@ -172,6 +188,7 @@ async def use_active_roll_skill(self, interaction: discord.Interaction, skill: d
         "embed": payload["embed"],
     }
 
+    
     await interaction.response.send_message(**send_kwargs)
 
     game = payload["game"]

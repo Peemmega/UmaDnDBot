@@ -6,7 +6,12 @@ from utils.game_manager import (
     is_owner,
     start_game,
 )
-from utils.dice.dice_presets import DICE_PRESET, MAX_DICE_VALUE
+from utils.dice.dice_presets import DICE_PRESET
+from utils.dice.dice_table import format_rule
+from utils.dice.race_dice import (
+    build_dice_table_grid
+)
+
 import math
 
 STYLES = ["Front", "Pace", "Late", "End"]
@@ -29,15 +34,6 @@ def build_phase_text(max_turn: int) -> str:
 
     return "\n".join(lines)
 
-def format_rule(rule: dict) -> str:
-    d = rule["d"]
-    kh = rule.get("kh")
-
-    text = f"d{MAX_DICE_VALUE}" if d == 1 else f"{d}d{MAX_DICE_VALUE}"
-    if kh is not None:
-        text += f"kh{kh}"
-    return text
-
 
 def build_style_table(color_type: str) -> str:
     lines = []
@@ -55,6 +51,9 @@ def build_style_table(color_type: str) -> str:
 
 
 def build_join_style_embed(max_turn: int) -> discord.Embed:
+    white_text = build_dice_table_grid(DICE_PRESET, "White")
+    gold_text = build_dice_table_grid(DICE_PRESET, "Gold")
+
     embed = discord.Embed(
         title="🏇 เลือกสายวิ่ง",
         description=(
@@ -67,34 +66,28 @@ def build_join_style_embed(max_turn: int) -> discord.Embed:
 
     embed.add_field(
         name="⚪ White Roll",
-        value=(
-            "**Style | P1 | P2 | P3 | P4**\n"
-            f"{build_style_table('White')}"
-        ),
+        value=f"```{white_text}```",
         inline=False
     )
 
     embed.add_field(
         name="🟡 Gold Roll",
-        value=(
-            "**Style | P1 | P2 | P3 | P4**\n"
-            f"{build_style_table('Gold')}"
-        ),
+        value=f"```{gold_text}```",
         inline=False
     )
 
     embed.add_field(
         name="📘 คำอธิบาย",
         value=(
-            "**d** = จำนวนลูกเต๋าที่ทอย\n"
-            "**d20** = ลูกเต๋าแต่ละลูกสุ่ม 1-20\n"
-            "**kh** = เลือกค่ามากสุดจำนวนที่กำหนด\n"
-            f"เช่น `6d20kh2` = ทอย 6 ลูก แล้วเลือก 2 ลูกที่มากสุดมารวม\n"
-            "**White / Gold** = ประเภทการทอยตามระยะห่างกับผู้เล่นอื่น"
+            "`d` = จำนวนลูกเต๋าที่ทอย\n"
+            "`d` 1 ลูก = สุ่ม 1-20\n"
+            "`kh` = เลือกค่ามากสุดจำนวนที่กำหนด\n"
+            "เช่น `6dkh2` = ทอย 6 ลูก แล้วเลือก 2 ลูกที่มากสุดมารวม\n"
+            "`White / Gold` = ประเภทการทอยตามระยะห่างกับผู้เล่นอื่น"
         ),
         inline=False
     )
-
+    
     embed.set_footer(text="กดปุ่มด้านล่างเพื่อเลือก Front / Pace / Late / End")
     return embed
 
