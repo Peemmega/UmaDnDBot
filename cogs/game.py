@@ -2,23 +2,21 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from views.run_reroll_view import RunRerollView
 from views.confirmDeleteGameView import ConfirmDeleteView
 from views.join_view import LobbyView
-from utils.database import ensure_player
 from utils.dice_presets import DICE_PRESET
 from utils.race_presets import RACE_PRESET
-from utils.icon_presets import Status_Icon_Type
+from utils.roll_service import (
+    execute_player_roll
+)
 
 from utils.race_presets import (
-    get_path_effect,
     get_current_path_type, 
     build_path_effect_text, 
     PATH_TYPE_TEXT
 )
 
 from utils.race_dice import (
-    roll_race_dice,
     get_phase_from_turn,
     build_dice_table_text
 )
@@ -328,151 +326,34 @@ class GameCog(commands.GroupCog, name="game"):
     async def run(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
-        game = get_game(interaction.channel_id)
-        if game is None:
-            await interaction.followup.send(
-                "ยังไม่มีเกมในห้องนี้",
-                ephemeral=True
-            )
-            return
-
-        game_player = get_player_in_game(interaction.channel_id, interaction.user.id)
-        if game_player is None:
-            await interaction.followup.send(
-                "คุณยังไม่ได้เข้าร่วมเกมนี้",
-                ephemeral=True
-            )
-            return
-
-        db_player = ensure_player(interaction.user.id, interaction.user.name)
-        path_type = get_current_path_type(game)
-        path_effect = get_path_effect(path_type, db_player)
-
         can_roll, message = can_player_roll(interaction.channel_id, interaction.user.id)
         if not can_roll:
             await interaction.followup.send(message, ephemeral=True)
             return
 
-        snapshot_scores = game["turn_snapshot_scores"]
-
-        # 🎲 roll
-        result = roll_race_dice(
-            style=game_player["style"],
-            player=db_player,
-            player_id=interaction.user.id,
-            score_map=snapshot_scores,
-            turn=game["turn"],
-            max_turn=game["max_turn"],
-            path_effect=path_effect,
-        )
-
-        flat_bonus = game_player.get("next_roll_flat_bonus", 0)
-        if flat_bonus != 0:
-            result["total"] += flat_bonus
-
-            if result["bonus_display"] == "-":
-                result["bonus_display"] = str(flat_bonus)
-            else:
-                sign = "+" if flat_bonus > 0 else ""
-                result["bonus_display"] += f" {sign}{flat_bonus}"
-
-            result["total_display"] = str(result["total"])
-            game_player["next_roll_flat_bonus"] = 0
-
-        # 💨 STAMINA SYSTEM
-        stamina_note = None
-
-        stamina_gain = path_effect.get("stamina_gain", 0)
-        stamina_cost = path_effect.get("stamina_cost", 0)
-
-        if stamina_gain > 0:
-            game_player["stamina_left"] += stamina_gain
-
-        if game_player["stamina_left"] >= stamina_cost:
-            game_player["stamina_left"] -= stamina_cost
-            if stamina_gain > 0:
-                stamina_note = f"{Status_Icon_Type["STA"]} +{stamina_gain} / -{stamina_cost} เหลือ {game_player['stamina_left']}"
-            else:
-                stamina_note = f"{Status_Icon_Type["STA"]} -{stamina_cost} เหลือ {game_player['stamina_left']}"
-        else:
-            result["total"] -= 30
-
-            if result["bonus_display"] == "-":
-                result["bonus_display"] = f"{Status_Icon_Type['STA']}-30"
-            else:
-                result["bonus_display"] += f" {Status_Icon_Type['STA']}-30"
-
-            result["total_display"] = str(result["total"])
-            stamina_note = f"{Status_Icon_Type["STA"]} ไม่พอ (ต้องใช้ {stamina_cost}) โดนหัก 30"
-
-        # 🏁 update score
-        success, new_score = update_player_score(
-            interaction.channel_id,
-            interaction.user.id,
-            result["total"]
+        success, payload = await execute_player_roll(
+            interaction,
+            title_prefix="วิ่งในเทิร์นนี้",
+            mark_roll=True,
+            allow_reroll_view=True,
         )
 
         if not success:
-            await interaction.followup.send(
-                "ไม่สามารถอัปเดตคะแนนได้",
-                ephemeral=True
-            )
+            await interaction.followup.send(payload["message"], ephemeral=True)
             return
 
-        # mark ว่ากดแล้ว
-        mark_player_rolled(interaction.channel_id, interaction.user.id)
+        send_kwargs = {
+            "content": f"🎯 <@{interaction.user.id}> กำลังวิ่ง!",
+            "embed": payload["embed"],
+        }
+        if payload["view"] is not None:
+            send_kwargs["view"] = payload["view"]
 
-        # 📊 embed แสดงผล
-        embed = discord.Embed(
-            title=f"{interaction.user.display_name} วิ่งในเทิร์นนี้",
-            color=discord.Color.gold()
-        )
+        await interaction.followup.send(**send_kwargs)
 
-        embed.add_field(name="Phase", value=result["phase"], inline=True)
-        embed.add_field(name="Style", value= f"{game_player["style"]} {result["distance_color"]}", inline=True)
-        embed.add_field(name="Path", value=path_effect["label"], inline=True)
+        game = payload["game"]
 
-        embed.add_field(name="🎲 Dice", value=result["display"], inline=False)
-        embed.add_field(name="📈 Stats Bonus", value=result["bonus_display"], inline=False)
-
-        embed.add_field(name="✨ Total", value=str(result["total"]), inline=True)
-        embed.add_field(name="🏁 Score ใหม่", value=new_score, inline=True)
-        embed.add_field(name=f"{Status_Icon_Type["STA"]} คงเหลือ", value=game_player["stamina_left"], inline=False)
-
-        embed.set_footer(text=f"Reroll คงเหลือ {game_player['reroll_left']}")
-
-        if stamina_note:
-            embed.add_field(name="----------------------", value=stamina_note, inline=False)
-
-        # 🎯 reroll view
-        allow_reroll = not game_player.get("no_reroll_this_turn", False)
-        view = None
-
-        if not game_player.get("no_reroll_this_turn", False):
-            view = RunRerollView(
-                owner_id=interaction.user.id,
-                channel_id=interaction.channel_id,
-                old_total=result["total"],
-            )
-
-        if view is not None:
-            await interaction.followup.send(
-                content=f"🎯 <@{interaction.user.id}> กำลังวิ่ง!",
-                embed=embed,
-                view=view
-            )
-        else:
-            await interaction.followup.send(
-                content=f"🎯 <@{interaction.user.id}> กำลังวิ่ง!",
-                embed=embed
-            )
-        
-
-        # ===============================
-        # 🔥 ถ้าทุกคน roll ครบ → เปิด confirm
-        # ===============================
         if have_all_players_rolled(interaction.channel_id):
-
             if not game["awaiting_turn_confirm"]:
                 start_turn_confirmation(interaction.channel_id)
 
@@ -496,21 +377,12 @@ class GameCog(commands.GroupCog, name="game"):
                         f"อันดับคะแนน:\n" + "\n".join(rank_lines)
                     )
                 )
-
-                confirm_embed.set_footer(
-                    text="ทุกคนต้องกดยืนยันก่อนจะไปเทิร์นถัดไป"
-                )
+                confirm_embed.set_footer(text="ทุกคนต้องกดยืนยันก่อนจะไปเทิร์นถัดไป")
 
                 from views.turn_confirm_view import TurnConfirmView
-
                 view = TurnConfirmView(self, interaction.channel_id)
-                msg = await interaction.followup.send(
-                    embed=confirm_embed,
-                    view=view
-                )
-
-                view.message = msg  
-
+                msg = await interaction.followup.send(embed=confirm_embed, view=view)
+                view.message = msg
 
 
     # @app_commands.command(name="next_turn", description="ไปเทิร์นถัดไป")

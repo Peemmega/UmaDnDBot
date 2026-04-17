@@ -53,7 +53,7 @@ TARGET_SCHEMA = {
 }
 
 SKILLS = {
-    "ProfessorOfCurvature": {
+    "s001": {
         "name": "Professor of Curvature",
         "icon": "Velocity",
         "cooldown": 8,
@@ -77,7 +77,7 @@ SKILLS = {
         "tags": ["corner", "velocity"],
     },
 
-    "EncroachingShadow": {
+    "s002": {
         "name": "Encroaching Shadow",
         "icon": "Acceleration",
         "cooldown": 8,
@@ -102,7 +102,7 @@ SKILLS = {
         "tags": ["straight", "lastspurt", "acceleration"],
     },
 
-    "Concentration": {
+    "s003": {
         "name": "Concentration",
         "icon": "Concentration",
         "cooldown": 20,
@@ -131,7 +131,7 @@ SKILLS = {
         "tags": ["start", "concentration"],
     },
 
-    "SwingingMaestro": {
+    "s004": {
         "name": "Swinging Maestro",
         "icon": "Recovery",
         "cooldown": 8,
@@ -153,7 +153,7 @@ SKILLS = {
         "tags": ["corner", "recovery"],
     },
 
-    "GoHomeSpecialist": {
+    "s005": {
         "name": "Go-Home Specialist",
         "icon": "Recovery",
         "cooldown": 8,
@@ -176,7 +176,7 @@ SKILLS = {
         "tags": ["downhill", "recovery"],
     },
 
-    "KeenEye": {
+    "s006": {
         "name": "Keen Eye",
         "icon": "DecreaseVelocity",
         "cooldown": 10,
@@ -205,5 +205,430 @@ SKILLS = {
         ],
         "active_roll": False,
         "tags": ["recovery", "debuff", "front_target"],
+    },
+    "s007": {
+        "name": "Technician",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "style": "Pace",
+            "path_type": 2,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "modify_selected_die", "value": 2, "duration": "this_roll"}
+        ],
+        "active_roll": True,
+        "tags": ["corner", "pace", "velocity"],
+    },
+
+    "s008": {
+        "name": "Lightning Step",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "position_group": "back",
+            "phase_min": 2,
+            "phase_max": 3,
+            "distance_type": "Medium",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "modify_gold_range", "value": 5, "duration": "this_turn"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 4, "duration": "this_roll"},
+        ],
+        "active_roll": True,
+        "tags": ["medium", "positioning", "back"],
+    },
+
+    "s009": {
+        "name": "Vanguard Spirit",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "style": "Front",
+            "phase_min": 2,
+            "phase_max": 3,
+            "distance_type": "Long",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "modify_velocity", "mode": "flat_total", "value": 6, "duration": "this_roll"}
+        ],
+        "active_roll": True,
+        "tags": ["front", "long", "lead"],
+    },
+
+    "s010": {
+        "name": "The Coast Is Clear!",
+        "icon": "LookUp",
+        "cooldown": 10,
+        "cost": 50,
+        "trigger": {
+            "style": "End",
+            "being_overtaken": False,
+            "phase_min": 2,
+            "phase_max": 4,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "modify_gold_range", "value": 8, "duration": "this_turn"}
+        ],
+        "active_roll": False,
+        "tags": ["vision", "end", "positioning"],
+    },
+
+    "s011": {
+        "name": "Killer Tunes",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "front",
+            "distance_type": "Medium",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "modify_velocity", "mode": "flat_total", "value": 5, "duration": "this_roll"}
+        ],
+        "active_roll": True,
+        "tags": ["medium", "front", "velocity"],
+    },
+
+    "s012": {
+        "name": "Speed Star",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "style": "Pace",
+            "path_type": 2,
+            "lastspurt": True,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "add_kh", "value": 1, "duration": "this_roll"}
+        ],
+        "active_roll": True,
+        "tags": ["pace", "final_corner", "acceleration"],
+    },
+
+    "s013": {
+        "name": "Determined Descent",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "style": "Pace",
+            "path_type": 4,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "add_d", "value": 1, "duration": "this_roll"}
+        ],
+        "active_roll": True,
+        "tags": ["pace", "downhill", "acceleration"],
+    },
+
+    "s014": {
+        "name": "On Your Left!",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "style": "Late",
+            "phase_min": 3,
+            "phase_max": 4,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "add_d", "value": 1, "duration": "this_roll"},
+            {"type": "add_kh", "value": 1, "duration": "this_roll"}
+        ],
+        "active_roll": True,
+        "tags": ["late", "acceleration", "late_race"],
+    },
+
+    "s015": {
+        "name": "Beeline Burst",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "path_type": 1,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "modify_velocity", "mode": "flat_total", "value": 6, "duration": "this_roll"}
+        ],
+        "active_roll": True,
+        "tags": ["straight", "velocity"],
+    },
+
+    "s016": {
+        "name": "Turbo Sprint",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "path_type": 1,
+            "distance_type": "Sprint",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "add_d", "value": 1, "duration": "this_roll"}
+        ],
+        "active_roll": True,
+        "tags": ["sprint", "straight", "acceleration"],
+    },
+
+    "s017": {
+        "name": "Flash Forward",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "path_type": 1,
+            "distance_type": "Medium",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "modify_velocity", "mode": "flat_total", "value": 6, "duration": "this_roll"}
+        ],
+        "active_roll": True,
+        "tags": ["medium", "straight", "velocity"],
+    },
+
+    "s018": {
+        "name": "Blast Forward",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "path_type": 1,
+            "distance_type": "Long",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "modify_velocity", "mode": "flat_total", "value": 6, "duration": "this_roll"}
+        ],
+        "active_roll": True,
+        "tags": ["long", "straight", "velocity"],
+    },
+
+    "s019": {
+        "name": "Battle Formation",
+        "icon": "DecreaseVelocity",
+        "cooldown": 10,
+        "cost": 50,
+        "trigger": {
+            "phase_min": 1,
+            "phase_max": 2,
+            "distance_type": "Mile",
+            "position_group": "back",
+            "target_distance_min": 1,
+            "target_distance_max": 20,
+        },
+        "target": {"scope": "all_front", "limit": 2},
+        "effects": [
+            {"type": "apply_debuff_next_turn", "stat": "selected_die", "value": -2}
+        ],
+        "active_roll": False,
+        "tags": ["debuff", "mile", "early_race"],
+    },
+
+    "s020": {
+        "name": "Stamina Siphon",
+        "icon": "ReduceSTA",
+        "cooldown": 10,
+        "cost": 50,
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "back",
+            "distance_type": "Long",
+            "target_distance_min": 1,
+            "target_distance_max": 20,
+        },
+        "target": {"scope": "nearest_front", "limit": 1},
+        "effects": [
+            {"type": "reduce_stamina", "value": 1}
+        ],
+        "active_roll": False,
+        "tags": ["debuff", "long", "stamina"],
+    },
+
+    # ---------- RECOVERY ----------
+    "s021": {
+        "name": "Calm and Collected",
+        "icon": "Recovery",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "style": "Pace",
+            "phase_min": 2,
+            "phase_max": 2,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "recover_stamina", "value": 1}
+        ],
+        "active_roll": False,
+        "tags": ["pace", "recovery", "mid_race"],
+    },
+
+    "s022": {
+        "name": "Breath of Fresh Air",
+        "icon": "Recovery",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "path_type": 1,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "recover_stamina", "value": 1}
+        ],
+        "active_roll": False,
+        "tags": ["straight", "recovery"],
+    },
+
+    "s023": {
+        "name": "Cooldown",
+        "icon": "Recovery",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "path_type": 1,
+            "distance_type": "Long",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "recover_stamina", "value": 2}
+        ],
+        "active_roll": False,
+        "tags": ["long", "straight", "recovery"],
+    },
+
+    "s024": {
+        "name": "Trackblazer",
+        "icon": "Recovery",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "front",
+            "distance_type": "Medium",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "recover_stamina", "value": 1}
+        ],
+        "active_roll": False,
+        "tags": ["medium", "front", "recovery"],
+    },
+
+    "s025": {
+        "name": "Restless",
+        "icon": "Recovery",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "style": "Front",
+            "path_type": 3,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "recover_stamina", "value": 1}
+        ],
+        "active_roll": False,
+        "tags": ["front", "uphill", "recovery"],
+    },
+
+    "s026": {
+        "name": "Relax",
+        "icon": "Recovery",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "style": "Late",
+            "phase_min": 4,
+            "phase_max": 4,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "recover_stamina", "value": 1}
+        ],
+        "active_roll": False,
+        "tags": ["late", "recovery", "late_race"],
+    },
+
+    # ---------- DEBUFF ----------
+    "s027": {
+        "name": "Dominator",
+        "icon": "DecreaseVelocity",
+        "cooldown": 10,
+        "cost": 80,
+        "trigger": {
+            "phase_min": 4,
+            "phase_max": 4,
+            "position_group": "back",
+            "distance_type": "Medium",
+            "target_distance_min": 1,
+            "target_distance_max": 20,
+        },
+        "target": {"scope": "all_front", "limit": 3},
+        "effects": [
+            {"type": "apply_debuff_next_turn", "stat": "flat_total", "value": -5}
+        ],
+        "active_roll": False,
+        "tags": ["debuff", "medium", "late_race"],
+    },
+
+    "s028": {
+        "name": "Dazzling Disorientation",
+        "icon": "Blind",
+        "cooldown": 10,
+        "cost": 50,
+        "trigger": {
+            "style": "Pace",
+            "phase_min": 4,
+            "phase_max": 4,
+            "position_group": "front",
+            "target_distance_min": -20,
+            "target_distance_max": -1,
+        },
+        "target": {"scope": "all_back", "limit": 3},
+        "effects": [
+            {"type": "modify_enemy_gold_range", "value": -5, "duration": "next_turn"}
+        ],
+        "active_roll": False,
+        "tags": ["blind", "pace", "debuff"],
+    },
+
+    "s029": {
+        "name": "Illusionist",
+        "icon": "Blind",
+        "cooldown": 10,
+        "cost": 50,
+        "trigger": {
+            "phase_min": 4,
+            "phase_max": 4,
+            "distance_type": "Long",
+            "target_distance_min": 1,
+            "target_distance_max": 20,
+        },
+        "target": {"scope": "all_front", "limit": 3},
+        "effects": [
+            {"type": "modify_enemy_gold_range", "value": -6, "duration": "next_turn"}
+        ],
+        "active_roll": False,
+        "tags": ["blind", "long", "debuff"],
     },
 }

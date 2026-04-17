@@ -1,6 +1,6 @@
 from typing import Optional
 
-from skill_presets import ICON, SKILLS
+from utils.skill_presets import SKILLS, ICON
 
 PATH_TEXT = {
     1: "ทางตรง",

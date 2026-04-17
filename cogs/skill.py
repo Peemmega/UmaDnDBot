@@ -92,7 +92,7 @@ class SkillCog(commands.Cog):
 
 
     @skill_group.command(name="tag", description="ดูสกิลตาม tag")
-    @app_commands.choices(stage=[
+    @app_commands.choices(tag=[
         app_commands.Choice(name="Concentration", value="Concentration"),
         app_commands.Choice(name="Acceleration", value="Acceleration"),
         app_commands.Choice(name="Velocity", value="Velocity"),
