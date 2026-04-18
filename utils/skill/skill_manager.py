@@ -115,7 +115,7 @@ def build_skill_card_text(skill_id: str | None) -> str:
     name = skill["name"]
     cooldown = skill.get("cooldown", 0)
     cost = skill.get("cost", 0)
-    active_text = "ใช้แทน Run" if skill.get("active_roll") else "ใช้ได้ทันที"
+    active_text = "เทส" #"ใช้แทน Run" if skill.get("active_roll") else "ใช้ได้ทันที"
 
     trigger_text = describe_trigger(skill.get("trigger", {}))
     target_text = describe_target(skill.get("target", {}))
@@ -136,6 +136,9 @@ def describe_trigger(trigger: dict) -> str:
 
     if "path_type" in trigger:
         parts.append(f"เมื่ออยู่บน{PATH_TEXT.get(trigger['path_type'], 'สนามพิเศษ')}")
+
+    if "distance_type" in trigger:
+        parts.append(f"เมื่ออยู่ในสนามระยะ {trigger['distance_type']}")
 
     if "style" in trigger:
         parts.append(f"สำหรับสาย {STYLE_TEXT.get(trigger['style'], trigger['style'])}")
@@ -187,10 +190,12 @@ def describe_effect(effect: dict) -> str:
         return f"เพิ่มจำนวนลูกเต๋า +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "add_kh":
         return f"เพิ่มจำนวนลูกที่เลือก +{value}" + (f" ({dur})" if dur else "")
-    if effect_type == "recover_stamina":
-        return f"ฟื้นฟู {Status_Icon_Type["STA"]} +{value}"
+    if effect_type in ["recover_stamina"]:
+        return f"ฟื้นฟู {Status_Icon_Type['STA']} +{value}"
+    if effect_type == "self_heal_stamina":
+        return f"ฟื้นฟู {Status_Icon_Type['STA']} ให้ตัวเอง +{value}"
     if effect_type == "reduce_stamina":
-        return f"ลด {Status_Icon_Type["STA"]} เป้าหมาย -{value}"
+        return f"ลด {Status_Icon_Type['STA']} เป้าหมาย -{value}"
     if effect_type == "flat_score_change":
         sign = "+" if value >= 0 else ""
         return f"ปรับคะแนนทันที {sign}{value}"

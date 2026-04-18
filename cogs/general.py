@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from utils.dice.dice_presets import DICE_PRESET
+from utils.dice.dice_presets import DICE_PRESET, MAX_DICE_VALUE
 from utils.dice.race_dice import (
     build_dice_table_grid
 )
@@ -36,7 +36,7 @@ class GeneralCog(commands.Cog):
         embed.add_field(
             name="📘 คำอธิบาย",
             value=(
-                "d = สุ่มค่า 1 ถึง 20 ต่อ 1 ลูกเต๋า\n"
+                f"d = สุ่มค่า 1 ถึง {MAX_DICE_VALUE} ต่อ 1 ลูกเต๋า\n"
                 "kh = เลือกค่าที่มากที่สุดตามจำนวน"
             ),
             inline=False

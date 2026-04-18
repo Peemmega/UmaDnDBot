@@ -4,10 +4,10 @@ from utils.game_manager import (
     get_player_in_game,
     update_player_score,
     mark_player_rolled,
-    can_player_roll
+    can_player_roll,
+    can_use_wit_reroll
 )
 from utils.icon_presets import Status_Icon_Type
-from views.run_reroll_view import RunRerollView
 from utils.dice.race_presets import (
     get_path_effect,
     get_current_path_type, 
@@ -20,7 +20,7 @@ from utils.dice.race_dice import (
 def build_single_wit_regen_text(game_player: dict) -> str:
     race_profile = game_player.get("race_profile", {})
     wit_stat = race_profile.get("wit", 0)
-    regen = 10 + (wit_stat * 5)
+    regen = 10 + (wit_stat * 1)
     current_mana = game_player.get("wit_mana", 0)
     return f"{Status_Icon_Type['WIT']} {current_mana} → {current_mana + regen}"
 
@@ -59,7 +59,18 @@ def build_run_embed(
         inline=False
     )
 
-    embed.set_footer(text=f"Reroll คงเหลือ {game_player['reroll_left']}")
+    embed.add_field(
+        name="Reroll คงเหลือ",
+        value=f"{game_player['reroll_left']}",
+        inline=True
+    )
+
+    embed.add_field(
+        name=f"{Status_Icon_Type["WIT"]} Reroll",
+        value=str(game_player.get("wit_reroll_left", 0)),
+        inline=True
+    )
+
     return embed
 
 async def execute_player_roll(
@@ -83,11 +94,70 @@ async def execute_player_roll(
         return False, {"message": "ไม่พบข้อมูล stat ตอนเริ่มเกม"}
     snapshot_scores = game["turn_snapshot_scores"]
 
+
+    pending_effects = []
+
+    # flat bonus
+    flat = game_player.get("next_roll_flat_bonus", 0)
+    if flat != 0:
+        pending_effects.append({
+            "type": "modify_velocity",
+            "value": flat,
+            "duration": "this_roll"
+        })
+
+    # add dice
+    add_d = game_player.get("next_roll_add_d", 0)
+    if add_d != 0:
+        pending_effects.append({
+            "type": "add_d",
+            "value": add_d,
+            "duration": "this_roll"
+        })
+
+    # add kh
+    add_kh = game_player.get("next_roll_add_kh", 0)
+    if add_kh != 0:
+        pending_effects.append({
+            "type": "add_kh",
+            "value": add_kh,
+            "duration": "this_roll"
+        })
+
+    # floor
+    floor = game_player.get("next_roll_floor_bonus", 0)
+    if floor != 0:
+        pending_effects.append({
+            "type": "modify_roll_floor",
+            "value": floor,
+            "duration": "this_roll"
+        })
+
+    # selected die
+    sel = game_player.get("next_roll_selected_die_bonus", 0)
+    if sel != 0:
+        pending_effects.append({
+            "type": "modify_selected_die",
+            "value": sel,
+            "duration": "this_roll"
+        })
+
+    # cap
+    cap = game_player.get("next_roll_cap_bonus", 0)
+    if cap != 0:
+        pending_effects.append({
+            "type": "modify_roll_cap",
+            "value": cap,
+            "duration": "this_roll"
+        })
+
     # path effect
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, race_player)
 
     # roll
+    next_roll_flat_bonus = game_player.get("next_roll_flat_bonus", 0)
+
     result = roll_race_dice(
         style=game_player["style"],
         player=race_player,
@@ -96,8 +166,26 @@ async def execute_player_roll(
         turn=game["turn"],
         max_turn=game["max_turn"],
         path_effect=path_effect,
-        skill_effects=skill_effects or [],
+        skill_effects=pending_effects,
     )
+    
+    if next_roll_flat_bonus != 0:
+        result["total"] += next_roll_flat_bonus
+        sign = "+" if next_roll_flat_bonus > 0 else ""
+
+        if result["bonus_display"] == "-":
+            result["bonus_display"] = f"NEXT{sign}{next_roll_flat_bonus}"
+        else:
+            result["bonus_display"] += f" NEXT{sign}{next_roll_flat_bonus}"
+
+        result["total_display"] = str(result["total"])
+
+    game_player["next_roll_flat_bonus"] = 0
+    game_player["next_roll_add_d"] = 0
+    game_player["next_roll_add_kh"] = 0
+    game_player["next_roll_floor_bonus"] = 0
+    game_player["next_roll_selected_die_bonus"] = 0
+    game_player["next_roll_cap_bonus"] = 0
 
     # stamina
     stamina_note = None
@@ -147,10 +235,15 @@ async def execute_player_roll(
 
     view = None
     if allow_reroll_view and not game_player.get("no_reroll_this_turn", False):
+        from views.run_reroll_view import RunRerollView
+        wit_reroll_ok = can_use_wit_reroll(game_player, result["base_total"])
+
         view = RunRerollView(
             owner_id=interaction.user.id,
             channel_id=interaction.channel_id,
             old_total=result["total"],
+            base_total=result["base_total"],
+            wit_reroll_ok=wit_reroll_ok,
         )
 
     return True, {

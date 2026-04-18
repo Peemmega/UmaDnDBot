@@ -110,7 +110,10 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     max_dice_value += path_effect.get("extra_max_from_wit", 0)
 
     roll_min = player.get("power", 1) + extra_floor
+    max_dice_value = max(max_dice_value, roll_min)
+
     rolls = [random.randint(roll_min, max_dice_value) for _ in range(d)]
+
     original_rolls = rolls.copy()
 
     if kh is not None:
@@ -153,7 +156,7 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     base_total = sum(selected)
 
     final_power_bonus = int(power_bonus * power_total_multiplier)
-    total = sum(modified_selected) + final_power_bonus + gut_bonus + flat_velocity_bonus
+    total = sum(modified_selected) + power_bonus + gut_bonus + flat_velocity_bonus
 
     bonus_parts = []
     if total_spd_bonus > 0:

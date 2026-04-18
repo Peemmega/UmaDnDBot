@@ -4,6 +4,8 @@ from discord import app_commands
 
 from views.confirmDeleteGameView import ConfirmDeleteView
 from views.join_view import LobbyView
+from utils.icon_presets import Status_Icon_Type
+from utils.skill.skill_presets import SKILLS, ICON
 
 from utils.dice.race_presets import RACE_PRESET
 from utils.dice.roll_service import (
@@ -11,17 +13,15 @@ from utils.dice.roll_service import (
 )
 from views.use_skill_view import UseSkillView
 from utils.database import ensure_player, get_player_skill_slots
-from utils.skill.skill_presets import SKILLS, ICON
-from utils.icon_presets import Status_Icon_Type
 from utils.dice.race_presets import (
     get_current_path_type, 
     build_path_effect_text, 
-    get_path_effect,
     PATH_TYPE_TEXT
 )
 
+from utils.skill.skill_manager import build_skill_card_text
+
 from utils.dice.race_dice import (
-    roll_race_dice,
     get_phase_from_turn,
 )
 
@@ -34,12 +34,10 @@ from utils.game_manager import (
     get_players,
     delete_game,
     can_player_roll, 
-    mark_player_rolled,
-    update_player_score,
     get_ranked_players,
     have_all_players_rolled,
     start_turn_confirmation,
-    get_player_skill_cd
+    is_skill_on_cooldown
 )
 
 PATH_EMOJI = {
@@ -88,6 +86,25 @@ def build_game_end_embed(ranked_players):
         )
 
         return embed
+
+def build_slot_display(skill_id: str | None, channel_id: int, user_id: int) -> str:
+    if not skill_id:
+        return "➖ ว่าง"
+
+    on_cd, cd_left = is_skill_on_cooldown(channel_id, user_id, skill_id)
+
+    skill = SKILLS.get(skill_id)
+    emoji = ICON.get(skill.get("icon"), "❓")
+    name = skill["name"]
+    
+    if on_cd:
+        return (
+            f"{emoji} `{skill_id}` **{name}**\n"
+            f"⏳ **คูลดาวน์ {cd_left} เทิร์น**\n"
+            f"--------------------------------------"
+        )
+
+    return build_skill_card_text(skill_id)
 
 class GameCog(commands.GroupCog, name="game"):
     def __init__(self, bot):
@@ -138,6 +155,15 @@ class GameCog(commands.GroupCog, name="game"):
         app_commands.Choice(name=RACE_PRESET["NHK"]["name"], value="NHK"),
         app_commands.Choice(name=RACE_PRESET["TakarazukaKinen"]["name"], value="TakarazukaKinen"),
         app_commands.Choice(name=RACE_PRESET["TennoShoSpring"]["name"], value="TennoShoSpring"),
+        app_commands.Choice(name=RACE_PRESET["SatsukiSho"]["name"], value="SatsukiSho"),
+        app_commands.Choice(name=RACE_PRESET["JapaneseDerby"]["name"], value="JapaneseDerby"),
+        app_commands.Choice(name=RACE_PRESET["ArimaKinen"]["name"], value="ArimaKinen"),
+        app_commands.Choice(name=RACE_PRESET["JapanCup"]["name"], value="JapanCup"),
+        app_commands.Choice(name=RACE_PRESET["OsakaHai"]["name"], value="OsakaHai"),
+        app_commands.Choice(name=RACE_PRESET["TennoShoAutumn"]["name"], value="TennoShoAutumn"),
+        app_commands.Choice(name=RACE_PRESET["OkaSho"]["name"], value="OkaSho"),
+        app_commands.Choice(name=RACE_PRESET["MileChampionship"]["name"], value="MileChampionship"),
+        app_commands.Choice(name="Random", value="Random"),
     ])
     async def create(self, interaction: discord.Interaction, stage: app_commands.Choice[str]):
         channel_id = interaction.channel_id
@@ -409,68 +435,49 @@ class GameCog(commands.GroupCog, name="game"):
             interaction.user.id
         )
 
-        slots = None
-        wit_mana = "ยังไม่อยู่ในเกม"
-
-        if playerInGame:
-            game_skills = playerInGame.get("skills", {})
-            has_any_skill = any(game_skills.get(i) for i in (1, 2, 3))
-
-            if has_any_skill:
-                slots = {
-                    "slot_1": game_skills.get(1),
-                    "slot_2": game_skills.get(2),
-                    "slot_3": game_skills.get(3),
-                }
-                wit_mana = playerInGame.get("wit_mana", 0)
+        if playerInGame and playerInGame.get("skills"):
+            slots = {
+                "slot_1": playerInGame["skills"].get(1),
+                "slot_2": playerInGame["skills"].get(2),
+                "slot_3": playerInGame["skills"].get(3),
+            }
+            wit_mana = playerInGame.get("wit_mana", 0)
+        else:
+            slots = get_player_skill_slots(interaction.user.id)
+            wit_mana = "ยังไม่อยู่ในเกม"
 
         if slots is None:
-            slots = get_player_skill_slots(interaction.user.id)
-
-        if not slots:
-            await interaction.response.send_message(
-                "ไม่พบข้อมูลสกิลของคุณ",
-                ephemeral=True
-            )
+            await interaction.response.send_message("ไม่พบข้อมูลผู้เล่น", ephemeral=True)
             return
 
-        def format_slot(skill_id: str | None) -> str:
-            if not skill_id:
-                return "➖ ว่าง"
-
-            skill = SKILLS.get(skill_id)
-            if not skill:
-                return f"❓ `{skill_id}`"
-
-            emoji = ICON.get(skill.get("icon"), "❓")
-
-            if playerInGame:
-                cd_left = get_player_skill_cd(
-                    interaction.channel_id,
-                    interaction.user.id,
-                    skill_id
-                )
-                if cd_left > 0:
-                    return f"{emoji} `{skill_id}` **{skill['name']}** ⏳ {cd_left}"
-
-            return f"{emoji} `{skill_id}` **{skill['name']}** ✅"
-
         embed = discord.Embed(
-            title=f"สกิลของ {interaction.user.display_name}",
-            description=(
-                f"**1** • {format_slot(slots['slot_1'])}\n"
-                f"**2** • {format_slot(slots['slot_2'])}\n"
-                f"**3** • {format_slot(slots['slot_3'])}\n\n"
-                f"กดปุ่มด้านล่างเพื่อใช้สกิล"
-            ),
+            title=f"📘 Skill Menu: {interaction.user.display_name}",
             color=discord.Color.blurple()
         )
 
         embed.add_field(
-            name=f"{Status_Icon_Type.get('WIT', '🔮')} skill pt",
-            value=f"{wit_mana}",
+            name="🎯 Skill Slot 1",
+            value=build_slot_display(slots["slot_1"], interaction.channel_id, interaction.user.id),
+            inline=False
+        )
+        embed.add_field(
+            name="🎯 Skill Slot 2",
+            value=build_slot_display(slots["slot_2"], interaction.channel_id, interaction.user.id),
+            inline=False
+        )
+        embed.add_field(
+            name="🎯 Skill Slot 3",
+            value=build_slot_display(slots["slot_3"], interaction.channel_id, interaction.user.id),
+            inline=False
+        )
+
+        embed.add_field(
+            name=f"{Status_Icon_Type["WIT"]} Skill pt",
+            value=str(wit_mana),
             inline=True
         )
+
+        embed.set_footer(text="กดปุ่ม 1 / 2 / 3 ด้านล่างเพื่อใช้สกิล")
 
         await interaction.response.send_message(
             embed=embed,

@@ -11,6 +11,7 @@ from utils.skill.skill_manager import (
     find_skill_by_name,
     get_skill_display,
     build_skill_card_text,
+    get_skills_by_tag
 )
 
 from utils.database import ensure_player, set_player_skill_slot, clear_player_skill_slot, get_player_skill_slots

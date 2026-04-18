@@ -1,3 +1,4 @@
+import random
 from utils.database import get_player_skill_in_slot, ensure_player
 from utils.skill.skill_presets import SKILLS, ICON
 from utils.game_manager import (
@@ -6,9 +7,8 @@ from utils.game_manager import (
     update_player_score,
 )
 
-def is_lastspurt(turn: int, max_turn: int) -> bool:
-    return turn >= max_turn - 2
-
+def is_lastspurt(phase: int, path_type: int) -> bool:
+    return phase == 4 and path_type == 1
 
 def get_position_group(channel_id: int, user_id: int) -> str:
     game = get_game(channel_id)
@@ -25,13 +25,22 @@ def get_position_group(channel_id: int, user_id: int) -> str:
     if total <= 1:
         return "front"
 
+    base = total // 3
+    remainder = total % 3
+
+    # แจกเศษให้ front → mid → back
+    front_size = base + (1 if remainder > 0 else 0)
+    mid_size = base + (1 if remainder > 1 else 0)
+    back_size = base
+
     for index, (uid, _) in enumerate(ranked):
         if uid == user_id:
-            if index == 0:
+            if index < front_size:
                 return "front"
-            elif index >= total - max(1, total // 3):
+            elif index < front_size + mid_size:
+                return "mid"
+            else:
                 return "back"
-            return "mid"
 
     return "mid"
 
@@ -71,6 +80,89 @@ def get_nearest_back_gap(channel_id: int, user_id: int):
 
     return min(gaps) if gaps else None
 
+def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tuple[int, dict]]:
+    game = get_game(channel_id)
+    if game is None or user_id not in game["players"]:
+        return []
+
+    player = game["players"][user_id]
+    my_score = player["score"]
+
+    target_info = skill.get("target", {})
+    scope = target_info.get("scope", "self")
+    limit = target_info.get("limit", 1)
+
+    if scope == "self":
+        return [(user_id, player)]
+
+    front = []
+    back = []
+
+    for target_id, info in game["players"].items():
+        if target_id == user_id:
+            continue
+
+        gap_front = info["score"] - my_score
+        gap_back = my_score - info["score"]
+
+        if gap_front > 0:
+            front.append((gap_front, target_id, info))
+        elif gap_back > 0:
+            back.append((gap_back, target_id, info))
+
+    front.sort(key=lambda x: x[0])  # ใกล้สุดก่อน
+    back.sort(key=lambda x: x[0])   # ใกล้สุดก่อน
+
+    if scope == "nearest_front":
+        return [(tid, info) for _, tid, info in front[:1]]
+
+    if scope == "nearest_back":
+        return [(tid, info) for _, tid, info in back[:1]]
+
+    if scope == "all_front":
+        return [(tid, info) for _, tid, info in front[:limit]]
+
+    if scope == "all_back":
+        return [(tid, info) for _, tid, info in back[:limit]]
+
+    if scope == "random_enemy":
+        enemies = [(tid, info) for _, tid, info in front + back]
+        if not enemies:
+            return []
+        random.shuffle(enemies)
+        return enemies[:limit]
+
+    return []
+
+def build_next_roll_buff_text(player: dict) -> str:
+    lines = []
+
+    flat = player.get("next_roll_flat_bonus", 0)
+    if flat:
+        lines.append(f"เพิ่มผลรวม +{flat}")
+
+    add_d = player.get("next_roll_add_d", 0)
+    if add_d:
+        lines.append(f"เพิ่มลูกเต๋า +{add_d}")
+
+    add_kh = player.get("next_roll_add_kh", 0)
+    if add_kh:
+        lines.append(f"เพิ่มจำนวนลูกที่เลือก +{add_kh}")
+
+    floor = player.get("next_roll_floor_bonus", 0)
+    if floor:
+        lines.append(f"เพิ่มแต้มขั้นต่ำ +{floor}")
+
+    selected = player.get("next_roll_selected_die_bonus", 0)
+    if selected:
+        lines.append(f"เพิ่มแต้มลูกที่เลือก +{selected}")
+
+    cap = player.get("next_roll_cap_bonus", 0)
+    if cap:
+        sign = "+" if cap > 0 else ""
+        lines.append(f"ปรับแต้มสูงสุดลูกเต๋า {sign}{cap}")
+
+    return "\n".join(lines) if lines else "ไม่มีบัฟค้าง"
 
 def check_skill_trigger(channel_id: int, user_id: int, skill: dict, *, path_type: int, phase: int) -> tuple[bool, str | None]:
     game = get_game(channel_id)
@@ -99,7 +191,16 @@ def check_skill_trigger(channel_id: int, user_id: int, skill: dict, *, path_type
     if "phase_max" in trigger and phase > trigger["phase_max"]:
         return False, f"ใช้ได้ถึง Phase {trigger['phase_max']}"
 
-    if trigger.get("lastspurt") is True and not is_lastspurt(game["turn"], game["max_turn"]):
+    if "front_blocked" in trigger:
+        blocked = has_front_blocked(channel_id, user_id, 10)
+
+        if trigger["front_blocked"] is True and not blocked:
+            return False, "ต้องมีคนอยู่ด้านหน้าในระยะ 10 ช่อง"
+
+        if trigger["front_blocked"] is False and blocked:
+            return False, "ใช้ไม่ได้เมื่อมีคนขวางด้านหน้าในระยะ 10 ช่อง"
+
+    if trigger.get("lastspurt") is True and not is_lastspurt(phase, path_type):
         return False, "ยังไม่เข้าสู่ Last Spurt"
 
     if "position_group" in trigger:
@@ -152,6 +253,23 @@ def get_equipped_skill(user_id: int, slot: int):
 
     return skill_id, skill
 
+def has_front_blocked(channel_id: int, user_id: int, max_gap: int = 10) -> bool:
+    game = get_game(channel_id)
+    if game is None or user_id not in game["players"]:
+        return False
+
+    my_score = game["players"][user_id]["score"]
+
+    for uid, info in game["players"].items():
+        if uid == user_id:
+            continue
+
+        gap = info["score"] - my_score
+        if 0 < gap <= max_gap:
+            return True
+
+    return False
+
 
 def apply_non_active_skill(channel_id: int, user_id: int, skill_id: str, skill: dict):
     game = get_game(channel_id)
@@ -162,55 +280,38 @@ def apply_non_active_skill(channel_id: int, user_id: int, skill_id: str, skill: 
     if player is None:
         return False, "คุณยังไม่ได้เข้าร่วมเกมนี้"
 
+    targets = resolve_skill_targets(channel_id, user_id, skill)
     applied_texts = []
 
     for effect in skill.get("effects", []):
         effect_type = effect.get("type")
         value = effect.get("value", 0)
 
-        if effect_type == "recover_stamina":
+        if effect_type in ["recover_stamina"]:
             player["stamina_left"] += value
             applied_texts.append(f"ฟื้นฟู STA +{value}")
 
+        elif effect_type == "self_heal_stamina":
+            player["stamina_left"] += value
+            applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
+
         elif effect_type == "flat_score_change":
-            success, _ = update_player_score(channel_id, user_id, value)
-            if success:
-                sign = "+" if value >= 0 else ""
-                applied_texts.append(f"ปรับคะแนนทันที {sign}{value}")
+            for target_id, _ in targets:
+                success, _ = update_player_score(channel_id, target_id, value)
+                if success:
+                    sign = "+" if value >= 0 else ""
+                    if target_id == user_id:
+                        applied_texts.append(f"ปรับคะแนนตัวเองทันที {sign}{value}")
+                    else:
+                        applied_texts.append(f"ปรับคะแนน <@{target_id}> ทันที {sign}{value}")
 
         elif effect_type == "reduce_stamina":
-            # เริ่มแบบง่าย: ลดเป้าหมายด้านหน้าที่ใกล้ที่สุด
-            my_score = player["score"]
-            candidates = []
-
-            for target_id, target_info in game["players"].items():
-                if target_id == user_id:
-                    continue
-                gap = target_info["score"] - my_score
-                if gap > 0:
-                    candidates.append((gap, target_id, target_info))
-
-            if candidates:
-                candidates.sort(key=lambda x: x[0])
-                _, target_id, target_info = candidates[0]
+            for target_id, target_info in targets:
                 target_info["stamina_left"] = max(0, target_info["stamina_left"] - value)
                 applied_texts.append(f"ลด STA ของ <@{target_id}> -{value}")
 
         elif effect_type == "apply_debuff_next_turn":
-            # เริ่มแบบง่าย: ใส่ debuff ให้คนหน้าใกล้สุด
-            my_score = player["score"]
-            candidates = []
-
-            for target_id, target_info in game["players"].items():
-                if target_id == user_id:
-                    continue
-                gap = target_info["score"] - my_score
-                if gap > 0:
-                    candidates.append((gap, target_id, target_info))
-
-            if candidates:
-                candidates.sort(key=lambda x: x[0])
-                _, target_id, target_info = candidates[0]
+            for target_id, target_info in targets:
                 target_info.setdefault("next_roll_flat_bonus", 0)
                 target_info["next_roll_flat_bonus"] += effect.get("value", 0)
                 applied_texts.append(
@@ -218,18 +319,19 @@ def apply_non_active_skill(channel_id: int, user_id: int, skill_id: str, skill: 
                 )
 
         elif effect_type == "modify_gold_range":
-            player.setdefault("gold_range_bonus_this_turn", 0)
-            player["gold_range_bonus_this_turn"] += value
-            applied_texts.append(f"เพิ่มระยะตรวจ Gold +{value}")
+            for target_id, target_info in targets:
+                target_info.setdefault("gold_range_bonus_this_turn", 0)
+                target_info["gold_range_bonus_this_turn"] += value
+                if target_id == user_id:
+                    applied_texts.append(f"เพิ่มระยะตรวจ Gold ตัวเอง +{value}")
+                else:
+                    applied_texts.append(f"เพิ่มระยะตรวจ Gold ให้ <@{target_id}> +{value}")
 
         elif effect_type == "modify_enemy_gold_range":
-            # เริ่มแบบง่าย: ใส่ให้คู่แข่งทุกคน
-            for target_id, target_info in game["players"].items():
-                if target_id == user_id:
-                    continue
+            for target_id, target_info in targets:
                 target_info.setdefault("enemy_gold_range_penalty_next_turn", 0)
                 target_info["enemy_gold_range_penalty_next_turn"] += value
-            applied_texts.append(f"ลดระยะตรวจ Gold ของคู่แข่ง {value}")
+                applied_texts.append(f"ลดระยะตรวจ Gold ของ <@{target_id}> {value}")
 
     if not applied_texts:
         return False, "สกิลนี้ยังไม่มีผลที่รองรับในระบบตอนนี้"

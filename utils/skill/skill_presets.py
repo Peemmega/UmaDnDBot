@@ -45,6 +45,7 @@ TRIGGER_SCHEMA = {
     "surface": None,
     "target_distance_min": None,
     "target_distance_max": None,
+    "front_blocked": None, 
 }
 
 TARGET_SCHEMA = {
@@ -69,7 +70,7 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 50,
+                "value": 40,
                 "duration": "this_roll"
             }
         ],
@@ -99,14 +100,14 @@ SKILLS = {
             }
         ],
         "active_roll": True,
-        "tags": ["straight", "lastspurt", "acceleration"],
+        "tags": ["straight", "lastspurt", "end", "acceleration"],
     },
 
     "s003": {
         "name": "Concentration",
         "icon": "Concentration",
         "cooldown": 20,
-        "cost": 80,
+        "cost": 50,
         "trigger": {
             "turn_min": 1,
             "turn_max": 1,
@@ -117,14 +118,8 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "modify_velocity",
-                "mode": "flat_total",
-                "value": 15,
-                "duration": "this_roll"
-            },
-            {
                 "type": "modify_roll_floor",
-                "value": 5,
+                "value": 15,
                 "duration": "this_roll"
             }
         ],
@@ -136,7 +131,7 @@ SKILLS = {
         "name": "Swinging Maestro",
         "icon": "Recovery",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 80,
         "trigger": {
             "path_type": 2,
         },
@@ -174,7 +169,7 @@ SKILLS = {
             }
         ],
         "active_roll": False,
-        "tags": ["downhill", "recovery"],
+        "tags": ["downhill", "recovery", "end"],
     },
 
     "s006": {
@@ -187,7 +182,7 @@ SKILLS = {
             "phase_min": 2,
             "phase_max": 3,
             "target_distance_min": 1,
-            "target_distance_max": 20,
+            "target_distance_max": 80,
         },
         "target": {
             "scope": "nearest_front",
@@ -230,9 +225,9 @@ SKILLS = {
         "cooldown": 8,
         "cost": 50,
         "trigger": {
-            "position_group": "back",
             "phase_min": 2,
             "phase_max": 3,
+            "position_group": "back",
             "distance_type": "Medium",
         },
         "target": {"scope": "self", "limit": 1},
@@ -248,16 +243,17 @@ SKILLS = {
         "name": "Vanguard Spirit",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 90,
         "trigger": {
             "style": "Front",
             "phase_min": 2,
             "phase_max": 3,
+            "position_group": "front",
             "distance_type": "Long",
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["front", "long", "lead"],
@@ -270,7 +266,6 @@ SKILLS = {
         "cost": 50,
         "trigger": {
             "style": "End",
-            "being_overtaken": False,
             "phase_min": 2,
             "phase_max": 4,
         },
@@ -286,16 +281,16 @@ SKILLS = {
         "name": "Killer Tunes",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 90,
         "trigger": {
+            "distance_type": "Medium",
             "phase_min": 2,
             "phase_max": 3,
             "position_group": "front",
-            "distance_type": "Medium",
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["medium", "front", "velocity"],
@@ -359,13 +354,13 @@ SKILLS = {
         "name": "Beeline Burst",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 80,
         "trigger": {
             "path_type": 1,
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["straight", "velocity"],
@@ -392,14 +387,14 @@ SKILLS = {
         "name": "Flash Forward",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 90,
         "trigger": {
             "path_type": 1,
             "distance_type": "Medium",
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["medium", "straight", "velocity"],
@@ -409,14 +404,14 @@ SKILLS = {
         "name": "Blast Forward",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 90,
         "trigger": {
             "path_type": 1,
             "distance_type": "Long",
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["long", "straight", "velocity"],
@@ -433,7 +428,7 @@ SKILLS = {
             "distance_type": "Mile",
             "position_group": "back",
             "target_distance_min": 1,
-            "target_distance_max": 20,
+            "target_distance_max": 100,
         },
         "target": {"scope": "all_front", "limit": 2},
         "effects": [
@@ -454,11 +449,12 @@ SKILLS = {
             "position_group": "back",
             "distance_type": "Long",
             "target_distance_min": 1,
-            "target_distance_max": 20,
+            "target_distance_max": 80,
         },
         "target": {"scope": "nearest_front", "limit": 1},
         "effects": [
-            {"type": "reduce_stamina", "value": 1}
+            {"type": "reduce_stamina", "value": 1},  # ศัตรู
+            {"type": "self_heal_stamina", "value": 1}     # ตัวเอง
         ],
         "active_roll": False,
         "tags": ["debuff", "long", "stamina"],
@@ -493,7 +489,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "recover_stamina", "value": 1}
+            {"type": "recover_stamina", "value": 2}
         ],
         "active_roll": False,
         "tags": ["straight", "recovery"],
@@ -582,7 +578,7 @@ SKILLS = {
             "position_group": "back",
             "distance_type": "Medium",
             "target_distance_min": 1,
-            "target_distance_max": 20,
+            "target_distance_max": 100,
         },
         "target": {"scope": "all_front", "limit": 3},
         "effects": [
@@ -602,12 +598,12 @@ SKILLS = {
             "phase_min": 4,
             "phase_max": 4,
             "position_group": "front",
-            "target_distance_min": -20,
-            "target_distance_max": -1,
+            "target_distance_min": -30,
+            "target_distance_max": 30,
         },
         "target": {"scope": "all_back", "limit": 3},
         "effects": [
-            {"type": "modify_enemy_gold_range", "value": -5, "duration": "next_turn"}
+            {"type": "modify_enemy_gold_range", "value": -7, "duration": "next_turn"}
         ],
         "active_roll": False,
         "tags": ["blind", "pace", "debuff"],
@@ -623,13 +619,79 @@ SKILLS = {
             "phase_max": 4,
             "distance_type": "Long",
             "target_distance_min": 1,
-            "target_distance_max": 20,
+            "target_distance_max": 100,
         },
         "target": {"scope": "all_front", "limit": 3},
         "effects": [
-            {"type": "modify_enemy_gold_range", "value": -6, "duration": "next_turn"}
+            {"type": "modify_enemy_gold_range", "value": -5, "duration": "next_turn"}
         ],
         "active_roll": False,
         "tags": ["blind", "long", "debuff"],
     },
+
+    "s030": {
+        "name": "Groundwork",
+        "icon": "Acceleration",
+        "cooldown": 10,
+        "cost": 50,
+        "trigger": {
+            "phase_min": 1,
+            "phase_max": 1,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {
+                "type": "add_d",
+                "value": 1,
+                "duration": "this_roll"
+            },
+            {
+                "type": "modify_roll_cap",
+                "value": 5,
+                "duration": "this_roll"
+            }
+        ],
+        "active_roll": True,
+        "tags": ["start", "acceleration"],
+    },
+
+    "s031": {
+        "name": "No Stopping Me!",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "lastspurt": True,
+            "front_blocked": True,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {"type": "add_d", "value": 2, "duration": "this_roll"},
+            {"type": "add_kh", "value": 1, "duration": "this_roll"},
+        ],
+        "active_roll": True,
+        "tags": ["lastspurt", "blocked", "acceleration"],
+    },
+
+    "s032": {
+        "name": "March Licker",
+        "icon": "Blind",
+        "cooldown": 5,
+        "cost": 0,
+        "trigger": {
+            "phase_min": 1,
+            "phase_max": 4,
+        },
+        "target": {"scope": "all_front", "limit": 6},
+        "effects": [
+            {"type": "apply_debuff_next_turn", "stat": "flat_total", "value": -50}
+        ],
+        "active_roll": False,
+        "tags": ["blind", "long", "debuff"],
+    },
+
+
 }

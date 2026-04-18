@@ -186,6 +186,7 @@ def start_game(channel_id: int):
             }
 
         player["reroll_left"] = 2
+        player["wit_reroll_left"] = 2
         player["stamina_left"] = 8 + db_player["stamina"]
 
         player["race_profile"] = db_player.copy()
@@ -213,7 +214,14 @@ def start_game(channel_id: int):
         player["used_rush"] = False
         player["used_block"] = False
         player["action_locked"] = False
+        
         player["next_roll_flat_bonus"] = 0
+        player["next_roll_add_d"] = 0
+        player["next_roll_add_kh"] = 0
+        player["next_roll_floor_bonus"] = 0
+        player["next_roll_selected_die_bonus"] = 0
+        player["next_roll_cap_bonus"] = 0
+
         player["no_reroll_this_turn"] = False
         player["no_reroll_next_turn"] = False
         player["last_roll_turn"] = -1
@@ -378,6 +386,33 @@ def get_players_behind(channel_id: int, user_id: int):
 
     return sorted(result, key=lambda x: x[1])
 
+def apply_next_roll_effects_to_player(player: dict, effects: list[dict]):
+    for effect in effects:
+        effect_type = effect.get("type")
+        value = effect.get("value", 0)
+        duration = effect.get("duration")
+
+        if duration != "this_roll":
+            continue
+
+        if effect_type == "modify_velocity":
+            player["next_roll_flat_bonus"] = player.get("next_roll_flat_bonus", 0) + value
+
+        elif effect_type == "add_d":
+            player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + value
+
+        elif effect_type == "add_kh":
+            player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + value
+
+        elif effect_type == "modify_roll_floor":
+            player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + value
+
+        elif effect_type == "modify_selected_die":
+            player["next_roll_selected_die_bonus"] = player.get("next_roll_selected_die_bonus", 0) + value
+
+        elif effect_type == "modify_roll_cap":
+            player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + value
+            
 def use_block(channel_id: int, user_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -491,7 +526,7 @@ def apply_wit_regen(channel_id: int):
     for _, player in game["players"].items():
         race_profile = player.get("race_profile", {})
         wit_stat = race_profile.get("wit", 0)
-        regen = 10 + (wit_stat * 5)
+        regen = 10 + (wit_stat * 1)
         player["wit_mana"] = player.get("wit_mana", 0) + regen
 
 def get_ranked_players(channel_id: int):
@@ -525,9 +560,8 @@ def add_player(channel_id: int, user_id: int, style: str):
         "last_roll_turn": -1,
         "reroll_left": 0,
         "stamina_left": 0,
-
         "wit_mana": 100,
-
+        "wit_reroll_left": 2,
         "skills": {
             1: None,
             2: None,
@@ -535,15 +569,19 @@ def add_player(channel_id: int, user_id: int, style: str):
         },
         "skill_cooldowns": {},
         "race_profile": {},
-
         "used_rush": False,
         "used_block": False,
         "action_locked": False,
-
         "next_roll_flat_bonus": 0,
+        "next_roll_add_d": 0,
+        "next_roll_add_kh": 0,
+        "next_roll_floor_bonus": 0,
+        "next_roll_selected_die_bonus": 0,
+        "next_roll_cap_bonus": 0,
         "no_reroll_this_turn": False,
         "no_reroll_next_turn": False,
     }
+
     return True, "เข้าร่วมเกมสำเร็จ"
 
 def grant_start_rerolls(channel_id: int, amount: int = 2):
@@ -582,6 +620,15 @@ def update_player_score(channel_id: int, user_id: int, amount: int):
     player["score"] += amount
     return True, player["score"]
 
+def can_use_wit_reroll(game_player: dict, base_total: int) -> bool:
+    race_profile = game_player.get("race_profile", {})
+    wit_stat = race_profile.get("wit", 0)
+    threshold = wit_stat * 5
+
+    if game_player.get("wit_reroll_left", 0) <= 0:
+        return False
+
+    return base_total < threshold
 
 def can_player_roll(channel_id: int, user_id: int):
     game = get_game(channel_id)

@@ -2,7 +2,8 @@ import discord
 from utils.game_manager import (
     get_game,
     is_skill_on_cooldown,
-    set_player_skill_cd
+    set_player_skill_cd,
+    apply_next_roll_effects_to_player
 )
 from utils.dice.race_presets import (
     get_current_path_type,
@@ -12,7 +13,8 @@ from utils.dice.race_dice import (
 )
 from utils.skill.skill_runtime import (
     apply_non_active_skill,
-    check_skill_trigger 
+    check_skill_trigger,
+    build_next_roll_buff_text
 )
 
 from utils.dice.roll_service import execute_player_roll
@@ -33,7 +35,7 @@ class UseSkillView(discord.ui.View):
             )
             return False
         return True
-
+    
     async def use_slot(self, interaction: discord.Interaction, slot: int):
         game = get_game(self.channel_id)
         if game is None:
@@ -73,8 +75,7 @@ class UseSkillView(discord.ui.View):
                 ephemeral=True
             )
             return
-        
-        
+
         path_type = get_current_path_type(game)
         phase = get_phase_from_turn(game["turn"], game["max_turn"])
 
@@ -90,80 +91,97 @@ class UseSkillView(discord.ui.View):
             return
 
         cost = skill.get("cost", 0)
-        if player["wit_mana"] < cost:
+        if player.get("wit_mana", 0) < cost:
             await interaction.response.send_message(
                 f"Wit ไม่พอ (ต้องใช้ {cost})",
                 ephemeral=True
             )
             return
 
-        # active_roll = ใช้โควต้าทอยเดียวกับ /run
-        if skill.get("active_roll", False):
-            can_roll, message = self.cog.can_use_roll_skill(
-                interaction.channel_id,
-                interaction.user.id
-            )
-            if not can_roll:
-                await interaction.response.send_message(message, ephemeral=True)
-                return
+        instant_effects = []
+        queued_effects = []
 
-            # หัก mana ก่อน เพื่อให้ embed ที่สร้างหลังจากนี้ใช้ค่าปัจจุบัน
-            player["wit_mana"] -= cost
+        for effect in skill.get("effects", []):
+            effect_type = effect.get("type")
+            duration = effect.get("duration")
 
-            success, payload = await execute_player_roll(
-                interaction,
-                title_prefix=f"ใช้สกิล {skill['name']}",
-                mark_roll=True,
-                allow_reroll_view=False,
-                skill_effects=skill.get("effects", []), 
-            )
-            if not success:
-                # rollback ถ้าทอยไม่สำเร็จ
-                player["wit_mana"] += cost
-                await interaction.response.send_message(payload["message"], ephemeral=True)
-                return
+            if effect_type in [
+                "modify_velocity",
+                "modify_selected_die",
+                "modify_roll_floor",
+                "modify_roll_cap",
+                "add_d",
+                "add_kh",
+                "add_dkh",
+            ] or duration == "this_roll":
+                queued_effects.append(effect)
+            else:
+                instant_effects.append(effect)
 
-            set_player_skill_cd(
+        result_texts = []
+
+        if instant_effects:
+            temp_skill = skill.copy()
+            temp_skill["effects"] = instant_effects
+
+            success, result_text = apply_non_active_skill(
                 self.channel_id,
                 interaction.user.id,
                 skill_id,
-                skill.get("cooldown", 0)
+                temp_skill
             )
+            if not success:
+                await interaction.response.send_message(result_text, ephemeral=True)
+                return
 
+            result_texts.append(result_text)
+
+        if queued_effects:
+            apply_next_roll_effects_to_player(player, queued_effects)
+            result_texts.append("บัฟถูกสะสมไว้สำหรับการวิ่งครั้งถัดไป")
+
+        if not instant_effects and not queued_effects:
             await interaction.response.send_message(
-                content=f"✨ <@{interaction.user.id}> ใช้สกิล {ICON.get(skill.get('icon'), '❓')} **{skill['name']}**!",
-                embed=payload["embed"]
+                "สกิลนี้ยังไม่มีผลที่รองรับในระบบตอนนี้",
+                ephemeral=True
             )
-
-            game = payload["game"]
-            await self.cog.handle_after_roll(interaction, game)
-
-            self.stop()
             return
 
-        # non-active skill
-        success, result_text = apply_non_active_skill(
+        player["wit_mana"] -= cost
+        set_player_skill_cd(
             self.channel_id,
             interaction.user.id,
             skill_id,
-            skill
+            skill.get("cooldown", 0)
         )
 
-        if not success:
-            await interaction.response.send_message(result_text, ephemeral=True)
-            return
+        emoji = ICON.get(skill.get("icon"), "❓")
 
-        set_player_skill_cd(self.channel_id, interaction.user.id, skill_id, skill.get("cooldown", 0))
         embed = discord.Embed(
-            title=f"{ICON.get(skill.get('icon'), '❓')} ใช้สกิล {skill['name']}",
-            description=result_text,
+            title=f"{emoji} {interaction.user.display_name} ใช้สกิล {skill['name']}",
+            description="\n".join(result_texts),
             color=discord.Color.green()
         )
 
-        player["wit_mana"] -= cost
-        
-        await interaction.response.send_message(embed=embed)
-        self.stop()
+        embed.add_field(
+            name="🔮 WIT Mana คงเหลือ",
+            value=str(player.get("wit_mana", 0)),
+            inline=True
+        )
+
+        embed.add_field(
+            name="⏳ Cooldown",
+            value=f"{skill.get('cooldown', 0)} เทิร์น",
+            inline=True
+        )
+
+        embed.add_field(
+            name="✨ บัพรวมทั้งหมด",
+            value=build_next_roll_buff_text(player),
+            inline=False
+        )
+
+        await interaction.response.send_message(embed=embed, ephemeral=False)
 
     @discord.ui.button(label="1", style=discord.ButtonStyle.primary)
     async def slot1(self, interaction: discord.Interaction, button: discord.ui.Button):

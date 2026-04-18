@@ -9,7 +9,7 @@ from utils.game_manager import (
 
 class TurnConfirmView(discord.ui.View):
     def __init__(self, cog, channel_id: int):
-        super().__init__(timeout=20)
+        super().__init__(timeout=30)
         self.cog = cog
         self.channel_id = channel_id
         self.message = None

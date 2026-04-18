@@ -88,6 +88,7 @@ def build_join_style_embed(max_turn: int) -> discord.Embed:
         inline=False
     )
     
+    embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1495065428349816842/Screen_Recording_20260418_210653_Umamusume-ezgif.com-crop.gif?ex=69e4e3af&is=69e3922f&hm=067329e7060809a86e0e62ee11ac1fa51893c0b4f59603e9837bf591e864ca4b&=&width=935&height=417")
     embed.set_footer(text="กดปุ่มด้านล่างเพื่อเลือก Front / Pace / Late / End")
     return embed
 

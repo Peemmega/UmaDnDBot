@@ -1,123 +1,122 @@
 import discord
-
-from utils.dice.race_dice import roll_race_dice
-from utils.game_manager import get_game, get_player_in_game, update_player_score, use_reroll
-from utils.dice.race_presets import (
-    get_path_effect,
-    get_current_path_type, 
+from utils.game_manager import (
+    get_game,
+    get_player_in_game,
+    use_reroll,
+    can_use_wit_reroll,
 )
+from utils.dice.reroll_service import execute_reroll
 
 class RunRerollView(discord.ui.View):
-    def __init__(
-        self,
-        *,
-        owner_id: int,
-        channel_id: int,
-        old_total: int,
-    ):
-        super().__init__(timeout=60)
+    def __init__(self, owner_id: int, channel_id: int, old_total: int, base_total: int, wit_reroll_ok: bool):
+        super().__init__(timeout=40)
         self.owner_id = owner_id
         self.channel_id = channel_id
         self.old_total = old_total
-        self.used = False
+        self.base_total = base_total
+        self.wit_reroll_ok = wit_reroll_ok
+
+        self.refresh_button_states()
+
+    def refresh_button_states(self):
+        game_player = get_player_in_game(self.channel_id, self.owner_id)
+
+        normal_left = 0
+        wit_left = 0
+
+        if game_player:
+            normal_left = game_player.get("reroll_left", 0)
+            wit_left = game_player.get("wit_reroll_left", 0)
+
+        for item in self.children:
+            if not isinstance(item, discord.ui.Button):
+                continue
+
+            if item.label == "สุ่มใหม่":
+                item.disabled = normal_left <= 0
+
+            elif item.label == "WIT Reroll":
+                item.disabled = (not self.wit_reroll_ok) or (wit_left <= 0)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.owner_id:
-            await interaction.response.send_message(
-                "มีแค่คนที่ใช้คำสั่งนี้เท่านั้นที่กดปุ่มได้",
-                ephemeral=True
-            )
+            await interaction.response.send_message("ปุ่มนี้ไม่ใช่ของคุณ", ephemeral=True)
             return False
         return True
 
     @discord.ui.button(label="สุ่มใหม่", style=discord.ButtonStyle.primary, emoji="🎲")
     async def reroll(self, interaction: discord.Interaction, button: discord.ui.Button):
+        success, reroll_left = use_reroll(self.channel_id, self.owner_id)
+        if not success:
+            await interaction.response.send_message(reroll_left, ephemeral=True)
+            return
+
+        success, payload = await execute_reroll(
+            interaction,
+            old_total=self.old_total,
+            title_prefix="สุ่มใหม่สำเร็จ",
+        )
+        if not success:
+            await interaction.response.send_message(payload["message"], ephemeral=True)
+            return
+
+        self.old_total = payload["result"]["total"]
+        self.base_total = payload["result"]["base_total"]
+
+        game_player = get_player_in_game(self.channel_id, self.owner_id)
+        if game_player:
+            self.wit_reroll_ok = can_use_wit_reroll(game_player, self.base_total)
+
+        self.refresh_button_states()
+
+        await interaction.response.edit_message(embed=payload["embed"], view=self)
+
+    @discord.ui.button(label="WIT Reroll", style=discord.ButtonStyle.success, emoji="🔮")
+    async def wit_reroll(self, interaction: discord.Interaction, button: discord.ui.Button):
         game = get_game(self.channel_id)
         if game is None:
-            await interaction.response.send_message(
-                "ไม่พบเกมนี้แล้ว",
-                ephemeral=True
-            )
+            await interaction.response.send_message("ไม่พบเกมนี้แล้ว", ephemeral=True)
             return
 
         game_player = get_player_in_game(self.channel_id, self.owner_id)
         if game_player is None:
-            await interaction.response.send_message(
-                "ไม่พบผู้เล่นในเกม",
-                ephemeral=True
-            )
+            await interaction.response.send_message("ไม่พบผู้เล่นในเกม", ephemeral=True)
             return
 
-        success, reroll_left = use_reroll(self.channel_id, self.owner_id)
-        if not success:
-            await interaction.response.send_message(
-                reroll_left,
-                ephemeral=True
-            )
+        if not can_use_wit_reroll(game_player, self.base_total):
+            await interaction.response.send_message("ไม่เข้าเงื่อนไข WIT Reroll", ephemeral=True)
             return
 
-        game_player = get_player_in_game(interaction.channel_id, interaction.user.id)
-        if game_player is None:
-            return False, {"message": "คุณยังไม่ได้เข้าร่วมเกมนี้"}
+        if game_player.get("wit_reroll_left", 0) <= 0:
+            await interaction.response.send_message("WIT Reroll หมดแล้ว", ephemeral=True)
+            return
 
-        race_player = game_player.get("race_profile")
-        if race_player is None:
-            return False, {"message": "ไม่พบข้อมูล stat ตอนเริ่มเกม"}
-        snapshot_scores = game["turn_snapshot_scores"]
+        game_player["wit_reroll_left"] -= 1
 
-        success, _ = update_player_score(
-            self.channel_id,
-            self.owner_id,
-            -self.old_total
+        success, payload = await execute_reroll(
+            interaction,
+            old_total=self.old_total,
+            title_prefix="WIT Reroll สำเร็จ",
         )
         if not success:
-            await interaction.response.send_message(
-                "ไม่สามารถลบคะแนนเดิมได้",
-                ephemeral=True
-            )
+            game_player["wit_reroll_left"] += 1
+            await interaction.response.send_message(payload["message"], ephemeral=True)
             return
 
-        path_type = get_current_path_type(game)
-        path_effect = get_path_effect(path_type, race_player)
+        self.old_total = payload["result"]["total"]
+        self.base_total = payload["result"]["base_total"]
 
+        self.wit_reroll_ok = can_use_wit_reroll(game_player, self.base_total)
 
-        result = roll_race_dice(
-            style=game_player["style"],
-            player=race_player,
-            player_id=interaction.user.id,
-            score_map=snapshot_scores,
-            turn=game["turn"],
-            max_turn=game["max_turn"],
-            path_effect=path_effect,
-        )
+        self.refresh_button_states()
 
-        success, new_score = update_player_score(
-            self.channel_id,
-            self.owner_id,
-            result["total"]
-        )
-        if not success:
-            await interaction.response.send_message(
-                "ไม่สามารถอัปเดตคะแนนใหม่ได้",
-                ephemeral=True
-            )
-            return
+        await interaction.response.edit_message(embed=payload["embed"], view=self)
 
-        self.old_total = result["total"]
+    # @discord.ui.button(label="ปิด", style=discord.ButtonStyle.secondary)
+    # async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
+    #     for item in self.children:
+    #         if isinstance(item, discord.ui.Button):
+    #             item.disabled = True
 
-        embed = discord.Embed(
-            title=f"{interaction.user.display_name} สุ่มใหม่สำเร็จ",
-            color=discord.Color.orange()
-        )
-        embed.add_field(name="Style", value=player["style"], inline=True)
-        embed.add_field(name="Phase", value=result["phase"], inline=True)
-        embed.add_field(name="Distance", value=result["distance_color"], inline=True)
-        embed.add_field(name="🎲 Dice", value=result["display"], inline=False)
-        embed.add_field(name="✨ Total ใหม่", value=result["total_display"], inline=True)
-        embed.add_field(name="🏁 Score ใหม่", value=new_score, inline=True)
-        embed.set_footer(text=f"Reroll คงเหลือ {reroll_left}")
-
-        if reroll_left <= 0:
-            button.disabled = True
-
-        await interaction.response.edit_message(embed=embed, view=self)
+    #     await interaction.response.edit_message(view=self)
+    #     self.stop()
