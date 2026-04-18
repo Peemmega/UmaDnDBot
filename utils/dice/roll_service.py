@@ -4,7 +4,7 @@ from utils.game_manager import (
     get_player_in_game,
     update_player_score,
     mark_player_rolled,
-    can_player_roll,
+    build_pending_effects_from_player,
     can_use_wit_reroll
 )
 from utils.icon_presets import Status_Icon_Type
@@ -73,13 +73,13 @@ def build_run_embed(
 
     return embed
 
+
 async def execute_player_roll(
     interaction: discord.Interaction,
     *,
     title_prefix: str = "วิ่งในเทิร์นนี้",
     mark_roll: bool = True,
     allow_reroll_view: bool = True,
-    skill_effects: list | None = None,
 ) -> tuple[bool, dict]:
     game = get_game(interaction.channel_id)
     if game is None:
@@ -95,68 +95,12 @@ async def execute_player_roll(
     snapshot_scores = game["turn_snapshot_scores"]
 
 
-    pending_effects = []
-
-    # flat bonus
-    flat = game_player.get("next_roll_flat_bonus", 0)
-    if flat != 0:
-        pending_effects.append({
-            "type": "modify_velocity",
-            "value": flat,
-            "duration": "this_roll"
-        })
-
-    # add dice
-    add_d = game_player.get("next_roll_add_d", 0)
-    if add_d != 0:
-        pending_effects.append({
-            "type": "add_d",
-            "value": add_d,
-            "duration": "this_roll"
-        })
-
-    # add kh
-    add_kh = game_player.get("next_roll_add_kh", 0)
-    if add_kh != 0:
-        pending_effects.append({
-            "type": "add_kh",
-            "value": add_kh,
-            "duration": "this_roll"
-        })
-
-    # floor
-    floor = game_player.get("next_roll_floor_bonus", 0)
-    if floor != 0:
-        pending_effects.append({
-            "type": "modify_roll_floor",
-            "value": floor,
-            "duration": "this_roll"
-        })
-
-    # selected die
-    sel = game_player.get("next_roll_selected_die_bonus", 0)
-    if sel != 0:
-        pending_effects.append({
-            "type": "modify_selected_die",
-            "value": sel,
-            "duration": "this_roll"
-        })
-
-    # cap
-    cap = game_player.get("next_roll_cap_bonus", 0)
-    if cap != 0:
-        pending_effects.append({
-            "type": "modify_roll_cap",
-            "value": cap,
-            "duration": "this_roll"
-        })
+    # Buff
+    pending_effects,merged_stats = build_pending_effects_from_player(game_player)
 
     # path effect
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, race_player)
-
-    # roll
-    next_roll_flat_bonus = game_player.get("next_roll_flat_bonus", 0)
 
     result = roll_race_dice(
         style=game_player["style"],
@@ -168,17 +112,17 @@ async def execute_player_roll(
         path_effect=path_effect,
         skill_effects=pending_effects,
     )
-    
-    if next_roll_flat_bonus != 0:
-        result["total"] += next_roll_flat_bonus
-        sign = "+" if next_roll_flat_bonus > 0 else ""
 
+    flat = merged_stats["flat"]
+    if flat != 0:
+        sign = "+" if flat > 0 else ""
         if result["bonus_display"] == "-":
-            result["bonus_display"] = f"NEXT{sign}{next_roll_flat_bonus}"
+            result["bonus_display"] = f"NEXT{sign}{flat}"
         else:
-            result["bonus_display"] += f" NEXT{sign}{next_roll_flat_bonus}"
+            result["bonus_display"] += f" NEXT{sign}{flat}"
 
-        result["total_display"] = str(result["total"])
+    ## Clear Debuff -----------------------------------------------
+    game_player["lastedBuff"] = merged_stats
 
     game_player["next_roll_flat_bonus"] = 0
     game_player["next_roll_add_d"] = 0
@@ -186,8 +130,9 @@ async def execute_player_roll(
     game_player["next_roll_floor_bonus"] = 0
     game_player["next_roll_selected_die_bonus"] = 0
     game_player["next_roll_cap_bonus"] = 0
+    ## Clear Debuff -----------------------------------------------
 
-    # stamina
+    # stamina -----------------------------------------------------------------------
     stamina_note = None
     stamina_gain = path_effect.get("stamina_gain", 0)
     stamina_cost = path_effect.get("stamina_cost", 0)
@@ -209,6 +154,8 @@ async def execute_player_roll(
             result["bonus_display"] += f" {Status_Icon_Type['STA']}-30"
         result["total_display"] = str(result["total"])
         stamina_note = f"STA ไม่พอ (ต้องใช้ {stamina_cost}) โดนหัก 30"
+    # stamina -----------------------------------------------------------------------
+
 
     # score
     success, new_score = update_player_score(
@@ -255,34 +202,3 @@ async def execute_player_roll(
         "view": view,
         "path_effect": path_effect,
     }
-
-async def use_active_roll_skill(self, interaction: discord.Interaction, skill: dict):
-    can_roll, message = can_player_roll(interaction.channel_id, interaction.user.id)
-    if not can_roll:
-        await interaction.response.send_message(
-            "ใช้สกิลนี้ไม่ได้ เพราะคุณใช้สิทธิ์ทอยในเทิร์นนี้ไปแล้ว",
-            ephemeral=True
-        )
-        return
-
-    success, payload = await execute_player_roll(
-        interaction,
-        title_prefix=f"ใช้สกิล {skill['name']}",
-        mark_roll=True,
-        allow_reroll_view=False,
-    )
-
-    if not success:
-        await interaction.response.send_message(payload["message"], ephemeral=True)
-        return
-
-    send_kwargs = {
-        "content": f"✨ <@{interaction.user.id}> ใช้สกิล **{skill['name']}**!",
-        "embed": payload["embed"],
-    }
-
-    
-    await interaction.response.send_message(**send_kwargs)
-
-    game = payload["game"]
-    await self.handle_after_roll(interaction, game)

@@ -70,9 +70,10 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 25,
                 "duration": "this_roll"
-            }
+            },
+            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
         ],
         "active_roll": True,
         "tags": ["corner", "velocity"],
@@ -202,21 +203,31 @@ SKILLS = {
         "active_roll": False,
         "tags": ["recovery", "debuff", "front_target"],
     },
+
     "s007": {
         "name": "Technician",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 80,
         "trigger": {
             "style": "Pace",
             "path_type": 2,
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_selected_die", "value": 2, "duration": "this_roll"}
+            {
+                "type": "modify_roll_floor",
+                "value": 7,
+                "duration": "this_roll"
+            },
+            {
+                "type": "modify_roll_cap",
+                "value": 12,
+                "duration": "this_roll"
+            }
         ],
-        "active_roll": True,
-        "tags": ["corner", "pace", "velocity"],
+        "active_roll": False,
+        "tags": ["corner", "pace", "stability"],
     },
 
     "s008": {
@@ -253,7 +264,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["front", "long", "lead"],
@@ -281,7 +293,7 @@ SKILLS = {
         "name": "Killer Tunes",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 90,
+        "cost": 80,
         "trigger": {
             "distance_type": "Medium",
             "phase_min": 2,
@@ -290,7 +302,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["medium", "front", "velocity"],
@@ -298,20 +311,22 @@ SKILLS = {
 
     "s012": {
         "name": "Speed Star",
-        "icon": "Acceleration",
+        "icon": "Velocity",
         "cooldown": 8,
         "cost": 80,
         "trigger": {
             "style": "Pace",
+            "phase_min": 4,
+            "phase_max": 4,
             "path_type": 2,
-            "lastspurt": True,
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "add_kh", "value": 1, "duration": "this_roll"}
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
         ],
         "active_roll": True,
-        "tags": ["pace", "final_corner", "acceleration"],
+        "tags": ["pace", "final_corner", "acceleration", "velocity"],
     },
 
     "s013": {
@@ -360,7 +375,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["straight", "velocity"],
@@ -394,7 +410,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["medium", "straight", "velocity"],
@@ -411,7 +428,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["long", "straight", "velocity"],
@@ -449,9 +467,9 @@ SKILLS = {
             "position_group": "back",
             "distance_type": "Long",
             "target_distance_min": 1,
-            "target_distance_max": 80,
+            "target_distance_max": 120,
         },
-        "target": {"scope": "nearest_front", "limit": 1},
+        "target": {"scope": "nearest_front", "limit": 4},
         "effects": [
             {"type": "reduce_stamina", "value": 1},  # ศัตรู
             {"type": "self_heal_stamina", "value": 1}     # ตัวเอง
@@ -473,7 +491,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "recover_stamina", "value": 1}
+            {"type": "recover_stamina", "value": 2}
         ],
         "active_roll": False,
         "tags": ["pace", "recovery", "mid_race"],
@@ -525,7 +543,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "recover_stamina", "value": 1}
+            {"type": "recover_stamina", "value": 2}
         ],
         "active_roll": False,
         "tags": ["medium", "front", "recovery"],
@@ -542,7 +560,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "recover_stamina", "value": 1}
+            {"type": "recover_stamina", "value": 2}
         ],
         "active_roll": False,
         "tags": ["front", "uphill", "recovery"],
@@ -560,7 +578,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "recover_stamina", "value": 1}
+            {"type": "recover_stamina", "value": 2}
         ],
         "active_roll": False,
         "tags": ["late", "recovery", "late_race"],
@@ -693,5 +711,146 @@ SKILLS = {
         "tags": ["blind", "long", "debuff"],
     },
 
+    "s034": {
+        "name": "Unrestrained",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "style": "Front",
+            "phase_min": 4,
+            "phase_max": 4,
+            "path_type": 2,  # ทางโค้ง
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "value": 20,
+                "duration": "this_roll"
+            },
+            {
+                "type": "add_d",
+                "value": 1,
+                "duration": "this_roll"
+            }
+        ],
+        "active_roll": False,
+        "tags": ["front", "final_corner", "acceleration", "burst"],
+    },
+    "s035": {
+        "name": "Radiant Star",
+        "icon": "Acceleration",
+        "cooldown": 6,
+        "cost": 120,
+        "trigger": {
+            "phase_min": 3,
+            "phase_max": 4,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "value": 30,
+                "duration": "this_roll"
+            },
+            {
+                "type": "add_d",
+                "value": 1,
+                "duration": "this_roll"
+            },
+            {
+                "type": "recover_stamina",
+                "value": 1
+            }
+        ],
+        "active_roll": False,
+        "tags": ["mid_late", "acceleration", "sustain"],
+    },
 
+    "s036": {
+        "name": "Sturm und Drang",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "phase_min": 3,
+            "phase_max": 4,
+            "position_group": "back",
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "value": 30,
+                "duration": "this_roll"
+            },
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+        ],
+        "active_roll": False,
+        "tags": ["late_race", "back", "velocity"],
+    },
+
+    "s037": {
+        "name": "In Body and Mind",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "lastspurt": True,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "value": 25,
+                "duration": "this_roll"
+            },
+            {
+            "type": "modify_roll_cap",
+            "value": 7,
+            "duration": "this_roll"
+        }
+    ],
+        "active_roll": False,
+        "tags": ["last_spurt", "velocity", "stability"],
+    },
+
+    "s038": {
+        "name": "All-Seeing Eyes",
+        "icon": "ReduceSTA",
+        "cooldown": 10,
+        "cost": 80,
+        "trigger": {
+            "style": "Late",
+            "phase_min": 3,
+            "phase_max": 4,
+            "target_distance_min": 1,
+            "target_distance_max": 999,
+        },
+        "target": {
+            "scope": "all_front",
+            "limit": 10,
+        },
+        "effects": [
+            {
+                "type": "reduce_stamina",
+                "value": 1
+            }
+        ],
+        "active_roll": False,
+        "tags": ["late", "debuff", "stamina", "all_front"],
+    },
 }

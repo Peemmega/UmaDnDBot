@@ -88,9 +88,9 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
     player = game["players"][user_id]
     my_score = player["score"]
 
-    target_info = skill.get("target", {})
-    scope = target_info.get("scope", "self")
-    limit = target_info.get("limit", 1)
+    target_cfg = skill.get("target", {})
+    scope = target_cfg.get("scope", "self")
+    limit = target_cfg.get("limit", 1)
 
     if scope == "self":
         return [(user_id, player)]
@@ -110,8 +110,8 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
         elif gap_back > 0:
             back.append((gap_back, target_id, info))
 
-    front.sort(key=lambda x: x[0])  # ใกล้สุดก่อน
-    back.sort(key=lambda x: x[0])   # ใกล้สุดก่อน
+    front.sort(key=lambda x: x[0])
+    back.sort(key=lambda x: x[0])
 
     if scope == "nearest_front":
         return [(tid, info) for _, tid, info in front[:1]]
@@ -127,8 +127,6 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
 
     if scope == "random_enemy":
         enemies = [(tid, info) for _, tid, info in front + back]
-        if not enemies:
-            return []
         random.shuffle(enemies)
         return enemies[:limit]
 
@@ -270,7 +268,6 @@ def has_front_blocked(channel_id: int, user_id: int, max_gap: int = 10) -> bool:
 
     return False
 
-
 def apply_non_active_skill(channel_id: int, user_id: int, skill_id: str, skill: dict):
     game = get_game(channel_id)
     if game is None:
@@ -287,30 +284,44 @@ def apply_non_active_skill(channel_id: int, user_id: int, skill_id: str, skill: 
         effect_type = effect.get("type")
         value = effect.get("value", 0)
 
-        if effect_type in ["recover_stamina"]:
+        if effect_type == "recover_stamina":
             player["stamina_left"] += value
-            applied_texts.append(f"ฟื้นฟู STA +{value}")
+            applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
 
         elif effect_type == "self_heal_stamina":
             player["stamina_left"] += value
             applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
 
         elif effect_type == "flat_score_change":
-            for target_id, _ in targets:
-                success, _ = update_player_score(channel_id, target_id, value)
+            # ถ้า target เป็น self ก็ลงตัวเอง ถ้าไม่ใช่ก็ลง target
+            if not targets:
+                success, _ = update_player_score(channel_id, user_id, value)
                 if success:
                     sign = "+" if value >= 0 else ""
-                    if target_id == user_id:
-                        applied_texts.append(f"ปรับคะแนนตัวเองทันที {sign}{value}")
-                    else:
-                        applied_texts.append(f"ปรับคะแนน <@{target_id}> ทันที {sign}{value}")
+                    applied_texts.append(f"ปรับคะแนนตัวเองทันที {sign}{value}")
+            else:
+                for target_id, _ in targets:
+                    success, _ = update_player_score(channel_id, target_id, value)
+                    if success:
+                        sign = "+" if value >= 0 else ""
+                        if target_id == user_id:
+                            applied_texts.append(f"ปรับคะแนนตัวเองทันที {sign}{value}")
+                        else:
+                            applied_texts.append(f"ปรับคะแนน <@{target_id}> ทันที {sign}{value}")
 
         elif effect_type == "reduce_stamina":
+            if not targets:
+                continue
+
             for target_id, target_info in targets:
-                target_info["stamina_left"] = max(0, target_info["stamina_left"] - value)
+                before = target_info.get("stamina_left", 0)
+                target_info["stamina_left"] = max(0, before - value)
                 applied_texts.append(f"ลด STA ของ <@{target_id}> -{value}")
 
         elif effect_type == "apply_debuff_next_turn":
+            if not targets:
+                continue
+
             for target_id, target_info in targets:
                 target_info.setdefault("next_roll_flat_bonus", 0)
                 target_info["next_roll_flat_bonus"] += effect.get("value", 0)
@@ -319,15 +330,14 @@ def apply_non_active_skill(channel_id: int, user_id: int, skill_id: str, skill: 
                 )
 
         elif effect_type == "modify_gold_range":
-            for target_id, target_info in targets:
-                target_info.setdefault("gold_range_bonus_this_turn", 0)
-                target_info["gold_range_bonus_this_turn"] += value
-                if target_id == user_id:
-                    applied_texts.append(f"เพิ่มระยะตรวจ Gold ตัวเอง +{value}")
-                else:
-                    applied_texts.append(f"เพิ่มระยะตรวจ Gold ให้ <@{target_id}> +{value}")
+            player.setdefault("gold_range_bonus_this_turn", 0)
+            player["gold_range_bonus_this_turn"] += value
+            applied_texts.append(f"เพิ่มระยะตรวจ Gold +{value}")
 
         elif effect_type == "modify_enemy_gold_range":
+            if not targets:
+                continue
+
             for target_id, target_info in targets:
                 target_info.setdefault("enemy_gold_range_penalty_next_turn", 0)
                 target_info["enemy_gold_range_penalty_next_turn"] += value

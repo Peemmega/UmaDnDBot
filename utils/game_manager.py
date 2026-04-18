@@ -480,6 +480,80 @@ def use_rush(channel_id: int, user_id: int):
         "new_score": player["score"],
     }
 
+def build_pending_effects_from_player(player: dict) -> tuple[list[dict], dict]:
+    flat = player.get("next_roll_flat_bonus", 0)
+    add_d = player.get("next_roll_add_d", 0)
+    add_kh = player.get("next_roll_add_kh", 0)
+    floor = player.get("next_roll_floor_bonus", 0)
+    sel = player.get("next_roll_selected_die_bonus", 0)
+    cap = player.get("next_roll_cap_bonus", 0)
+
+    # รวม lastedBuff
+    buff = player.get("lastedBuff", {})
+    if buff:
+        flat += buff.get("flat", 0)
+        add_d += buff.get("add_d", 0)
+        add_kh += buff.get("add_kh", 0)
+        floor += buff.get("floor", 0)
+        sel += buff.get("sel", 0)
+        cap += buff.get("cap", 0)
+
+    pending_effects = []
+
+    if flat != 0:
+        pending_effects.append({
+            "type": "modify_velocity",
+            "value": flat,
+            "duration": "this_roll"
+        })
+
+    if add_d != 0:
+        pending_effects.append({
+            "type": "add_d",
+            "value": add_d,
+            "duration": "this_roll"
+        })
+
+    if add_kh != 0:
+        pending_effects.append({
+            "type": "add_kh",
+            "value": add_kh,
+            "duration": "this_roll"
+        })
+
+    if floor != 0:
+        pending_effects.append({
+            "type": "modify_roll_floor",
+            "value": floor,
+            "duration": "this_roll"
+        })
+
+    if sel != 0:
+        pending_effects.append({
+            "type": "modify_selected_die",
+            "value": sel,
+            "duration": "this_roll"
+        })
+
+    if cap != 0:
+        pending_effects.append({
+            "type": "modify_roll_cap",
+            "value": cap,
+            "duration": "this_roll"
+        })
+
+    merged_stats = {
+        "flat": flat,
+        "add_d": add_d,
+        "add_kh": add_kh,
+        "floor": floor,
+        "sel": sel,
+        "cap": cap,
+    }
+
+    return pending_effects, merged_stats
+
+
 def use_reroll(channel_id: int, user_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -508,6 +582,7 @@ def next_turn(channel_id: int):
         player["no_reroll_this_turn"] = player.get("no_reroll_next_turn", False)
         player["no_reroll_next_turn"] = False
         player["action_locked"] = False
+        player.pop("lastedBuff", None)
 
     game["turn_snapshot_scores"] = {
         user_id: info["score"]

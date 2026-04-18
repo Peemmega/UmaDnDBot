@@ -1,5 +1,5 @@
 import discord
-from utils.game_manager import get_game, get_player_in_game, update_player_score
+from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player
 from utils.icon_presets import Status_Icon_Type
 from utils.dice.race_presets import get_current_path_type, get_path_effect
 from utils.dice.race_dice import roll_race_dice
@@ -10,7 +10,6 @@ async def execute_reroll(
     *,
     old_total: int,
     title_prefix: str = "สุ่มใหม่สำเร็จ",
-    skill_effects: list | None = None,
 ) -> tuple[bool, dict]:
     game = get_game(interaction.channel_id)
     if game is None:
@@ -34,6 +33,9 @@ async def execute_reroll(
     if not success:
         return False, {"message": "ไม่สามารถลบคะแนนเดิมได้"}
 
+    # Buff
+    pending_effects,merged_stats = build_pending_effects_from_player(game_player)
+
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, race_player)
 
@@ -45,8 +47,27 @@ async def execute_reroll(
         turn=game["turn"],
         max_turn=game["max_turn"],
         path_effect=path_effect,
-        skill_effects=skill_effects or [],
+        skill_effects=pending_effects,
     )
+
+    flat = merged_stats["flat"]
+    if flat != 0:
+        sign = "+" if flat > 0 else ""
+        if result["bonus_display"] == "-":
+            result["bonus_display"] = f"NEXT{sign}{flat}"
+        else:
+            result["bonus_display"] += f" NEXT{sign}{flat}"
+
+    ## Clear Debuff -----------------------------------------------
+    game_player["lastedBuff"] = merged_stats
+
+    game_player["next_roll_flat_bonus"] = 0
+    game_player["next_roll_add_d"] = 0
+    game_player["next_roll_add_kh"] = 0
+    game_player["next_roll_floor_bonus"] = 0
+    game_player["next_roll_selected_die_bonus"] = 0
+    game_player["next_roll_cap_bonus"] = 0
+    ## Clear Debuff -----------------------------------------------
 
     success, new_score = update_player_score(
         interaction.channel_id,

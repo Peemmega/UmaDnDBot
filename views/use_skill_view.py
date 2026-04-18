@@ -17,8 +17,8 @@ from utils.skill.skill_runtime import (
     build_next_roll_buff_text
 )
 
-from utils.dice.roll_service import execute_player_roll
 from utils.skill.skill_presets import SKILLS, ICON
+from utils.icon_presets import Status_Icon_Type
 
 class UseSkillView(discord.ui.View):
     def __init__(self, cog, owner_id: int, channel_id: int):
@@ -142,7 +142,7 @@ class UseSkillView(discord.ui.View):
 
         if not instant_effects and not queued_effects:
             await interaction.response.send_message(
-                "สกิลนี้ยังไม่มีผลที่รองรับในระบบตอนนี้",
+                "dddd สกิลนี้ยังไม่มีผลที่รองรับในระบบตอนนี้",
                 ephemeral=True
             )
             return
@@ -164,7 +164,7 @@ class UseSkillView(discord.ui.View):
         )
 
         embed.add_field(
-            name="🔮 WIT Mana คงเหลือ",
+            name=f"{Status_Icon_Type["WIT"]} คงเหลือ",
             value=str(player.get("wit_mana", 0)),
             inline=True
         )

@@ -158,6 +158,9 @@ def describe_trigger(trigger: dict) -> str:
     if trigger.get("lastspurt") is True:
         parts.append("ในช่วง Last Spurt")
 
+    if trigger.get("front_blocked") is True:
+        parts.append("มีคู่แข่งในระยะ 10 ช่องด้านหน้า")
+
     if "target_distance_min" in trigger and "target_distance_max" in trigger:
         parts.append(
             f"เมื่อมีเป้าหมายอยู่ในระยะ {trigger['target_distance_min']} ถึง {trigger['target_distance_max']}"
