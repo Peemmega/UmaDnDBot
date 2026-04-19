@@ -1,6 +1,8 @@
 import os
 import sqlite3
 from typing import Optional
+from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE
+import json
 
 DB_PATH = "data/player.db"
 
@@ -18,29 +20,53 @@ def init_db():
     CREATE TABLE IF NOT EXISTS players (
         user_id INTEGER PRIMARY KEY,
         username TEXT NOT NULL,
+
         speed INTEGER NOT NULL DEFAULT 1,
         stamina INTEGER NOT NULL DEFAULT 1,
         power INTEGER NOT NULL DEFAULT 1,
         gut INTEGER NOT NULL DEFAULT 1,
         wit INTEGER NOT NULL DEFAULT 1,
+
         turf INTEGER NOT NULL DEFAULT 1,
         dirt INTEGER NOT NULL DEFAULT 1,
+
         sprint INTEGER NOT NULL DEFAULT 1,
         mile INTEGER NOT NULL DEFAULT 1,
         medium INTEGER NOT NULL DEFAULT 1,
         long INTEGER NOT NULL DEFAULT 1,
+
         front INTEGER NOT NULL DEFAULT 1,
         pace INTEGER NOT NULL DEFAULT 1,
         late INTEGER NOT NULL DEFAULT 1,
         end_style INTEGER NOT NULL DEFAULT 1,
+
         stats_point INTEGER NOT NULL DEFAULT 5,
         uma_coin INTEGER NOT NULL DEFAULT 0,
         skill_point INTEGER NOT NULL DEFAULT 12,
+
         skill_slot_1 TEXT,
         skill_slot_2 TEXT,
-        skill_slot_3 TEXT
+        skill_slot_3 TEXT,
+
+        zone_name TEXT DEFAULT 'Default Zone',
+        zone_image_url TEXT DEFAULT '',
+        zone_points INTEGER NOT NULL DEFAULT 5,
+        zone_build TEXT DEFAULT '{}'
     )
     """)
+    
+    zone_columns = [
+        ("zone_name", "TEXT DEFAULT 'Default Zone'"),
+        ("zone_image_url", f"TEXT DEFAULT '{DEFAULT_ZONE_IMAGE}'"),
+        ("zone_points", "INTEGER NOT NULL DEFAULT 5"),
+        ("zone_build", "TEXT DEFAULT '{}'")
+    ]
+
+    for col, col_type in zone_columns:
+        try:
+            cursor.execute(f"ALTER TABLE players ADD COLUMN {col} {col_type}")
+        except Exception:
+            pass
 
     # migration กันกรณี table เก่ามีอยู่แล้ว
     for col in ["skill_slot_1", "skill_slot_2", "skill_slot_3"]:
@@ -48,6 +74,49 @@ def init_db():
             cursor.execute(f"ALTER TABLE players ADD COLUMN {col} TEXT")
         except Exception:
             pass
+
+    conn.commit()
+    conn.close()
+
+def set_player_zone_build(user_id: int, build: dict) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    safe_build = {field: int(build.get(field, 0)) for field in ZONE_FIELDS}
+
+    cursor.execute("""
+    UPDATE players
+    SET zone_build = ?
+    WHERE user_id = ?
+    """, (json.dumps(safe_build), user_id))
+
+    conn.commit()
+    conn.close()
+
+
+def set_player_zone_name(user_id: int, zone_name: str) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE players
+    SET zone_name = ?
+    WHERE user_id = ?
+    """, (zone_name, user_id))
+
+    conn.commit()
+    conn.close()
+
+
+def set_player_zone_image_url(user_id: int, image_url: str) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE players
+    SET zone_image_url = ?
+    WHERE user_id = ?
+    """, (image_url, user_id))
 
     conn.commit()
     conn.close()
@@ -222,6 +291,45 @@ def get_player_skill_in_slot(user_id: int, slot: int):
 
     return row[0]
 
+def set_player_zone_name(user_id: int, name: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE players
+    SET zone_name = ?
+    WHERE user_id = ?
+    """, (name, user_id))
+
+    conn.commit()
+    conn.close()
+
+def set_player_zone_image(user_id: int, url: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE players
+    SET zone_image_url = ?
+    WHERE user_id = ?
+    """, (url, user_id))
+
+    conn.commit()
+    conn.close()
+
+def consume_player_zone(user_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE players
+    SET zone_left = zone_left - 1
+    WHERE user_id = ?
+    """, (user_id,))
+
+    conn.commit()
+    conn.close()
+
 def get_player(user_id: int) -> Optional[dict]:
     conn = get_connection()
     cursor = conn.cursor()
@@ -233,7 +341,8 @@ def get_player(user_id: int) -> Optional[dict]:
         turf, dirt,
         sprint, mile, medium, long,
         front, pace, late, end_style,
-        stats_point, uma_coin, skill_point
+        stats_point, uma_coin, skill_point,
+        zone_name, zone_image_url, zone_points, zone_build
     FROM players
     WHERE user_id = ?
     """, (user_id,))
@@ -270,6 +379,13 @@ def get_player(user_id: int) -> Optional[dict]:
         "stats_point": row[17],
         "uma_coin": row[18],
         "skill_point": row[19],
+
+        "zone": {
+            "name": row[20],
+            "image_url": row[21],
+            "points": row[22],
+            "build": json.loads(row[23] or "{}")
+        }
     }
 
 

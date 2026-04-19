@@ -631,6 +631,8 @@ def add_player(channel_id, user_id, display_name: str, style):
     if user_id in game["players"]:
         return False, "คุณเข้าร่วมเกมนี้แล้ว"
     
+    db_player = get_player(user_id)
+
     game["players"][user_id] = {
         "username": player_data.get("username"),
         "display_name": display_name,
@@ -659,6 +661,14 @@ def add_player(channel_id, user_id, display_name: str, style):
         "next_roll_cap_bonus": 0,
         "no_reroll_this_turn": False,
         "no_reroll_next_turn": False,
+
+        "zone": {
+            "name": db_player["zone"]["name"],
+            "image_url": db_player["zone"]["image_url"],
+            "points": db_player["zone"]["points"],
+            "build": db_player["zone"]["build"],
+            "left": 1,
+        }
     }
 
     return True, "เข้าร่วมเกมสำเร็จ"

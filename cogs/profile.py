@@ -6,6 +6,8 @@ from utils.database import ensure_player, update_player_username
 from views.profile_stat_view import ProfileStatView, build_stat_embed
 from utils.player_card import create_stats_card
 from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
+from views.zone_manage_view import ZoneManageView
+from utils.zone.zone_embed import build_zone_manage_embed
 
 def get_stat_emoji(value: int) -> str:
     value = max(1, min(value, 8))
@@ -67,6 +69,21 @@ class ProfileCog(commands.Cog):
             view=OpenStatMenuView(interaction.user.id),
             ephemeral=True
         )      
+
+    @discord.app_commands.command(name="zone_manage", description="เปิดหน้าอัป Zone")
+    async def zone_manage(self, interaction: discord.Interaction):
+        ensure_player(interaction.user.id, interaction.user.name)
+
+        embed = build_zone_manage_embed(
+            interaction.user.id,
+            interaction.user.display_name
+        )
+
+        await interaction.response.send_message(
+            embed=embed,
+            view=ZoneManageView(interaction.user.id),
+            ephemeral=True
+        )
 
     @discord.app_commands.command(name="set_name", description="เปลี่ยนชื่อโปรไฟล์")
     async def setname(self, interaction: discord.Interaction, new_name: str):
