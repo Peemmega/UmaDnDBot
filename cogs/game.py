@@ -6,8 +6,14 @@ from views.confirmDeleteGameView import ConfirmDeleteView
 from views.join_view import LobbyView
 from utils.icon_presets import Status_Icon_Type
 from utils.skill.skill_presets import SKILLS, ICON
+from utils.narrater import (
+    generate_commentary,
+    build_narrator_players_from_ranked,
+    generate_finish_commentary,
+    is_first_turn_of_phase
+)
 
-from utils.dice.race_presets import RACE_PRESET
+from utils.dice.race_presets import RACE_PRESET, PATH_TYPE_ICON, build_track_progress_text, build_current_track_text
 from utils.dice.roll_service import (
     execute_player_roll
 )
@@ -37,55 +43,55 @@ from utils.game_manager import (
     get_ranked_players,
     have_all_players_rolled,
     start_turn_confirmation,
-    is_skill_on_cooldown
+    is_skill_on_cooldown,
 )
 
-PATH_EMOJI = {
-    1: "➡️",  # ทางตรง
-    2: "⤵️",  # โค้ง
-    3: "↗️",  # เนินขึ้น
-    4: "↘️",  # เนินลง
-}
-
 def render_path(path: list[int]) -> str:
-    return "".join(PATH_EMOJI.get(x, "⬜") for x in path)
+    return "".join(PATH_TYPE_ICON.get(x, "⬜") for x in path)
 
-def build_game_end_embed(ranked_players):
-        rank_lines = []
-        for index, (user_id, info) in enumerate(ranked_players, start=1):
-            rank_lines.append(
-                f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
-            )
-
-        if not rank_lines:
-            rank_lines.append("ยังไม่มีผู้เล่น")
-
-        winner_text = "ไม่มีผู้ชนะ"
-        if ranked_players:
-            winner_id, winner_info = ranked_players[0]
-            winner_text = (
-                f"🏆 ผู้ชนะ: <@{winner_id}>\n"
-                f"Style: {winner_info['style']}\n"
-                f"Score: {winner_info['score']}"
-            )
-
-        embed = discord.Embed(
-            title="🏁 เกมจบแล้ว",
-            color=discord.Color.red(),
-            description=(
-                f"{winner_text}\n\n"
-                f"อันดับสุดท้าย:\n" + "\n".join(rank_lines)
-            )
+def build_game_end_embed(ranked_players, commentary_text: str | None = None):
+    rank_lines = []
+    for index, (user_id, info) in enumerate(ranked_players, start=1):
+        rank_lines.append(
+            f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
         )
 
-        embed.set_image(
-            url="https://media.discordapp.net/attachments/1493575422007447622/1493676112952426629/i-won-taurus-cup-with-tm-opera-o-v0-w2a0zxpycglf1.gif"
-        )
-        embed.set_thumbnail(
-            url="https://media.discordapp.net/attachments/1493575422007447622/1493678180702355568/utx_txt_order_00.png"
+    if not rank_lines:
+        rank_lines.append("ยังไม่มีผู้เล่น")
+
+    winner_text = "ไม่มีผู้ชนะ"
+    if ranked_players:
+        winner_id, winner_info = ranked_players[0]
+        winner_text = (
+            f"🏆 ผู้ชนะ: <@{winner_id}>\n"
+            f"Style: {winner_info['style']}\n"
+            f"Score: {winner_info['score']}"
         )
 
-        return embed
+    embed = discord.Embed(
+        title="🏁 เกมจบแล้ว",
+        color=discord.Color.red(),
+        description=(
+            f"{winner_text}\n\n"
+            f"อันดับสุดท้าย:\n" + "\n".join(rank_lines)
+        )
+    )
+
+    if commentary_text:
+        embed.add_field(
+            name="📢 Narrator",
+            value=commentary_text[:1000],
+            inline=False
+        )
+
+    embed.set_image(
+        url="https://media.discordapp.net/attachments/1493575422007447622/1493676112952426629/i-won-taurus-cup-with-tm-opera-o-v0-w2a0zxpycglf1.gif"
+    )
+    embed.set_thumbnail(
+        url="https://media.discordapp.net/attachments/1493575422007447622/1493678180702355568/utx_txt_order_00.png"
+    )
+
+    return embed
 
 def build_slot_display(skill_id: str | None, channel_id: int, user_id: int) -> str:
     if not skill_id:
@@ -223,18 +229,38 @@ class GameCog(commands.GroupCog, name="game"):
             await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
             return
 
+        # เก็บสถานะก่อนขึ้นเทิร์น
+        previous_ranked_players = get_ranked_players(interaction.channel_id)
+        previous_players = build_narrator_players_from_ranked(previous_ranked_players)
+
         new_turn = next_turn(interaction.channel_id)
 
+        # เกมจบ
         if new_turn > game["max_turn"]:
             ranked_players = get_ranked_players(interaction.channel_id)
-            embed = build_game_end_embed(ranked_players)
 
+            commentary_text = None
+            try:
+                final_players = build_narrator_players_from_ranked(ranked_players)
+                commentary_text = await generate_finish_commentary(
+                    final_players,
+                    stage_name=game.get("stage_name")
+                )
+            except Exception as e:
+                print("Finish narrator error:", e)
+
+            embed = build_game_end_embed(ranked_players, commentary_text=commentary_text)
             await interaction.followup.send(embed=embed)
+
             delete_game(interaction.channel_id)
             return
 
+        # ดึง game ใหม่หลังเปลี่ยน state
+        game = get_game(interaction.channel_id)
+
         phase = get_phase_from_turn(new_turn, game["max_turn"])
         ranked_players = get_ranked_players(interaction.channel_id)
+        current_players = build_narrator_players_from_ranked(ranked_players)
 
         rank_lines = []
         for index, (user_id, info) in enumerate(ranked_players, start=1):
@@ -245,21 +271,48 @@ class GameCog(commands.GroupCog, name="game"):
         if not rank_lines:
             rank_lines.append("ยังไม่มีผู้เล่น")
 
-
         path_type = get_current_path_type(game)
         path_label = PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง")
+
+        track_preview = build_track_progress_text(game["path"], new_turn)
+        current_track_text = build_current_track_text(game["path"], new_turn)
+
+        commentary_text = None
+        try:
+            commentary_text = await generate_commentary(
+                previous_players,
+                current_players,
+                turn=new_turn,
+                max_turn=game["max_turn"],
+                event_text=f"เริ่มเทิร์น {new_turn} เส้นทางเป็น {path_label}"
+            )
+        except Exception as e:
+            print("Narrator error:", e)
 
         embed = discord.Embed(
             title=f"เข้าสู่เทิร์น {new_turn}",
             color=discord.Color.green(),
             description=(
                 f"Phase: {phase}\n"
-                f"เส้นทางเทิร์นนี้: {path_label}\n\n"
+                f"เส้นทางเทิร์นนี้:\n{track_preview}\n{current_track_text}\n\n"
                 f"อันดับคะแนน:\n" + "\n".join(rank_lines)
             )
         )
 
-        embed.add_field(name="Effect", value=build_path_effect_text(path_type), inline=False)
+        embed.add_field(
+            name="Effect",
+            value=build_path_effect_text(path_type),
+            inline=False
+        )
+
+        embed.set_thumbnail(url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200")
+
+        if commentary_text:
+            embed.add_field(
+                name="📢 Narrator",
+                value=commentary_text[:1000],
+                inline=False
+            )
 
         await interaction.followup.send(embed=embed)
 
@@ -268,20 +321,38 @@ class GameCog(commands.GroupCog, name="game"):
         if game is None:
             return
 
+        # เก็บสถานะก่อนขึ้นเทิร์น
+        previous_ranked_players = get_ranked_players(channel.id)
+        previous_players = build_narrator_players_from_ranked(previous_ranked_players)
+
         new_turn = next_turn(channel.id)
 
-        # 🏁 เกมจบ
+        # เกมจบ
         if new_turn > game["max_turn"]:
             ranked_players = get_ranked_players(channel.id)
-            embed = build_game_end_embed(ranked_players)
 
+            commentary_text = None
+            try:
+                final_players = build_narrator_players_from_ranked(ranked_players)
+                commentary_text = await generate_finish_commentary(
+                    final_players,
+                    stage_name=game.get("stage_name")
+                )
+            except Exception as e:
+                print("Finish narrator error:", e)
+
+            embed = build_game_end_embed(ranked_players, commentary_text=commentary_text)
             await channel.send(embed=embed)
+
             delete_game(channel.id)
             return
 
-        # 👉 เทิร์นถัดไป
+        # ดึง game ใหม่หลังเปลี่ยน state
+        game = get_game(channel.id)
+
         phase = get_phase_from_turn(new_turn, game["max_turn"])
         ranked_players = get_ranked_players(channel.id)
+        current_players = build_narrator_players_from_ranked(ranked_players)
 
         rank_lines = []
         for index, (user_id, info) in enumerate(ranked_players, start=1):
@@ -289,24 +360,52 @@ class GameCog(commands.GroupCog, name="game"):
                 f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
             )
 
+        if not rank_lines:
+            rank_lines.append("ยังไม่มีผู้เล่น")
+
         path_type = get_current_path_type(game)
         path_label = PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง")
+
+        track_preview = build_track_progress_text(game["path"], new_turn)
+        current_track_text = build_current_track_text(game["path"], new_turn)
+
+        commentary_text = None
+        try:
+            commentary_text = await generate_commentary(
+                previous_players,
+                current_players,
+                turn=new_turn,
+                max_turn=game["max_turn"],
+                event_text=f"เริ่มเทิร์น {new_turn} เส้นทางเป็น {path_label}"
+            )
+        except Exception as e:
+            print("Narrator error:", e)
 
         embed = discord.Embed(
             title=f"เข้าสู่เทิร์น {new_turn} (Auto)",
             color=discord.Color.green(),
             description=(
                 f"Phase: {phase}\n"
-                f"เส้นทางเทิร์นนี้: {path_label}\n\n"
+                f"เส้นทางเทิร์นนี้:\n{track_preview}\n{current_track_text}\n\n"
                 f"อันดับคะแนน:\n" + "\n".join(rank_lines)
             )
         )
 
-        embed.add_field(name="Effect", value=build_path_effect_text(path_type), inline=False)
+        embed.add_field(
+            name="Effect",
+            value=build_path_effect_text(path_type),
+            inline=False
+        )
+        embed.set_thumbnail(url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200")
 
+        if commentary_text:
+            embed.add_field(
+                name="📢 Narrator",
+                value=commentary_text[:1000],
+                inline=False
+            )
 
         await channel.send(embed=embed)
-
 
     @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
     async def myinfo(self, interaction: discord.Interaction):

@@ -107,8 +107,9 @@ class StyleSelectView(discord.ui.View):
             return
 
         success, message = add_player(
-            self.channel_id,
+            interaction.channel_id,
             interaction.user.id,
+            interaction.user.display_name,
             style
         )
 

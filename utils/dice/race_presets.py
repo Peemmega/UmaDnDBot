@@ -15,6 +15,13 @@ PATH_TYPE_TEXT = {
     4: "↘️ เนินลง",
 }
 
+PATH_TYPE_ICON = {
+    1: "➡️",  # ทางตรง
+    2: "⤵️",  # โค้ง
+    3: "↗️",  # เนินขึ้น
+    4: "↘️",  # เนินลง
+}
+
 def get_current_path_type(game: dict) -> int:
     turn = game["turn"]
     path = game["path"]
@@ -35,6 +42,29 @@ def build_path_effect_text(path_type: int) -> str:
     if path_type == 4:
         return f"ไม่เสีย {Status_Icon_Type["STA"]} • เพิ่มแต้มสูงสุดลูกเต๋าตามค่า {Status_Icon_Type["WIT"]}"
     return "-"
+
+def build_track_progress_text(path: list[int], current_turn: int) -> str:
+    parts = []
+
+    for i, path_type in enumerate(path, start=1):
+        icon = PATH_TYPE_ICON.get(path_type, "➡️")
+
+        if i == current_turn:
+            parts.append(f"【{icon}】")
+        else:
+            parts.append(icon)
+
+    return " ".join(parts)
+
+def build_current_track_text(path: list[int], current_turn: int) -> str:
+    if not path:
+        return "ไม่พบข้อมูลสนาม"
+
+    current_turn = max(1, min(current_turn, len(path)))
+    path_type = path[current_turn - 1]
+    path_label = PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง")
+
+    return f"ตอนนี้อยู่ช่วงที่ {current_turn}/{len(path)} : {path_label}"
 
 def get_path_effect(path_type: int, player: dict) -> dict:
     effect = {

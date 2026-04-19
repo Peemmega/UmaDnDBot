@@ -27,6 +27,7 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
         "turn_confirmations": set(),
         "awaiting_turn_confirm": False,
     }
+
     return True
 
 def have_all_players_rolled(channel_id: int):
@@ -615,7 +616,8 @@ def get_ranked_players(channel_id: int):
         reverse=True
     )
 
-def add_player(channel_id: int, user_id: int, style: str):
+def add_player(channel_id, user_id, display_name: str, style):
+    player_data = get_player(user_id)
     game = get_game(channel_id)
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
@@ -628,8 +630,10 @@ def add_player(channel_id: int, user_id: int, style: str):
 
     if user_id in game["players"]:
         return False, "คุณเข้าร่วมเกมนี้แล้ว"
-
+    
     game["players"][user_id] = {
+        "username": player_data.get("username"),
+        "display_name": display_name,
         "style": style,
         "score": 0,
         "last_roll_turn": -1,
