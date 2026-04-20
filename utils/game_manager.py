@@ -5,7 +5,6 @@ import discord
 from utils.dice.race_presets import RACE_PRESET
 from utils.database import get_player, get_player_skill_slots
 from utils.mob.mob_presets import MOB_PRESETS
-from utils.mob.mob_roll import execute_roll_core, build_mob_run_embed
 from utils.dice.race_presets import (
     get_path_effect,
     get_current_path_type, 
