@@ -853,6 +853,7 @@ def process_mob_turn(channel_id: int, user_id: str):
 
     # ✅ ใช้ zone_left
     zone_text = None
+    zone_success = False
     print(player.get("is_mob")
         , game["turn"] == game["max_turn"]
         , player.get("zone_left", 0) > 0 ,game["turn"], game["max_turn"] )
@@ -864,10 +865,8 @@ def process_mob_turn(channel_id: int, user_id: str):
         and player.get("zone_left", 0) > 0
     ):
         zone_success, zone_text = apply_zone_in_game(player)
-        print(zone_success, zone_text)
         if zone_success:
             player["zone_left"] -= 1   # 🔥 สำคัญ
-            zone_text = "aaaaaaa"
         else:
             zone_text = None
 
@@ -899,7 +898,7 @@ def process_mob_turn(channel_id: int, user_id: str):
     )
 
     payload["embed"] = embed
-    if not zone_text == None:
+    if zone_success:
         payload["zone_preview"] = build_zone_used_preview_embed(player)
     
     return True, payload
