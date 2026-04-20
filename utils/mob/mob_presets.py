@@ -31,14 +31,13 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 0,
-                "add_d": 0,
-                "add_kh": 0,
+                "add_d": 1,
+                "add_kh": 1,         # 🔥 สำคัญ
                 "floor": 0,
-                "selected_die": 0,
-                "cap": 0,
+                "selected_die": 1,
+                "cap": 2,
                 "self_heal_stamina": 0,
             },
-            "left": 0,
         },
     },
 
@@ -73,12 +72,12 @@ MOB_PRESETS = {
             "image_url": "",
             "points": 3,
             "build": {
-                "flat": 1,
-                "add_d": 0,
-                "add_kh": 0,
-                "floor": 1,
-                "selected_die": 0,
-                "cap": 1,
+                "flat": 0,
+                "add_d": 1,
+                "add_kh": 1,         # 🔥 สำคัญ
+                "floor": 0,
+                "selected_die": 1,
+                "cap": 2,
                 "self_heal_stamina": 0,
             },
         },
@@ -116,13 +115,13 @@ MOB_PRESETS = {
             "points": 4,
             "build": {
                 "flat": 0,
-                "add_d": 1,
-                "add_kh": 0,
-                "floor": 1,
-                "selected_die": 0,
-                "cap": 1,
+                "add_d": 2,
+                "add_kh": 2,         # 🔥 สาย late ต้อง kh เยอะ
+                "floor": 0,
+                "selected_die": 1,
+                "cap": 2,
                 "self_heal_stamina": 0,
-            },
+            }
         },
     },
 
@@ -158,13 +157,13 @@ MOB_PRESETS = {
             "points": 4,
             "build": {
                 "flat": 0,
-                "add_d": 1,
+                "add_d": 0,
                 "add_kh": 0,
                 "floor": 0,
-                "selected_die": 0,
-                "cap": 1,
+                "selected_die": 2,   # 🔥 boost ลูกที่เลือก
+                "cap": 4,            # 🔥 สำคัญมากกับ 10d
                 "self_heal_stamina": 0,
-            },
+            }
         },
     },
 
@@ -199,14 +198,14 @@ MOB_PRESETS = {
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910874370543746/agnes-tachyon-watch-me-run.gif?ex=69e7f711&is=69e6a591&hm=2cf187ac55166488c0e95a9e598dc6cfda93ec3a3a6df21e393cfb3ec8631179&=&width=561&height=317",
             "points": 6,
             "build": {
-                "flat": 2,
-                "add_d": 1,
-                "add_kh": 0,
-                "floor": 1,
-                "selected_die": 0,
-                "cap": 1,
-                "self_heal_stamina": 1,
-            },
+                "flat": 0,
+                "add_d": 2,
+                "add_kh": 1,
+                "floor": 0,
+                "selected_die": 1,
+                "cap": 5,
+                "self_heal_stamina": 0,
+            }
         },
     },
 }
