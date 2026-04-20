@@ -87,11 +87,11 @@ MOB_PRESETS = {
         "name": "Oguri Cap",
         "style": "Late",
         "race_profile": {
-            "speed": 3,
-            "stamina": 2,
-            "power": 3,
-            "gut": 2,
-            "wit": 2,
+            "speed": 5,
+            "stamina": 4,
+            "power": 4,
+            "gut": 1,
+            "wit": 3,
 
             "turf": 2,
             "dirt": 1,
@@ -129,11 +129,11 @@ MOB_PRESETS = {
         "name": "Obey Your Master",
         "style": "End",
         "race_profile": {
-            "speed": 4,
-            "stamina": 1,
-            "power": 2,
-            "gut": 2,
-            "wit": 2,
+            "speed": 6,
+            "stamina": 4,
+            "power": 3,
+            "gut": 0,
+            "wit": 3,
 
             "turf": 2,
             "dirt": 1,
