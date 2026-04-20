@@ -317,10 +317,7 @@ class GameCog(commands.GroupCog, name="game"):
         lastPhase, Phase = is_first_turn_of_phase(new_turn, game["max_turn"])
         print(lastPhase, Phase)
 
-        ok,msg = play_bgm(interaction.guild) 
-        print(msg)
-
-        if (Phase == 1 and lastPhase):
+        if (Phase == 4 and lastPhase):
             ok,msg = play_bgm(interaction.guild) 
             print(msg)
 
