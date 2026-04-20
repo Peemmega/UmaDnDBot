@@ -136,7 +136,7 @@ def is_first_turn_of_phase(turn: int, max_turn: int) -> bool:
 
     current_phase = get_phase_from_turn(turn, max_turn)
     prev_phase = get_phase_from_turn(turn - 1, max_turn)
-    return current_phase != prev_phase
+    return current_phase != prev_phase, current_phase
 
 
 def build_player_lookup(players: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:

@@ -12,6 +12,7 @@ from utils.narrater import (
     generate_finish_commentary,
     is_first_turn_of_phase
 )
+from utils.music_manager import play_bgm, stop_bgm
 
 from utils.dice.race_presets import RACE_PRESET, PATH_TYPE_ICON, build_track_progress_text, build_current_track_text
 from utils.dice.roll_service import (
@@ -234,7 +235,6 @@ class GameCog(commands.GroupCog, name="game"):
         previous_players = build_narrator_players_from_ranked(previous_ranked_players)
 
         new_turn = next_turn(interaction.channel_id)
-
         # เกมจบ
         if new_turn > game["max_turn"]:
             ranked_players = get_ranked_players(interaction.channel_id)
@@ -251,7 +251,7 @@ class GameCog(commands.GroupCog, name="game"):
 
             embed = build_game_end_embed(ranked_players, commentary_text=commentary_text)
             await interaction.followup.send(embed=embed)
-
+            stop_bgm(interaction.guild)
             delete_game(interaction.channel_id)
             return
 
@@ -314,6 +314,10 @@ class GameCog(commands.GroupCog, name="game"):
                 inline=False
             )
 
+        lastPhase, Phase = is_first_turn_of_phase(new_turn, game["max_turn"])
+        if (Phase == 4 and lastPhase):
+            play_bgm(interaction.guild) 
+
         await interaction.followup.send(embed=embed)
 
     async def process_next_turn_from_timeout(self, channel: discord.TextChannel):
@@ -343,6 +347,9 @@ class GameCog(commands.GroupCog, name="game"):
 
             embed = build_game_end_embed(ranked_players, commentary_text=commentary_text)
             await channel.send(embed=embed)
+
+            ok, msg = stop_bgm(channel.guild)
+            print(f"[Music] stop on timeout turn end: {msg}")
 
             delete_game(channel.id)
             return
@@ -405,7 +412,10 @@ class GameCog(commands.GroupCog, name="game"):
                 inline=False
             )
 
-        await channel.send(embed=embed)
+        lastPhase, Phase = is_first_turn_of_phase(new_turn, game["max_turn"])
+        if Phase == 4 and lastPhase:
+            ok, msg = play_bgm(channel.guild)
+            print(f"[Music] play on timeout turn: {msg}")
 
     @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
     async def myinfo(self, interaction: discord.Interaction):
