@@ -104,8 +104,8 @@ class ProfileCog(commands.Cog):
         player = ensure_player(interaction.user.id, interaction.user.name)
 
         embed = build_zone_used_preview_embed(player)
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        embed.set_footer("!! สำหรับโชว์ผลลัพท์ !!")
+        await interaction.response.send_message(embed=embed, ephemeral=False)
 
     @discord.app_commands.command(name="zone_set", description="ตั้งค่า Zone (ชื่อ / รูป)")
     @discord.app_commands.describe(
