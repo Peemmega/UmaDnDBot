@@ -254,6 +254,8 @@ class LobbyView(discord.ui.View):
 
                 if success and payload.get("embed"):
                     await interaction.followup.send(embed=payload["embed"])
+                if success and payload.get("zone_preview"):
+                    await interaction.followup.send(embed=payload["zone_preview"])
  
 
 

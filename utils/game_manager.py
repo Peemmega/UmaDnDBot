@@ -10,6 +10,7 @@ from utils.dice.race_presets import (
     get_path_effect,
     get_current_path_type, 
 )
+from utils.zone.zone_embed import build_zone_used_preview_embed
 
 from utils.dice.race_dice import (
     roll_race_dice,
@@ -895,15 +896,9 @@ def process_mob_turn(channel_id: int, user_id: str):
         player_name=f"🤖 {mob_name}",
     )
 
-    # ✅ ใส่ Zone effect
-    if zone_text:
-        embed.add_field(
-            name="🌌 Zone Activated",
-            value=zone_text,
-            inline=False
-        )
-
     payload["embed"] = embed
+    payload["zone_preview"] = build_zone_used_preview_embed(player)
+    
     return True, payload
 
 def build_single_wit_regen_text(game_player: dict) -> str:
