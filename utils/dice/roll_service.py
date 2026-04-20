@@ -1,9 +1,9 @@
 import discord
 from utils.game_manager import (
-    can_use_wit_reroll
+    can_use_wit_reroll,
+    execute_roll_core
 )
 from utils.icon_presets import Status_Icon_Type
-from utils.mob.mob_roll import execute_roll_core
 
 
 def build_single_wit_regen_text(game_player: dict) -> str:
