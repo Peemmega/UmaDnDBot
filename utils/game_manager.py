@@ -26,7 +26,6 @@ def execute_roll_core(
     user_id,
     title_prefix: str = "วิ่งในเทิร์นนี้",
     mark_roll: bool = True,
-    game
 ):
     game = get_game(channel_id)
     if game is None:
