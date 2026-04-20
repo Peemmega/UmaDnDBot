@@ -1,18 +1,20 @@
-import discord
 import os
-import platform
 import shutil
+import platform
 
 BGM_PATH = "assets/music/LastSpurt.mp3"
-# --- ส่วนหัวของโค้ด ---
+
 if platform.system() == "Windows":
     FFMPEG_EXECUTABLE = r"C:\Users\peemm_a8kwyjd\ffmpeg\ffmpeg-master-latest-win64-gpl\bin\ffmpeg.exe"
 else:
-    # ใน Dockerfile (Linux) ffmpeg จะอยู่ที่นี่เสมอ
     FFMPEG_EXECUTABLE = "/usr/bin/ffmpeg"
 
 print(f"Checking FFmpeg Path: {FFMPEG_EXECUTABLE}")
 print(f"Checking BGM Path: {os.path.abspath(BGM_PATH)}")
+
+print(f"FFmpeg file exists: {os.path.exists(FFMPEG_EXECUTABLE)}")
+print(f"BGM file exists: {os.path.exists(BGM_PATH)}")
+print(f"which ffmpeg: {shutil.which('ffmpeg')}")
 
 async def join_user_voice(interaction: discord.Interaction) -> tuple[bool, str]:
     if interaction.guild is None:
