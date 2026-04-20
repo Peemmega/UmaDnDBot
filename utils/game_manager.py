@@ -895,9 +895,8 @@ def process_mob_turn(channel_id: int, user_id: str):
     if zone_success:
         payload["zone_preview"] = build_zone_used_preview_embed(player)
     
-    print(player.get("is_mob"), game["turn"] == game["max_turn"], player.get("zone_left", 0) > 0 ,game["turn"], game["max_turn"],zone_success,payload["zone_preview"] )
-            
-
+    # print(player.get("is_mob"), game["turn"] == game["max_turn"], player.get("zone_left", 0) > 0 ,game["turn"], game["max_turn"])
+        
     return True, payload
 
 def build_single_wit_regen_text(game_player: dict) -> str:
