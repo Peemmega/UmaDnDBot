@@ -326,7 +326,7 @@ SKILLS = {
             {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
         "active_roll": True,
-        "tags": ["pace", "final_corner", "acceleration", "velocity"],
+        "tags": ["pace", "final_corner", "velocity"],
     },
 
     "s013": {
@@ -713,6 +713,59 @@ SKILLS = {
     #     "active_roll": False,
     #     "tags": ["blind", "long", "debuff"],
     # },
+    "s032": {
+        "name": "Neck and Neck",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "style": "Pace",
+            "phase_min": 3,
+            "phase_max": 4,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "add_d",
+                "value": 2,
+                "duration": "this_roll"
+            }
+        ],
+        "active_roll": True,
+        "tags": ["pace", "late_race", "acceleration", "burst"],
+    },
+
+    "s033": {
+        "name": "Runaway",
+        "icon": "Acceleration",
+        "cooldown": 10,
+        "cost": 50,
+        "trigger": {
+            "style": "Front",
+            "turn_min": 1,
+            "turn_max": 1,
+        },
+        "target": {
+            "scope": "self", 
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "add_d",
+                "value": 2,
+                "duration": "this_roll"
+            },
+            {
+                "type": "reduce_stamina", 
+                "value": 1
+            }
+        ],
+        "active_roll": True,
+        "tags": ["front", "start", "acceleration", "stamina_cost"],
+    },
 
     "s034": {
         "name": "Unrestrained",
@@ -831,6 +884,7 @@ SKILLS = {
         "tags": ["last_spurt", "velocity", "stability"],
     },
 
+
     "s038": {
         "name": "All-Seeing Eyes",
         "icon": "ReduceSTA",
@@ -855,5 +909,60 @@ SKILLS = {
         ],
         "active_roll": False,
         "tags": ["late", "debuff", "stamina", "all_front"],
+    },
+
+    "s039": {
+        "name": "Rising Dragon",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "style": "Late",
+            "phase_min": 4,
+            "phase_max": 4,
+            "path_type": 2,  # ทางโค้ง
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_roll_floor",
+                "value": 10,
+                "duration": "this_roll"
+            },
+            {
+                "type": "modify_roll_cap",
+                "value": 12,
+                "duration": "this_roll"
+            }
+        ],
+        "active_roll": True,
+        "tags": ["late", "corner", "burst", "stability"],
+    },
+
+    "s040": {
+        "name": "Tail Nine",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_roll_cap",
+                "value": 12,
+                "duration": "this_roll"
+            }
+        ],
+        "active_roll": True,
+        "tags": ["mid_race", "velocity", "cap_boost"],
     },
 }
