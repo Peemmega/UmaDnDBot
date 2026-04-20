@@ -251,6 +251,9 @@ class LobbyView(discord.ui.View):
             if player.get("is_mob"):
                 success, payload = process_mob_turn(self.channel_id, user_id)
                 print(success, payload)
+
+                if success and payload.get("embed"):
+                    await interaction.followup.send(embed=payload["embed"])
  
 
 
