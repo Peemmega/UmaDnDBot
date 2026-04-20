@@ -85,7 +85,7 @@ MOB_PRESETS = {
     },
 
     "chaser_late": {
-        "name": "Shadow Chaser",
+        "name": "Oguri Cap",
         "style": "Late",
         "race_profile": {
             "speed": 3,
@@ -111,8 +111,8 @@ MOB_PRESETS = {
             3: None,
         },
         "zone": {
-            "name": "Shadow Zone",
-            "image_url": "",
+            "name": "Grey Phantom",
+            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910813691809813/umamusume-cinderella-gray.gif?ex=69e7f702&is=69e6a582&hm=79435ae723a1e2952da81083223166a29644bfccc6e26dc43f7d952fbe424707&=&width=561&height=317",
             "points": 4,
             "build": {
                 "flat": 0,
@@ -127,7 +127,7 @@ MOB_PRESETS = {
     },
 
     "sprinter_end": {
-        "name": "Sprint Phantom",
+        "name": "Obey Your Master",
         "style": "End",
         "race_profile": {
             "speed": 4,
@@ -153,8 +153,8 @@ MOB_PRESETS = {
             3: None,
         },
         "zone": {
-            "name": "Phantom Burst",
-            "image_url": "",
+            "name": "Wild Joker",
+            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910826534637709/obey-your-master-umamusume.gif?ex=69e7f705&is=69e6a585&hm=dbb241a5960cf39bc83a4fffba9b24dcbf2888d7fc6b46257c1e0a9e004462a0&=&width=561&height=317",
             "points": 4,
             "build": {
                 "flat": 0,
@@ -196,7 +196,7 @@ MOB_PRESETS = {
         },
         "zone": {
             "name": "Champion Zone",
-            "image_url": "",
+            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910874370543746/agnes-tachyon-watch-me-run.gif?ex=69e7f711&is=69e6a591&hm=2cf187ac55166488c0e95a9e598dc6cfda93ec3a3a6df21e393cfb3ec8631179&=&width=561&height=317",
             "points": 6,
             "build": {
                 "flat": 2,
