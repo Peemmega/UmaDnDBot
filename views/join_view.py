@@ -7,7 +7,9 @@ from utils.game_manager import (
     start_game,
     get_player,
     get_attitude_values,
-    build_attitude_stat_bonus
+    build_attitude_stat_bonus,
+    process_mob_turn,
+    build_mob_run_embed
 )
 from utils.dice.dice_presets import DICE_PRESET
 from utils.icon_presets import Status_Icon_Type
@@ -244,3 +246,19 @@ class LobbyView(discord.ui.View):
         
         embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1495728671300780083/uma-musume-running.gif?ex=69e74d60&is=69e5fbe0&hm=958b07dacfcb4c4b2bb82049ac1863c8d1b4ecc2122514250b3b18104b9ce09a&=&width=747&height=422")
         await interaction.followup.send(embed=embed)
+        mob_embeds = []
+
+        for user_id, player in game["players"].items():
+            if player.get("is_mob"):
+                success, payload = process_mob_turn(self.channel_id, user_id)
+                if success:
+                    embed = build_mob_run_embed(
+                        game=payload["game"],
+                        game_player=payload["game_player"],
+                        result=payload["result"],
+                        new_score=payload["new_score"],
+                        stamina_note=payload["stamina_note"],
+                        path_effect=payload["path_effect"],
+                    )
+                    mob_embeds.append(embed)
+        
