@@ -1,18 +1,22 @@
+import copy
 import discord
 
 from utils.zone.zone_manager import (
-    upgrade_zone_stat,
-    downgrade_zone_stat,
+    get_player_zone,
+    get_zone_points_left,
+    set_player_zone_build,
+    ZONE_POINT_COST,
 )
-from utils.zone.zone_embed import build_zone_manage_embed
+from utils.zone.zone_embed import build_zone_manage_embed_from_zone
 
 ZONE_OPTIONS = [
-    discord.SelectOption(label="Flat Total", value="flat", description="เพิ่มผลรวมโดยตรง"),
-    discord.SelectOption(label="Add Dice", value="add_d", description="เพิ่มจำนวนลูกเต๋า"),
-    discord.SelectOption(label="Keep High", value="add_kh", description="เพิ่มจำนวนลูกที่เลือก"),
-    discord.SelectOption(label="Floor", value="floor", description="เพิ่มแต้มขั้นต่ำ"),
-    discord.SelectOption(label="Selected Die", value="selected_die", description="เพิ่มแต้มลูกที่เลือก"),
-    discord.SelectOption(label="Cap", value="cap", description="เพิ่มแต้มสูงสุด"),
+    discord.SelectOption(label="เพิ่มคะแนน", value="flat", description="เพิ่มผลรวมโดยตรง | cost 1"),
+    discord.SelectOption(label="เพิ่มลูกเต๋า", value="add_d", description="เพิ่มจำนวนลูกเต๋า | cost 3"),
+    discord.SelectOption(label="เพิ่มลุกเต๋าที่นับ(kh)", value="add_kh", description="เพิ่มจำนวนลูกที่เลือก | cost 3"),
+    discord.SelectOption(label="เพิ่มพื้นลูกเต๋า", value="floor", description="เพิ่มแต้มขั้นต่ำ | cost 1"),
+    discord.SelectOption(label="เพราะคะแนนลูกเต๋าที่เลือก", value="selected_die", description="เพิ่มแต้มลูกที่เลือก | cost 1"),
+    discord.SelectOption(label="เพิ่มแต้มสูงสุดลูกเต๋า", value="cap", description="เพิ่มแต้มสูงสุด | cost 1"),
+    discord.SelectOption(label="ฟื้นฟู Stamina",value="self_heal_stamina",description="ฟื้นฟู STA ตัวเอง | cost 3"),
 ]
 
 
@@ -29,20 +33,25 @@ class ZoneFieldSelect(discord.ui.Select):
         view: ZoneManageView = self.view
         view.selected_field = self.values[0]
 
-        embed = build_zone_manage_embed(view.user_id, interaction.user.display_name)
-        embed.add_field(
-            name="เลือกอยู่ตอนนี้",
-            value=f"`{view.selected_field}`",
-            inline=False
+        embed = build_zone_manage_embed_from_zone(
+            view.temp_zone,
+            interaction.user.display_name,
+            selected_field=view.selected_field,
+            note="เลือกหมวดสำหรับปรับค่าแล้ว"
         )
         await interaction.response.edit_message(embed=embed, view=view)
 
 
 class ZoneManageView(discord.ui.View):
     def __init__(self, user_id: int):
-        super().__init__(timeout=180)
+        super().__init__(timeout=300)
         self.user_id = user_id
         self.selected_field = "flat"
+
+        zone = get_player_zone(user_id)
+        self.original_zone = copy.deepcopy(zone)
+        self.temp_zone = copy.deepcopy(zone)
+
         self.add_item(ZoneFieldSelect())
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -51,33 +60,78 @@ class ZoneManageView(discord.ui.View):
             return False
         return True
 
+    def _add_temp_stat(self, field: str, amount: int = 1) -> tuple[bool, str]:
+        build = self.temp_zone["build"]
+        cost = ZONE_POINT_COST[field] * amount
+        left = get_zone_points_left(self.temp_zone)
+
+        if left < cost:
+            return False, f"Zone point ไม่พอ (ต้องใช้ {cost})"
+
+        build[field] = int(build.get(field, 0)) + amount
+        return True, f"เพิ่ม {field} +{amount} ชั่วคราว"
+
+    def _remove_temp_stat(self, field: str, amount: int = 1) -> tuple[bool, str]:
+        build = self.temp_zone["build"]
+        current = int(build.get(field, 0))
+
+        if current - amount < 0:
+            return False, "ค่านี้ต่ำกว่า 0 ไม่ได้"
+
+        build[field] = current - amount
+        return True, f"ลด {field} -{amount} ชั่วคราว"
+
     @discord.ui.button(label="➕ เพิ่ม", style=discord.ButtonStyle.success)
     async def add_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        ok, msg = upgrade_zone_stat(self.user_id, self.selected_field, 1)
+        ok, msg = self._add_temp_stat(self.selected_field, 1)
         if not ok:
             await interaction.response.send_message(msg, ephemeral=True)
             return
 
-        embed = build_zone_manage_embed(self.user_id, interaction.user.display_name)
-        embed.add_field(name="ผลล่าสุด", value=msg, inline=False)
+        embed = build_zone_manage_embed_from_zone(
+            self.temp_zone,
+            interaction.user.display_name,
+            selected_field=self.selected_field,
+            note=msg
+        )
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="➖ ลด", style=discord.ButtonStyle.danger)
     async def remove_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        ok, msg = downgrade_zone_stat(self.user_id, self.selected_field, 1)
+        ok, msg = self._remove_temp_stat(self.selected_field, 1)
         if not ok:
             await interaction.response.send_message(msg, ephemeral=True)
             return
 
-        embed = build_zone_manage_embed(self.user_id, interaction.user.display_name)
-        embed.add_field(name="ผลล่าสุด", value=msg, inline=False)
+        embed = build_zone_manage_embed_from_zone(
+            self.temp_zone,
+            interaction.user.display_name,
+            selected_field=self.selected_field,
+            note=msg
+        )
         await interaction.response.edit_message(embed=embed, view=self)
 
-    @discord.ui.button(label="ปิด", style=discord.ButtonStyle.secondary)
-    async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        for item in self.children:
-            item.disabled = True
+    @discord.ui.button(label="💾 บันทึก", style=discord.ButtonStyle.primary)
+    async def save_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        set_player_zone_build(self.user_id, self.temp_zone["build"])
+        self.original_zone = copy.deepcopy(self.temp_zone)
 
-        embed = build_zone_manage_embed(self.user_id, interaction.user.display_name)
+        embed = build_zone_manage_embed_from_zone(
+            self.temp_zone,
+            interaction.user.display_name,
+            selected_field=self.selected_field,
+            note="บันทึกค่า Zone เรียบร้อยแล้ว"
+        )
         await interaction.response.edit_message(embed=embed, view=self)
-        self.stop()
+
+    @discord.ui.button(label="↩ รีเซ็ต", style=discord.ButtonStyle.secondary)
+    async def reset_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.temp_zone = copy.deepcopy(self.original_zone)
+
+        embed = build_zone_manage_embed_from_zone(
+            self.temp_zone,
+            interaction.user.display_name,
+            selected_field=self.selected_field,
+            note="ย้อนกลับเป็นค่าที่บันทึกล่าสุดแล้ว"
+        )
+        await interaction.response.edit_message(embed=embed, view=self)

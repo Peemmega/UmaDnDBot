@@ -1,11 +1,13 @@
 import discord
-from utils.zone.zone_preset import DEFAULT_ZONE_IMAGE
 from utils.zone.zone_manager import (
     get_player_zone,
     get_zone_points_used,
     get_zone_points_left,
-    get_zone_effect_preview
+    get_zone_effect_preview,
+    ZONE_POINT_COST,
 )
+
+from utils.icon_presets import ICONS, Status_Icon_Type
 
 ZONE_LABELS = {
     "flat": "Flat Total",
@@ -14,94 +16,114 @@ ZONE_LABELS = {
     "floor": "Floor",
     "selected_die": "Selected Die",
     "cap": "Cap",
+    "self_heal_stamina": "Self Heal STA",
 }
-
-ZONE_PREVIEW_LABELS = {
-    "flat": "ผลรวม",
-    "add_d": "ลูกเต๋า",
-    "add_kh": "ลูกที่เลือก",
-    "floor": "ขั้นต่ำ",
-    "selected_die": "ลูกที่เลือก +",
-    "cap": "สูงสุด",
-}
-
 
 def build_zone_manage_embed(user_id: int, display_name: str) -> discord.Embed:
     zone = get_player_zone(user_id)
-
     if zone is None:
         return discord.Embed(
             title="Zone Manager",
             description="ไม่พบข้อมูลผู้เล่น",
             color=discord.Color.red()
         )
+    return build_zone_manage_embed_from_zone(zone, display_name)
 
+def build_zone_manage_embed_from_zone(
+    zone: dict,
+    display_name: str,
+    selected_field: str | None = None,
+    note: str | None = None
+) -> discord.Embed:
     used = get_zone_points_used(zone)
     left = get_zone_points_left(zone)
     build = zone["build"]
     preview = get_zone_effect_preview(zone)
 
-    lines = []
-    for key, label in ZONE_LABELS.items():
-        lines.append(f"**{label}**: {build.get(key, 0)}")
+    zone_title = zone.get("name", "Default Zone")
+    image_url = zone.get("image_url", "")
+
+    stat_lines = []
+    zone_labels = {
+        "flat": f"{ICONS["Aoharu"]} เพิ่มคะแนนรวม",
+        "add_d": f"{ICONS["Aoharu"]} เพิ่มลูกเต๋า",
+        "add_kh": f"{ICONS["Aoharu"]} เพิ่มจำนวนลูกที่เลือก",
+        "floor": f"{ICONS["Aoharu"]} เพิ่มแต้มลูกเต๋าขั้นต่ำ",
+        "selected_die": f"{ICONS["Aoharu"]} เพิ่มแต้มลูกที่เลือก",
+        "cap": f"{ICONS["Aoharu"]} เพิ่มแต้มลูกเต๋าสูงสุด",
+        "self_heal_stamina": f"{ICONS["Aoharu"]} ฟื้นฟู Stamina",
+    }
+
+    for key, label in zone_labels.items():
+        cost = ZONE_POINT_COST[key]
+        value = build.get(key, 0)
+        prefix = "➤ " if key == selected_field else ""
+        stat_lines.append(f"{prefix}{label}: **{value}**") # `cost {cost}`
 
     preview_lines = []
     if preview["flat"]:
-        preview_lines.append(f"เพิ่มผลรวม +{preview['flat']}")
+        preview_lines.append(f"✨ เพิ่มผลรวม **+{preview['flat']}**")
     if preview["add_d"]:
-        preview_lines.append(f"เพิ่มลูกเต๋า +{preview['add_d']}")
+        preview_lines.append(f"🎲 เพิ่มลูกเต๋า **+{preview['add_d']}**")
     if preview["add_kh"]:
-        preview_lines.append(f"เพิ่มจำนวนลูกที่เลือก +{preview['add_kh']}")
+        preview_lines.append(f"🖐️ เพิ่มจำนวนลูกที่เลือก **+{preview['add_kh']}**")
     if preview["floor"]:
-        preview_lines.append(f"เพิ่มแต้มขั้นต่ำ +{preview['floor']}")
+        preview_lines.append(f"🧱 เพิ่มแต้มขั้นต่ำ **+{preview['floor']}**")
     if preview["selected_die"]:
-        preview_lines.append(f"เพิ่มแต้มลูกที่เลือก +{preview['selected_die']}")
+        preview_lines.append(f"🎯 เพิ่มแต้มลูกที่เลือก **+{preview['selected_die']}**")
     if preview["cap"]:
-        preview_lines.append(f"เพิ่มแต้มสูงสุด +{preview['cap']}")
-
+        preview_lines.append(f"📈 เพิ่มแต้มสูงสุด **+{preview['cap']}**")
+    if preview["self_heal_stamina"]:
+        preview_lines.append(f"{Status_Icon_Type["STA"]} ฟื้นฟู STA ตัวเอง +{preview['self_heal_stamina']}")
     if not preview_lines:
         preview_lines.append("ยังไม่มีการอัป Zone")
 
     embed = discord.Embed(
         title=f"🌌 Zone Manager : {display_name}",
-        description=f"**Zone Name:** {zone['name']}",
+        description=(
+            f"**「 {zone_title} 」**\n"
+            f"โหมดปรับแต่งพลัง Zone พร้อมใช้งาน"
+        ),
         color=discord.Color.purple()
     )
 
     embed.add_field(
-        name="Zone Points",
+        name="🧬 Current Build",
+        value="\n".join(stat_lines),
+        inline=True
+    )
+
+    embed.add_field(
+        name="🔮 Zone pt",
         value=(
-            f"ทั้งหมด: {zone['points']}\n"
-            f"ใช้ไป: {used}\n"
-            f"คงเหลือ: {left}"
+            # f"**ทั้งหมด**: {zone['points']}\n"
+            # f"**ใช้ไป**: {used}\n"
+            f"**คงเหลือ**: {left}"
         ),
         inline=True
     )
 
     embed.add_field(
-        name="Build",
-        value="\n".join(lines),
-        inline=True
-    )
-
-    embed.add_field(
-        name="Preview เมื่อใช้ Zone",
+        name="__⚡ ความสามารถทั้งหมด__",
         value="\n".join(preview_lines),
         inline=False
     )
 
+    guide_text = (
+        "เลือกหมวดจากเมนูด้านล่าง แล้วกด **เพิ่ม** หรือ **ลด**\n"
+        "กด **💾 บันทึก** เมื่อพอใจกับค่าที่อัปแล้ว"
+    )
+    if note:
+        guide_text += f"\n\n**ล่าสุด:** {note}"
+
     embed.add_field(
-        name="วิธีใช้",
-        value=(
-            "เลือกหมวดจากเมนูด้านล่าง แล้วกด ➕ หรือ ➖\n"
-            "ค่า Zone จะถูกบันทึกลง player data ทันที"
-        ),
+        name="__🛠️ วิธีใช้งาน__",
+        value=guide_text,
         inline=False
     )
 
-    if zone.get("image_url"):
-        embed.set_image(url=zone["image_url"])
-    else:
-        embed.set_image(url=DEFAULT_ZONE_IMAGE)
+    if image_url:
+        embed.set_image(url=image_url)
 
+    embed.set_footer(text="Zone tuning panel • Customize your awakening")
     return embed

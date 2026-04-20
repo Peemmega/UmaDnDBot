@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import io
 
-from utils.database import ensure_player, update_player_username
+from utils.database import ensure_player, update_player_username,set_player_zone_name,set_player_zone_image_url
 from views.profile_stat_view import ProfileStatView, build_stat_embed
 from utils.player_card import create_stats_card
 from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
@@ -15,7 +15,6 @@ def get_stat_emoji(value: int) -> str:
 
 def get_stat_icon(value: str) -> str:
     return Status_Icon_Type[value]
-
 
 class OpenStatMenuView(discord.ui.View):
     def __init__(self, user_id: int):
@@ -42,6 +41,20 @@ class OpenStatMenuView(discord.ui.View):
         await interaction.response.send_message(
             embed=embed,
             view=view,
+            ephemeral=True
+        )
+
+
+    @discord.ui.button(label="Zone Manager", emoji="🌌", style=discord.ButtonStyle.primary)
+    async def open_zone_manager(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = build_zone_manage_embed(
+            self.user_id,
+            interaction.user.display_name
+        )
+
+        await interaction.response.send_message(
+            embed=embed,
+            view=ZoneManageView(self.user_id),
             ephemeral=True
         )
 
@@ -84,6 +97,61 @@ class ProfileCog(commands.Cog):
             view=ZoneManageView(interaction.user.id),
             ephemeral=True
         )
+
+    @discord.app_commands.command(name="zone_set", description="ตั้งค่า Zone (ชื่อ / รูป)")
+    @discord.app_commands.describe(
+        mode="เลือกว่าจะตั้งชื่อหรือรูป",
+        value="ชื่อ Zone หรือ URL ของรูป"
+    )
+    @discord.app_commands.choices(mode=[
+        discord.app_commands.Choice(name="ตั้งชื่อ", value="name"),
+        discord.app_commands.Choice(name="ตั้งรูป", value="image"),
+    ])
+    async def zone_set(
+        self,
+        interaction: discord.Interaction,
+        mode: discord.app_commands.Choice[str],
+        value: str
+    ):
+        user_id = interaction.user.id
+        ensure_player(user_id, interaction.user.name)
+
+        if mode.value == "name":
+            if len(value) > 50:
+                await interaction.response.send_message(
+                    "ชื่อ Zone ยาวเกินไป (ไม่เกิน 50 ตัวอักษร)",
+                    ephemeral=True
+                )
+                return
+
+            set_player_zone_name(user_id, value)
+
+            await interaction.response.send_message(
+                f"✅ ตั้งชื่อ Zone เป็น **{value}** สำเร็จ",
+                ephemeral=True
+            )
+            return
+
+        if mode.value == "image":
+            # เช็คง่าย ๆ ว่าเป็น URL ไหม
+            if not (value.startswith("http://") or value.startswith("https://")):
+                await interaction.response.send_message(
+                    "กรุณาใส่ URL ที่ถูกต้อง",
+                    ephemeral=True
+                )
+                return
+
+            set_player_zone_image_url(user_id, value)
+
+            embed = discord.Embed(
+                title="🌌 ตั้งค่า Zone Image สำเร็จ",
+                description="ภาพ Zone ถูกเปลี่ยนแล้ว",
+                color=discord.Color.purple()
+            )
+            embed.set_image(url=value)
+
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
 
     @discord.app_commands.command(name="set_name", description="เปลี่ยนชื่อโปรไฟล์")
     async def setname(self, interaction: discord.Interaction, new_name: str):

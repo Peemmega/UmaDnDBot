@@ -50,14 +50,6 @@ async def execute_reroll(
         skill_effects=pending_effects,
     )
 
-    flat = merged_stats["flat"]
-    if flat != 0:
-        sign = "+" if flat > 0 else ""
-        if result["bonus_display"] == "-":
-            result["bonus_display"] = f"NEXT{sign}{flat}"
-        else:
-            result["bonus_display"] += f" NEXT{sign}{flat}"
-
     ## Clear Debuff -----------------------------------------------
     game_player["lastedBuff"] = merged_stats
 

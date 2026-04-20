@@ -22,7 +22,7 @@ def build_single_wit_regen_text(game_player: dict) -> str:
     wit_stat = race_profile.get("wit", 0)
     regen = 10 + (wit_stat * 1)
     current_mana = game_player.get("wit_mana", 0)
-    return f"{Status_Icon_Type['WIT']} {current_mana} → {current_mana + regen}"
+    return f"{current_mana} → {current_mana + regen}" #{Status_Icon_Type['WIT']} 
 
 def build_run_embed(
     interaction: discord.Interaction,
@@ -35,40 +35,32 @@ def build_run_embed(
     title_prefix: str = "วิ่งในเทิร์นนี้",
 ) -> discord.Embed:
     embed = discord.Embed(
-        title=f"{interaction.user.display_name} {title_prefix}",
+        title=f"Phase {result["phase"]} {path_effect["label"]} สาย {game_player["style"]}",
         color=discord.Color.gold()
     )
 
-    embed.add_field(name="Phase", value=result["phase"], inline=True)
-    embed.add_field(name="Style", value=game_player["style"], inline=True)
-    embed.add_field(name="Path", value=path_effect["label"], inline=True)
+    embed.add_field(name=f"🏇 ความเร็ว {result["distance_color"]}", value= f"{result["display"]} {result["bonus_display"]}" , inline=False)
 
-    embed.add_field(name="🎲 Dice", value=result["display"], inline=False)
-    embed.add_field(name="📈 Stats Bonus", value=result["bonus_display"], inline=False)
-
-    embed.add_field(name="✨ Total", value=str(result["total"]), inline=True)
-    embed.add_field(name="🏁 Score ใหม่", value=str(new_score), inline=True)
-    embed.add_field(name=f"{Status_Icon_Type['STA']} คงเหลือ", value=str(game_player["stamina_left"]), inline=True)
-
-    if stamina_note:
-        embed.add_field(name="Stamina", value=stamina_note, inline=False)
+    if stamina_note == None:
+        stamina_note = str(game_player["stamina_left"])
 
     embed.add_field(
-        name=f"{Status_Icon_Type["WIT"]} ฟื้นฟูจากค่า stats",
-        value=build_single_wit_regen_text(game_player),
+        name="📊 สรุปผล",
+        value=(
+            f"🏁 Score รวม: **{new_score}** ({result['total']})　"
+            f"{Status_Icon_Type["STA"]} : **{stamina_note}**　"
+            f"{Status_Icon_Type["WIT"]} : **{build_single_wit_regen_text(game_player)}**"
+        ),
         inline=False
     )
 
     embed.add_field(
-        name="Reroll คงเหลือ",
-        value=f"{game_player['reroll_left']}",
-        inline=True
-    )
-
-    embed.add_field(
-        name=f"{Status_Icon_Type["WIT"]} Reroll",
-        value=str(game_player.get("wit_reroll_left", 0)),
-        inline=True
+        name="🎲 Reroll",
+        value=(
+            f"Reroll คงเหลือ: **{game_player['reroll_left']}**　"
+            f"{Status_Icon_Type['WIT']} Reroll: **{str(game_player.get("wit_reroll_left", 0))}**"
+        ),
+        inline=False
     )
 
     return embed
@@ -113,13 +105,13 @@ async def execute_player_roll(
         skill_effects=pending_effects,
     )
 
-    flat = merged_stats["flat"]
-    if flat != 0:
-        sign = "+" if flat > 0 else ""
-        if result["bonus_display"] == "-":
-            result["bonus_display"] = f"NEXT{sign}{flat}"
-        else:
-            result["bonus_display"] += f" NEXT{sign}{flat}"
+    # flat = merged_stats["flat"]
+    # if flat != 0:
+    #     sign = "+" if flat > 0 else ""
+    #     if result["bonus_display"] == "-":
+    #         result["bonus_display"] = f"NEXT{sign}{flat}"
+    #     else:
+    #         result["bonus_display"] += f" NEXT{sign}{flat}"
 
     ## Clear Debuff -----------------------------------------------
     game_player["lastedBuff"] = merged_stats
@@ -142,18 +134,21 @@ async def execute_player_roll(
 
     if game_player["stamina_left"] >= stamina_cost:
         game_player["stamina_left"] -= stamina_cost
-        if stamina_gain > 0:
-            stamina_note = f"+{stamina_gain} / -{stamina_cost} เหลือ {game_player['stamina_left']}"
+        if stamina_cost == 0 and stamina_gain == 0:
+            stamina_note = f"{game_player['stamina_left']}"
         else:
-            stamina_note = f"-{stamina_cost} เหลือ {game_player['stamina_left']}"
+            if stamina_gain > 0:
+                stamina_note = f"+{stamina_gain} / -{stamina_cost} เหลือ {game_player['stamina_left']}"
+            else:
+                stamina_note = f"{game_player['stamina_left'] + stamina_cost} → {game_player['stamina_left']}"
     else:
         result["total"] -= 30
         if result["bonus_display"] == "-":
-            result["bonus_display"] = f"{Status_Icon_Type['STA']}-30"
+            result["bonus_display"] = f"-30{Status_Icon_Type['STA']}"
         else:
-            result["bonus_display"] += f" {Status_Icon_Type['STA']}-30"
+            result["bonus_display"] += f" -30{Status_Icon_Type['STA']}"
         result["total_display"] = str(result["total"])
-        stamina_note = f"STA ไม่พอ (ต้องใช้ {stamina_cost}) โดนหัก 30"
+        stamina_note = f"{Status_Icon_Type['STA']} ไม่พอ โดนหัก 30 แต้ม"
     # stamina -----------------------------------------------------------------------
 
 

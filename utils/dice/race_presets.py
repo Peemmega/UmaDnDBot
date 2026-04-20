@@ -163,7 +163,7 @@ RACE_PRESET = {
 
     
     "TennoShoAutumn": {
-        "name": "Tenno Sho (Autumn) 3200m",
+        "name": "Tenno Sho (Autumn) 2000m",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495035900818751598/thum_race_rt_000_1016_00.png?ex=69e4c82f&is=69e376af&hm=9dfb903aa4a2ca5c03acf2d67c32ee70d04ef389eeb251ff7ddb64596ad2b796&=&format=webp&quality=lossless&width=192&height=96",
         "image": "https://media.discordapp.net/attachments/1494730857259471030/1495035901087318036/10604.png?ex=69e4c82f&is=69e376af&hm=89286fb782c955579e4cedc8c44c0b4ab54afed16ff6b88bd6ec8967b05eb7e6&=&format=webp&quality=lossless&width=1745&height=930",
         "turn": 12,

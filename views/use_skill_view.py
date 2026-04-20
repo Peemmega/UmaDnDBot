@@ -17,6 +17,9 @@ from utils.skill.skill_runtime import (
     build_next_roll_buff_text
 )
 
+from utils.zone.zone_manager import apply_zone_in_game
+from utils.zone.zone_preset import DEFAULT_ZONE_IMAGE
+
 from utils.skill.skill_presets import SKILLS, ICON
 from utils.icon_presets import Status_Icon_Type
 
@@ -142,7 +145,7 @@ class UseSkillView(discord.ui.View):
 
         if not instant_effects and not queued_effects:
             await interaction.response.send_message(
-                "dddd สกิลนี้ยังไม่มีผลที่รองรับในระบบตอนนี้",
+                "สกิลนี้ยังไม่มีผลที่รองรับในระบบตอนนี้",
                 ephemeral=True
             )
             return
@@ -195,7 +198,40 @@ class UseSkillView(discord.ui.View):
     async def slot3(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.use_slot(interaction, 3)
 
-    @discord.ui.button(label="ปิด", style=discord.ButtonStyle.secondary)
-    async def close_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="ปิดเมนูสกิลแล้ว", embed=None, view=None)
-        self.stop()
+    @discord.ui.button(label="Zone", style=discord.ButtonStyle.success, emoji="🌌")
+    async def use_zone_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        game = get_game(self.channel_id)
+        if game is None:
+            await interaction.response.send_message("ไม่พบเกม", ephemeral=True)
+            return
+
+        player = game["players"].get(interaction.user.id)
+        if player is None:
+            await interaction.response.send_message("ไม่พบผู้เล่น", ephemeral=True)
+            return
+
+        if player.get("zone_left", 0) <= 0:
+            await interaction.response.send_message("Zone ถูกใช้ไปแล้ว", ephemeral=True)
+            return
+
+        success, result_text = apply_zone_in_game(player)
+        if not success:
+            await interaction.response.send_message(result_text, ephemeral=True)
+            return
+
+        zone = player.get("zone")
+        if not zone:
+            return False, "ไม่พบข้อมูล Zone"
+
+        zone_name = zone.get("name", "Default Zone")
+        zone_img = zone.get("image_url", DEFAULT_ZONE_IMAGE)
+
+        embed = discord.Embed(
+            title=f"🌌 {player["username"]} ใช้งาน Zone:\n【{zone_name}】",
+            description=result_text,
+            color=discord.Color.purple()
+        )
+
+        embed.set_image(url=zone_img)
+
+        await interaction.response.send_message(embed=embed, ephemeral=False)

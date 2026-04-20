@@ -534,6 +534,18 @@ class GameCog(commands.GroupCog, name="game"):
             interaction.user.id
         )
 
+        zone = playerInGame.get("zone")
+        if not zone:
+            return False, "ไม่พบข้อมูล Zone"
+
+        zone_text = "ยังไม่อยู่ในเกม"
+        if playerInGame:
+            
+            zone_name = zone.get("name", "Default Zone")
+
+            zone_left = playerInGame.get("zone_left", 0)
+            zone_text = f"{zone_name}\nคงเหลือ: {zone_left}"
+
         if playerInGame and playerInGame.get("skills"):
             slots = {
                 "slot_1": playerInGame["skills"].get(1),
@@ -552,6 +564,12 @@ class GameCog(commands.GroupCog, name="game"):
         embed = discord.Embed(
             title=f"📘 Skill Menu: {interaction.user.display_name}",
             color=discord.Color.blurple()
+        )
+
+        embed.add_field(
+            name="🌌 Zone",
+            value=zone_text,
+            inline=False
         )
 
         embed.add_field(
@@ -576,7 +594,7 @@ class GameCog(commands.GroupCog, name="game"):
             inline=True
         )
 
-        embed.set_footer(text="กดปุ่ม 1 / 2 / 3 ด้านล่างเพื่อใช้สกิล")
+        embed.set_footer(text="กดปุ่ม 1 / 2 / 3 เพื่อใช้สกิล หรือกด 🌌 เพื่อใช้ Zone")
 
         await interaction.response.send_message(
             embed=embed,

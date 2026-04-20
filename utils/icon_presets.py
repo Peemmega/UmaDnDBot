@@ -17,6 +17,10 @@ Status_Icon_Type = {
     "WIT": "<:Wit:1493706329406308352>",
 }
 
+ICONS = {
+    "Aoharu": "<:Aoharu:1495417469328949258>",
+}
+
 GRADE_IMAGE_MAP = {
     1: "G.png",
     2: "F.png",

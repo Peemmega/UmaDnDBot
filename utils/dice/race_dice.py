@@ -86,6 +86,7 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     extra_floor = 0
     flat_velocity_bonus = 0
     selected_die_bonus = 0
+    roll_cap_increase = 0
 
     for effect in skill_effects:
         effect_type = effect.get("type")
@@ -101,12 +102,15 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
             flat_velocity_bonus += value
         elif effect_type == "modify_selected_die":
             selected_die_bonus += value
+        elif effect_type == "modify_roll_cap":
+            roll_cap_increase += value
+            
 
     d += extra_d
 
     path_effect = context.get("path_effect", {})
 
-    max_dice_value = path_effect.get("max_dice_value", MAX_DICE_VALUE)
+    max_dice_value = path_effect.get("max_dice_value", MAX_DICE_VALUE) + roll_cap_increase
     max_dice_value += path_effect.get("extra_max_from_wit", 0)
 
     roll_min = player.get("power", 1) + extra_floor
@@ -131,7 +135,7 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     spd_bonus_raw = player.get("speed", 0)
     spd_bonus = int(spd_bonus_raw * spd_multiplier)
 
-    power_bonus = player.get("power", 1)
+    power_bonus = player.get("power", 1) * 3
     nearby_count = min(context.get("nearby_count", 0), 3)
     gut_bonus = (player.get("gut", 1) * nearby_count * 3) if context.get("distance_color") == "Gold" else 0
 
@@ -160,13 +164,13 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
 
     bonus_parts = []
     if total_spd_bonus > 0:
-        bonus_parts.append(f"{get_stat_icon("SPD")}+{total_spd_bonus}")
+        bonus_parts.append(f"+{total_spd_bonus}{get_stat_icon("SPD")}")
     if gut_bonus > 0:
-        bonus_parts.append(f"{get_stat_icon("GUT")}+{gut_bonus}")
+        bonus_parts.append(f"+{gut_bonus}{get_stat_icon("GUT")}")
     if final_power_bonus > 0:
-        bonus_parts.append(f"{get_stat_icon("POW")}+{final_power_bonus}")
+        bonus_parts.append(f"+{final_power_bonus}{get_stat_icon("POW")}")
     if flat_velocity_bonus > 0:
-        bonus_parts.append(f"{ICON["Velocity"]}+{flat_velocity_bonus}")
+        bonus_parts.append(f"+{flat_velocity_bonus}{ICON["Velocity"]}")
 
     bonus_display = " ".join(bonus_parts) if bonus_parts else "-"
     total_display = str(total)
