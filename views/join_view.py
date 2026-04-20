@@ -9,7 +9,7 @@ from utils.game_manager import (
     get_attitude_values,
     build_attitude_stat_bonus,
     process_mob_turn,
-    build_mob_run_embed
+    build_run_embed
 )
 from utils.dice.dice_presets import DICE_PRESET
 from utils.icon_presets import Status_Icon_Type
@@ -251,14 +251,27 @@ class LobbyView(discord.ui.View):
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(self.channel_id, user_id)
+                print(success, payload)
                 if success:
-                    embed = build_mob_run_embed(
-                        game=payload["game"],
+                    mob_name = (
+                        player.get("display_name")
+                        or player.get("username")
+                        or player.get("name")
+                        or "Mob"
+                    )
+
+                    embed = build_run_embed(
                         game_player=payload["game_player"],
                         result=payload["result"],
                         new_score=payload["new_score"],
                         stamina_note=payload["stamina_note"],
                         path_effect=payload["path_effect"],
+                        player_name=f"🤖 {mob_name}",   # 👈 ใส่ตรงนี้
                     )
                     mob_embeds.append(embed)
+                
+        for mob_embed in mob_embeds:
+            await interaction.followup.send(embed=mob_embed)
+
+
         

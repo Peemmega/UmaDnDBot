@@ -112,82 +112,6 @@ def execute_roll_core(
         "title_prefix": title_prefix,
     }
 
-def build_mob_run_embed(
-    *,
-    game: dict,
-    game_player: dict,
-    result: dict,
-    new_score: int,
-    stamina_note: str | None,
-    path_effect: dict,
-    title_prefix: str = "วิ่งในเทิร์นนี้",
-):
-    mob_name = (
-        game_player.get("display_name")
-        or game_player.get("username")
-        or game_player.get("name")
-        or "Mob"
-    )
-
-    embed = discord.Embed(
-        title=f"🤖 {mob_name} {title_prefix}",
-        color=discord.Color.orange()
-    )
-
-    embed.add_field(
-        name="🎲 Roll",
-        value=(
-            f"Base: **{result['base_total']}**\n"
-            f"โบนัส: {result['bonus_display']}\n"
-            f"รวม: **{result['total_display']}**"
-        ),
-        inline=True
-    )
-
-    embed.add_field(
-        name="🏁 Score",
-        value=f"**{new_score}**",
-        inline=True
-    )
-
-    embed.add_field(
-        name="❤️ STA",
-        value=stamina_note or "-",
-        inline=True
-    )
-
-    if result.get("selected"):
-        embed.add_field(
-            name="🎯 Selected Dice",
-            value=", ".join(str(x) for x in result["selected"]),
-            inline=False
-        )
-
-    if result.get("all_rolls"):
-        embed.add_field(
-            name="🎲 All Dice",
-            value=", ".join(str(x) for x in result["all_rolls"]),
-            inline=False
-        )
-
-    if path_effect:
-        effect_lines = []
-        if path_effect.get("flat_bonus", 0):
-            effect_lines.append(f"Flat {path_effect['flat_bonus']:+}")
-        if path_effect.get("stamina_cost", 0):
-            effect_lines.append(f"STA Cost -{path_effect['stamina_cost']}")
-        if path_effect.get("stamina_gain", 0):
-            effect_lines.append(f"STA Gain +{path_effect['stamina_gain']}")
-
-        if effect_lines:
-            embed.add_field(
-                name="🛤️ Path Effect",
-                value="\n".join(effect_lines),
-                inline=False
-            )
-
-    return embed
-
 def create_game(channel_id: int, stage_key: str, owner_id: int):
     if channel_id in games:
         return False
@@ -884,6 +808,58 @@ def process_mob_turn(channel_id: int, user_id: str):
 
     return True, payload
 
+def build_single_wit_regen_text(game_player: dict) -> str:
+    race_profile = game_player.get("race_profile", {})
+    wit_stat = race_profile.get("wit", 0)
+    regen = 10 + (wit_stat * 1)
+    current_mana = game_player.get("wit_mana", 0)
+    return f"{current_mana} → {current_mana + regen}" #{Status_Icon_Type['WIT']} 
+
+def build_run_embed(
+    game_player: dict,
+    result: dict,
+    new_score: int,
+    stamina_note: str | None,
+    path_effect: dict,
+    title_prefix: str = "วิ่งในเทิร์นนี้",
+) -> discord.Embed:
+    
+    name_part = f"{game_player["username"]} | " if game_player["username"] else ""
+    title = f"{name_part} Phase {result['phase']} {path_effect['label']} สาย {game_player['style']}"
+    embed = discord.Embed(
+        title=title,
+        color=discord.Color.gold()
+    )
+
+    embed.add_field(name=f"🏇 ความเร็ว {result["distance_color"]}", value= f"{result["display"]} {result["bonus_display"]}" , inline=False)
+    reroll = game_player.get("reroll_left", 0)
+    wit_reroll = game_player.get("wit_reroll_left", 0)
+
+    if stamina_note == None:
+        stamina_note = str(game_player["stamina_left"])
+
+    embed.add_field(
+        name="📊 สรุปผล",
+        value=(
+            f"🏁 Score รวม: **{new_score}** ({result['total']})　"
+            f"{Status_Icon_Type['STA']} : **{stamina_note}**　"
+            f"{Status_Icon_Type['WIT']} : **{build_single_wit_regen_text(game_player)}**"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="🎲 Reroll",
+        value=(
+            f"Reroll คงเหลือ: **{reroll}**　"
+            f"{Status_Icon_Type['WIT']} Reroll: **{wit_reroll}**"
+        ),
+        inline=False
+    )
+
+    return embed
+
+
 def next_turn(channel_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -909,18 +885,26 @@ def next_turn(channel_id: int):
     mob_embeds = []
 
     for user_id, player in game["players"].items():
-        if player.get("is_mob"):
-            success, payload = process_mob_turn(channel_id, user_id)
-            if success:
-                embed = build_mob_run_embed(
-                    game=payload["game"],
-                    game_player=payload["game_player"],
-                    result=payload["result"],
-                    new_score=payload["new_score"],
-                    stamina_note=payload["stamina_note"],
-                    path_effect=payload["path_effect"],
-                )
-                mob_embeds.append(embed)
+            if player.get("is_mob"):
+                success, payload = process_mob_turn(channel_id, user_id)
+                print(success, payload)
+                if success:
+                    mob_name = (
+                        player.get("display_name")
+                        or player.get("username")
+                        or player.get("name")
+                        or "Mob"
+                    )
+
+                    embed = build_run_embed(
+                        game_player=payload["game_player"],
+                        result=payload["result"],
+                        new_score=payload["new_score"],
+                        stamina_note=payload["stamina_note"],
+                        path_effect=payload["path_effect"],
+                        player_name=f"🤖 {mob_name}",   # 👈 ใส่ตรงนี้
+                    )
+                    mob_embeds.append(embed)
 
     return game["turn"], mob_embeds
 

@@ -1,8 +1,7 @@
 import discord
-from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player
+from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player,build_run_embed
 from utils.dice.race_presets import get_current_path_type, get_path_effect
 from utils.dice.race_dice import roll_race_dice
-from utils.dice.roll_service import build_run_embed
 
 async def execute_reroll(
     interaction: discord.Interaction,
@@ -69,8 +68,6 @@ async def execute_reroll(
         return False, {"message": "ไม่สามารถอัปเดตคะแนนใหม่ได้"}
 
     embed = build_run_embed(
-        interaction=interaction,
-        game=game,
         game_player=game_player,
         result=result,
         new_score=new_score,
