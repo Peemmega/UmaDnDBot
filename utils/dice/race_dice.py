@@ -160,7 +160,7 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     base_total = sum(selected)
 
     final_power_bonus = int(power_bonus * power_total_multiplier)
-    total = sum(modified_selected) + power_bonus + gut_bonus + flat_velocity_bonus
+    total = sum(modified_selected) + final_power_bonus + gut_bonus + flat_velocity_bonus
 
     bonus_parts = []
     if total_spd_bonus > 0:
