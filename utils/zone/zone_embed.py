@@ -150,6 +150,5 @@ def build_zone_used_preview_embed(player: dict) -> discord.Embed:
     )
 
     embed.set_image(url=zone_img)
-    embed.set_footer(text="Zone Preview • ยังไม่ได้ใช้จริง")
 
     return embed
