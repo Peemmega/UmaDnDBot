@@ -4,8 +4,7 @@ from typing import Optional
 from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST
 import json
 
-DB_PATH = "data/player.db"
-
+DB_PATH = "/app/data/player.db"
 
 def get_connection():
     os.makedirs("data", exist_ok=True)
