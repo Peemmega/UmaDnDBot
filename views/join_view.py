@@ -250,7 +250,6 @@ class LobbyView(discord.ui.View):
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(self.channel_id, user_id)
-                print(success, payload)
                 
                 if success and payload.get("zone_preview"):
                     await interaction.followup.send(embed=payload["zone_preview"])
