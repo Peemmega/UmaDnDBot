@@ -264,6 +264,10 @@ def confirm_turn(channel_id: int, user_id: int):
     confirmed_count = len(game["turn_confirmations"])
     total_players = len(game["players"])
 
+    for user_id, player in game["players"].items():
+        if player.get("is_mob"):
+            confirmed_count += 1
+
     all_confirmed = confirmed_count >= total_players
 
     return True, {
