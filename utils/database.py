@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from typing import Optional
-from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE
+from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST
 import json
 
 DB_PATH = "data/player.db"
@@ -388,6 +388,12 @@ def get_player(user_id: int) -> Optional[dict]:
         }
     }
 
+def reset_zone_build(zone: dict) -> None:
+    if "build" not in zone or not isinstance(zone["build"], dict):
+        zone["build"] = {}
+
+    for key in ZONE_POINT_COST.keys():
+        zone["build"][key] = 0
 
 def ensure_player(user_id: int, username: str) -> dict:
     player = get_player(user_id)

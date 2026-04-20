@@ -1,6 +1,7 @@
 import copy
 import discord
 
+from utils.database import reset_zone_build
 from utils.zone.zone_manager import (
     get_player_zone,
     get_zone_points_left,
@@ -16,7 +17,7 @@ ZONE_OPTIONS = [
     discord.SelectOption(label="เพิ่มพื้นลูกเต๋า", value="floor", description="เพิ่มแต้มขั้นต่ำ | cost 1"),
     discord.SelectOption(label="เพราะคะแนนลูกเต๋าที่เลือก", value="selected_die", description="เพิ่มแต้มลูกที่เลือก | cost 1"),
     discord.SelectOption(label="เพิ่มแต้มสูงสุดลูกเต๋า", value="cap", description="เพิ่มแต้มสูงสุด | cost 1"),
-    discord.SelectOption(label="ฟื้นฟู Stamina",value="self_heal_stamina",description="ฟื้นฟู STA ตัวเอง | cost 3"),
+    discord.SelectOption(label="ฟื้นฟู Stamina", value="self_heal_stamina", description="ฟื้นฟู STA ตัวเอง | cost 3"),
 ]
 
 
@@ -49,6 +50,17 @@ class ZoneManageView(discord.ui.View):
         self.selected_field = "flat"
 
         zone = get_player_zone(user_id)
+        if not zone:
+            zone = {
+                "name": "Default Zone",
+                "build": {key: 0 for key in ZONE_POINT_COST.keys()},
+                "image_url": ""
+            }
+
+        zone.setdefault("build", {})
+        for key in ZONE_POINT_COST.keys():
+            zone["build"].setdefault(key, 0)
+
         self.original_zone = copy.deepcopy(zone)
         self.temp_zone = copy.deepcopy(zone)
 
@@ -124,14 +136,15 @@ class ZoneManageView(discord.ui.View):
         )
         await interaction.response.edit_message(embed=embed, view=self)
 
-    @discord.ui.button(label="↩ รีเซ็ต", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="↺ รีเซ็ต", style=discord.ButtonStyle.secondary)
     async def reset_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.temp_zone = copy.deepcopy(self.original_zone)
+        reset_zone_build(self.temp_zone)
+        self.selected_field = "flat"
 
         embed = build_zone_manage_embed_from_zone(
             self.temp_zone,
             interaction.user.display_name,
             selected_field=self.selected_field,
-            note="ย้อนกลับเป็นค่าที่บันทึกล่าสุดแล้ว"
+            note="รีเซ็ตแต้ม Zone ชั่วคราวแล้ว กรุณากด 💾 บันทึก เพื่อยืนยัน"
         )
         await interaction.response.edit_message(embed=embed, view=self)
