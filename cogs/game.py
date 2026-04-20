@@ -45,7 +45,8 @@ from utils.game_manager import (
     start_turn_confirmation,
     is_skill_on_cooldown,
     add_mob_from_preset,
-    build_mob_join_embed
+    build_mob_join_embed,
+    process_mob_turn
 )
 
 def render_path(path: list[int]) -> str:
@@ -54,9 +55,15 @@ def render_path(path: list[int]) -> str:
 def build_game_end_embed(ranked_players, commentary_text: str | None = None):
     rank_lines = []
     for index, (user_id, info) in enumerate(ranked_players, start=1):
+        if str(user_id).startswith("mob_"):
+            display_name = info.get("display_name") or info.get("username") or "Mob"
+        else:
+            display_name = f"<@{user_id}>"
+
         rank_lines.append(
-            f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
+            f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
         )
+        
 
     if not rank_lines:
         rank_lines.append("ยังไม่มีผู้เล่น")
@@ -135,8 +142,13 @@ class GameCog(commands.GroupCog, name="game"):
 
                 rank_lines = []
                 for index, (user_id, info) in enumerate(ranked_players, start=1):
+                    if str(user_id).startswith("mob_"):
+                        display_name = info.get("display_name") or info.get("username") or "Mob"
+                    else:
+                        display_name = f"<@{user_id}>"
+
                     rank_lines.append(
-                        f"#{index} <@{user_id}> | {info['style']} | Score: {info['score']}"
+                        f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
                     )
 
                 if not rank_lines:
@@ -256,7 +268,9 @@ class GameCog(commands.GroupCog, name="game"):
         previous_ranked_players = get_ranked_players(interaction.channel_id)
         previous_players = build_narrator_players_from_ranked(previous_ranked_players)
 
-        new_turn, mob_embeds = next_turn(interaction.channel_id)
+        # ✅ ขึ้นเทิร์นแค่ครั้งเดียว
+        new_turn = next_turn(interaction.channel_id)
+
         # เกมจบ
         if new_turn > game["max_turn"]:
             ranked_players = get_ranked_players(interaction.channel_id)
@@ -286,8 +300,18 @@ class GameCog(commands.GroupCog, name="game"):
 
         rank_lines = []
         for index, (user_id, info) in enumerate(ranked_players, start=1):
+            if str(user_id).startswith("mob_"):
+                display_name = (
+                    info.get("display_name")
+                    or info.get("username")
+                    or info.get("name")
+                    or "Mob"
+                )
+            else:
+                display_name = f"<@{user_id}>"
+
             rank_lines.append(
-                f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
+                f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
             )
 
         if not rank_lines:
@@ -327,7 +351,9 @@ class GameCog(commands.GroupCog, name="game"):
             inline=False
         )
 
-        embed.set_thumbnail(url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200")
+        embed.set_thumbnail(
+            url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200"
+        )
 
         if commentary_text:
             embed.add_field(
@@ -336,16 +362,15 @@ class GameCog(commands.GroupCog, name="game"):
                 inline=False
             )
 
-        # lastPhase, Phase = is_first_turn_of_phase(new_turn, game["max_turn"])
-        # print(lastPhase, Phase)
-
-        # if (Phase == 4 and lastPhase):
-        #     ok,msg = play_bgm(interaction.guild) 
-        #     print(msg)
-
+        # ✅ ส่ง embed เปิดเทิร์นก่อน
         await interaction.followup.send(embed=embed)
-        for mob_embed in mob_embeds:
-            await interaction.followup.send(embed=mob_embed)
+
+        # ✅ ค่อยให้ mob วิ่งทีหลัง
+        for user_id, player in game["players"].items():
+            if player.get("is_mob"):
+                success, payload = process_mob_turn(interaction.channel_id, user_id)
+                if success and payload.get("embed"):
+                    await interaction.followup.send(embed=payload["embed"])
 
     async def process_next_turn_from_timeout(self, channel: discord.TextChannel):
         game = get_game(channel.id)
@@ -356,7 +381,8 @@ class GameCog(commands.GroupCog, name="game"):
         previous_ranked_players = get_ranked_players(channel.id)
         previous_players = build_narrator_players_from_ranked(previous_ranked_players)
 
-        new_turn, mob_embeds = next_turn(channel.id)
+        # ✅ next_turn คืนแค่เลขเทิร์น
+        new_turn = next_turn(channel.id)
 
         # เกมจบ
         if new_turn > game["max_turn"]:
@@ -390,8 +416,18 @@ class GameCog(commands.GroupCog, name="game"):
 
         rank_lines = []
         for index, (user_id, info) in enumerate(ranked_players, start=1):
+            if str(user_id).startswith("mob_"):
+                display_name = (
+                    info.get("display_name")
+                    or info.get("username")
+                    or info.get("name")
+                    or "Mob"
+                )
+            else:
+                display_name = f"<@{user_id}>"
+
             rank_lines.append(
-                f"{index}. <@{user_id}> | {info['style']} | Score: {info['score']}"
+                f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
             )
 
         if not rank_lines:
@@ -430,7 +466,9 @@ class GameCog(commands.GroupCog, name="game"):
             value=build_path_effect_text(path_type),
             inline=False
         )
-        embed.set_thumbnail(url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200")
+        embed.set_thumbnail(
+            url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200"
+        )
 
         if commentary_text:
             embed.add_field(
@@ -439,12 +477,16 @@ class GameCog(commands.GroupCog, name="game"):
                 inline=False
             )
 
-        # lastPhase, Phase = is_first_turn_of_phase(new_turn, game["max_turn"])
-        # if Phase == 4 and lastPhase:
-        #     ok, msg = play_bgm(channel.guild)
-        #     print(f"[Music] play on timeout turn: {msg}")
-
+        # ✅ ส่ง embed เปิดเทิร์นก่อน
         await channel.send(embed=embed)
+
+        # ✅ ค่อยให้ mob วิ่งทีหลัง
+        game = get_game(channel.id)
+        for user_id, player in game["players"].items():
+            if player.get("is_mob"):
+                success, payload = process_mob_turn(channel.id, user_id)
+                if success and payload.get("embed"):
+                    await channel.send(embed=payload["embed"])
 
     @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
     async def myinfo(self, interaction: discord.Interaction):

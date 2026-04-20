@@ -356,6 +356,7 @@ def start_game(channel_id: int):
                 "slot_2": None,
                 "slot_3": None,
             }
+            player["zone_left"] = 1
 
             player["skills"] = {
                 1: slots["slot_1"],
@@ -370,7 +371,6 @@ def start_game(channel_id: int):
                     "image_url": db_player["zone"]["image_url"],
                     "points": db_player["zone"]["points"],
                     "build": db_player["zone"]["build"],
-                    "left": 1,
                 }
 
         # reset กลางเกม ใช้ร่วมกันทั้ง player จริงและ mob
@@ -390,10 +390,7 @@ def start_game(channel_id: int):
         player["no_reroll_this_turn"] = False
         player["no_reroll_next_turn"] = False
         player["last_roll_turn"] = -1
-
-        # ถ้าอยากเก็บ zone_left แยกไว้ด้วยก็ใส่ แต่ผมแนะนำใช้ player["zone"]["left"] อย่างเดียว
-        if player.get("zone"):
-            player["zone"]["left"] = player["zone"].get("left", 1)
+        player["zone_left"] = 1
 
         # ===== attitude bonus =====
         att_source = player["race_profile"]
@@ -857,8 +854,8 @@ def process_mob_turn(channel_id: int, user_id: str):
     zone_text = None
     if (
         player.get("is_mob")
-        and game["turn"] == game["max_turn"]
-        and player.get("zone", {}).get("left", 0) > 0
+        and game["turn"] == 1 #game["max_turn"]
+        and player.get("zone_left", 0) > 0
     ):
         zone_success, zone_text = apply_zone_in_game(player)
         if not zone_success:
@@ -942,7 +939,7 @@ def build_run_embed(
 def next_turn(channel_id: int):
     game = get_game(channel_id)
     if game is None:
-        return None, []
+        return None
 
     game["turn"] += 1
 
@@ -961,31 +958,7 @@ def next_turn(channel_id: int):
 
     apply_wit_regen(channel_id)
 
-    mob_embeds = []
-
-    for user_id, player in game["players"].items():
-            if player.get("is_mob"):
-                success, payload = process_mob_turn(channel_id, user_id)
-
-                if success:
-                    mob_name = (
-                        player.get("display_name")
-                        or player.get("username")
-                        or player.get("name")
-                        or "Mob"
-                    )
-
-                    embed = build_run_embed(
-                        game_player=payload["game_player"],
-                        result=payload["result"],
-                        new_score=payload["new_score"],
-                        stamina_note=payload["stamina_note"],
-                        path_effect=payload["path_effect"],
-                        player_name=f"🤖 {mob_name}",   # 👈 ใส่ตรงนี้
-                    )
-                    mob_embeds.append(embed)
-
-    return game["turn"], mob_embeds
+    return game["turn"]
 
 def apply_wit_regen(channel_id: int):
     game = get_game(channel_id)

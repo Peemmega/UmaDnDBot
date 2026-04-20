@@ -316,19 +316,6 @@ def set_player_zone_image(user_id: int, url: str):
     conn.commit()
     conn.close()
 
-def consume_player_zone(user_id: int):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE players
-    SET zone_left = zone_left - 1
-    WHERE user_id = ?
-    """, (user_id,))
-
-    conn.commit()
-    conn.close()
-
 def get_player(user_id: int) -> Optional[dict]:
     conn = get_connection()
     cursor = conn.cursor()

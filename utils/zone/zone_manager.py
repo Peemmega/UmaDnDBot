@@ -139,8 +139,9 @@ def apply_zone_in_game(player: dict) -> tuple[bool, str]:
     zone = player.get("zone")
     if not zone:
         return False, "ไม่พบข้อมูล Zone"
-
-    if zone.get("left", 0) <= 0:
+    
+    zone_left = player.get("zone_left", 0)
+    if zone_left <= 0:
         return False, "Zone ถูกใช้ไปแล้ว"
 
     zone_build = zone.get("build", {})
@@ -157,7 +158,7 @@ def apply_zone_in_game(player: dict) -> tuple[bool, str]:
     if heal_value > 0:
         player["stamina_left"] = player.get("stamina_left", 0) + heal_value
 
-    zone["left"] -= 1
+    zone_left -= 1
 
     zone_effect = get_zone_effect(zone)
 
