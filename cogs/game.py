@@ -317,9 +317,9 @@ class GameCog(commands.GroupCog, name="game"):
         lastPhase, Phase = is_first_turn_of_phase(new_turn, game["max_turn"])
         print(lastPhase, Phase)
 
-        if (Phase == 4 and lastPhase):
-            ok,msg = play_bgm(interaction.guild) 
-            print(msg)
+        # if (Phase == 4 and lastPhase):
+        #     ok,msg = play_bgm(interaction.guild) 
+        #     print(msg)
 
         await interaction.followup.send(embed=embed)
 
@@ -416,9 +416,9 @@ class GameCog(commands.GroupCog, name="game"):
             )
 
         lastPhase, Phase = is_first_turn_of_phase(new_turn, game["max_turn"])
-        if Phase == 4 and lastPhase:
-            ok, msg = play_bgm(channel.guild)
-            print(f"[Music] play on timeout turn: {msg}")
+        # if Phase == 4 and lastPhase:
+        #     ok, msg = play_bgm(channel.guild)
+        #     print(f"[Music] play on timeout turn: {msg}")
 
     @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
     async def myinfo(self, interaction: discord.Interaction):

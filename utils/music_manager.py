@@ -3,7 +3,16 @@ import shutil
 import platform
 import discord
 
-BGM_PATH = "assets/music/LastSpurt.mp3"
+DEFAULT_MUSIC_KEY = "lastspurt"
+
+MUSICS = {
+    "lastspurt": "assets/music/LastSpurt.mp3",
+    "arima_kinen": "assets/music/arima_kinen.mp3",
+    "g1_race": "assets/music/g1_race.mp3",
+    "girl_legend_u": "assets/music/girl_legend_u.mp3",
+    "l_arc": "assets/music/l_arc.mp3",
+    "glorious_moment": "assets/music/glorious_moment.mp3",
+}
 
 if platform.system() == "Windows":
     FFMPEG_EXECUTABLE = r"C:\Users\peemm_a8kwyjd\ffmpeg\ffmpeg-master-latest-win64-gpl\bin\ffmpeg.exe"
@@ -11,11 +20,18 @@ else:
     FFMPEG_EXECUTABLE = "/usr/bin/ffmpeg"
 
 print(f"Checking FFmpeg Path: {FFMPEG_EXECUTABLE}")
-print(f"Checking BGM Path: {os.path.abspath(BGM_PATH)}")
-
+print(f"Default BGM Path: {os.path.abspath(MUSICS[DEFAULT_MUSIC_KEY])}")
 print(f"FFmpeg file exists: {os.path.exists(FFMPEG_EXECUTABLE)}")
-print(f"BGM file exists: {os.path.exists(BGM_PATH)}")
 print(f"which ffmpeg: {shutil.which('ffmpeg')}")
+
+
+def get_music_path(music_key: str) -> str | None:
+    return MUSICS.get(music_key)
+
+
+def get_music_choices() -> list[str]:
+    return list(MUSICS.keys())
+
 
 async def join_user_voice(interaction: discord.Interaction) -> tuple[bool, str]:
     if interaction.guild is None:
@@ -60,7 +76,8 @@ async def leave_voice(guild: discord.Guild | None) -> tuple[bool, str]:
     except Exception as e:
         return False, f"ไม่สามารถออกจากห้องเสียงได้: {e}"
 
-def play_bgm(guild: discord.Guild | None) -> tuple[bool, str]:
+
+def play_bgm(guild: discord.Guild | None, music_key: str = DEFAULT_MUSIC_KEY) -> tuple[bool, str]:
     if guild is None:
         return False, "ไม่พบเซิร์ฟเวอร์"
 
@@ -68,8 +85,12 @@ def play_bgm(guild: discord.Guild | None) -> tuple[bool, str]:
     if voice_client is None:
         return False, "บอทยังไม่ได้อยู่ในห้องเสียง"
 
-    if not os.path.exists(BGM_PATH):
-        return False, f"ไม่พบไฟล์เพลง: {BGM_PATH}"
+    music_path = get_music_path(music_key)
+    if music_path is None:
+        return False, f"ไม่พบเพลงชื่อ: {music_key}"
+
+    if not os.path.exists(music_path):
+        return False, f"ไม่พบไฟล์เพลง: {music_path}"
 
     if platform.system() == "Windows" and not os.path.exists(FFMPEG_EXECUTABLE):
         return False, f"ไม่พบ ffmpeg: {FFMPEG_EXECUTABLE}"
@@ -79,12 +100,12 @@ def play_bgm(guild: discord.Guild | None) -> tuple[bool, str]:
             voice_client.stop()
 
         source = discord.FFmpegPCMAudio(
-            BGM_PATH,
+            music_path,
             executable=FFMPEG_EXECUTABLE,
             options="-vn"
         )
         voice_client.play(source)
-        return True, "เริ่มเล่นเพลงแล้ว"
+        return True, f"เริ่มเล่นเพลง: {music_key}"
     except Exception as e:
         return False, f"ไม่สามารถเปิดเพลงได้: {e}"
 
