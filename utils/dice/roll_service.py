@@ -48,8 +48,8 @@ def build_run_embed(
         name="📊 สรุปผล",
         value=(
             f"🏁 Score รวม: **{new_score}** ({result['total']})　"
-            f"{Status_Icon_Type["STA"]} : **{stamina_note}**　"
-            f"{Status_Icon_Type["WIT"]} : **{build_single_wit_regen_text(game_player)}**"
+            f"{Status_Icon_Type['STA']} : **{stamina_note}**　"
+            f"{Status_Icon_Type['WIT']} : **{build_single_wit_regen_text(game_player)}**"
         ),
         inline=False
     )

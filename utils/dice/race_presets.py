@@ -34,13 +34,13 @@ def get_current_path_type(game: dict) -> int:
 
 def build_path_effect_text(path_type: int) -> str:
     if path_type == 1:
-        return f"หัก 1 {Status_Icon_Type["STA"]}"
+        return f"หัก 1 {Status_Icon_Type['STA']}"
     if path_type == 2:
-        return f"หัก 1 {Status_Icon_Type["STA"]} • แต้มสูงสุดลูกเต๋าลดลง 5"
+        return f"หัก 1 {Status_Icon_Type['STA']} • แต้มสูงสุดลูกเต๋าลดลง 5"
     if path_type == 3:
-        return f"หัก 2 {Status_Icon_Type["STA"]} • {Status_Icon_Type["SPD"]} เหลือครึ่งหนึ่ง • {Status_Icon_Type["POW"]} โบนัสรวม x3"
+        return f"หัก 2 {Status_Icon_Type['STA']} • {Status_Icon_Type['SPD']} เหลือครึ่งหนึ่ง • {Status_Icon_Type['POW']} โบนัสรวม x3"
     if path_type == 4:
-        return f"ไม่เสีย {Status_Icon_Type["STA"]} • เพิ่มแต้มสูงสุดลูกเต๋าตามค่า {Status_Icon_Type["WIT"]}"
+        return f"ไม่เสีย {Status_Icon_Type['STA']} • เพิ่มแต้มสูงสุดลูกเต๋าตามค่า {Status_Icon_Type['WIT']}"
     return "-"
 
 def build_track_progress_text(path: list[int], current_turn: int) -> str:

@@ -167,7 +167,7 @@ class UseSkillView(discord.ui.View):
         )
 
         embed.add_field(
-            name=f"{Status_Icon_Type["WIT"]} คงเหลือ",
+            name=f"{Status_Icon_Type['WIT']} คงเหลือ",
             value=str(player.get("wit_mana", 0)),
             inline=True
         )

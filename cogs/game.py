@@ -319,7 +319,7 @@ class GameCog(commands.GroupCog, name="game"):
 
         ok,msg = play_bgm(interaction.guild) 
         print(msg)
-        
+
         if (Phase == 1 and lastPhase):
             ok,msg = play_bgm(interaction.guild) 
             print(msg)
@@ -609,7 +609,7 @@ class GameCog(commands.GroupCog, name="game"):
         )
 
         embed.add_field(
-            name=f"{Status_Icon_Type["WIT"]} Skill pt",
+            name=f"{Status_Icon_Type['WIT']} Skill pt",
             value=str(wit_mana),
             inline=True
         )

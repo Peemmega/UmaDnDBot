@@ -46,13 +46,13 @@ def build_zone_manage_embed_from_zone(
 
     stat_lines = []
     zone_labels = {
-        "flat": f"{ICONS["Aoharu"]} เพิ่มคะแนนรวม",
-        "add_d": f"{ICONS["Aoharu"]} เพิ่มลูกเต๋า",
-        "add_kh": f"{ICONS["Aoharu"]} เพิ่มจำนวนลูกที่เลือก",
-        "floor": f"{ICONS["Aoharu"]} เพิ่มแต้มลูกเต๋าขั้นต่ำ",
-        "selected_die": f"{ICONS["Aoharu"]} เพิ่มแต้มลูกที่เลือก",
-        "cap": f"{ICONS["Aoharu"]} เพิ่มแต้มลูกเต๋าสูงสุด",
-        "self_heal_stamina": f"{ICONS["Aoharu"]} ฟื้นฟู Stamina",
+        "flat": f"{ICONS['Aoharu']} เพิ่มคะแนนรวม",
+        "add_d": f"{ICONS['Aoharu']} เพิ่มลูกเต๋า",
+        "add_kh": f"{ICONS['Aoharu']} เพิ่มจำนวนลูกที่เลือก",
+        "floor": f"{ICONS['Aoharu']} เพิ่มแต้มลูกเต๋าขั้นต่ำ",
+        "selected_die": f"{ICONS['Aoharu']} เพิ่มแต้มลูกที่เลือก",
+        "cap": f"{ICONS['Aoharu']} เพิ่มแต้มลูกเต๋าสูงสุด",
+        "self_heal_stamina": f"{ICONS['Aoharu']} ฟื้นฟู Stamina",
     }
 
     for key, label in zone_labels.items():
@@ -75,7 +75,7 @@ def build_zone_manage_embed_from_zone(
     if preview["cap"]:
         preview_lines.append(f"📈 เพิ่มแต้มสูงสุด **+{preview['cap']}**")
     if preview["self_heal_stamina"]:
-        preview_lines.append(f"{Status_Icon_Type["STA"]} ฟื้นฟู STA ตัวเอง +{preview['self_heal_stamina']}")
+        preview_lines.append(f"{Status_Icon_Type['STA']} ฟื้นฟู STA ตัวเอง +{preview['self_heal_stamina']}")
     if not preview_lines:
         preview_lines.append("ยังไม่มีการอัป Zone")
 

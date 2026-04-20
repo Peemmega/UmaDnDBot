@@ -124,7 +124,7 @@ def build_skill_card_text(skill_id: str | None) -> str:
 
     return (
         f"{emoji} `{skill_id}` **{name}**\n"
-        f"⏱️ {cooldown} | {Status_Icon_Type["WIT"]} {cost} | {active_text}\n"
+        f"⏱️ {cooldown} | {Status_Icon_Type['WIT']} {cost} | {active_text}\n"
         f"**เป้าหมาย:** {target_text}\n"
         f"**เงื่อนไข:** {trigger_text}\n"
         f"ผล: {effect_text}\n"
