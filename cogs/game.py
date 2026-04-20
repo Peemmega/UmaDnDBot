@@ -483,10 +483,11 @@ class GameCog(commands.GroupCog, name="game"):
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(channel.id, user_id)
-                if success and payload.get("embed"):
-                    await channel.send(embed=payload["embed"])
                 if success and payload.get("zone_preview"):
                     await channel.send(embed=payload["zone_preview"])
+                if success and payload.get("embed"):
+                    await channel.send(embed=payload["embed"])
+                
 
     @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
     async def myinfo(self, interaction: discord.Interaction):
