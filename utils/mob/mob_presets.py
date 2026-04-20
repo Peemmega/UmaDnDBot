@@ -81,7 +81,6 @@ MOB_PRESETS = {
                 "cap": 1,
                 "self_heal_stamina": 0,
             },
-            "left": 1,
         },
     },
 
@@ -124,7 +123,6 @@ MOB_PRESETS = {
                 "cap": 1,
                 "self_heal_stamina": 0,
             },
-            "left": 1,
         },
     },
 
@@ -167,7 +165,6 @@ MOB_PRESETS = {
                 "cap": 1,
                 "self_heal_stamina": 0,
             },
-            "left": 1,
         },
     },
 
@@ -210,7 +207,6 @@ MOB_PRESETS = {
                 "cap": 1,
                 "self_heal_stamina": 1,
             },
-            "left": 1,
         },
     },
 }

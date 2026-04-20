@@ -362,10 +362,8 @@ class GameCog(commands.GroupCog, name="game"):
                 inline=False
             )
 
-        # ✅ ส่ง embed เปิดเทิร์นก่อน
         await interaction.followup.send(embed=embed)
 
-        # ✅ ค่อยให้ mob วิ่งทีหลัง
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(interaction.channel_id, user_id)

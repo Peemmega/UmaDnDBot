@@ -850,15 +850,17 @@ def process_mob_turn(channel_id: int, user_id: str):
     if player is None:
         return False, {"message": "ไม่พบ mob"}
 
-    # ใช้ Zone อัตโนมัติในเทิร์นสุดท้าย
+    # ✅ ใช้ zone_left
     zone_text = None
     if (
         player.get("is_mob")
-        and game["turn"] == 1 #game["max_turn"]
+        and game["turn"] == game["max_turn"]   # 🔥 เทิร์นสุดท้าย
         and player.get("zone_left", 0) > 0
     ):
         zone_success, zone_text = apply_zone_in_game(player)
-        if not zone_success:
+        if zone_success:
+            player["zone_left"] -= 1   # 🔥 สำคัญ
+        else:
             zone_text = None
 
     success, payload = execute_roll_core(
@@ -866,21 +868,37 @@ def process_mob_turn(channel_id: int, user_id: str):
         user_id=user_id,
         title_prefix="วิ่งอัตโนมัติ",
         mark_roll=True,
-        build_embed=True,
-        build_reroll_view=False,
-        player_name=f"🤖 {player.get('display_name') or player.get('username') or player.get('name') or 'Mob'}",
     )
 
     if not success:
         return False, payload
 
-    if zone_text and payload.get("embed"):
-        payload["embed"].add_field(
+    # ✅ สร้าง embed เอง
+    mob_name = (
+        player.get("display_name")
+        or player.get("username")
+        or player.get("name")
+        or "Mob"
+    )
+
+    embed = build_run_embed(
+        game_player=payload["game_player"],
+        result=payload["result"],
+        new_score=payload["new_score"],
+        stamina_note=payload["stamina_note"],
+        path_effect=payload["path_effect"],
+        player_name=f"🤖 {mob_name}",
+    )
+
+    # ✅ ใส่ Zone effect
+    if zone_text:
+        embed.add_field(
             name="🌌 Zone Activated",
             value=zone_text,
             inline=False
         )
 
+    payload["embed"] = embed
     return True, payload
 
 def build_single_wit_regen_text(game_player: dict) -> str:
@@ -897,13 +915,12 @@ def build_run_embed(
     stamina_note: str | None,
     path_effect: dict,
     title_prefix: str = "วิ่งในเทิร์นนี้",
-    player_name: str | None = None,   # 👈 เพิ่ม
+    player_name: str | None = None,
 ) -> discord.Embed:
-    
     name_part = f"{player_name} | " if player_name else ""
-    title = f"{name_part}Phase {result['phase']} {path_effect['label']} สาย {game_player['style']}"
+
     embed = discord.Embed(
-        title=title,
+        title=f"{name_part}Phase {result['phase']} {path_effect['label']} สาย {game_player['style']}",
         color=discord.Color.gold()
     )
 
