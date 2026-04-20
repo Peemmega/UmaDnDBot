@@ -4,16 +4,20 @@ import platform
 import shutil
 
 BGM_PATH = "assets/music/LastSpurt.mp3"
-
+# --- ส่วนหัวของโค้ด ---
 if platform.system() == "Windows":
     FFMPEG_EXECUTABLE = r"C:\Users\peemm_a8kwyjd\ffmpeg\ffmpeg-master-latest-win64-gpl\bin\ffmpeg.exe"
 else:
-    # บน Railway/Linux เราจะหา ffmpeg จาก 3 แหล่ง: 
-    # 1. shutil.which 2. /usr/bin 3. คำว่า "ffmpeg" เฉยๆ
-    FFMPEG_EXECUTABLE = shutil.which("ffmpeg") or "/usr/bin/ffmpeg"
+    # พยายามหา ffmpeg จากระบบอัตโนมัติ
+    found_ffmpeg = shutil.which("ffmpeg")
+    if found_ffmpeg:
+        FFMPEG_EXECUTABLE = found_ffmpeg
+    else:
+        # ถ้าหาไม่เจอจริงๆ ให้ใส่ "ffmpeg" เฉยๆ เพื่อให้ library พยายามเรียกเอง
+        FFMPEG_EXECUTABLE = "ffmpeg"
 
-print(f"Checking BGM Path: {os.path.abspath(BGM_PATH)}")
 print(f"Checking FFmpeg Path: {FFMPEG_EXECUTABLE}")
+print(f"Checking BGM Path: {os.path.abspath(BGM_PATH)}")
 
 async def join_user_voice(interaction: discord.Interaction) -> tuple[bool, str]:
     if interaction.guild is None:
