@@ -5,6 +5,7 @@ import discord
 from utils.dice.race_presets import RACE_PRESET
 from utils.database import get_player, get_player_skill_slots
 from utils.mob.mob_presets import MOB_PRESETS
+from utils.zone.zone_manager import apply_zone_in_game
 from utils.dice.race_presets import (
     get_path_effect,
     get_current_path_type, 
@@ -840,15 +841,44 @@ def use_reroll(channel_id: int, user_id: int):
     return True, player["reroll_left"]
 
 def process_mob_turn(channel_id: int, user_id: str):
+    game = get_game(channel_id)
+    if game is None:
+        return False, {"message": "ยังไม่มีเกมในห้องนี้"}
+
+    player = game["players"].get(user_id)
+    if player is None:
+        return False, {"message": "ไม่พบ mob"}
+
+    # ใช้ Zone อัตโนมัติในเทิร์นสุดท้าย
+    zone_text = None
+    if (
+        player.get("is_mob")
+        and game["turn"] == game["max_turn"]
+        and player.get("zone", {}).get("left", 0) > 0
+    ):
+        zone_success, zone_text = apply_zone_in_game(player)
+        if not zone_success:
+            zone_text = None
+
     success, payload = execute_roll_core(
         channel_id=channel_id,
         user_id=user_id,
-        title_prefix="Mob วิ่งอัตโนมัติ",
+        title_prefix="วิ่งอัตโนมัติ",
         mark_roll=True,
+        build_embed=True,
+        build_reroll_view=False,
+        player_name=f"🤖 {player.get('display_name') or player.get('username') or player.get('name') or 'Mob'}",
     )
 
     if not success:
-        return False, payload.get("message", "mob roll failed")
+        return False, payload
+
+    if zone_text and payload.get("embed"):
+        payload["embed"].add_field(
+            name="🌌 Zone Activated",
+            value=zone_text,
+            inline=False
+        )
 
     return True, payload
 
@@ -1080,6 +1110,8 @@ def add_mob_from_preset(channel_id: int, preset_key: str):
 
         "zone": zone,
     }
+
+    
 
     return True, f"เพิ่ม mob `{preset['name']}` เรียบร้อย"
 

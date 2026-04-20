@@ -137,17 +137,15 @@ def get_zone_effect(zone: dict) -> tuple[bool, str]:
 
 def apply_zone_in_game(player: dict) -> tuple[bool, str]:
     zone = player.get("zone")
-    zone_left = player.get("zone_left")
     if not zone:
         return False, "ไม่พบข้อมูล Zone"
 
-    if zone_left <= 0:
+    if zone.get("left", 0) <= 0:
         return False, "Zone ถูกใช้ไปแล้ว"
 
     zone_build = zone.get("build", {})
     effects = get_zone_effects_from_build(zone_build)
 
-    # Apply Effect to player
     player["next_roll_flat_bonus"] = player.get("next_roll_flat_bonus", 0) + effects["flat"]
     player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + effects["add_d"]
     player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + effects["add_kh"]
@@ -159,12 +157,11 @@ def apply_zone_in_game(player: dict) -> tuple[bool, str]:
     if heal_value > 0:
         player["stamina_left"] = player.get("stamina_left", 0) + heal_value
 
-    player["zone_left"] -= 1
+    zone["left"] -= 1
 
-    zone_effect = get_zone_effect(zone);
+    zone_effect = get_zone_effect(zone)
 
     return True, zone_effect
-
     
 def get_zone_effect_preview(zone: dict) -> dict:
     build = zone.get("build", {})
