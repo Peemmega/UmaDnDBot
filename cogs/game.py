@@ -318,7 +318,8 @@ class GameCog(commands.GroupCog, name="game"):
         print(lastPhase, Phase)
 
         if (Phase == 4 and lastPhase):
-            play_bgm(interaction.guild) 
+            ok,msg = play_bgm(interaction.guild) 
+            print(msg)
 
         await interaction.followup.send(embed=embed)
 
