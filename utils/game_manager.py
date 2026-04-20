@@ -17,6 +17,8 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
         "stage_key": stage_key,
         "stage_name": stage["name"],
         "max_turn": stage["turn"],
+        "track": stage["track"],
+        "distance": stage["distance"],
         "path": stage["path"],
         "owner_id": owner_id,
         "turn": 0,
@@ -228,9 +230,46 @@ def start_game(channel_id: int):
         player["last_roll_turn"] = -1
 
         player["zone_left"] = 1
+
+        att = get_attitude_values(
+            db_player,
+            game["track"],
+            game["distancce"],
+            player["style"]
+        )
+
+        att_bonus = build_attitude_stat_bonus(att)
+
+        player["race_profile"]["power"] += att_bonus["power"]
+        player["race_profile"]["speed"] += att_bonus["speed"]
+        player["race_profile"]["wit"] += att_bonus["wit"]
         
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
+
+def get_attitude_values(db_player, surface, distance, style):
+    surface_key = "turf" if surface == "Turf" else "dirt"
+
+    style_map = {
+        "Front": "front",
+        "Pace": "pace",
+        "Late": "late",
+        "End": "end_style",
+    }
+
+    return {
+        "track": db_player.get(surface_key, 1),
+        "distance": db_player.get(distance.lower(), 1),
+        "style": db_player.get(style_map.get(style, "pace"), 1),
+    }
+
+
+def build_attitude_stat_bonus(att):
+    return {
+        "power": max(0, att["track"] - 1),
+        "speed": max(0, att["distance"] - 1),
+        "wit": max(0, att["style"] - 1),
+    }
 
 def get_player_skill_cd(channel_id: int, user_id: int, skill_id: str) -> int:
     game = get_game(channel_id)
@@ -482,6 +521,29 @@ def use_rush(channel_id: int, user_id: int):
         "target_id": target_id,
         "move_forward": move_forward,
         "new_score": player["score"],
+    }
+
+def get_attitude_values(db_player, surface, distance, style):
+    surface_key = "turf" if surface == "Turf" else "dirt"
+
+    style_map = {
+        "Front": "front",
+        "Pace": "pace",
+        "Late": "late",
+        "End": "end_style",
+    }
+
+    return {
+        "track": db_player.get(surface_key, 1),
+        "distance": db_player.get(distance.lower(), 1),
+        "style": db_player.get(style_map.get(style, "pace"), 1),
+    }
+
+def build_attitude_stat_bonus(att):
+    return {
+        "power": att["track"],      # Track → Power
+        "speed": att["distance"],   # Distance → Speed
+        "wit": att["style"],        # Style → Wit
     }
 
 def build_pending_effects_from_player(player: dict) -> tuple[list[dict], dict]:

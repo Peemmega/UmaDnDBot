@@ -5,6 +5,9 @@ from utils.game_manager import (
     get_game,
     is_owner,
     start_game,
+    get_player,
+    get_attitude_values,
+    build_attitude_stat_bonus
 )
 from utils.dice.dice_presets import DICE_PRESET
 from utils.dice.dice_table import format_rule
@@ -126,13 +129,32 @@ class StyleSelectView(discord.ui.View):
             view=self
         )
 
+        game = get_game(self.channel_id)
+        db_player = get_player(interaction.user.id)
+        
+        surface = game.get("surface", "Turf")
+        distance = game.get("distance", "Medium")
+
         embed = discord.Embed(
             title="🏇 ผู้เล่นเข้าร่วม!",
             color=discord.Color.green()
         )
         embed.add_field(name="ผู้เล่น", value=interaction.user.mention, inline=True)
         embed.add_field(name="Style", value=style, inline=True)
-        embed.add_field(name="Score", value="0", inline=True)
+
+        att = get_attitude_values(db_player, surface, distance, style)
+        att_bonus = build_attitude_stat_bonus(att)
+        
+        # 🔥 เพิ่มตรงนี้
+        embed.add_field(
+            name="📊 Attitude Bonus",
+            value=(
+                f"🌿 Power +{att_bonus['power']}\n"
+                f"🏁 Speed +{att_bonus['speed']}\n"
+                f"🎯 Wit +{att_bonus['wit']}"
+            ),
+            inline=False
+        )
 
         await interaction.followup.send(embed=embed)
 
