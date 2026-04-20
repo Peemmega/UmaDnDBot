@@ -27,6 +27,10 @@ def execute_roll_core(
     user_id,
     title_prefix: str = "วิ่งในเทิร์นนี้",
     mark_roll: bool = True,
+    build_embed: bool = False,
+    build_reroll_view: bool = False,
+    owner_id: int | None = None,
+    player_name: str | None = None,
 ):
     game = get_game(channel_id)
     if game is None:
@@ -962,7 +966,7 @@ def next_turn(channel_id: int):
     for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(channel_id, user_id)
-                print(success, payload)
+
                 if success:
                     mob_name = (
                         player.get("display_name")
