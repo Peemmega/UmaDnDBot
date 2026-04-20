@@ -93,16 +93,16 @@ MOB_PRESETS = {
             "gut": 1,
             "wit": 3,
 
-            "turf": 2,
-            "dirt": 1,
-            "sprint": 1,
-            "mile": 1,
-            "medium": 2,
-            "long": 2,
-            "front": 1,
-            "pace": 1,
-            "late": 3,
-            "end_style": 2,
+            "turf": 7,
+            "dirt": 6,
+            "sprint": 3,
+            "mile": 7,
+            "medium": 7,
+            "long": 6,
+            "front": 2,
+            "pace": 7,
+            "late": 7,
+            "end_style": 4,
         },
         "skills": {
             1: "s014",   # On Your Left!
@@ -115,11 +115,11 @@ MOB_PRESETS = {
             "points": 4,
             "build": {
                 "flat": 0,
-                "add_d": 2,
-                "add_kh": 2,         # 🔥 สาย late ต้อง kh เยอะ
+                "add_d": 3,
+                "add_kh": 0,         # 🔥 สาย late ต้อง kh เยอะ
                 "floor": 0,
-                "selected_die": 1,
-                "cap": 2,
+                "selected_die": 0,
+                "cap": 3,
                 "self_heal_stamina": 0,
             }
         },
@@ -135,16 +135,16 @@ MOB_PRESETS = {
             "gut": 0,
             "wit": 3,
 
-            "turf": 2,
+            "turf": 7,
             "dirt": 1,
-            "sprint": 3,
-            "mile": 2,
-            "medium": 1,
+            "sprint": 2,
+            "mile": 6,
+            "medium": 7,
             "long": 1,
             "front": 1,
             "pace": 1,
-            "late": 2,
-            "end_style": 3,
+            "late": 6,
+            "end_style": 7,
         },
         "skills": {
             1: "s002",   # Encroaching Shadow
@@ -157,10 +157,10 @@ MOB_PRESETS = {
             "points": 4,
             "build": {
                 "flat": 0,
-                "add_d": 0,
+                "add_d": 2,
                 "add_kh": 0,
                 "floor": 0,
-                "selected_die": 2,   # 🔥 boost ลูกที่เลือก
+                "selected_die": 0,   # 🔥 boost ลูกที่เลือก
                 "cap": 4,            # 🔥 สำคัญมากกับ 10d
                 "self_heal_stamina": 0,
             }
@@ -168,25 +168,25 @@ MOB_PRESETS = {
     },
 
     "boss_champion": {
-        "name": "Champion Alpha",
+        "name": "Beyond The Light",
         "style": "Pace",
         "race_profile": {
-            "speed": 5,
-            "stamina": 5,
-            "power": 5,
-            "gut": 4,
+            "speed": 6,
+            "stamina": 4,
+            "power": 3,
+            "gut": 1,
             "wit": 4,
             
-            "turf": 3,
-            "dirt": 2,
-            "sprint": 2,
-            "mile": 3,
-            "medium": 3,
-            "long": 3,
-            "front": 2,
-            "pace": 4,
-            "late": 3,
-            "end_style": 2,
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 1,
+            "mile": 7,
+            "medium": 7,
+            "long": 6,
+            "front": 1,
+            "pace": 7,
+            "late": 6,
+            "end_style": 1,
         },
         "skills": {
             1: "s012",   # Speed Star
@@ -202,8 +202,8 @@ MOB_PRESETS = {
                 "add_d": 2,
                 "add_kh": 1,
                 "floor": 0,
-                "selected_die": 1,
-                "cap": 5,
+                "selected_die": 0,
+                "cap": 3,
                 "self_heal_stamina": 0,
             }
         },

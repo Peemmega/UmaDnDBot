@@ -242,9 +242,9 @@ class GameCog(commands.GroupCog, name="game"):
     @discord.app_commands.choices(preset=[
         discord.app_commands.Choice(name="Rookie Front", value="rookie_front"),
         discord.app_commands.Choice(name="Field Pace", value="runner_pace"),
-        discord.app_commands.Choice(name="Shadow Chaser", value="chaser_late"),
-        discord.app_commands.Choice(name="Sprint Phantom", value="sprinter_end"),
-        discord.app_commands.Choice(name="Champion Alpha", value="boss_champion"),
+        discord.app_commands.Choice(name="Oguri Cap", value="chaser_late"),
+        discord.app_commands.Choice(name="Obey Your Master", value="sprinter_end"),
+        discord.app_commands.Choice(name="Beyond The Light", value="boss_champion"),
     ])
     async def add_mob(self, interaction: discord.Interaction, preset: discord.app_commands.Choice[str]):
         success, message = add_mob_from_preset(interaction.channel_id, preset.value)
