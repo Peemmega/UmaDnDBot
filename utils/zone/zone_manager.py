@@ -149,6 +149,7 @@ def apply_zone_in_game(player: dict) -> tuple[bool, str]:
 
     return True, "\n".join(lines)
 
+    
 def get_zone_effect_preview(zone: dict) -> dict:
     build = zone.get("build", {})
 
