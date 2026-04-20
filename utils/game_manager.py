@@ -279,57 +279,102 @@ def start_game(channel_id: int):
     }
 
     for user_id, player in game["players"].items():
-        db_player = get_player(user_id)
+        is_mob = player.get("is_mob", False)
 
-        if db_player is None:
-            db_player = {
-                "speed": 1,
-                "stamina": 1,
-                "power": 1,
-                "gut": 1,
-                "wit": 1,
-                "turf": 1,
-                "dirt": 1,
-                "sprint": 1,
-                "mile": 1,
-                "medium": 1,
-                "long": 1,
-                "front": 1,
-                "pace": 1,
-                "late": 1,
-                "end_style": 1,
+        if is_mob:
+            # mob ใช้ค่า preset ที่มีอยู่ใน player อยู่แล้ว
+            base_player = player.get("race_profile", {}).copy()
+
+            if not base_player:
+                base_player = {
+                    "speed": 1,
+                    "stamina": 1,
+                    "power": 1,
+                    "gut": 1,
+                    "wit": 1,
+                    "turf": 1,
+                    "dirt": 1,
+                    "sprint": 1,
+                    "mile": 1,
+                    "medium": 1,
+                    "long": 1,
+                    "front": 1,
+                    "pace": 1,
+                    "late": 1,
+                    "end_style": 1,
+                }
+
+            player["reroll_left"] = player.get("reroll_left", 0)
+            player["wit_reroll_left"] = player.get("wit_reroll_left", 0)
+            player["stamina_left"] = 8 + base_player["stamina"]
+
+            # reset race_profile ใหม่จากฐาน preset
+            player["race_profile"] = base_player.copy()
+
+            # mob ใช้ skills จาก preset เดิม ไม่ต้องโหลดจาก DB
+            player["skills"] = player.get("skills", {
+                1: None,
+                2: None,
+                3: None,
+            })
+
+        else:
+            db_player = get_player(user_id)
+
+            if db_player is None:
+                db_player = {
+                    "speed": 1,
+                    "stamina": 1,
+                    "power": 1,
+                    "gut": 1,
+                    "wit": 1,
+                    "turf": 1,
+                    "dirt": 1,
+                    "sprint": 1,
+                    "mile": 1,
+                    "medium": 1,
+                    "long": 1,
+                    "front": 1,
+                    "pace": 1,
+                    "late": 1,
+                    "end_style": 1,
+                }
+
+            player["reroll_left"] = 2
+            player["wit_reroll_left"] = 2
+            player["stamina_left"] = 8 + db_player["stamina"]
+
+            player["race_profile"] = db_player.copy()
+
+            slots = get_player_skill_slots(user_id) or {
+                "slot_1": None,
+                "slot_2": None,
+                "slot_3": None,
             }
 
-        player["reroll_left"] = 2
-        player["wit_reroll_left"] = 2
-        player["stamina_left"] = 8 + db_player["stamina"]
+            player["skills"] = {
+                1: slots["slot_1"],
+                2: slots["slot_2"],
+                3: slots["slot_3"],
+            }
 
-        player["race_profile"] = db_player.copy()
+            # zone ของผู้เล่นจริง ถ้ายังใช้ในเกม
+            if "zone" not in player and "zone" in db_player:
+                player["zone"] = {
+                    "name": db_player["zone"]["name"],
+                    "image_url": db_player["zone"]["image_url"],
+                    "points": db_player["zone"]["points"],
+                    "build": db_player["zone"]["build"],
+                    "left": 1,
+                }
 
-        slots = get_player_skill_slots(user_id) or {
-            "slot_1": None,
-            "slot_2": None,
-            "slot_3": None,
-        }
-
-        # print("START GAME SKILL SNAPSHOT", user_id, slots)
-
-        player["skills"] = {
-            1: slots["slot_1"],
-            2: slots["slot_2"],
-            3: slots["slot_3"],
-        }
-
-        # print("PLAYER SKILLS IN GAME", user_id, player["skills"])
-
+        # reset กลางเกม ใช้ร่วมกันทั้ง player จริงและ mob
         player["skill_cooldowns"] = {}
-
         player["wit_mana"] = 100
-
         player["used_rush"] = False
         player["used_block"] = False
         player["action_locked"] = False
-        
+
         player["next_roll_flat_bonus"] = 0
         player["next_roll_add_d"] = 0
         player["next_roll_add_kh"] = 0
@@ -341,10 +386,15 @@ def start_game(channel_id: int):
         player["no_reroll_next_turn"] = False
         player["last_roll_turn"] = -1
 
-        player["zone_left"] = 1
+        # ถ้าอยากเก็บ zone_left แยกไว้ด้วยก็ใส่ แต่ผมแนะนำใช้ player["zone"]["left"] อย่างเดียว
+        if player.get("zone"):
+            player["zone"]["left"] = player["zone"].get("left", 1)
+
+        # ===== attitude bonus =====
+        att_source = player["race_profile"]
 
         att = get_attitude_values(
-            db_player,
+            att_source,
             game["track"],
             game["distance"],
             player["style"]
@@ -355,57 +405,51 @@ def start_game(channel_id: int):
         player["race_profile"]["power"] += att_bonus["power"]
         player["race_profile"]["speed"] += att_bonus["speed"]
         player["race_profile"]["wit"] += att_bonus["wit"]
-        
+
+        # optional: เก็บไว้ดูใน UI
+        player["attitude_bonus"] = att_bonus
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
 
-def add_mob_from_preset(channel_id: int, preset_key: str):
-    game = get_game(channel_id)
-    if game is None:
-        return False, "ยังไม่มีเกมในห้องนี้"
 
-    if game["started"]:
-        return False, "เกมเริ่มแล้ว ไม่สามารถเพิ่ม mob ได้"
+def build_mob_join_embed(game: dict, player: dict):
+    surface = game.get("surface", "Turf")
+    distance = game.get("distance", "Medium")
 
-    preset = MOB_PRESETS.get(preset_key)
-    if preset is None:
-        return False, "ไม่พบ preset mob"
+    mob_name = (
+        player.get("display_name")
+        or player.get("username")
+        or player.get("name")
+        or "Mob"
+    )
 
-    mob_id = f"mob_{uuid.uuid4().hex[:8]}"
+    style = player.get("style", "Unknown")
 
-    race_profile = copy.deepcopy(preset["race_profile"])
-    zone = copy.deepcopy(preset["zone"])
-    skills = copy.deepcopy(preset["skills"])
+    embed = discord.Embed(
+        title="🤖 Mob เข้าร่วม!",
+        color=discord.Color.orange()
+    )
 
-    game["players"][mob_id] = {
-        "username": preset["name"],
-        "display_name": preset["name"],
-        "is_mob": True,
-        "style": preset["style"],
-        "score": 0,
-        "last_roll_turn": -1,
-        "reroll_left": 0,
-        "wit_reroll_left": 0,
-        "stamina_left": 8 + race_profile.get("stamina", 1),
-        "wit_mana": 100,
-        "skills": skills,
-        "skill_cooldowns": {},
-        "race_profile": race_profile,
-        "used_rush": False,
-        "used_block": False,
-        "action_locked": False,
-        "next_roll_flat_bonus": 0,
-        "next_roll_add_d": 0,
-        "next_roll_add_kh": 0,
-        "next_roll_floor_bonus": 0,
-        "next_roll_selected_die_bonus": 0,
-        "next_roll_cap_bonus": 0,
-        "no_reroll_this_turn": False,
-        "no_reroll_next_turn": False,
-        "zone": zone,
-    }
+    embed.add_field(name="ชื่อ", value=mob_name, inline=True)
+    embed.add_field(name="Style", value=style, inline=True)
 
-    return True, f"เพิ่ม mob `{preset['name']}` เรียบร้อย"
+    # 🔥 ใช้ race_profile แทน db_player
+    race_profile = player.get("race_profile", {})
+
+    att = get_attitude_values(race_profile, surface, distance, style)
+    att_bonus = build_attitude_stat_bonus(att)
+
+    embed.add_field(
+        name="📊 Attitude Bonus",
+        value=(
+            f"{Status_Icon_Type['POW']} +{att_bonus['power']}\n"
+            f"{Status_Icon_Type['SPD']} +{att_bonus['speed']}\n"
+            f"{Status_Icon_Type['WIT']} +{att_bonus['wit']}"
+        ),
+        inline=False
+    )
+
+    return embed
 
 def get_attitude_values(db_player, surface, distance, style):
     surface_key = "turf" if surface == "Turf" else "dirt"
@@ -987,6 +1031,58 @@ def add_player(channel_id, user_id, display_name: str, style):
     }
 
     return True, "เข้าร่วมเกมสำเร็จ"
+
+def add_mob_from_preset(channel_id: int, preset_key: str):
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+
+    if game["started"]:
+        return False, "เกมเริ่มแล้ว ไม่สามารถเพิ่ม mob ได้"
+
+    preset = MOB_PRESETS.get(preset_key)
+    if preset is None:
+        return False, "ไม่พบ preset mob"
+
+    mob_id = f"mob_{uuid.uuid4().hex[:8]}"
+
+    race_profile = copy.deepcopy(preset["race_profile"])
+    zone = copy.deepcopy(preset["zone"])
+    skills = copy.deepcopy(preset["skills"])
+
+    game["players"][mob_id] = {
+        "username": preset["name"],
+        "display_name": preset["name"],
+        "is_mob": True,
+        "style": preset["style"],
+        "score": 0,
+        "last_roll_turn": -1,
+        "reroll_left": 0,
+        "wit_reroll_left": 0,
+        "stamina_left": 8 + race_profile.get("stamina", 1),
+        "wit_mana": 100,
+        "skills": skills,
+        "skill_cooldowns": {},
+        "race_profile": race_profile,
+        "used_rush": False,
+        "used_block": False,
+        "action_locked": False,
+
+        "next_roll_flat_bonus": 0,
+        "next_roll_add_d": 0,
+        "next_roll_add_kh": 0,
+        "next_roll_floor_bonus": 0,
+        "next_roll_selected_die_bonus": 0,
+        "next_roll_cap_bonus": 0,
+        "no_reroll_this_turn": False,
+        "no_reroll_next_turn": False,
+        "zone_left": 1,
+
+        "zone": zone,
+    }
+
+    return True, f"เพิ่ม mob `{preset['name']}` เรียบร้อย"
+
 
 def grant_start_rerolls(channel_id: int, amount: int = 2):
     game = get_game(channel_id)

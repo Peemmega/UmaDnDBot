@@ -44,7 +44,8 @@ from utils.game_manager import (
     have_all_players_rolled,
     start_turn_confirmation,
     is_skill_on_cooldown,
-    add_mob_from_preset
+    add_mob_from_preset,
+    build_mob_join_embed
 )
 
 def render_path(path: list[int]) -> str:
@@ -235,7 +236,14 @@ class GameCog(commands.GroupCog, name="game"):
     ])
     async def add_mob(self, interaction: discord.Interaction, preset: discord.app_commands.Choice[str]):
         success, message = add_mob_from_preset(interaction.channel_id, preset.value)
-        await interaction.response.send_message(message, ephemeral=True)
+
+        if success:
+            game = get_game(interaction.channel_id)
+
+            mob = list(game["players"].values())[-1]
+            embed = build_mob_join_embed(game, mob)
+
+            await interaction.response.send_message(embed=embed)
 
 
     async def process_next_turn(self, interaction: discord.Interaction):
