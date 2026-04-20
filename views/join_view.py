@@ -214,11 +214,10 @@ class LobbyView(discord.ui.View):
 
         embed = discord.Embed(
             title="🏁 เกมเริ่มแล้ว!",
-            description=f"ด่าน: {game['stage_name']}",
+            description=f"สนาม: {game['stage_name']} เทิร์นที่ 1",
             color=discord.Color.gold()
         )
-        embed.add_field(name="เทิร์นปัจจุบัน", value=str(game["turn"]), inline=True)
-        embed.add_field(name="📢 วิธีเล่น", value=f"ในแต่ละ turn สามาใช้งาน /game run เพื่อวิ่ง\nนอกจากนี้ยังสามารถใช้งานสกิลโดยใช้ /game skill(แนะนำให้ใช้ก่อน run)", inline=True)
+        embed.add_field(name="📢 วิธีเล่น", value=f"ในแต่ละ turn สามาใช้งาน\n /game run เพื่อวิ่ง\nนอกจากนี้ยังสามารถใช้งานสกิลโดยใช้\n/game skill(แนะนำให้ใช้ก่อน run)", inline=True)
         
         embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1495728671300780083/uma-musume-running.gif?ex=69e74d60&is=69e5fbe0&hm=958b07dacfcb4c4b2bb82049ac1863c8d1b4ecc2122514250b3b18104b9ce09a&=&width=747&height=422")
         await interaction.followup.send(embed=embed)
