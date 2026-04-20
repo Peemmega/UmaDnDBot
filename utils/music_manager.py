@@ -53,7 +53,6 @@ async def leave_voice(guild: discord.Guild | None) -> tuple[bool, str]:
     except Exception as e:
         return False, f"ไม่สามารถออกจากห้องเสียงได้: {e}"
 
-
 def play_bgm(guild: discord.Guild | None) -> tuple[bool, str]:
     if guild is None:
         return False, "ไม่พบเซิร์ฟเวอร์"
@@ -65,18 +64,20 @@ def play_bgm(guild: discord.Guild | None) -> tuple[bool, str]:
     if not os.path.exists(BGM_PATH):
         return False, f"ไม่พบไฟล์เพลง: {BGM_PATH}"
 
+    if platform.system() == "Windows" and not os.path.exists(FFMPEG_EXECUTABLE):
+        return False, f"ไม่พบ ffmpeg: {FFMPEG_EXECUTABLE}"
+
     try:
         if voice_client.is_playing():
             voice_client.stop()
 
         source = discord.FFmpegPCMAudio(
             BGM_PATH,
-            executable="ffmpeg",
+            executable=FFMPEG_EXECUTABLE,
             options="-vn"
         )
         voice_client.play(source)
         return True, "เริ่มเล่นเพลงแล้ว"
-
     except Exception as e:
         return False, f"ไม่สามารถเปิดเพลงได้: {e}"
 
