@@ -10,6 +10,7 @@ from utils.game_manager import (
     build_attitude_stat_bonus
 )
 from utils.dice.dice_presets import DICE_PRESET
+from utils.icon_presets import Status_Icon_Type
 from utils.dice.dice_table import format_rule
 from utils.dice.race_dice import (
     build_dice_table_grid
@@ -149,9 +150,9 @@ class StyleSelectView(discord.ui.View):
         embed.add_field(
             name="📊 Attitude Bonus",
             value=(
-                f"🌿 Power +{att_bonus['power']}\n"
-                f"🏁 Speed +{att_bonus['speed']}\n"
-                f"🎯 Wit +{att_bonus['wit']}"
+                f"{Status_Icon_Type['POW']} +{att_bonus['power']}\n"
+                f"{Status_Icon_Type['SPD']} +{att_bonus['speed']}\n"
+                f"{Status_Icon_Type['WIT']} +{att_bonus['wit']}"
             ),
             inline=False
         )

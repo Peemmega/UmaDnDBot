@@ -234,7 +234,7 @@ def start_game(channel_id: int):
         att = get_attitude_values(
             db_player,
             game["track"],
-            game["distancce"],
+            game["distance"],
             player["style"]
         )
 
