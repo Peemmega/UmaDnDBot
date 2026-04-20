@@ -1,8 +1,14 @@
-import os
 import discord
+import os
+import platform
+import shutil
 
 BGM_PATH = "assets/music/LastSpurt.mp3"
 
+if platform.system() == "Windows":
+    FFMPEG_EXECUTABLE = r"C:\Users\peemm_a8kwyjd\ffmpeg\ffmpeg-master-latest-win64-gpl\bin\ffmpeg.exe"
+else:
+    FFMPEG_EXECUTABLE = shutil.which("ffmpeg") or "ffmpeg"
 
 async def join_user_voice(interaction: discord.Interaction) -> tuple[bool, str]:
     if interaction.guild is None:

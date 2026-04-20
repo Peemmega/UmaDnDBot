@@ -1,5 +1,2 @@
-[build]
-    nixpacksVersion = "latest"
-
-[build.variables]
-    NIXPACKS_PACKAGES = "ffmpeg"
+[phases.setup]
+nixPkgs = ["ffmpeg"]
