@@ -3,3 +3,4 @@ python-dotenv
 Pillow
 PyNaCl
 discord.py[voice]
+pynacl
