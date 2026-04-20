@@ -3,14 +3,16 @@
   "build": {
     "builder": "NIXPACKS"
   },
-  "deploy": {
-    "numReplicas": 1,
-    "sleepApplication": false
-  },
   "nixpacks": {
     "pkgs": [
       "python311",
       "ffmpeg"
-    ]
+    ],
+    "setup": {
+       "nixPkgs": ["python311", "ffmpeg"]
+    }
+  },
+  "deploy": {
+    "startCommand": "python main.py"
   }
 }
