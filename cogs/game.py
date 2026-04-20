@@ -534,13 +534,6 @@ class GameCog(commands.GroupCog, name="game"):
             interaction.user.id
         )
 
-        if playerInGame:
-            
-            zone_name = zone.get("name", "Default Zone")
-
-            zone_left = playerInGame.get("zone_left", 0)
-            zone_text = f"{zone_name}\nคงเหลือ: {zone_left}"
-
         if playerInGame and playerInGame.get("skills"):
             slots = {
                 "slot_1": playerInGame["skills"].get(1),
@@ -570,6 +563,12 @@ class GameCog(commands.GroupCog, name="game"):
             return False, "ไม่พบข้อมูล Zone"
 
         zone_text = "ยังไม่อยู่ในเกม"
+        if playerInGame:
+            zone_name = zone.get("name", "Default Zone")
+
+            zone_left = playerInGame.get("zone_left", 0)
+            zone_text = f"{zone_name}\nคงเหลือ: {zone_left}"
+
 
         embed.add_field(
             name="🌌 Zone",
