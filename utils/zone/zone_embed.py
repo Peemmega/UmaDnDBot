@@ -142,7 +142,7 @@ def build_zone_used_preview_embed(player: dict) -> discord.Embed:
     zone_name = zone.get("name", "Default Zone")
     zone_img = zone.get("image_url", DEFAULT_ZONE_IMAGE)
     result_text = get_zone_effect(zone)
-    
+
     embed = discord.Embed(
         title=f"🌌 {player.get('username', 'Unknown')} ใช้งาน Zone:\n【{zone_name}】",
         description=result_text,

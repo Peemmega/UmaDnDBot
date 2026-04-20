@@ -103,12 +103,7 @@ class ProfileCog(commands.Cog):
     async def zone_preview_cmd(self, interaction: discord.Interaction):
         player = ensure_player(interaction.user.id, interaction.user.name)
 
-        success, result_text = apply_zone_in_game(player)
-        if not success:
-            await interaction.response.send_message(result_text, ephemeral=True)
-            return
-    
-        embed = build_zone_used_preview_embed(player,result_text)
+        embed = build_zone_used_preview_embed(player)
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
