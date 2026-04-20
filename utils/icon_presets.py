@@ -21,6 +21,17 @@ ICONS = {
     "Aoharu": "<:Aoharu:1495417469328949258>",
 }
 
+GRADE_TEXT = {
+    1: "G",
+    2: "F",
+    3: "E",
+    4: "D",
+    5: "C",
+    6: "B",
+    7: "A",
+    8: "S",
+}
+
 GRADE_IMAGE_MAP = {
     1: "G.png",
     2: "F.png",

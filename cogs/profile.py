@@ -2,13 +2,12 @@ import discord
 from discord.ext import commands
 import io
 
-from utils.database import ensure_player, update_player_username,set_player_zone_name,set_player_zone_image_url
+from utils.database import ensure_player, update_player_username,set_player_zone_name,set_player_zone_image_url,set_all_attitude
 from views.profile_stat_view import ProfileStatView, build_stat_embed
 from utils.player_card import create_stats_card
-from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
+from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type, GRADE_TEXT
 from views.zone_manage_view import ZoneManageView
 from utils.zone.zone_embed import build_zone_manage_embed, build_zone_used_preview_embed
-from utils.zone.zone_manager import apply_zone_in_game
 
 def get_stat_emoji(value: int) -> str:
     value = max(1, min(value, 8))
@@ -186,6 +185,31 @@ class ProfileCog(commands.Cog):
             f"เปลี่ยนชื่อโปรไฟล์เป็น **{new_name.strip()}** เรียบร้อยแล้ว"
         )
 
+
+    @discord.app_commands.command(name="set_all_att", description="ตั้งค่า attitude ทั้งหมด (สำหรับทดสอบ)")
+    @discord.app_commands.describe(value="ระดับ 1-8")
+    @discord.app_commands.choices(value=[
+        discord.app_commands.Choice(name="1", value=1),
+        discord.app_commands.Choice(name="2", value=2),
+        discord.app_commands.Choice(name="3", value=3),
+        discord.app_commands.Choice(name="4", value=4),
+        discord.app_commands.Choice(name="5", value=5),
+        discord.app_commands.Choice(name="6", value=6),
+        discord.app_commands.Choice(name="7", value=7),
+        discord.app_commands.Choice(name="8", value=8),
+    ])
+    async def set_all_att(self, interaction: discord.Interaction, value: discord.app_commands.Choice[int]):
+
+        ensure_player(interaction.user.id, interaction.user.name)
+
+        set_all_attitude(interaction.user.id, value.value)
+
+        grade = GRADE_TEXT.get(value.value, str(value.value))
+
+        await interaction.response.send_message(
+            f"📊 ตั้งค่า Attitude ทั้งหมดเป็นระดับ {grade} ({value.value})",
+            ephemeral=True
+        )
 
     # @discord.app_commands.command(name="profile", description="ดูข้อมูลผู้เล่น")
     # async def profile(self, interaction: discord.Interaction):

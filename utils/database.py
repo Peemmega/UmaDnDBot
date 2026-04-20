@@ -388,6 +388,34 @@ def get_player(user_id: int) -> Optional[dict]:
         }
     }
 
+def set_all_attitude(user_id: int, value: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE players
+    SET
+        turf = ?,
+        dirt = ?,
+        sprint = ?,
+        mile = ?,
+        medium = ?,
+        long = ?,
+        front = ?,
+        pace = ?,
+        late = ?,
+        end_style = ?
+    WHERE user_id = ?
+    """, (
+        value, value,
+        value, value, value, value,
+        value, value, value, value,
+        user_id
+    ))
+
+    conn.commit()
+    conn.close()
+
 def reset_zone_build(zone: dict) -> None:
     if "build" not in zone or not isinstance(zone["build"], dict):
         zone["build"] = {}
