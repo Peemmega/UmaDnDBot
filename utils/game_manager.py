@@ -852,12 +852,8 @@ def process_mob_turn(channel_id: int, user_id: str):
         return False, {"message": "ไม่พบ mob"}
 
     # ✅ ใช้ zone_left
-    zone_text = None
     zone_success = False
-    print(player.get("is_mob")
-        , game["turn"] == game["max_turn"]
-        , player.get("zone_left", 0) > 0 ,game["turn"], game["max_turn"] )
-        
+    
     
     if (
         player.get("is_mob")
@@ -867,8 +863,6 @@ def process_mob_turn(channel_id: int, user_id: str):
         zone_success, zone_text = apply_zone_in_game(player)
         if zone_success:
             player["zone_left"] -= 1   # 🔥 สำคัญ
-        else:
-            zone_text = None
 
     success, payload = execute_roll_core(
         channel_id=channel_id,
@@ -901,6 +895,9 @@ def process_mob_turn(channel_id: int, user_id: str):
     if zone_success:
         payload["zone_preview"] = build_zone_used_preview_embed(player)
     
+    print(player.get("is_mob"), game["turn"] == game["max_turn"], player.get("zone_left", 0) > 0 ,game["turn"], game["max_turn"],zone_success,payload["zone_preview"] )
+            
+
     return True, payload
 
 def build_single_wit_regen_text(game_player: dict) -> str:

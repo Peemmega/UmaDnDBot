@@ -367,6 +367,8 @@ class GameCog(commands.GroupCog, name="game"):
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(interaction.channel_id, user_id)
+                if success and payload.get("zone_preview"):
+                    await interaction.followup.send(embed=payload["zone_preview"])
                 if success and payload.get("embed"):
                     await interaction.followup.send(embed=payload["embed"])
 
