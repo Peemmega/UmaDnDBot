@@ -164,13 +164,13 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
 
     bonus_parts = []
     if total_spd_bonus > 0:
-        bonus_parts.append(f"+{total_spd_bonus}{get_stat_icon("SPD")}")
+        bonus_parts.append(f"+{total_spd_bonus}{get_stat_icon('SPD')}")
     if gut_bonus > 0:
-        bonus_parts.append(f"+{gut_bonus}{get_stat_icon("GUT")}")
+        bonus_parts.append(f"+{gut_bonus}{get_stat_icon('GUT')}")
     if final_power_bonus > 0:
-        bonus_parts.append(f"+{final_power_bonus}{get_stat_icon("POW")}")
+        bonus_parts.append(f"+{final_power_bonus}{get_stat_icon('POW')}")
     if flat_velocity_bonus > 0:
-        bonus_parts.append(f"+{flat_velocity_bonus}{ICON["Velocity"]}")
+        bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
 
     bonus_display = " ".join(bonus_parts) if bonus_parts else "-"
     total_display = str(total)

@@ -118,19 +118,19 @@ class ProfileStatView(discord.ui.View):
     # -------- แถวบน (เพิ่ม) --------
     @discord.ui.button(label="SPD +", style=discord.ButtonStyle.success, row=0, custom_id="add_speed")
     async def add_speed_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.add_stat(interaction, "speed", "SPD")
+        await self.add_stat(interaction, "speed", 'SPD')
 
     @discord.ui.button(label="SPD -", style=discord.ButtonStyle.danger, row=1, custom_id="remove_speed")
     async def remove_speed_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.remove_stat(interaction, "speed", "SPD")
+        await self.remove_stat(interaction, "speed", 'SPD')
 
     @discord.ui.button(label="STA +", style=discord.ButtonStyle.success, row=0, custom_id="add_stamina")
     async def add_stamina_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.add_stat(interaction, "stamina", "STA")
+        await self.add_stat(interaction, "stamina", 'STA')
 
     @discord.ui.button(label="STA -", style=discord.ButtonStyle.danger, row=1, custom_id="remove_stamina")
     async def remove_stamina_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.remove_stat(interaction, "stamina", "STA")
+        await self.remove_stat(interaction, "stamina", 'STA')
 
     @discord.ui.button(label="POW +", style=discord.ButtonStyle.success, row=0, custom_id="add_power")
     async def add_power_button(self, interaction: discord.Interaction, button: discord.ui.Button):
