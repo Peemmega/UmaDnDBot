@@ -3,12 +3,12 @@ from discord.ext import commands
 import io
 
 from utils.database import ensure_player, update_player_username,set_player_zone_name,set_player_zone_image_url
-from utils.game_manager import get_player_in_game
 from views.profile_stat_view import ProfileStatView, build_stat_embed
 from utils.player_card import create_stats_card
 from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
 from views.zone_manage_view import ZoneManageView
-from utils.zone.zone_embed import build_zone_manage_embed, zone_preview
+from utils.zone.zone_embed import build_zone_manage_embed, build_zone_used_preview_embed
+from utils.zone.zone_manager import apply_zone_in_game
 
 def get_stat_emoji(value: int) -> str:
     value = max(1, min(value, 8))
@@ -101,18 +101,15 @@ class ProfileCog(commands.Cog):
 
     @discord.app_commands.command(name="zone_preview", description="ดูตัวอย่างผลของ Zone")
     async def zone_preview_cmd(self, interaction: discord.Interaction):
-        user_id = interaction.user.id
+        player = ensure_player(interaction.user.id, interaction.user.name)
 
-        player = get_player_in_game(user_id)  # เปลี่ยนเป็นฟังก์ชันที่คุณใช้จริง
-
-        if player is None:
-            await interaction.response.send_message(
-                "คุณยังไม่ได้อยู่ในเกม",
-                ephemeral=True
-            )
+        success, result_text = apply_zone_in_game(player)
+        if not success:
+            await interaction.response.send_message(result_text, ephemeral=True)
             return
+    
+        embed = build_zone_used_preview_embed(player,result_text)
 
-        embed = zone_preview(player)
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @discord.app_commands.command(name="zone_set", description="ตั้งค่า Zone (ชื่อ / รูป)")

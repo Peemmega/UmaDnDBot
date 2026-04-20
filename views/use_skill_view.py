@@ -18,7 +18,7 @@ from utils.skill.skill_runtime import (
 )
 
 from utils.zone.zone_manager import apply_zone_in_game
-from utils.zone.zone_preset import DEFAULT_ZONE_IMAGE
+from utils.zone.zone_embed import build_zone_used_preview_embed
 
 from utils.skill.skill_presets import SKILLS, ICON
 from utils.icon_presets import Status_Icon_Type
@@ -218,20 +218,7 @@ class UseSkillView(discord.ui.View):
         if not success:
             await interaction.response.send_message(result_text, ephemeral=True)
             return
-
-        zone = player.get("zone")
-        if not zone:
-            return False, "ไม่พบข้อมูล Zone"
-
-        zone_name = zone.get("name", "Default Zone")
-        zone_img = zone.get("image_url", DEFAULT_ZONE_IMAGE)
-
-        embed = discord.Embed(
-            title=f"🌌 {player["username"]} ใช้งาน Zone:\n【{zone_name}】",
-            description=result_text,
-            color=discord.Color.purple()
-        )
-
-        embed.set_image(url=zone_img)
+    
+        embed = build_zone_used_preview_embed(player)
 
         await interaction.response.send_message(embed=embed, ephemeral=False)

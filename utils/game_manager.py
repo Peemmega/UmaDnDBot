@@ -681,7 +681,7 @@ def grant_start_rerolls(channel_id: int, amount: int = 2):
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
 
-    for user_id, player in game["players"].items():
+    for _, player in game["players"].items():
         player["reroll_left"] = 2
 
     return True, f"แจก reroll คนละ {amount} ครั้งแล้ว"

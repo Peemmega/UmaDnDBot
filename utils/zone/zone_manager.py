@@ -103,30 +103,13 @@ def get_zone_effects_from_build(zone_build: dict) -> dict:
         "self_heal_stamina": int(zone_build.get("self_heal_stamina", 0)) * 2,
     }
 
-def apply_zone_in_game(player: dict) -> tuple[bool, str]:
-    zone = player.get("zone")
-    zone_left = player.get("zone_left")
-    if not zone:
-        return False, "ไม่พบข้อมูล Zone"
-
-    if zone_left <= 0:
-        return False, "Zone ถูกใช้ไปแล้ว"
-
+def get_zone_effect(zone: dict) -> tuple[bool, str]:
     zone_build = zone.get("build", {})
+    if not zone_build:
+        return "ไม่พบข้อมูล zone_build"
+
     effects = get_zone_effects_from_build(zone_build)
-
-    player["next_roll_flat_bonus"] = player.get("next_roll_flat_bonus", 0) + effects["flat"]
-    player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + effects["add_d"]
-    player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + effects["add_kh"]
-    player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + effects["floor"]
-    player["next_roll_selected_die_bonus"] = player.get("next_roll_selected_die_bonus", 0) + effects["selected_die"]
-    player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + effects["cap"]
-
     heal_value = effects.get("self_heal_stamina", 0)
-    if heal_value > 0:
-        player["stamina_left"] = player.get("stamina_left", 0) + heal_value
-
-    player["zone_left"] -= 1
 
     lines = []
     if effects["flat"]:
@@ -145,9 +128,39 @@ def apply_zone_in_game(player: dict) -> tuple[bool, str]:
         lines.append(f"❤️ ฟื้นฟู STA ตัวเอง +{heal_value}")
 
     if not lines:
-        lines.append("Zone ทำงาน แต่ยังไม่มีค่าที่อัปไว้")
+        lines.append("Zone ทำงาน แต่ยังไม่มีค่าที่อัปไว้")   
 
-    return True, "\n".join(lines)
+    return "\n".join(lines)
+
+def apply_zone_in_game(player: dict) -> tuple[bool, str]:
+    zone = player.get("zone")
+    zone_left = player.get("zone_left")
+    if not zone:
+        return False, "ไม่พบข้อมูล Zone"
+
+    if zone_left <= 0:
+        return False, "Zone ถูกใช้ไปแล้ว"
+
+    zone_build = zone.get("build", {})
+    effects = get_zone_effects_from_build(zone_build)
+
+    # Apply Effect to player
+    player["next_roll_flat_bonus"] = player.get("next_roll_flat_bonus", 0) + effects["flat"]
+    player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + effects["add_d"]
+    player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + effects["add_kh"]
+    player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + effects["floor"]
+    player["next_roll_selected_die_bonus"] = player.get("next_roll_selected_die_bonus", 0) + effects["selected_die"]
+    player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + effects["cap"]
+
+    heal_value = effects.get("self_heal_stamina", 0)
+    if heal_value > 0:
+        player["stamina_left"] = player.get("stamina_left", 0) + heal_value
+
+    player["zone_left"] -= 1
+
+    zone_detail = get_zone_effect(zone)
+
+    return True, zone_detail
 
     
 def get_zone_effect_preview(zone: dict) -> dict:
