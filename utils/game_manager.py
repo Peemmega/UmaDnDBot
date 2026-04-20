@@ -822,10 +822,11 @@ def build_run_embed(
     stamina_note: str | None,
     path_effect: dict,
     title_prefix: str = "วิ่งในเทิร์นนี้",
+    player_name: str | None = None,   # 👈 เพิ่ม
 ) -> discord.Embed:
     
-    name_part = f"{game_player["username"]} | " if game_player["username"] else ""
-    title = f"{name_part} Phase {result['phase']} {path_effect['label']} สาย {game_player['style']}"
+    name_part = f"{player_name} | " if player_name else ""
+    title = f"{name_part}Phase {result['phase']} {path_effect['label']} สาย {game_player['style']}"
     embed = discord.Embed(
         title=title,
         color=discord.Color.gold()
