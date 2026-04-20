@@ -226,7 +226,7 @@ class GameCog(commands.GroupCog, name="game"):
     async def process_next_turn(self, interaction: discord.Interaction):
         game = get_game(interaction.channel_id)
         if game is None:
-            await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
+            await interaction.followup.send("เกมยังไม่เข้าร่วม race", ephemeral=True)
             return
 
         # เก็บสถานะก่อนขึ้นเทิร์น
@@ -534,11 +534,6 @@ class GameCog(commands.GroupCog, name="game"):
             interaction.user.id
         )
 
-        zone = playerInGame.get("zone")
-        if not zone:
-            return False, "ไม่พบข้อมูล Zone"
-
-        zone_text = "ยังไม่อยู่ในเกม"
         if playerInGame:
             
             zone_name = zone.get("name", "Default Zone")
@@ -557,6 +552,10 @@ class GameCog(commands.GroupCog, name="game"):
             slots = get_player_skill_slots(interaction.user.id)
             wit_mana = "ยังไม่อยู่ในเกม"
 
+        if playerInGame is None:
+            await interaction.response.send_message("เกมยังไม่เข้าร่วม race", ephemeral=True)
+            return
+
         if slots is None:
             await interaction.response.send_message("ไม่พบข้อมูลผู้เล่น", ephemeral=True)
             return
@@ -565,6 +564,12 @@ class GameCog(commands.GroupCog, name="game"):
             title=f"📘 Skill Menu: {interaction.user.display_name}",
             color=discord.Color.blurple()
         )
+
+        zone = playerInGame.get("zone")
+        if not zone:
+            return False, "ไม่พบข้อมูล Zone"
+
+        zone_text = "ยังไม่อยู่ในเกม"
 
         embed.add_field(
             name="🌌 Zone",
