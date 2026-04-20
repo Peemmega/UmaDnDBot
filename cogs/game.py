@@ -10,7 +10,6 @@ from utils.narrater import (
     generate_commentary,
     build_narrator_players_from_ranked,
     generate_finish_commentary,
-    is_first_turn_of_phase
 )
 from utils.music_manager import play_bgm, stop_bgm
 
@@ -45,6 +44,7 @@ from utils.game_manager import (
     have_all_players_rolled,
     start_turn_confirmation,
     is_skill_on_cooldown,
+    add_mob_from_preset
 )
 
 def render_path(path: list[int]) -> str:
@@ -224,6 +224,20 @@ class GameCog(commands.GroupCog, name="game"):
             view=LobbyView(channel_id)
         )
 
+    @discord.app_commands.command(name="add_mob", description="เพิ่ม mob preset เข้าการแข่งขัน")
+    @discord.app_commands.describe(preset="preset ของ mob")
+    @discord.app_commands.choices(preset=[
+        discord.app_commands.Choice(name="Rookie Front", value="rookie_front"),
+        discord.app_commands.Choice(name="Field Pace", value="runner_pace"),
+        discord.app_commands.Choice(name="Shadow Chaser", value="chaser_late"),
+        discord.app_commands.Choice(name="Sprint Phantom", value="sprinter_end"),
+        discord.app_commands.Choice(name="Champion Alpha", value="boss_champion"),
+    ])
+    async def add_mob(self, interaction: discord.Interaction, preset: discord.app_commands.Choice[str]):
+        success, message = add_mob_from_preset(interaction.channel_id, preset.value)
+        await interaction.response.send_message(message, ephemeral=True)
+
+
     async def process_next_turn(self, interaction: discord.Interaction):
         game = get_game(interaction.channel_id)
         if game is None:
@@ -234,7 +248,7 @@ class GameCog(commands.GroupCog, name="game"):
         previous_ranked_players = get_ranked_players(interaction.channel_id)
         previous_players = build_narrator_players_from_ranked(previous_ranked_players)
 
-        new_turn = next_turn(interaction.channel_id)
+        new_turn, mob_embeds = next_turn(interaction.channel_id)
         # เกมจบ
         if new_turn > game["max_turn"]:
             ranked_players = get_ranked_players(interaction.channel_id)
@@ -322,6 +336,8 @@ class GameCog(commands.GroupCog, name="game"):
         #     print(msg)
 
         await interaction.followup.send(embed=embed)
+        for mob_embed in mob_embeds:
+            await interaction.followup.send(embed=mob_embed)
 
     async def process_next_turn_from_timeout(self, channel: discord.TextChannel):
         game = get_game(channel.id)
@@ -332,7 +348,7 @@ class GameCog(commands.GroupCog, name="game"):
         previous_ranked_players = get_ranked_players(channel.id)
         previous_players = build_narrator_players_from_ranked(previous_ranked_players)
 
-        new_turn = next_turn(channel.id)
+        new_turn, mob_embeds = next_turn(channel.id)
 
         # เกมจบ
         if new_turn > game["max_turn"]:

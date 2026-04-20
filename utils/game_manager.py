@@ -1,5 +1,9 @@
+import copy
+import uuid
 from utils.dice.race_presets import RACE_PRESET
 from utils.database import get_player, get_player_skill_slots
+from utils.mob.mob_presets import MOB_PRESETS
+from utils.dice.roll_service import execute_roll_core, build_mob_run_embed
 
 VALID_STYLES = {"Front", "Pace", "Late", "End"}
 games = {}
@@ -246,6 +250,54 @@ def start_game(channel_id: int):
         
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
+
+def add_mob_from_preset(channel_id: int, preset_key: str):
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+
+    if game["started"]:
+        return False, "เกมเริ่มแล้ว ไม่สามารถเพิ่ม mob ได้"
+
+    preset = MOB_PRESETS.get(preset_key)
+    if preset is None:
+        return False, "ไม่พบ preset mob"
+
+    mob_id = f"mob_{uuid.uuid4().hex[:8]}"
+
+    race_profile = copy.deepcopy(preset["race_profile"])
+    zone = copy.deepcopy(preset["zone"])
+    skills = copy.deepcopy(preset["skills"])
+
+    game["players"][mob_id] = {
+        "username": preset["name"],
+        "display_name": preset["name"],
+        "is_mob": True,
+        "style": preset["style"],
+        "score": 0,
+        "last_roll_turn": -1,
+        "reroll_left": 0,
+        "wit_reroll_left": 0,
+        "stamina_left": 8 + race_profile.get("stamina", 1),
+        "wit_mana": 100,
+        "skills": skills,
+        "skill_cooldowns": {},
+        "race_profile": race_profile,
+        "used_rush": False,
+        "used_block": False,
+        "action_locked": False,
+        "next_roll_flat_bonus": 0,
+        "next_roll_add_d": 0,
+        "next_roll_add_kh": 0,
+        "next_roll_floor_bonus": 0,
+        "next_roll_selected_die_bonus": 0,
+        "next_roll_cap_bonus": 0,
+        "no_reroll_this_turn": False,
+        "no_reroll_next_turn": False,
+        "zone": zone,
+    }
+
+    return True, f"เพิ่ม mob `{preset['name']}` เรียบร้อย"
 
 def get_attitude_values(db_player, surface, distance, style):
     surface_key = "turf" if surface == "Turf" else "dirt"
@@ -635,10 +687,23 @@ def use_reroll(channel_id: int, user_id: int):
     player["reroll_left"] -= 1
     return True, player["reroll_left"]
 
+def process_mob_turn(channel_id: int, user_id: str):
+    success, payload = execute_roll_core(
+        channel_id=channel_id,
+        user_id=user_id,
+        title_prefix="Mob วิ่งอัตโนมัติ",
+        mark_roll=True,
+    )
+
+    if not success:
+        return False, payload.get("message", "mob roll failed")
+
+    return True, payload
+
 def next_turn(channel_id: int):
     game = get_game(channel_id)
     if game is None:
-        return None
+        return None, []
 
     game["turn"] += 1
 
@@ -657,7 +722,23 @@ def next_turn(channel_id: int):
 
     apply_wit_regen(channel_id)
 
-    return game["turn"]
+    mob_embeds = []
+
+    for user_id, player in game["players"].items():
+        if player.get("is_mob"):
+            success, payload = process_mob_turn(channel_id, user_id)
+            if success:
+                embed = build_mob_run_embed(
+                    game=payload["game"],
+                    game_player=payload["game_player"],
+                    result=payload["result"],
+                    new_score=payload["new_score"],
+                    stamina_note=payload["stamina_note"],
+                    path_effect=payload["path_effect"],
+                )
+                mob_embeds.append(embed)
+
+    return game["turn"], mob_embeds
 
 def apply_wit_regen(channel_id: int):
     game = get_game(channel_id)

@@ -65,39 +65,112 @@ def build_run_embed(
 
     return embed
 
-
-async def execute_player_roll(
-    interaction: discord.Interaction,
+def build_mob_run_embed(
     *,
+    game: dict,
+    game_player: dict,
+    result: dict,
+    new_score: int,
+    stamina_note: str | None,
+    path_effect: dict,
+    title_prefix: str = "วิ่งในเทิร์นนี้",
+):
+    mob_name = (
+        game_player.get("display_name")
+        or game_player.get("username")
+        or game_player.get("name")
+        or "Mob"
+    )
+
+    embed = discord.Embed(
+        title=f"🤖 {mob_name} {title_prefix}",
+        color=discord.Color.orange()
+    )
+
+    embed.add_field(
+        name="🎲 Roll",
+        value=(
+            f"Base: **{result['base_total']}**\n"
+            f"โบนัส: {result['bonus_display']}\n"
+            f"รวม: **{result['total_display']}**"
+        ),
+        inline=True
+    )
+
+    embed.add_field(
+        name="🏁 Score",
+        value=f"**{new_score}**",
+        inline=True
+    )
+
+    embed.add_field(
+        name="❤️ STA",
+        value=stamina_note or "-",
+        inline=True
+    )
+
+    if result.get("selected"):
+        embed.add_field(
+            name="🎯 Selected Dice",
+            value=", ".join(str(x) for x in result["selected"]),
+            inline=False
+        )
+
+    if result.get("all_rolls"):
+        embed.add_field(
+            name="🎲 All Dice",
+            value=", ".join(str(x) for x in result["all_rolls"]),
+            inline=False
+        )
+
+    if path_effect:
+        effect_lines = []
+        if path_effect.get("flat_bonus", 0):
+            effect_lines.append(f"Flat {path_effect['flat_bonus']:+}")
+        if path_effect.get("stamina_cost", 0):
+            effect_lines.append(f"STA Cost -{path_effect['stamina_cost']}")
+        if path_effect.get("stamina_gain", 0):
+            effect_lines.append(f"STA Gain +{path_effect['stamina_gain']}")
+
+        if effect_lines:
+            embed.add_field(
+                name="🛤️ Path Effect",
+                value="\n".join(effect_lines),
+                inline=False
+            )
+
+    return embed
+
+def execute_roll_core(
+    *,
+    channel_id: int,
+    user_id,
     title_prefix: str = "วิ่งในเทิร์นนี้",
     mark_roll: bool = True,
-    allow_reroll_view: bool = True,
-) -> tuple[bool, dict]:
-    game = get_game(interaction.channel_id)
+):
+    game = get_game(channel_id)
     if game is None:
         return False, {"message": "ยังไม่มีเกมในห้องนี้"}
 
-    game_player = get_player_in_game(interaction.channel_id, interaction.user.id)
+    game_player = get_player_in_game(channel_id, user_id)
     if game_player is None:
-        return False, {"message": "คุณยังไม่ได้เข้าร่วมเกมนี้"}
+        return False, {"message": "ไม่พบผู้เล่นในเกม"}
 
     race_player = game_player.get("race_profile")
     if race_player is None:
         return False, {"message": "ไม่พบข้อมูล stat ตอนเริ่มเกม"}
+
     snapshot_scores = game["turn_snapshot_scores"]
 
+    pending_effects, merged_stats = build_pending_effects_from_player(game_player)
 
-    # Buff
-    pending_effects,merged_stats = build_pending_effects_from_player(game_player)
-
-    # path effect
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, race_player)
 
     result = roll_race_dice(
         style=game_player["style"],
         player=race_player,
-        player_id=interaction.user.id,
+        player_id=user_id,
         score_map=snapshot_scores,
         turn=game["turn"],
         max_turn=game["max_turn"],
@@ -105,15 +178,6 @@ async def execute_player_roll(
         skill_effects=pending_effects,
     )
 
-    # flat = merged_stats["flat"]
-    # if flat != 0:
-    #     sign = "+" if flat > 0 else ""
-    #     if result["bonus_display"] == "-":
-    #         result["bonus_display"] = f"NEXT{sign}{flat}"
-    #     else:
-    #         result["bonus_display"] += f" NEXT{sign}{flat}"
-
-    ## Clear Debuff -----------------------------------------------
     game_player["lastedBuff"] = merged_stats
 
     game_player["next_roll_flat_bonus"] = 0
@@ -122,9 +186,7 @@ async def execute_player_roll(
     game_player["next_roll_floor_bonus"] = 0
     game_player["next_roll_selected_die_bonus"] = 0
     game_player["next_roll_cap_bonus"] = 0
-    ## Clear Debuff -----------------------------------------------
 
-    # stamina -----------------------------------------------------------------------
     stamina_note = None
     stamina_gain = path_effect.get("stamina_gain", 0)
     stamina_cost = path_effect.get("stamina_cost", 0)
@@ -149,20 +211,50 @@ async def execute_player_roll(
             result["bonus_display"] += f" -30{Status_Icon_Type['STA']}"
         result["total_display"] = str(result["total"])
         stamina_note = f"{Status_Icon_Type['STA']} ไม่พอ โดนหัก 30 แต้ม"
-    # stamina -----------------------------------------------------------------------
 
-
-    # score
     success, new_score = update_player_score(
-        interaction.channel_id,
-        interaction.user.id,
+        channel_id,
+        user_id,
         result["total"]
     )
     if not success:
         return False, {"message": "ไม่สามารถอัปเดตคะแนนได้"}
 
     if mark_roll:
-        mark_player_rolled(interaction.channel_id, interaction.user.id)
+        mark_player_rolled(channel_id, user_id)
+
+    return True, {
+        "game": game,
+        "game_player": game_player,
+        "result": result,
+        "new_score": new_score,
+        "path_effect": path_effect,
+        "stamina_note": stamina_note,
+        "title_prefix": title_prefix,
+    }
+
+async def execute_player_roll(
+    interaction: discord.Interaction,
+    *,
+    title_prefix: str = "วิ่งในเทิร์นนี้",
+    mark_roll: bool = True,
+    allow_reroll_view: bool = True,
+) -> tuple[bool, dict]:
+    success, payload = execute_roll_core(
+        channel_id=interaction.channel_id,
+        user_id=interaction.user.id,
+        title_prefix=title_prefix,
+        mark_roll=mark_roll,
+    )
+    if not success:
+        return False, payload
+
+    game = payload["game"]
+    game_player = payload["game_player"]
+    result = payload["result"]
+    new_score = payload["new_score"]
+    path_effect = payload["path_effect"]
+    stamina_note = payload["stamina_note"]
 
     embed = build_run_embed(
         interaction=interaction,
@@ -188,12 +280,6 @@ async def execute_player_roll(
             wit_reroll_ok=wit_reroll_ok,
         )
 
-    return True, {
-        "game": game,
-        "game_player": game_player,
-        "result": result,
-        "new_score": new_score,
-        "embed": embed,
-        "view": view,
-        "path_effect": path_effect,
-    }
+    payload["embed"] = embed
+    payload["view"] = view
+    return True, payload
