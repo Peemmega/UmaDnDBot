@@ -8,13 +8,8 @@ BGM_PATH = "assets/music/LastSpurt.mp3"
 if platform.system() == "Windows":
     FFMPEG_EXECUTABLE = r"C:\Users\peemm_a8kwyjd\ffmpeg\ffmpeg-master-latest-win64-gpl\bin\ffmpeg.exe"
 else:
-    # พยายามหา ffmpeg จากระบบอัตโนมัติ
-    found_ffmpeg = shutil.which("ffmpeg")
-    if found_ffmpeg:
-        FFMPEG_EXECUTABLE = found_ffmpeg
-    else:
-        # ถ้าหาไม่เจอจริงๆ ให้ใส่ "ffmpeg" เฉยๆ เพื่อให้ library พยายามเรียกเอง
-        FFMPEG_EXECUTABLE = "ffmpeg"
+    # ใน Dockerfile (Linux) ffmpeg จะอยู่ที่นี่เสมอ
+    FFMPEG_EXECUTABLE = "/usr/bin/ffmpeg"
 
 print(f"Checking FFmpeg Path: {FFMPEG_EXECUTABLE}")
 print(f"Checking BGM Path: {os.path.abspath(BGM_PATH)}")
