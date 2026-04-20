@@ -1,6 +1,7 @@
 import os
 import shutil
 import platform
+import discord
 
 BGM_PATH = "assets/music/LastSpurt.mp3"
 
