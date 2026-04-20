@@ -3,7 +3,7 @@ import uuid
 from utils.dice.race_presets import RACE_PRESET
 from utils.database import get_player, get_player_skill_slots
 from utils.mob.mob_presets import MOB_PRESETS
-from utils.dice.roll_service import execute_roll_core, build_mob_run_embed
+from utils.mob.mob_roll import execute_roll_core, build_mob_run_embed
 
 VALID_STYLES = {"Front", "Pace", "Late", "End"}
 games = {}

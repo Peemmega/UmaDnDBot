@@ -1,6 +1,5 @@
 import discord
 from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player
-from utils.icon_presets import Status_Icon_Type
 from utils.dice.race_presets import get_current_path_type, get_path_effect
 from utils.dice.race_dice import roll_race_dice
 from utils.dice.roll_service import build_run_embed
