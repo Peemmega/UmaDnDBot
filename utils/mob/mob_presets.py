@@ -85,11 +85,11 @@ MOB_PRESETS = {
         "name": "Oguri Cap",
         "style": "Late",
         "race_profile": {
-            "speed": 5,
+            "speed": 7,
             "stamina": 4,
-            "power": 4,
+            "power": 6,
             "gut": 1,
-            "wit": 3,
+            "wit": 1,
 
             "turf": 7,
             "dirt": 6,
@@ -114,7 +114,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 3,
-                "floor": 0,
+                "floor": 3,
                 "selected_die": 0,
                 "cap": 3,
                 "self_heal_stamina": 0,
@@ -126,11 +126,11 @@ MOB_PRESETS = {
         "name": "Obey Your Master",
         "style": "End",
         "race_profile": {
-            "speed": 6,
+            "speed": 4,
             "stamina": 4,
-            "power": 3,
+            "power": 7,
             "gut": 0,
-            "wit": 3,
+            "wit": 1,
 
             "turf": 7,
             "dirt": 1,
@@ -155,9 +155,9 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 2,
-                "floor": 0,
+                "floor": 3,
                 "selected_die": 0,   # 🔥 boost ลูกที่เลือก
-                "cap": 4,            # 🔥 สำคัญมากกับ 10d
+                "cap": 2,            # 🔥 สำคัญมากกับ 10d
                 "self_heal_stamina": 0,
             }
         },
@@ -167,11 +167,11 @@ MOB_PRESETS = {
         "name": "Beyond The Light",
         "style": "Pace",
         "race_profile": {
-            "speed": 6,
+            "speed": 8,
             "stamina": 4,
-            "power": 3,
+            "power": 5,
             "gut": 1,
-            "wit": 4,
+            "wit": 1,
             
             "turf": 7,
             "dirt": 1,
@@ -197,10 +197,92 @@ MOB_PRESETS = {
                 "flat": 0,
                 "add_dkh": 2,
                 
-                "floor": 0,
+                "floor": 3,
                 "selected_die": 0,
                 "cap": 3,
                 "self_heal_stamina": 0,
+            }
+        },
+    },
+
+    "almond_eye": {
+        "name": "Almond Eye",
+        "style": "Pace",
+        "race_profile": {
+            "speed": 8,
+            "stamina": 4,
+            "power": 6,
+            "gut": 2,
+            "wit": 1,
+
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 2,
+            "mile": 7,
+            "medium": 7,
+            "long": 3,
+            "front": 1,
+            "pace": 7,
+            "late": 5,
+            "end_style": 2,
+        },
+        "skills": {
+            1: "s014",   # On Your Left!
+            2: "s039",   # Rising Dragon
+            3: "s042",   # Tail Nine
+        },
+        "zone": {
+            "name": "Peerless Heroine",
+            "image_url": "https://media.discordapp.net/attachments/1494733536656097340/1496040180648378428/-almond-eye.gif?ex=69e86f7e&is=69e71dfe&hm=3201c1caf77c93aebaa9050246a12b44920d492936be5df9ba20d7426a00f1a0&=&width=561&height=317",
+            "points": 6,
+            "build": {
+                "flat": 0,
+                "add_dkh": 3,
+                "floor": 3,
+                "selected_die": 0,
+                "cap": 3,
+                "self_heal_stamina": 0,
+            }
+        },
+    },
+
+    "equinox": {
+        "name": "Equinox",
+        "style": "Pace",
+        "race_profile": {
+            "speed": 8,
+            "stamina": 8,
+            "power": 8,
+            "gut": 8,
+            "wit": 8,
+
+            "turf": 8,
+            "dirt": 8,
+            "sprint": 8,
+            "mile": 8,
+            "medium": 8,
+            "long": 8,
+            "front": 8,
+            "pace": 8,
+            "late": 8,
+            "end_style": 8,
+        },
+        "skills": {
+            1: "s012",   # Speed Star
+            2: "s035",   # Radiant Star
+            3: "s041",   # Rising Dragon / หรือสกิลท้ายแรงตัวอื่น
+        },
+        "zone": {
+            "name": "I SHOW SPEED",
+            "image_url": "https://media.discordapp.net/attachments/1494733536656097340/1496040976911831142/ishowspeed-speed.gif?ex=69e8703b&is=69e71ebb&hm=2b52dfe8463eb477dc7709da57887a7e790f51f4d57f59cd84d04368f0ec2765&=&width=561&height=374",
+            "points": 6,
+            "build": {
+                "flat": 3,
+                "add_dkh": 3,
+                "floor": 3,
+                "selected_die": 3,
+                "cap": 3,
+                "self_heal_stamina": 3,
             }
         },
     },
