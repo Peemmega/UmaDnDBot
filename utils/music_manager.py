@@ -12,6 +12,8 @@ MUSICS = {
     "girl_legend_u": "assets/music/girl_legend_u.mp3",
     "l_arc": "assets/music/l_arc.mp3",
     "glorious_moment": "assets/music/glorious_moment.mp3",
+    "cingrey_ost_01": "assets/music/cingrey_ost_01.mp3",
+    "SpecialWeekAura": "assets/music/SpecialWeekAura.mp3",
 }
 
 if platform.system() == "Windows":

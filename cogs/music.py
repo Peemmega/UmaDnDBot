@@ -18,6 +18,8 @@ class Music(commands.Cog):
             app_commands.Choice(name="Girl Legend U", value="girl_legend_u"),
             app_commands.Choice(name="L'Arc", value="l_arc"),
             app_commands.Choice(name="Glorious Moment", value="glorious_moment"),
+            app_commands.Choice(name="Cingrey OST", value="cingrey_ost_01"),
+            app_commands.Choice(name="Japan cup Special week", value="SpecialWeekAura"),
         ]
     )
     async def music_play(
