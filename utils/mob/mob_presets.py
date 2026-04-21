@@ -86,7 +86,7 @@ MOB_PRESETS = {
         "style": "Late",
         "race_profile": {
             "speed": 7,
-            "stamina": 4,
+            "stamina": 6,
             "power": 8,
             "gut": 6,
             "wit": 1,
@@ -113,10 +113,10 @@ MOB_PRESETS = {
             "points": 4,
             "build": {
                 "flat": 0,
-                "add_dkh": 5,
+                "add_dkh": 2,
                 "floor": 3,
                 "selected_die": 0,
-                "cap": 4,
+                "cap": 5,
                 "self_heal_stamina": 0,
             }
         },
@@ -212,7 +212,7 @@ MOB_PRESETS = {
             "speed": 8,
             "stamina": 6,
             "power": 7,
-            "gut": 6,
+            "gut": 8,
             "wit": 6,
 
             "turf": 7,
