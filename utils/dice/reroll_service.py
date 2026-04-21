@@ -84,7 +84,7 @@ async def execute_reroll(
         game_player=game_player,
         result=result,
         new_score=new_score,
-        stamina_note=stamina_note,
+        stamina_note="",
         path_effect=path_effect,
         title_prefix=title_prefix,
     )
