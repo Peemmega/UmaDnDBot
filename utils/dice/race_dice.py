@@ -46,7 +46,7 @@ def get_phase_from_turn(turn: int, max_turn: int) -> int:
 def get_distance_color(
     player_id: int,
     score_map: dict[int, int],
-    context: dict | None = None,
+    skill_effects: list | None = None,
 ) -> str:
     """
     score_map = {user_id: score}
@@ -69,7 +69,8 @@ def get_distance_color(
         return "Gold"
 
     nearest_gap = min(abs(player_score - score) for score in other_scores)
-    skill_effects = context.get("skill_effects", [])
+
+    skill_effects = skill_effects or []
 
     bonus = 0
     penalty = 0
@@ -77,9 +78,9 @@ def get_distance_color(
     for eff in skill_effects:
         if eff.get("type") == "modify_gold_range":
             bonus += eff.get("value", 0)
+        elif eff.get("type") == "modify_enemy_gold_range":
+            penalty += eff.get("value", 0)
 
-    if eff.get("type") == "modify_enemy_gold_range":
-        penalty += eff.get("value", 0)
     gold_range = max(1, 10 + bonus - penalty)
 
     if nearest_gap <= gold_range:
