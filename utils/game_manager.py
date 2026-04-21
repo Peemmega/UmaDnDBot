@@ -52,8 +52,8 @@ def execute_roll_core(
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, race_player)
 
-    stamina_note = apply_stamina_for_roll(game_player,path_effect)
-    new_stamina_note, stamina_penalty_active = apply_stamina_debuff(game_player,path_effect,pending_effects)
+    stamina_note, stamina_penalty_active = apply_stamina_debuff(game_player,path_effect,pending_effects)
+    new_stamina_note = apply_stamina_for_roll(game_player,path_effect)
 
     if (new_stamina_note != None):
         stamina_note = new_stamina_note
@@ -140,6 +140,7 @@ def apply_stamina_for_roll(
 
     if game_player["stamina_left"] >= stamina_cost:
         game_player["stamina_left"] -= stamina_cost
+        
         if stamina_cost == 0 and stamina_gain == 0:
             stamina_note = f"{game_player['stamina_left']}"
         else:
@@ -147,6 +148,8 @@ def apply_stamina_for_roll(
                 stamina_note = f"+{stamina_gain} / -{stamina_cost} เหลือ {game_player['stamina_left']}"
             else:
                 stamina_note = f"{game_player['stamina_left'] + stamina_cost} → {game_player['stamina_left']}"
+    else:
+        game_player["takeStaminaDebuff"] = True
     return stamina_note
 
 def create_game(channel_id: int, stage_key: str, owner_id: int):
@@ -347,6 +350,7 @@ def start_game(channel_id: int):
 
             # reset race_profile ใหม่จากฐาน preset
             player["race_profile"] = base_player.copy()
+            player["takeStaminaDebuff"] = False
 
             # mob ใช้ skills จาก preset เดิม ไม่ต้องโหลดจาก DB
             player["skills"] = player.get("skills", {
@@ -1013,6 +1017,7 @@ def next_turn(channel_id: int):
         player["no_reroll_this_turn"] = player.get("no_reroll_next_turn", False)
         player["no_reroll_next_turn"] = False
         player["action_locked"] = False
+        player["takeStaminaDebuff"] = False
         player.pop("lastedBuff", None)
 
     game["turn_snapshot_scores"] = {

@@ -909,7 +909,7 @@ SKILLS = {
         "cost": 80,
         "trigger": {
             "style": "Late",
-            "phase_min": 4,
+            "phase_min": 3,
             "phase_max": 4,
             "path_type": 2,  # ทางโค้ง
         },
