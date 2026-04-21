@@ -151,6 +151,10 @@ def build_next_roll_buff_text(player: dict) -> str:
     if floor:
         lines.append(f"เพิ่มแต้มขั้นต่ำ +{floor}")
 
+    gold_range = player.get("gold_range_bonus_this_turn", 0)
+    if gold_range:
+        lines.append(f"เพิ่มระยะในการนับโรล Gold +{gold_range}")
+
     selected = player.get("next_roll_selected_die_bonus", 0)
     if selected:
         lines.append(f"เพิ่มแต้มลูกที่เลือก +{selected}")
