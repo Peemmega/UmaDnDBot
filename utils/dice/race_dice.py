@@ -47,6 +47,7 @@ def get_distance_color(
     player_id: int,
     score_map: dict[int, int],
     player: dict | None = None,
+    context: dict | None = [],
 ) -> str:
     """
     score_map = {user_id: score}
@@ -69,13 +70,14 @@ def get_distance_color(
         return "Gold"
 
     nearest_gap = min(abs(player_score - score) for score in other_scores)
+    skill_effects = context.get("skill_effects", [])
 
     bonus = 0
     penalty = 0
 
     if player:
-        bonus = player.get("gold_range_bonus_this_turn", 0)
-        penalty = player.get("enemy_gold_range_penalty_next_turn", 0)
+        bonus = skill_effects.get("gold_range_bonus_this_turn", 0)
+        penalty = skill_effects.get("enemy_gold_range_penalty_next_turn", 0)
 
     gold_range = max(1, 10 + bonus - penalty)
 
@@ -220,7 +222,7 @@ def roll_race_dice(
     skill_effects: list | None = None,
 ) -> dict:
     phase = get_phase_from_turn(turn, max_turn)
-    distance_color = get_distance_color(player_id, score_map, player)
+    distance_color = get_distance_color(player_id, score_map, player, skill_effects)
     nearby_count = count_nearby_players(player_id, score_map, radius=10)
     rule = get_dice_rule(style, distance_color, phase)
 

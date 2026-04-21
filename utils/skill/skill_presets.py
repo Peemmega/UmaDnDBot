@@ -956,4 +956,24 @@ SKILLS = {
         "active_roll": True,
         "tags": ["mid_race", "velocity", "cap_boost"],
     },
+
+    
+    "s099": {
+        "name": "March Licking",
+        "icon": "LookUp",
+        "cooldown": 10,
+        "cost": 60,
+        "trigger": {
+            "style": "End",
+            "phase_min": 1,
+            "phase_max": 4,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "modify_gold_range", "value": 100, "duration": "this_turn"},
+            {"type": "modify_roll_cap", "value": 99, "duration": "this_roll"},
+        ],
+        "active_roll": False,
+        "tags": ["vision", "end", "positioning"],
+    },
 }

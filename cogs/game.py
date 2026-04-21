@@ -237,6 +237,39 @@ class GameCog(commands.GroupCog, name="game"):
             view=LobbyView(channel_id)
         )
 
+        @app_commands.command(name="skip_turn", description="ข้ามไปเทิร์นถัดไปทันที (เฉพาะเจ้าของห้อง)")
+        async def skip_turn(self, interaction: discord.Interaction):
+            game = get_game(interaction.channel_id)
+
+            if game is None:
+                await interaction.response.send_message(
+                    "ยังไม่มีเกมในห้องนี้",
+                    ephemeral=True
+                )
+                return
+
+            if not game["started"]:
+                await interaction.response.send_message(
+                    "เกมยังไม่เริ่ม",
+                    ephemeral=True
+                )
+                return
+
+            if not is_owner(interaction.channel_id, interaction.user.id):
+                await interaction.response.send_message(
+                    "มีแค่เจ้าของห้องเท่านั้นที่ข้ามเทิร์นได้",
+                    ephemeral=True
+                )
+                return
+
+            await interaction.response.defer()
+
+            await interaction.followup.send(
+                f"⏭️ <@{interaction.user.id}> ข้ามเทิร์น {game['turn']}"
+            )
+
+            await self.process_next_turn(interaction)
+
     @discord.app_commands.command(name="add_mob", description="เพิ่ม mob preset เข้าการแข่งขัน")
     @discord.app_commands.describe(preset="preset ของ mob")
     @discord.app_commands.choices(preset=[
