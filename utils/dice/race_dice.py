@@ -47,7 +47,7 @@ def get_distance_color(
     player_id: int,
     score_map: dict[int, int],
     player: dict | None = None,
-    context: dict | None = [],
+    context: dict | None = None,
 ) -> str:
     """
     score_map = {user_id: score}
@@ -75,10 +75,12 @@ def get_distance_color(
     bonus = 0
     penalty = 0
 
-    if player:
-        bonus = skill_effects.get("gold_range_bonus_this_turn", 0)
-        penalty = skill_effects.get("enemy_gold_range_penalty_next_turn", 0)
+    for eff in skill_effects:
+        if eff.get("type") == "modify_gold_range":
+            bonus += eff.get("value", 0)
 
+    if eff.get("type") == "modify_enemy_gold_range":
+        penalty += eff.get("value", 0)
     gold_range = max(1, 10 + bonus - penalty)
 
     if nearest_gap <= gold_range:
