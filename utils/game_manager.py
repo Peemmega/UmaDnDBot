@@ -797,6 +797,7 @@ def build_pending_effects_from_player(
     add_d = player.get("next_roll_add_d", 0)
     add_kh = player.get("next_roll_add_kh", 0)
     floor = player.get("next_roll_floor_bonus", 0)
+    cap = player.get("next_roll_cap_bonus", 0)
     sel = player.get("next_roll_selected_die_bonus", 0)
     gold_range = player.get("gold_range_bonus_this_turn", 0)
 
