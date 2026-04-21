@@ -107,7 +107,7 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     for effect in skill_effects:
         effect_type = effect.get("type")
         value = effect.get("value", 0)
-
+        print(effect_type)
         if effect_type == "add_d":
             extra_d += value
         elif effect_type == "add_kh":
