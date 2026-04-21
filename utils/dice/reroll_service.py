@@ -1,5 +1,5 @@
 import discord
-from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player,build_run_embed
+from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player,build_run_embed, apply_stamina_debuff
 from utils.dice.race_presets import get_current_path_type, get_path_effect
 from utils.dice.race_dice import roll_race_dice
 
@@ -37,6 +37,8 @@ async def execute_reroll(
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, race_player)
 
+    stamina_note, stamina_penalty_active = apply_stamina_debuff(game_player,path_effect,pending_effects)
+
     result = roll_race_dice(
         style=game_player["style"],
         player=race_player,
@@ -48,6 +50,13 @@ async def execute_reroll(
         skill_effects=pending_effects,
     )
 
+
+    if stamina_penalty_active:
+        if result["bonus_display"] == "-":
+            result["bonus_display"] = "-10CAP"
+        else:
+            result["bonus_display"] += " -10CAP"
+            
     ## Clear Debuff -----------------------------------------------
     game_player["lastedBuff"] = merged_stats
 
@@ -73,7 +82,7 @@ async def execute_reroll(
         game_player=game_player,
         result=result,
         new_score=new_score,
-        stamina_note=None,
+        stamina_note=stamina_note,
         path_effect=path_effect,
         title_prefix=title_prefix,
     )

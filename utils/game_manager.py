@@ -52,32 +52,11 @@ def execute_roll_core(
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, race_player)
 
-    stamina_note = None
-    stamina_gain = path_effect.get("stamina_gain", 0)
-    stamina_cost = path_effect.get("stamina_cost", 0)
+    stamina_note = apply_stamina_for_roll(game_player,path_effect)
+    new_stamina_note, stamina_penalty_active = apply_stamina_debuff(game_player,path_effect,pending_effects)
 
-    if stamina_gain > 0:
-        game_player["stamina_left"] += stamina_gain
-
-    stamina_penalty_active = False
-
-    if game_player["stamina_left"] >= stamina_cost:
-        game_player["stamina_left"] -= stamina_cost
-        if stamina_cost == 0 and stamina_gain == 0:
-            stamina_note = f"{game_player['stamina_left']}"
-        else:
-            if stamina_gain > 0:
-                stamina_note = f"+{stamina_gain} / -{stamina_cost} เหลือ {game_player['stamina_left']}"
-            else:
-                stamina_note = f"{game_player['stamina_left'] + stamina_cost} → {game_player['stamina_left']}"
-    else:
-        stamina_penalty_active = True
-        pending_effects.append({
-            "type": "modify_roll_cap",
-            "value": -10,
-            "duration": "this_roll"
-        })
-        stamina_note = f"{Status_Icon_Type['STA']} ไม่พอ แต้มสูงสุดลูกเต๋า -10"
+    if (new_stamina_note != None):
+        stamina_note = new_stamina_note
 
     result = roll_race_dice(
         style=game_player["style"],
@@ -106,6 +85,7 @@ def execute_roll_core(
             result["bonus_display"] = "-10CAP"
         else:
             result["bonus_display"] += " -10CAP"
+            
     success, new_score = update_player_score(
         channel_id,
         user_id,
@@ -126,6 +106,48 @@ def execute_roll_core(
         "stamina_note": stamina_note,
         "title_prefix": title_prefix,
     }
+
+def apply_stamina_debuff(game_player: dict,
+                         path_effect: dict,
+                         pending_effects: list[dict]
+                         ):
+    stamina_note = None
+    stamina_cost = path_effect.get("stamina_cost", 0)
+    if game_player["stamina_left"] >= stamina_cost:
+        return stamina_note, False
+    else:
+        pending_effects.append({
+            "type": "modify_roll_cap",
+            "value": -10,
+            "duration": "this_roll"
+        })
+        stamina_note = f"{Status_Icon_Type['STA']} ไม่พอ แต้มสูงสุดลูกเต๋า -10"
+        return stamina_note, True
+
+
+
+def apply_stamina_for_roll(
+    game_player: dict,
+    path_effect: dict,
+) -> tuple[str | None, bool]:
+    stamina_note = None
+    stamina_gain = path_effect.get("stamina_gain", 0)
+    stamina_cost = path_effect.get("stamina_cost", 0)
+
+    if stamina_gain > 0:
+        game_player["stamina_left"] += stamina_gain
+
+
+    if game_player["stamina_left"] >= stamina_cost:
+        game_player["stamina_left"] -= stamina_cost
+        if stamina_cost == 0 and stamina_gain == 0:
+            stamina_note = f"{game_player['stamina_left']}"
+        else:
+            if stamina_gain > 0:
+                stamina_note = f"+{stamina_gain} / -{stamina_cost} เหลือ {game_player['stamina_left']}"
+            else:
+                stamina_note = f"{game_player['stamina_left'] + stamina_cost} → {game_player['stamina_left']}"
+    return stamina_note
 
 def create_game(channel_id: int, stage_key: str, owner_id: int):
     if channel_id in games:
@@ -768,13 +790,14 @@ def build_attitude_stat_bonus(att):
         "wit": att["style"],        # Style → Wit
     }
 
-def build_pending_effects_from_player(player: dict) -> tuple[list[dict], dict]:
+def build_pending_effects_from_player(
+    player: dict,
+) -> tuple[list[dict], dict]:
     flat = player.get("next_roll_flat_bonus", 0)
     add_d = player.get("next_roll_add_d", 0)
     add_kh = player.get("next_roll_add_kh", 0)
     floor = player.get("next_roll_floor_bonus", 0)
     sel = player.get("next_roll_selected_die_bonus", 0)
-    cap = player.get("next_roll_cap_bonus", 0)
     gold_range = player.get("gold_range_bonus_this_turn", 0)
 
     # รวม lastedBuff
