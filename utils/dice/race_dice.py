@@ -46,7 +46,6 @@ def get_phase_from_turn(turn: int, max_turn: int) -> int:
 def get_distance_color(
     player_id: int,
     score_map: dict[int, int],
-    player: dict | None = None,
     context: dict | None = None,
 ) -> str:
     """
@@ -224,7 +223,7 @@ def roll_race_dice(
     skill_effects: list | None = None,
 ) -> dict:
     phase = get_phase_from_turn(turn, max_turn)
-    distance_color = get_distance_color(player_id, score_map, player, skill_effects)
+    distance_color = get_distance_color(player_id, score_map, skill_effects or [])
     nearby_count = count_nearby_players(player_id, score_map, radius=10)
     rule = get_dice_rule(style, distance_color, phase)
 
