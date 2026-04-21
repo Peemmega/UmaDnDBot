@@ -768,6 +768,7 @@ def build_pending_effects_from_player(player: dict) -> tuple[list[dict], dict]:
     floor = player.get("next_roll_floor_bonus", 0)
     sel = player.get("next_roll_selected_die_bonus", 0)
     cap = player.get("next_roll_cap_bonus", 0)
+    gold_range = player.get("gold_range_bonus_this_turn", 0)
 
     # รวม lastedBuff
     buff = player.get("lastedBuff", {})
@@ -778,6 +779,7 @@ def build_pending_effects_from_player(player: dict) -> tuple[list[dict], dict]:
         floor += buff.get("floor", 0)
         sel += buff.get("sel", 0)
         cap += buff.get("cap", 0)
+        gold_range += buff.get("gold_range", 0)
 
     pending_effects = []
 
@@ -823,6 +825,13 @@ def build_pending_effects_from_player(player: dict) -> tuple[list[dict], dict]:
             "duration": "this_roll"
         })
 
+    if gold_range != 0:
+        pending_effects.append({
+            "type": "modify_gold_range",
+            "value": gold_range,
+            "duration": "this_roll"
+        })
+
     merged_stats = {
         "flat": flat,
         "add_d": add_d,
@@ -830,6 +839,7 @@ def build_pending_effects_from_player(player: dict) -> tuple[list[dict], dict]:
         "floor": floor,
         "sel": sel,
         "cap": cap,
+        "gold_range": gold_range,  # 👈 เพิ่ม
     }
 
     return pending_effects, merged_stats
