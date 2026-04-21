@@ -47,8 +47,7 @@ def build_zone_manage_embed_from_zone(
     stat_lines = []
     zone_labels = {
         "flat": f"{ICONS['Aoharu']} เพิ่มคะแนนรวม",
-        "add_d": f"{ICONS['Aoharu']} เพิ่มลูกเต๋า",
-        "add_kh": f"{ICONS['Aoharu']} เพิ่มจำนวนลูกที่เลือก",
+        "add_dkh": f"{ICONS['Aoharu']} เพิ่มลูกเต๋า d/kh",
         "floor": f"{ICONS['Aoharu']} เพิ่มแต้มลูกเต๋าขั้นต่ำ",
         "selected_die": f"{ICONS['Aoharu']} เพิ่มแต้มลูกที่เลือก",
         "cap": f"{ICONS['Aoharu']} เพิ่มแต้มลูกเต๋าสูงสุด",
@@ -65,9 +64,7 @@ def build_zone_manage_embed_from_zone(
     if preview["flat"]:
         preview_lines.append(f"✨ เพิ่มผลรวม **+{preview['flat']}**")
     if preview["add_d"]:
-        preview_lines.append(f"🎲 เพิ่มลูกเต๋า **+{preview['add_d']}**")
-    if preview["add_kh"]:
-        preview_lines.append(f"🖐️ เพิ่มจำนวนลูกที่เลือก **+{preview['add_kh']}**")
+        preview_lines.append(f"🎲 เพิ่มลูกเต๋า d/kh **+{preview['add_dkh']}**")
     if preview["floor"]:
         preview_lines.append(f"🧱 เพิ่มแต้มขั้นต่ำ **+{preview['floor']}**")
     if preview["selected_die"]:

@@ -115,8 +115,8 @@ def get_zone_effect(zone: dict) -> tuple[bool, str]:
     lines = []
     if effects["flat"]:
         lines.append(f"✨ เพิ่มผลรวม +{effects['flat']}")
-    if effects["add_d"]:
-        lines.append(f"🎲 เพิ่มลูกเต๋า +{effects['add_d']}")
+    if effects["add_dkh"]:
+        lines.append(f"🎲 เพิ่มลูกเต๋า d/kh +{effects['add_d']}")
     if effects["add_kh"]:
         lines.append(f"🖐️ เพิ่มจำนวนลูกที่เลือก +{effects['add_kh']}")
     if effects["floor"]:

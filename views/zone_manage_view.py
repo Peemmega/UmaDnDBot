@@ -12,12 +12,11 @@ from utils.zone.zone_embed import build_zone_manage_embed_from_zone
 
 ZONE_OPTIONS = [
     discord.SelectOption(label="เพิ่มคะแนน", value="flat", description="เพิ่มผลรวมโดยตรง | cost 1"),
-    discord.SelectOption(label="เพิ่มลูกเต๋า", value="add_d", description="เพิ่มจำนวนลูกเต๋า | cost 3"),
-    discord.SelectOption(label="เพิ่มลุกเต๋าที่นับ(kh)", value="add_kh", description="เพิ่มจำนวนลูกที่เลือก | cost 3"),
+    discord.SelectOption(label="เพิ่มลูกเต๋า", value="add_dkh", description="เพิ่มจำนวนลูกเต๋า | cost 3"),
     discord.SelectOption(label="เพิ่มพื้นลูกเต๋า", value="floor", description="เพิ่มแต้มขั้นต่ำ | cost 1"),
     discord.SelectOption(label="เพราะคะแนนลูกเต๋าที่เลือก", value="selected_die", description="เพิ่มแต้มลูกที่เลือก | cost 1"),
     discord.SelectOption(label="เพิ่มแต้มสูงสุดลูกเต๋า", value="cap", description="เพิ่มแต้มสูงสุด | cost 1"),
-    discord.SelectOption(label="ฟื้นฟู Stamina", value="self_heal_stamina", description="ฟื้นฟู STA ตัวเอง | cost 3"),
+    discord.SelectOption(label="ฟื้นฟู Stamina", value="self_heal_stamina", description="ฟื้นฟู STA ตัวเอง | cost 1"),
 ]
 
 
