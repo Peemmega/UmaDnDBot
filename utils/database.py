@@ -77,6 +77,28 @@ def init_db():
     conn.commit()
     conn.close()
 
+def reset_all_zone_data():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    default_build = {
+        "flat": 0,
+        "add_dkh": 0,
+        "floor": 0,
+        "selected_die": 0,
+        "cap": 0,
+        "self_heal_stamina": 0,
+    }
+
+    cursor.execute("""
+    UPDATE players
+    SET zone_build = ?,
+        zone_points = 5
+    """, (json.dumps(default_build),))
+
+    conn.commit()
+    conn.close()
+
 def set_player_zone_build(user_id: int, build: dict) -> None:
     conn = get_connection()
     cursor = conn.cursor()
