@@ -165,7 +165,7 @@ def get_zone_effect_preview(zone: dict) -> dict:
 
     return {
         "flat": int(build.get("flat", 0)) * ZONE_VALUE["flat"],
-        "add_dkh": int(build.get("add_d", 0)) * ZONE_VALUE["add_dkh"],
+        "add_dkh": int(build.get("add_dkh", 0)) * ZONE_VALUE["add_dkh"],
         "floor": int(build.get("floor", 0)) * ZONE_VALUE["floor"],
         "selected_die": int(build.get("selected_die", 0)) * ZONE_VALUE["selected_die"],
         "cap": int(build.get("cap", 0)) * ZONE_VALUE["cap"],

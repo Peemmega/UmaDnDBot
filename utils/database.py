@@ -312,31 +312,6 @@ def get_player_skill_in_slot(user_id: int, slot: int):
 
     return row[0]
 
-def set_player_zone_name(user_id: int, name: str):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE players
-    SET zone_name = ?
-    WHERE user_id = ?
-    """, (name, user_id))
-
-    conn.commit()
-    conn.close()
-
-def set_player_zone_image(user_id: int, url: str):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE players
-    SET zone_image_url = ?
-    WHERE user_id = ?
-    """, (url, user_id))
-
-    conn.commit()
-    conn.close()
 
 def get_player(user_id: int) -> Optional[dict]:
     conn = get_connection()
