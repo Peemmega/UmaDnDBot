@@ -22,22 +22,20 @@ ZONE_IMAGE_PRESET = {
 
 ZONE_POINT_COST = {
     "flat": 1,
-    "add_d": 3,
-    "add_kh": 3,
+    "add_dkh": 3,
     "floor": 1,
     "selected_die": 1,
     "cap": 1,
-    "self_heal_stamina": 3,
+    "self_heal_stamina": 1,
 }
 
 ZONE_VALUE = {
     "flat": 18,
-    "add_d": 2,
-    "add_kh": 2,
+    "add_dkh": 2,
     "floor": 5,
     "selected_die": 3,
     "cap": 7,
-    "self_heal_stamina": 2,
+    "self_heal_stamina": 1,
 }
 
 DEFAULT_ZONE = {
@@ -46,8 +44,7 @@ DEFAULT_ZONE = {
     "points": 5,
     "build": {
         "flat": 0,
-        "add_d": 0,
-        "add_kh": 0,
+        "add_dkh": 0,
         "floor": 0,
         "selected_die": 0,
         "cap": 0,

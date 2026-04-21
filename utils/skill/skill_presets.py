@@ -190,15 +190,8 @@ SKILLS = {
             "limit": 3,
         },
         "effects": [
-            {
-                "type": "recover_stamina",
-                "value": 1
-            },
-            {
-                "type": "apply_debuff_next_turn",
-                "stat": "flat_total",
-                "value": -40
-            }
+            {"type": "recover_stamina","value": 1},
+            {"type": "modify_roll_cap", "value": -7, "duration": "this_roll"},
         ],
         "active_roll": False,
         "tags": ["recovery", "debuff", "front_target"],
@@ -234,7 +227,7 @@ SKILLS = {
         "name": "Lightning Step",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 80,
+        "cost": 60,
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
@@ -243,8 +236,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_gold_range", "value": 10, "duration": "this_turn"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"},
+            {"type": "modify_gold_range", "value": 60, "duration": "this_turn"},
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
         "active_roll": True,
         "tags": ["medium", "positioning", "back"],
@@ -275,7 +268,7 @@ SKILLS = {
         "name": "The Coast Is Clear!",
         "icon": "LookUp",
         "cooldown": 10,
-        "cost": 50,
+        "cost": 60,
         "trigger": {
             "style": "End",
             "phase_min": 2,
@@ -283,7 +276,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_gold_range", "value": 30, "duration": "this_turn"}
+            {"type": "modify_gold_range", "value": 100, "duration": "this_turn"},
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
         ],
         "active_roll": False,
         "tags": ["vision", "end", "positioning"],
@@ -450,9 +444,9 @@ SKILLS = {
             "target_distance_min": 1,
             "target_distance_max": 100,
         },
-        "target": {"scope": "all_front", "limit": 2},
+        "target": {"scope": "all_front", "limit": 3},
         "effects": [
-            {"type": "apply_debuff_next_turn", "stat": "selected_die", "value": -2}
+            {"type": "modify_roll_cap", "value": -12, "duration": "this_roll"},
         ],
         "active_roll": False,
         "tags": ["debuff", "mile", "early_race"],
@@ -602,8 +596,8 @@ SKILLS = {
         },
         "target": {"scope": "all_front", "limit": 4},
         "effects": [
-            {"type": "modify_roll_cap", "value": -5, "duration": "this_roll"},
-            {"type": "apply_debuff_next_turn", "stat": "flat_total", "value": -40}
+            {"type": "modify_roll_cap", "value": -7, "duration": "this_roll"},
+            {"type": "apply_debuff_next_turn", "stat": "flat_total", "value": -35}
         ],
         "active_roll": False,
         "tags": ["debuff", "medium", "late_race"],

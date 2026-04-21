@@ -19,8 +19,7 @@ def get_player_zone(user_id: int) -> Optional[dict]:
 
     normalized_build = {
         "flat": int(build.get("flat", 0)),
-        "add_d": int(build.get("add_d", 0)),
-        "add_kh": int(build.get("add_kh", 0)),
+        "add_dkh": int(build.get("add_dkh", 0)),
         "floor": int(build.get("floor", 0)),
         "selected_die": int(build.get("selected_die", 0)),
         "cap": int(build.get("cap", 0)),
@@ -95,12 +94,11 @@ def downgrade_zone_stat(user_id: int, field: str, amount: int = 1) -> tuple[bool
 def get_zone_effects_from_build(zone_build: dict) -> dict:
     return {
         "flat": int(zone_build.get("flat", 0)) * 18,
-        "add_d": int(zone_build.get("add_d", 0)) * 2,
-        "add_kh": int(zone_build.get("add_kh", 0)) * 3,
+        "add_dkh": int(zone_build.get("add_dkh", 0)) * 2,
         "floor": int(zone_build.get("floor", 0)) * 5,
         "selected_die": int(zone_build.get("selected_die", 0)) * 3,
         "cap": int(zone_build.get("cap", 0)) * 7,
-        "self_heal_stamina": int(zone_build.get("self_heal_stamina", 0)) * 2,
+        "self_heal_stamina": int(zone_build.get("self_heal_stamina", 0)) * 1,
     }
 
 def get_zone_effect(zone: dict) -> tuple[bool, str]:
@@ -148,8 +146,8 @@ def apply_zone_in_game(player: dict) -> tuple[bool, str]:
     effects = get_zone_effects_from_build(zone_build)
 
     player["next_roll_flat_bonus"] = player.get("next_roll_flat_bonus", 0) + effects["flat"]
-    player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + effects["add_d"]
-    player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + effects["add_kh"]
+    player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + effects["add_dkh"]
+    player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + effects["add_dkh"]
     player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + effects["floor"]
     player["next_roll_selected_die_bonus"] = player.get("next_roll_selected_die_bonus", 0) + effects["selected_die"]
     player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + effects["cap"]
@@ -169,8 +167,8 @@ def get_zone_effect_preview(zone: dict) -> dict:
 
     return {
         "flat": int(build.get("flat", 0)) * ZONE_VALUE["flat"],
-        "add_d": int(build.get("add_d", 0)) * ZONE_VALUE["add_d"],
-        "add_kh": int(build.get("add_kh", 0)) * ZONE_VALUE["add_kh"],
+        "add_d": int(build.get("add_d", 0)) * ZONE_VALUE["add_dkh"],
+        "add_kh": int(build.get("add_kh", 0)) * ZONE_VALUE["add_dkh"],
         "floor": int(build.get("floor", 0)) * ZONE_VALUE["floor"],
         "selected_die": int(build.get("selected_die", 0)) * ZONE_VALUE["selected_die"],
         "cap": int(build.get("cap", 0)) * ZONE_VALUE["cap"],

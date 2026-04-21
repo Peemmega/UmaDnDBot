@@ -31,8 +31,7 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 0,
-                "add_d": 1,
-                "add_kh": 1,         # 🔥 สำคัญ
+                "add_dkh": 1,
                 "floor": 0,
                 "selected_die": 1,
                 "cap": 2,
@@ -73,8 +72,7 @@ MOB_PRESETS = {
             "points": 3,
             "build": {
                 "flat": 0,
-                "add_d": 1,
-                "add_kh": 1,         # 🔥 สำคัญ
+                "add_dkh": 1,
                 "floor": 0,
                 "selected_die": 1,
                 "cap": 2,
@@ -115,8 +113,7 @@ MOB_PRESETS = {
             "points": 4,
             "build": {
                 "flat": 0,
-                "add_d": 3,
-                "add_kh": 0,         # 🔥 สาย late ต้อง kh เยอะ
+                "add_dkh": 3,
                 "floor": 0,
                 "selected_die": 0,
                 "cap": 3,
@@ -157,8 +154,7 @@ MOB_PRESETS = {
             "points": 4,
             "build": {
                 "flat": 0,
-                "add_d": 2,
-                "add_kh": 0,
+                "add_dkh": 2,
                 "floor": 0,
                 "selected_die": 0,   # 🔥 boost ลูกที่เลือก
                 "cap": 4,            # 🔥 สำคัญมากกับ 10d
@@ -199,8 +195,8 @@ MOB_PRESETS = {
             "points": 6,
             "build": {
                 "flat": 0,
-                "add_d": 2,
-                "add_kh": 1,
+                "add_dkh": 2,
+                
                 "floor": 0,
                 "selected_die": 0,
                 "cap": 3,
