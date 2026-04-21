@@ -52,6 +52,33 @@ def execute_roll_core(
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, race_player)
 
+    stamina_note = None
+    stamina_gain = path_effect.get("stamina_gain", 0)
+    stamina_cost = path_effect.get("stamina_cost", 0)
+
+    if stamina_gain > 0:
+        game_player["stamina_left"] += stamina_gain
+
+    stamina_penalty_active = False
+
+    if game_player["stamina_left"] >= stamina_cost:
+        game_player["stamina_left"] -= stamina_cost
+        if stamina_cost == 0 and stamina_gain == 0:
+            stamina_note = f"{game_player['stamina_left']}"
+        else:
+            if stamina_gain > 0:
+                stamina_note = f"+{stamina_gain} / -{stamina_cost} เหลือ {game_player['stamina_left']}"
+            else:
+                stamina_note = f"{game_player['stamina_left'] + stamina_cost} → {game_player['stamina_left']}"
+    else:
+        stamina_penalty_active = True
+        pending_effects.append({
+            "type": "modify_roll_cap",
+            "value": -10,
+            "duration": "this_roll"
+        })
+        stamina_note = f"{Status_Icon_Type['STA']} ไม่พอ แต้มสูงสุดลูกเต๋า -10"
+
     result = roll_race_dice(
         style=game_player["style"],
         player=race_player,
@@ -74,31 +101,11 @@ def execute_roll_core(
     game_player["gold_range_bonus_this_turn"] = 0
     game_player["enemy_gold_range_penalty_next_turn"] = 0
 
-    stamina_note = None
-    stamina_gain = path_effect.get("stamina_gain", 0)
-    stamina_cost = path_effect.get("stamina_cost", 0)
-
-    if stamina_gain > 0:
-        game_player["stamina_left"] += stamina_gain
-
-    if game_player["stamina_left"] >= stamina_cost:
-        game_player["stamina_left"] -= stamina_cost
-        if stamina_cost == 0 and stamina_gain == 0:
-            stamina_note = f"{game_player['stamina_left']}"
-        else:
-            if stamina_gain > 0:
-                stamina_note = f"+{stamina_gain} / -{stamina_cost} เหลือ {game_player['stamina_left']}"
-            else:
-                stamina_note = f"{game_player['stamina_left'] + stamina_cost} → {game_player['stamina_left']}"
-    else:
-        result["total"] -= 30
+    if stamina_penalty_active:
         if result["bonus_display"] == "-":
-            result["bonus_display"] = f"-30{Status_Icon_Type['STA']}"
+            result["bonus_display"] = "-10CAP"
         else:
-            result["bonus_display"] += f" -30{Status_Icon_Type['STA']}"
-        result["total_display"] = str(result["total"])
-        stamina_note = f"{Status_Icon_Type['STA']} ไม่พอ โดนหัก 30 แต้ม"
-
+            result["bonus_display"] += " -10CAP"
     success, new_score = update_player_score(
         channel_id,
         user_id,
