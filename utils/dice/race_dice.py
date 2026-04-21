@@ -56,7 +56,7 @@ def get_distance_color(
     """
 
     if player_id not in score_map:
-        return "Gold"
+        return "Gold",0
 
     player_score = score_map[player_id]
 
@@ -66,7 +66,7 @@ def get_distance_color(
     ]
 
     if not other_scores:
-        return "Gold"
+        return "Gold",0
 
     nearest_gap = min(abs(player_score - score) for score in other_scores)
 
@@ -83,7 +83,6 @@ def get_distance_color(
 
     max_range = 10 + bonus - penalty
     gold_range = max(1, 10 + max_range)
-
     umaInRange = count_nearby_players(player_id, score_map, radius=max_range)
 
     if nearest_gap <= gold_range:
