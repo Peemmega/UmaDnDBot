@@ -165,7 +165,7 @@ MOB_PRESETS = {
 
     "fujimasa_march": {
         "name": "Fujimasa March",
-        "style": "pace",
+        "style": "Pace",
         "race_profile": {
             "speed": 6,
             "stamina": 4,
