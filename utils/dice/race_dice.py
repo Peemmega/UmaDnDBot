@@ -43,13 +43,16 @@ def get_phase_from_turn(turn: int, max_turn: int) -> int:
     phase = math.ceil(turn / phase_size)
     return min(max(phase, 1), 4)
 
-def get_distance_color(player_id: int, score_map: dict[int, int]) -> str:
+def get_distance_color(
+    player_id: int,
+    score_map: dict[int, int],
+    player: dict | None = None,
+) -> str:
     """
     score_map = {user_id: score}
 
-    ถ้าระยะห่างจากม้าที่ใกล้ที่สุด <= 10 => Gold
-    ถ้ามากกว่า 10 => White
-    ถ้าอยู่คนเดียวในเกม => Gold
+    ถ้าระยะห่างจากม้าที่ใกล้ที่สุด <= 10 + bonus => Gold
+    ถ้ามากกว่า => White
     """
 
     if player_id not in score_map:
@@ -67,7 +70,16 @@ def get_distance_color(player_id: int, score_map: dict[int, int]) -> str:
 
     nearest_gap = min(abs(player_score - score) for score in other_scores)
 
-    if nearest_gap <= 10:
+    bonus = 0
+    penalty = 0
+
+    if player:
+        bonus = player.get("gold_range_bonus_this_turn", 0)
+        penalty = player.get("enemy_gold_range_penalty_next_turn", 0)
+
+    gold_range = max(1, 10 + bonus - penalty)
+
+    if nearest_gap <= gold_range:
         return "Gold"
     return "White"
 
@@ -208,7 +220,7 @@ def roll_race_dice(
     skill_effects: list | None = None,
 ) -> dict:
     phase = get_phase_from_turn(turn, max_turn)
-    distance_color = get_distance_color(player_id, score_map)
+    distance_color = get_distance_color(player_id, score_map, player)
     nearby_count = count_nearby_players(player_id, score_map, radius=10)
     rule = get_dice_rule(style, distance_color, phase)
 
