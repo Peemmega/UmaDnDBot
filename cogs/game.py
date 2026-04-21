@@ -245,6 +245,8 @@ class GameCog(commands.GroupCog, name="game"):
         discord.app_commands.Choice(name="Oguri Cap", value="chaser_late"),
         discord.app_commands.Choice(name="Obey Your Master", value="sprinter_end"),
         discord.app_commands.Choice(name="Beyond The Light", value="boss_champion"),
+        discord.app_commands.Choice(name="Almond Eye", value="almond_eye"),
+        discord.app_commands.Choice(name="Equinox", value="equinox"),
     ])
     async def add_mob(self, interaction: discord.Interaction, preset: discord.app_commands.Choice[str]):
         success, message = add_mob_from_preset(interaction.channel_id, preset.value)
