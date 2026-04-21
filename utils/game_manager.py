@@ -653,6 +653,10 @@ def apply_next_roll_effects_to_player(player: dict, effects: list[dict]):
 
         elif effect_type == "add_kh":
             player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + value
+            
+        elif effect_type == "add_dkh":
+            player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + value
+            player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + value
 
         elif effect_type == "modify_roll_floor":
             player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + value

@@ -95,7 +95,7 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "add_d",
+                "type": "add_dkh",
                 "value": 2,
                 "duration": "this_roll"
             }
@@ -327,15 +327,14 @@ SKILLS = {
         "name": "Determined Descent",
         "icon": "Acceleration",
         "cooldown": 8,
-        "cost": 60,
+        "cost": 70,
         "trigger": {
             "style": "Pace",
             "path_type": 4,
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "add_d", "value": 1, "duration": "this_roll"},
-            {"type": "add_kh", "value": 1, "duration": "this_roll"}
+            {"type": "add_dkh", "value": 2, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["pace", "downhill", "acceleration"],
@@ -345,7 +344,7 @@ SKILLS = {
         "name": "On Your Left!",
         "icon": "Acceleration",
         "cooldown": 8,
-        "cost": 60,
+        "cost": 80,
         "trigger": {
             "style": "Late",
             "phase_min": 3,
@@ -353,8 +352,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "add_d", "value": 1, "duration": "this_roll"},
-            {"type": "add_kh", "value": 1, "duration": "this_roll"}
+            {"type": "add_dkh", "value": 2, "duration": "this_roll"},
         ],
         "active_roll": True,
         "tags": ["late", "acceleration", "late_race"],
@@ -388,8 +386,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "add_d", "value": 1, "duration": "this_roll"},
-            {"type": "add_kh", "value": 1, "duration": "this_roll"}
+            {"type": "add_dkh", "value": 2, "duration": "this_roll"},
         ],
         "active_roll": True,
         "tags": ["sprint", "straight", "acceleration"],
@@ -656,7 +653,7 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {
-                "type": "add_d",
+                "type": "add_dkh",
                 "value": 1,
                 "duration": "this_roll"
             },
@@ -684,8 +681,8 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "add_d", "value": 2, "duration": "this_roll"},
-            {"type": "add_kh", "value": 2, "duration": "this_roll"},
+            {"type": "add_dkh", "value": 2, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
         ],
         "active_roll": True,
         "tags": ["lastspurt", "blocked", "acceleration"],
@@ -723,7 +720,7 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "add_d",
+                "type": "add_dkh",
                 "value": 2,
                 "duration": "this_roll"
             }
@@ -748,7 +745,7 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "add_d",
+                "type": "add_dkh",
                 "value": 2,
                 "duration": "this_roll"
             },
@@ -778,7 +775,7 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "add_d",
+                "type": "add_dkh",
                 "value": 2,
                 "duration": "this_roll"
             }
@@ -811,7 +808,7 @@ SKILLS = {
                 "duration": "this_roll"
             },
             {
-                "type": "add_d",
+                "type": "add_dkh",
                 "value": 1,
                 "duration": "this_roll"
             },
