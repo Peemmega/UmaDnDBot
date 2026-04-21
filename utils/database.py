@@ -99,6 +99,88 @@ def reset_all_zone_data():
     conn.commit()
     conn.close()
 
+def add_player_attitude(user_id: int, attitude_field: str, amount: int = 1):
+    valid_fields = {
+        "turf", "dirt",
+        "sprint", "mile", "medium", "long",
+        "front", "pace", "late", "end_style",
+    }
+
+    if attitude_field not in valid_fields:
+        return False, "ไม่พบ attitude นี้"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(f"""
+    UPDATE players
+    SET {attitude_field} = COALESCE({attitude_field}, 0) + ?
+    WHERE user_id = ?
+    """, (amount, user_id))
+
+    conn.commit()
+    conn.close()
+    return True, f"เพิ่ม {attitude_field} +{amount} สำเร็จ"
+
+
+def set_all_attitude(user_id: int, value: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE players
+    SET
+        turf = ?,
+        dirt = ?,
+        sprint = ?,
+        mile = ?,
+        medium = ?,
+        long = ?,
+        front = ?,
+        pace = ?,
+        late = ?,
+        end_style = ?
+    WHERE user_id = ?
+    """, (
+        value, value,
+        value, value, value, value,
+        value, value, value, value,
+        user_id
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+def add_player_stats_point(user_id: int, amount: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE players
+    SET stats_point = COALESCE(stats_point, 0) + ?
+    WHERE user_id = ?
+    """, (amount, user_id))
+
+    conn.commit()
+    conn.close()
+    return True, f"เพิ่ม stats_point +{amount} สำเร็จ"
+
+
+def add_player_skill_point(user_id: int, amount: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE players
+    SET skill_point = COALESCE(skill_point, 0) + ?
+    WHERE user_id = ?
+    """, (amount, user_id))
+
+    conn.commit()
+    conn.close()
+    return True, f"เพิ่ม skill_point +{amount} สำเร็จ"
+
 def set_player_zone_build(user_id: int, build: dict) -> None:
     conn = get_connection()
     cursor = conn.cursor()
