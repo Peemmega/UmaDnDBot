@@ -1,7 +1,6 @@
 ZONE_FIELDS = {
     "flat", 
-    "add_d", 
-    "add_kh", 
+    "add_dkh", 
     "floor", 
     "selected_die", 
     "cap", 
