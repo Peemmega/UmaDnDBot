@@ -150,6 +150,7 @@ def apply_stamina_for_roll(
                 stamina_note = f"{game_player['stamina_left'] + stamina_cost} → {game_player['stamina_left']}"
     else:
         game_player["takeStaminaDebuff"] = True
+        
     return stamina_note
 
 def create_game(channel_id: int, stage_key: str, owner_id: int):
@@ -1078,6 +1079,7 @@ def add_player(channel_id, user_id, display_name: str, style):
         "stamina_left": 0,
         "wit_mana": 100,
         "wit_reroll_left": 2,
+        "takeStaminaDebuff": False,
         "skills": {
             1: None,
             2: None,
@@ -1143,6 +1145,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str):
         "used_rush": False,
         "used_block": False,
         "action_locked": False,
+        "takeStaminaDebuff": False,
 
         "next_roll_flat_bonus": 0,
         "next_roll_add_d": 0,

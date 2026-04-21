@@ -35,24 +35,12 @@ async def execute_reroll(
     pending_effects = []
     merged_stats = {}
 
-    if game_player["takeStaminaDebuff"]:
-        pending_effects,merged_stats = build_pending_effects_from_player(game_player)
+    pending_effects,merged_stats = build_pending_effects_from_player(game_player)
 
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, race_player)
-
     
-    has_modify_roll_cap = any(
-        effect.get("type") == "modify_roll_cap"
-        for effect in pending_effects
-    )
-    stamina_note = None
-    stamina_penalty_active = None
-    
-    if (has_modify_roll_cap):
-        stamina_note, stamina_penalty_active = apply_stamina_debuff(game_player,path_effect,pending_effects)
-    
-    if stamina_penalty_active:
+    if game_player.get("takeStaminaDebuff", False):
         if result["bonus_display"] == "-":
             result["bonus_display"] = "-10CAP"
         else:
