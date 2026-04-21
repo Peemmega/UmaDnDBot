@@ -40,12 +40,7 @@ async def execute_reroll(
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, race_player)
     
-    if game_player.get("takeStaminaDebuff", False):
-        if result["bonus_display"] == "-":
-            result["bonus_display"] = "-10CAP"
-        else:
-            result["bonus_display"] += " -10CAP"
-            
+  
     result = roll_race_dice(
         style=game_player["style"],
         player=race_player,
@@ -57,7 +52,11 @@ async def execute_reroll(
         skill_effects=pending_effects,
     )
 
-
+    if game_player.get("takeStaminaDebuff", False):
+        if result["bonus_display"] == "-":
+            result["bonus_display"] = "-10CAP"
+        else:
+            result["bonus_display"] += " -10CAP" 
    
     ## Clear Debuff -----------------------------------------------
     game_player["lastedBuff"] = merged_stats
@@ -84,7 +83,7 @@ async def execute_reroll(
         game_player=game_player,
         result=result,
         new_score=new_score,
-        stamina_note="",
+        stamina_note="-",
         path_effect=path_effect,
         title_prefix=title_prefix,
     )
