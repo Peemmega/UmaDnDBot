@@ -150,7 +150,7 @@ class Admin(commands.Cog):
             )
             await self.send_result_embed(
                 ctx,
-                title="❌ เพิ่ม Attitude ไม่สำเร็จ",
+                title="เพิ่ม Attitude ไม่สำเร็จ",
                 description=error_text,
                 color=discord.Color.red()
             )
@@ -169,7 +169,7 @@ class Admin(commands.Cog):
             result_text = f"เพิ่ม `{attitude_name}` +1 ให้ {target.display_name}"
             await self.send_result_embed(
                 ctx,
-                title="📈 เพิ่ม Attitude สำเร็จ",
+                title="เพิ่ม Attitude สำเร็จ",
                 description=f"{target.mention}\nเพิ่ม `{attitude_name}` +1 แล้ว",
                 color=discord.Color.green()
             )
@@ -183,7 +183,7 @@ class Admin(commands.Cog):
         else:
             await self.send_result_embed(
                 ctx,
-                title="❌ เพิ่ม Attitude ไม่สำเร็จ",
+                title="เพิ่ม Attitude ไม่สำเร็จ",
                 description=msg,
                 color=discord.Color.red()
             )
@@ -219,7 +219,7 @@ class Admin(commands.Cog):
             error_text = "ค่าต้องอยู่ระหว่าง `1-8`"
             await self.send_result_embed(
                 ctx,
-                title="❌ ตั้งค่า Attitude ไม่สำเร็จ",
+                title="ตั้งค่า Attitude ไม่สำเร็จ",
                 description=error_text,
                 color=discord.Color.red()
             )
@@ -240,7 +240,7 @@ class Admin(commands.Cog):
         result_text = f"ตั้งค่า Attitude ทั้งหมดของ {target.display_name} เป็น {value}"
         await self.send_result_embed(
             ctx,
-            title="🎯 ตั้งค่า Attitude สำเร็จ",
+            title="ตั้งค่า Attitude สำเร็จ",
             description=f"{target.mention}\nตั้งค่า Attitude ทั้งหมดเป็น `{value}` แล้ว",
             color=discord.Color.green()
         )
@@ -281,7 +281,7 @@ class Admin(commands.Cog):
             result_text = f"เพิ่ม Stats Point ให้ {target.display_name} +{amount}"
             await self.send_result_embed(
                 ctx,
-                title="💠 เพิ่ม Stats Point สำเร็จ",
+                title="เพิ่ม Stats Point สำเร็จ",
                 description=f"{target.mention}\nเพิ่ม Stats Point +{amount}",
                 color=discord.Color.green()
             )
@@ -295,7 +295,7 @@ class Admin(commands.Cog):
         else:
             await self.send_result_embed(
                 ctx,
-                title="❌ เพิ่ม Stats Point ไม่สำเร็จ",
+                title="เพิ่ม Stats Point ไม่สำเร็จ",
                 description=msg,
                 color=discord.Color.red()
             )
@@ -336,7 +336,7 @@ class Admin(commands.Cog):
             result_text = f"เพิ่ม Skill Point ให้ {target.display_name} +{amount}"
             await self.send_result_embed(
                 ctx,
-                title="🧠 เพิ่ม Skill Point สำเร็จ",
+                title="เพิ่ม Skill Point สำเร็จ",
                 description=f"{target.mention}\nเพิ่ม Skill Point +{amount}",
                 color=discord.Color.green()
             )
@@ -350,7 +350,7 @@ class Admin(commands.Cog):
         else:
             await self.send_result_embed(
                 ctx,
-                title="❌ เพิ่ม Skill Point ไม่สำเร็จ",
+                title="เพิ่ม Skill Point ไม่สำเร็จ",
                 description=msg,
                 color=discord.Color.red()
             )
