@@ -264,6 +264,7 @@ class GameCog(commands.GroupCog, name="game"):
         discord.app_commands.Choice(name="Rookie Pace", value="rookie_pace"),
         discord.app_commands.Choice(name="Rookie Late", value="rookie_late"),
         discord.app_commands.Choice(name="Rookie End", value="rookie_end"),
+        discord.app_commands.Choice(name="Fujimasa March", value="fujimasa_march"),
         discord.app_commands.Choice(name="Field Pace", value="runner_pace"),
         discord.app_commands.Choice(name="Oguri Cap", value="chaser_late"),
         discord.app_commands.Choice(name="Obey Your Master", value="sprinter_end"),
