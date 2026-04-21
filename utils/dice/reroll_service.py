@@ -2,6 +2,7 @@ import discord
 from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player,build_run_embed, apply_stamina_debuff
 from utils.dice.race_presets import get_current_path_type, get_path_effect
 from utils.dice.race_dice import roll_race_dice
+from utils.icon_presets import Status_Icon_Type
 
 async def execute_reroll(
     interaction: discord.Interaction,
@@ -52,7 +53,9 @@ async def execute_reroll(
         skill_effects=pending_effects,
     )
 
+    staminaNote = None
     if game_player.get("takeStaminaDebuff", False):
+        staminaNote = f"{Status_Icon_Type['STA']} ไม่พอ แต้มสูงสุดลูกเต๋า -10"
         if result["bonus_display"] == "-":
             result["bonus_display"] = "-10CAP"
         else:
@@ -83,7 +86,7 @@ async def execute_reroll(
         game_player=game_player,
         result=result,
         new_score=new_score,
-        stamina_note="-",
+        stamina_note= staminaNote or game_player['stamina_left'],
         path_effect=path_effect,
         title_prefix=title_prefix,
     )
