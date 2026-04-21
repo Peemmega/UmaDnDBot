@@ -209,6 +209,16 @@ RACE_PRESET = {
     },
 
 
+    "SteelBallRun": {
+        "name": "Steel Ball Run 4000000m",
+        "thumnail": "https://media.discordapp.net/attachments/697810514448744448/1496124802065371156/2026-04-21_192453.png?ex=69e8be4d&is=69e76ccd&hm=5b70ed31363207dd1453202f3657a698a98f8842aaf382b3360c0fa4ec3f4517&=&format=webp&quality=lossless&width=884&height=479",
+        "image": "https://media.discordapp.net/attachments/697810514448744448/1496124786143924304/Steel-Ball-Run-1-580x326.png?ex=69e8be49&is=69e76cc9&hm=c2aa1c996100f886b9eed318fad5b9ff35222dbecb78706b5c075aa382544bf4&=&format=webp&quality=lossless&width=870&height=489",
+        "track": "dirt",
+        "distance": "long",
+        "turn": 40,
+        "path": [1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1]
+    },
+
     # "TennoShoSpring": {
     #     "name": "Tenno Sho Spring 3200m",
     #     "thumnail": "",

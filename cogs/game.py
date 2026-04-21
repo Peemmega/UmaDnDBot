@@ -183,6 +183,7 @@ class GameCog(commands.GroupCog, name="game"):
         app_commands.Choice(name=RACE_PRESET["TennoShoAutumn"]["name"], value="TennoShoAutumn"),
         app_commands.Choice(name=RACE_PRESET["OkaSho"]["name"], value="OkaSho"),
         app_commands.Choice(name=RACE_PRESET["MileChampionship"]["name"], value="MileChampionship"),
+        app_commands.Choice(name=RACE_PRESET["SteelBallRun"]["name"], value="SteelBallRun"),
         app_commands.Choice(name="Random", value="Random"),
     ])
     async def create(self, interaction: discord.Interaction, stage: app_commands.Choice[str]):

@@ -81,11 +81,14 @@ def get_distance_color(
         elif eff.get("type") == "modify_enemy_gold_range":
             penalty += eff.get("value", 0)
 
-    gold_range = max(1, 10 + bonus - penalty)
+    max_range = 10 + bonus - penalty
+    gold_range = max(1, 10 + max_range)
+
+    umaInRange = count_nearby_players(player_id, score_map, radius=max_range)
 
     if nearest_gap <= gold_range:
-        return "Gold"
-    return "White"
+        return "Gold", umaInRange
+    return "White", umaInRange
 
 
 def get_dice_rule(style: str, distance_color: str, phase: int) -> dict:
@@ -223,8 +226,7 @@ def roll_race_dice(
     skill_effects: list | None = None,
 ) -> dict:
     phase = get_phase_from_turn(turn, max_turn)
-    distance_color = get_distance_color(player_id, score_map, skill_effects or [])
-    nearby_count = count_nearby_players(player_id, score_map, radius=10)
+    distance_color,nearby_count = get_distance_color(player_id, score_map, skill_effects or [])
     rule = get_dice_rule(style, distance_color, phase)
 
     dice_result = roll_by_rule(rule, player, {
