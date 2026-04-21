@@ -9,7 +9,7 @@ from utils.dice.reroll_service import execute_reroll
 
 class RunRerollView(discord.ui.View):
     def __init__(self, owner_id: int, channel_id: int, old_total: int, base_total: int, wit_reroll_ok: bool):
-        super().__init__(timeout=40)
+        super().__init__(timeout=120)
         self.owner_id = owner_id
         self.channel_id = channel_id
         self.old_total = old_total
