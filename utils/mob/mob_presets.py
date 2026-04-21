@@ -113,10 +113,10 @@ MOB_PRESETS = {
             "points": 4,
             "build": {
                 "flat": 0,
-                "add_dkh": 2,
+                "add_dkh": 3,
                 "floor": 3,
                 "selected_die": 0,
-                "cap": 5,
+                "cap": 7,
                 "self_heal_stamina": 0,
             }
         },
@@ -210,17 +210,19 @@ MOB_PRESETS = {
         "style": "Pace",
         "race_profile": {
             "speed": 8,
-            "stamina": 6,
-            "power": 7,
+            "stamina": 8,
+            "power": 8,
             "gut": 8,
-            "wit": 6,
+            "wit": 8,
 
             "turf": 7,
             "dirt": 1,
+
             "sprint": 2,
             "mile": 7,
             "medium": 7,
             "long": 3,
+
             "front": 1,
             "pace": 7,
             "late": 5,
@@ -237,10 +239,10 @@ MOB_PRESETS = {
             "points": 6,
             "build": {
                 "flat": 0,
-                "add_dkh": 3,
+                "add_dkh": 4,
                 "floor": 5,
                 "selected_die": 0,
-                "cap": 5,
+                "cap": 7,
                 "self_heal_stamina": 0,
             }
         },
@@ -281,7 +283,7 @@ MOB_PRESETS = {
                 "add_dkh": 3,
                 "floor": 3,
                 "selected_die": 3,
-                "cap": 3,
+                "cap": 7,
                 "self_heal_stamina": 3,
             }
         },
