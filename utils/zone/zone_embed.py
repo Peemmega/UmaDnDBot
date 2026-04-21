@@ -63,7 +63,7 @@ def build_zone_manage_embed_from_zone(
     preview_lines = []
     if preview["flat"]:
         preview_lines.append(f"✨ เพิ่มผลรวม **+{preview['flat']}**")
-    if preview["add_d"]:
+    if preview["add_dkh"]:
         preview_lines.append(f"🎲 เพิ่มลูกเต๋า d/kh **+{preview['add_dkh']}**")
     if preview["floor"]:
         preview_lines.append(f"🧱 เพิ่มแต้มขั้นต่ำ **+{preview['floor']}**")
