@@ -21,6 +21,7 @@ class Client(commands.Bot):
         await self.load_extension("cogs.skill")
         await self.load_extension("cogs.general")
         await self.load_extension("cogs.music")
+        await self.load_extension("cogs.admin")
         await self.tree.sync()
 
     async def on_ready(self):
