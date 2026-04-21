@@ -32,6 +32,9 @@ async def execute_reroll(
         return False, {"message": "ไม่สามารถลบคะแนนเดิมได้"}
 
     # Buff
+    pending_effects = []
+    merged_stats = {}
+
     if game_player["takeStaminaDebuff"]:
         pending_effects,merged_stats = build_pending_effects_from_player(game_player)
 
