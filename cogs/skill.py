@@ -17,7 +17,7 @@ from views.skill_fillter import SkillListView
 from views.skill_equip_view import SkillEquipView
 
 from utils.database import ensure_player, set_player_skill_slot, clear_player_skill_slot, get_player_skill_slots
-from utils.skill.skill_presets import SKILLS, SKILL_TAG_CHOICES
+from utils.skill.skill_presets import SKILLS
 
 
 class SkillCog(commands.Cog):
