@@ -91,8 +91,6 @@ class SkillCog(commands.Cog):
         self,
         interaction: discord.Interaction,
         mode: app_commands.Choice[str],
-        type: app_commands.Choice[str] | None = None,
-        tag: app_commands.Choice[str] | None = None,
         info: str | None = None,
     ):
         mode_value = mode.value
