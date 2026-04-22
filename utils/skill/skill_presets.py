@@ -982,7 +982,6 @@ SKILLS = {
         "cooldown": 8,
         "cost": 80,
         "trigger": {
-            "position_group": "front",
             "target_distance_min": -30,
             "target_distance_max": -11,
         },
