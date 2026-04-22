@@ -204,6 +204,88 @@ MOB_PRESETS = {
         },
     },
 
+    "oguri_cap": {
+        "name": "Oguri Cap",
+        "style": "Late",
+        "race_profile": {
+            "speed": 7,
+            "stamina": 6,
+            "power": 8,
+            "gut": 6,
+            "wit": 1,
+
+            "turf": 7,
+            "dirt": 6,
+            "sprint": 3,
+            "mile": 7,
+            "medium": 7,
+            "long": 6,
+            "front": 2,
+            "pace": 7,
+            "late": 7,
+            "end_style": 4,
+        },
+        "skills": {
+            1: "s014",   # On Your Left!
+            2: "s039",   # Rising Dragon
+            3: None,
+        },
+        "zone": {
+            "name": "Grey Phantom",
+            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910813691809813/umamusume-cinderella-gray.gif?ex=69e7f702&is=69e6a582&hm=79435ae723a1e2952da81083223166a29644bfccc6e26dc43f7d952fbe424707&=&width=561&height=317",
+            "points": 4,
+            "build": {
+                "flat": 0,
+                "add_dkh": 3,
+                "floor": 3,
+                "selected_die": 0,
+                "cap": 7,
+                "self_heal_stamina": 0,
+            }
+        },
+    },
+
+    "obey_your_master": {
+        "name": "Obey Your Master",
+        "style": "End",
+        "race_profile": {
+            "speed": 4,
+            "stamina": 4,
+            "power": 7,
+            "gut": 0,
+            "wit": 1,
+
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 2,
+            "mile": 6,
+            "medium": 7,
+            "long": 1,
+            "front": 1,
+            "pace": 1,
+            "late": 6,
+            "end_style": 7,
+        },
+        "skills": {
+            1: "s002",   # Encroaching Shadow
+            2: "s016",   # Turbo Sprint
+            3: None,
+        },
+        "zone": {
+            "name": "Wild Joker",
+            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910826534637709/obey-your-master-umamusume.gif?ex=69e7f705&is=69e6a585&hm=dbb241a5960cf39bc83a4fffba9b24dcbf2888d7fc6b46257c1e0a9e004462a0&=&width=561&height=317",
+            "points": 4,
+            "build": {
+                "flat": 0,
+                "add_dkh": 2,
+                "floor": 3,
+                "selected_die": 0,   # 🔥 boost ลูกที่เลือก
+                "cap": 2,            # 🔥 สำคัญมากกับ 10d
+                "self_heal_stamina": 0,
+            }
+        },
+    },
+
     "beyond_the_light": {
         "name": "Beyond The Light",
         "style": "Pace",
