@@ -1189,7 +1189,12 @@ def add_player(channel_id, user_id, display_name: str, style):
 
     return True, "เข้าร่วมเกมสำเร็จ"
 
-def add_player_as_mob_preset(channel_id: int, user_id: int, display_name: str, preset_key: str):
+def add_player_as_mob_preset(
+        channel_id: int, 
+        user_id: int, 
+        display_name: str, 
+        preset_key: str
+        ):
     game = get_game(channel_id)
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
@@ -1205,8 +1210,8 @@ def add_player_as_mob_preset(channel_id: int, user_id: int, display_name: str, p
         return False, "ไม่พบ preset"
 
     game["players"][user_id] = {
-        "username": display_name,
-        "display_name": display_name,
+        "username": preset["name"],
+        "display_name": preset["name"],
         "style": preset["style"],
         "score": 0,
         "last_roll_turn": -1,
