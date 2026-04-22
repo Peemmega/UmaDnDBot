@@ -976,6 +976,30 @@ SKILLS = {
         "tags": ["mid_race", "velocity", "cap_boost"],
     },
 
+    "s041": {
+        "name": "Tantalizing Trick",
+        "icon": "ReduceSTA",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "position_group": "front",
+            "target_distance_min": -30,
+            "target_distance_max": -11,
+        },
+        "target": {
+            "scope": "all_back",
+            "limit": 1,
+        },
+        "effects": [
+            {"type": "reduce_stamina", "value": 1},  # ศัตรู
+            {
+                "type": "force_rush",
+                "value": 1
+            }
+        ],
+        "active_roll": False,
+        "tags": ["debuff", "front", "mindgame"],
+    },
     
     "s099": {
         "name": "March Licking",

@@ -148,13 +148,10 @@ class StyleSelectView(discord.ui.View):
         att = get_attitude_values(db_player, surface, distance, style)
         att_bonus = build_attitude_stat_bonus(att)
         
-        # 🔥 เพิ่มตรงนี้
         embed.add_field(
             name="📊 Attitude Bonus",
             value=(
-                f"{Status_Icon_Type['POW']} +{att_bonus['power']}\n"
-                f"{Status_Icon_Type['SPD']} +{att_bonus['speed']}\n"
-                f"{Status_Icon_Type['WIT']} +{att_bonus['wit']}"
+                f"{Status_Icon_Type['SPD']} +{att_bonus['speed']} {Status_Icon_Type['POW']} +{att_bonus['power']} {Status_Icon_Type['WIT']} +{att_bonus['wit']}"
             ),
             inline=False
         )

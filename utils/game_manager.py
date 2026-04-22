@@ -489,7 +489,7 @@ def build_mob_join_embed(game: dict, player: dict):
     style = player.get("style", "Unknown")
 
     embed = discord.Embed(
-        title="🤖 Mob เข้าร่วม!",
+        title="🏇 ผู้เล่นเข้าร่วม!",
         color=discord.Color.orange()
     )
 
@@ -505,9 +505,7 @@ def build_mob_join_embed(game: dict, player: dict):
     embed.add_field(
         name="📊 Attitude Bonus",
         value=(
-            f"{Status_Icon_Type['POW']} +{att_bonus['power']}\n"
-            f"{Status_Icon_Type['SPD']} +{att_bonus['speed']}\n"
-            f"{Status_Icon_Type['WIT']} +{att_bonus['wit']}"
+            f"{Status_Icon_Type['SPD']} +{att_bonus['speed']} {Status_Icon_Type['POW']} +{att_bonus['power']} {Status_Icon_Type['WIT']} +{att_bonus['wit']}"
         ),
         inline=False
     )
@@ -760,7 +758,7 @@ def use_block(channel_id: int, user_id: int):
         "new_score": player["score"],
     }
 
-def use_rush(channel_id: int, user_id: int):
+def can_use_rush(channel_id: int, user_id: int) -> tuple[bool, str | None]:
     game = get_game(channel_id)
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
@@ -778,6 +776,19 @@ def use_rush(channel_id: int, user_id: int):
     if not valid_targets:
         return False, "ไม่มีคนด้านหน้าที่อยู่ในระยะ 30"
 
+    return True, None
+
+def use_rush(channel_id: int, user_id: int):
+    ok, reason = can_use_rush(channel_id, user_id)
+    if not ok:
+        return False, reason
+
+    game = get_game(channel_id)
+    player = game["players"].get(user_id)
+
+    ahead_players = get_players_ahead(channel_id, user_id)
+    valid_targets = [(uid, gap, info) for uid, gap, info in ahead_players if gap <= 30]
+
     target_id, gap, target_info = valid_targets[0]
 
     move_forward = max(gap - 10, 0)
@@ -793,6 +804,30 @@ def use_rush(channel_id: int, user_id: int):
         "move_forward": move_forward,
         "new_score": player["score"],
     }
+
+def can_force_rush_targets(channel_id: int, targets: list[tuple[int, dict]]) -> tuple[bool, str | None]:
+    if not targets:
+        return False, "ไม่มีเป้าหมายสำหรับบังคับ Rush"
+
+    for target_id, _ in targets:
+        game = get_game(channel_id)
+        if game is None:
+            return False, "ยังไม่มีเกมในห้องนี้"
+
+        player = game["players"].get(target_id)
+        if player is None:
+            continue
+
+        if player.get("used_rush"):
+            continue
+
+        ahead_players = get_players_ahead(channel_id, target_id)
+        valid_targets = [(uid, gap, info) for uid, gap, info in ahead_players if gap <= 30]
+
+        if valid_targets:
+            return True, None
+
+    return False, "ไม่มีเป้าหมายที่สามารถถูกบังคับใช้ Rush ได้"
 
 def get_attitude_values(db_player, surface, distance, style):
     surface_key = "turf" if surface == "Turf" else "dirt"

@@ -5,6 +5,8 @@ from utils.game_manager import (
     get_game,
     get_player_in_game,
     update_player_score,
+    use_rush,
+    can_force_rush_targets
 )
 
 def is_lastspurt(phase: int, path_type: int) -> bool:
@@ -282,6 +284,13 @@ def apply_non_active_skill(channel_id: int, user_id: int, skill_id: str, skill: 
         return False, "คุณยังไม่ได้เข้าร่วมเกมนี้"
 
     targets = resolve_skill_targets(channel_id, user_id, skill)
+
+    for effect in skill.get("effects", []):
+        if effect.get("type") == "force_rush":
+            ok, reason = can_force_rush_targets(channel_id, targets)
+            if not ok:
+                return False, reason
+
     applied_texts = []
 
     for effect in skill.get("effects", []):
@@ -326,12 +335,46 @@ def apply_non_active_skill(channel_id: int, user_id: int, skill_id: str, skill: 
             if not targets:
                 continue
 
+            stat = effect.get("stat", "flat_total")
+
             for target_id, target_info in targets:
-                target_info.setdefault("next_roll_flat_bonus", 0)
-                target_info["next_roll_flat_bonus"] += effect.get("value", 0)
-                applied_texts.append(
-                    f"ใส่ดีบัฟให้ <@{target_id}> เทิร์นหน้า {effect.get('value', 0)}"
-                )
+                value = effect.get("value", 0)
+
+                if stat == "flat_total":
+                    target_info.setdefault("next_roll_flat_bonus", 0)
+                    target_info["next_roll_flat_bonus"] += value
+                    applied_texts.append(
+                        f"ใส่ดีบัฟให้ <@{target_id}> เทิร์นหน้า Flat {value}"
+                    )
+
+                elif stat == "cap":
+                    target_info.setdefault("next_roll_cap_bonus", 0)
+                    target_info["next_roll_cap_bonus"] += value
+                    applied_texts.append(
+                        f"ใส่ดีบัฟให้ <@{target_id}> เทิร์นหน้า Cap {value}"
+                    )
+
+        elif effect_type == "force_rush":
+            if not targets:
+                continue
+                
+            for effect in skill.get("effects", []):
+                if effect.get("type") == "force_rush":
+                    ok, reason = can_force_rush_targets(channel_id, targets)
+                    if not ok:
+                        return False, reason
+
+            for target_id, target_info in targets:
+                rush_success, rush_payload = use_rush(channel_id, target_id)
+
+                if rush_success:
+                    applied_texts.append(
+                        f"บังคับ <@{target_id}> ใช้ Rush สำเร็จ"
+                    )
+                else:
+                    applied_texts.append(
+                        f"บังคับ <@{target_id}> ใช้ Rush ไม่สำเร็จ ({rush_payload})"
+                    )
 
         elif effect_type == "modify_gold_range":
             player.setdefault("gold_range_bonus_this_turn", 0)
