@@ -692,8 +692,26 @@ class GameCog(commands.GroupCog, name="game"):
             }
             wit_mana = playerInGame.get("wit_mana", 0)
         else:
-            slots = get_player_skill_slots(interaction.user.id)
-            wit_mana = "ยังไม่อยู่ในเกม"
+            playerInGame = get_player_in_game(
+                interaction.channel_id,
+                interaction.user.id
+            )
+
+            if playerInGame is None:
+                await interaction.response.send_message(
+                    "เกมยังไม่เข้าร่วม race",
+                    ephemeral=True
+                )
+                return
+
+            # ✅ ใช้จาก game เท่านั้น
+            slots = playerInGame.get("skills", {
+                1: None,
+                2: None,
+                3: None,
+            })
+
+            wit_mana = playerInGame.get("wit_mana", 0)
 
         if playerInGame is None:
             await interaction.response.send_message("เกมยังไม่เข้าร่วม race", ephemeral=True)
@@ -728,17 +746,17 @@ class GameCog(commands.GroupCog, name="game"):
 
         embed.add_field(
             name="🎯 Skill Slot 1",
-            value=build_slot_display(slots["slot_1"], interaction.channel_id, interaction.user.id),
+            value=build_slot_display(slots.get(1), interaction.channel_id, interaction.user.id),
             inline=False
         )
         embed.add_field(
             name="🎯 Skill Slot 2",
-            value=build_slot_display(slots["slot_2"], interaction.channel_id, interaction.user.id),
+            value=build_slot_display(slots.get(2), interaction.channel_id, interaction.user.id),
             inline=False
         )
         embed.add_field(
             name="🎯 Skill Slot 3",
-            value=build_slot_display(slots["slot_3"], interaction.channel_id, interaction.user.id),
+            value=build_slot_display(slots.get(3), interaction.channel_id, interaction.user.id),
             inline=False
         )
 
