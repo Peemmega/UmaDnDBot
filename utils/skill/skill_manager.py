@@ -1,5 +1,5 @@
 from typing import Optional
-
+import discord
 from utils.skill.skill_presets import SKILLS, ICON
 from utils.icon_presets import Status_Icon_Type
 
@@ -241,6 +241,67 @@ def build_skill_description(skill_id: str) -> str:
         f"เงื่อนไข: {trigger_text}\n"
         f"ผล:\n{effects}"
     )
+    
+def build_skill_embed(skills: dict) -> discord.Embed:
+    categories = build_skill_list_by_style(skills)
+
+    embed = discord.Embed(
+        title="📘 รายชื่อสกิลทั้งหมด",
+        color=discord.Color.blurple()
+    )
+
+    for style, lines in categories.items():
+        if not lines:
+            continue
+
+        name_map = {
+            "Front": "🟥 Front",
+            "Pace": "🟦 Pace",
+            "Late": "🟩 Late",
+            "End": "🟪 End",
+            "All": "⭐ ทุกสาย",
+        }
+
+        embed.add_field(
+            name=name_map.get(style, style),
+            value="\n".join(lines[:20]),  # กันยาวเกิน
+            inline=False
+        )
+
+    return embed
+
+def build_skill_list_by_style(skills: dict) -> dict:
+    categories = {
+        "Front": [],
+        "Pace": [],
+        "Late": [],
+        "End": [],
+        "All": [],
+    }
+
+    for key, skill in skills.items():
+        icon = ICON.get(skill.get("icon", ""), "")
+        line = f"{icon} `{key}` - {skill['name']}"
+
+        trigger = skill.get("trigger", {})
+        style = trigger.get("style")
+
+        if style is None:
+            categories["All"].append(line)
+
+        elif isinstance(style, list):
+            for s in style:
+                if s in categories:
+                    categories[s].append(line)
+
+        else:
+            if style in categories:
+                categories[style].append(line)
+            else:
+                categories["All"].append(line)
+
+    return categories
+
 
 def build_skill_list_text(skills: dict) -> str:
     if not skills:

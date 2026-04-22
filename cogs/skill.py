@@ -11,12 +11,12 @@ from utils.skill.skill_manager import (
     find_skill_by_name,
     get_skill_display,
     build_skill_card_text,
-    get_skills_by_tag
+    get_skills_by_tag,
+    build_skill_embed
 )
 
 from utils.database import ensure_player, set_player_skill_slot, clear_player_skill_slot, get_player_skill_slots
 from utils.skill.skill_presets import SKILLS
-from utils.icon_presets import Status_Icon_Type
 
 class SkillCog(commands.Cog):
     def __init__(self, bot):
@@ -78,11 +78,7 @@ class SkillCog(commands.Cog):
 
         if mode_value == "list":
             skills = get_all_skills()
-            embed = discord.Embed(
-                title="📘 รายชื่อสกิลทั้งหมด",
-                description=build_skill_list_text(skills),
-                color=discord.Color.blurple()
-            )
+            embed = build_skill_embed(skills)
             await interaction.response.send_message(embed=embed)
             return
 
