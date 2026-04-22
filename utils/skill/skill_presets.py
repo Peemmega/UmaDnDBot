@@ -29,7 +29,8 @@ EFFECT_TYPES = {
     "modify_start_loss",        # ลดโอกาส/ผลเสียตอนออกตัว
 }
 
-SKILL_TAG_CHOICES = [
+SKILL_TAG_OPTIONS = [
+    ("all", "ทั้งหมด"),
     ("corner", "corner"),
     ("straight", "straight"),
     ("uphill", "uphill"),
@@ -43,8 +44,8 @@ SKILL_TAG_CHOICES = [
     ("late", "late"),
     ("end", "end"),
     ("start", "start"),
-    ("late_race", "late_race"),
     ("mid_race", "mid_race"),
+    ("late_race", "late_race"),
 ]
 
 TRIGGER_SCHEMA = {

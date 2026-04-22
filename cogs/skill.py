@@ -11,9 +11,9 @@ from utils.skill.skill_manager import (
     get_skill_display,
     build_skill_card_text,
     build_skill_tag_embed,
-    build_skill_embed_from_dict
+    build_skill_list_embed
 )
-from views.skill_fillter import SkillFilterView, SkillTagView
+from views.skill_fillter import SkillListView
 from views.skill_equip_view import SkillEquipView
 
 from utils.database import ensure_player, set_player_skill_slot, clear_player_skill_slot, get_player_skill_slots
@@ -85,23 +85,7 @@ class SkillCog(commands.Cog):
     )
     @app_commands.choices(mode=[
         app_commands.Choice(name="list", value="list"),
-        app_commands.Choice(name="type", value="type"),
-        app_commands.Choice(name="tag", value="tag"),
         app_commands.Choice(name="info", value="info"),
-    ])
-    @app_commands.choices(type=[
-        app_commands.Choice(name="Concentration", value="Concentration"),
-        app_commands.Choice(name="Acceleration", value="Acceleration"),
-        app_commands.Choice(name="Velocity", value="Velocity"),
-        app_commands.Choice(name="Recovery", value="Recovery"),
-        app_commands.Choice(name="DecreaseVelocity", value="DecreaseVelocity"),
-        app_commands.Choice(name="ReduceSTA", value="ReduceSTA"),
-        app_commands.Choice(name="LookUp", value="LookUp"),
-        app_commands.Choice(name="Blind", value="Blind"),
-    ])
-    @app_commands.choices(tag=[
-        app_commands.Choice(name=name, value=value)
-        for name, value in SKILL_TAG_CHOICES
     ])
     async def skill_check(
         self,
@@ -115,9 +99,15 @@ class SkillCog(commands.Cog):
 
         if mode_value == "list":
             skills = get_all_skills()
-            embed = build_skill_embed_from_dict(skills, "📘 สกิลทั้งหมด")
-            view = SkillFilterView(skills)
-            await interaction.response.send_message(embed=embed, view=view)
+            embed = build_skill_list_embed(skills, "📘 รายชื่อสกิลทั้งหมด")
+            view = SkillListView()
+
+            await interaction.response.send_message(
+                embed=embed,
+                view=view,
+                ephemeral=False
+            )
+            return
 
         if mode_value == "type":
             if type is None:
@@ -134,17 +124,6 @@ class SkillCog(commands.Cog):
                 color=discord.Color.green()
             )
             await interaction.response.send_message(embed=embed)
-            return
-
-        if mode_value == "tag":
-            embed = build_skill_tag_embed("corner")
-            view = SkillTagView()
-
-            await interaction.response.send_message(
-                embed=embed,
-                view=view,
-                ephemeral=True
-            )
             return
 
         if mode_value == "info":

@@ -105,6 +105,14 @@ def get_skill_emoji(skill_id: str) -> str:
     return ICON.get(skill.get("icon"), "❓")
 
 
+def build_skill_list_embed(skills: dict, title: str = "📘 รายชื่อสกิลทั้งหมด") -> discord.Embed:
+    embed = discord.Embed(
+        title=title,
+        description=build_skill_list_text(skills),
+        color=discord.Color.blurple()
+    )
+    return embed
+
 def build_skill_tag_embed(tag_value: str):
     skills = get_skills_by_tag(tag_value)
 

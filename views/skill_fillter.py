@@ -3,22 +3,24 @@ from utils.skill.skill_manager import (
     build_skill_embed_from_dict,
     filter_skills,
     build_skill_detail_embed,
-    build_skill_tag_embed
+    build_skill_list_embed,
+    get_all_skills,
+    get_skills_by_tag
 )
 
 from utils.skill.skill_presets import (
-    SKILL_TAG_CHOICES
+    SKILL_TAG_OPTIONS
 )
 
-class SkillTagSelect(discord.ui.Select):
+class SkillListTagSelect(discord.ui.Select):
     def __init__(self):
         options = [
-            discord.SelectOption(label=name, value=value)
-            for name, value in SKILL_TAG_CHOICES
+            discord.SelectOption(label=label, value=value)
+            for value, label in SKILL_TAG_OPTIONS
         ]
 
         super().__init__(
-            placeholder="เลือก tag ของสกิล",
+            placeholder="เลือก tag เพื่อกรองสกิล",
             min_values=1,
             max_values=1,
             options=options
@@ -26,13 +28,21 @@ class SkillTagSelect(discord.ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         selected_tag = self.values[0]
-        embed = build_skill_tag_embed(selected_tag)
+
+        if selected_tag == "all":
+            skills = get_all_skills()
+            embed = build_skill_list_embed(skills, "📘 รายชื่อสกิลทั้งหมด")
+        else:
+            skills = get_skills_by_tag(selected_tag)
+            embed = build_skill_list_embed(skills, f"📘 รายชื่อสกิล | tag: {selected_tag}")
+
         await interaction.response.edit_message(embed=embed, view=self.view)
-        
-class SkillTagView(discord.ui.View):
+
+
+class SkillListView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=180)
-        self.add_item(SkillTagSelect())
+        self.add_item(SkillListTagSelect())
 
 class SkillFilterView(discord.ui.View):
     def __init__(self, skills: dict):
