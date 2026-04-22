@@ -318,11 +318,12 @@ def start_game(channel_id: int):
         user_id: info["score"]
         for user_id, info in game["players"].items()
     }
-    
-    using_mob_preset = player.get("using_mob_preset", False)
+
 
     for user_id, player in game["players"].items():
         is_mob = player.get("is_mob", False)
+        using_mob_preset = player.get("using_mob_preset", False)
+
 
         if is_mob:
             # mob ใช้ค่า preset ที่มีอยู่ใน player อยู่แล้ว
