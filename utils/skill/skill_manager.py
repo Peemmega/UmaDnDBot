@@ -240,6 +240,8 @@ def describe_effect(effect: dict) -> str:
         return f"ฟื้นฟู {Status_Icon_Type['STA']} ให้ตัวเอง +{value}"
     if effect_type == "reduce_stamina":
         return f"ลด {Status_Icon_Type['STA']} เป้าหมาย -{value}"
+    if effect_type == "force_rush":
+        return f"บังคับเป้าหมายใช้ Rush"
     if effect_type == "flat_score_change":
         sign = "+" if value >= 0 else ""
         return f"ปรับคะแนนทันที {sign}{value}"

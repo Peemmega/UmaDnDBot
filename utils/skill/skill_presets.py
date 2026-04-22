@@ -980,7 +980,7 @@ SKILLS = {
         "name": "Tantalizing Trick",
         "icon": "ReduceSTA",
         "cooldown": 8,
-        "cost": 80,
+        "cost": 60,
         "trigger": {
             "target_distance_min": -11,
             "target_distance_max": -30,
