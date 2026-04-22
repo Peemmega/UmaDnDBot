@@ -1123,11 +1123,7 @@ def add_player_as_mob_preset(channel_id: int, user_id: int, display_name: str, p
 
     preset = MOB_PRESETS.get(preset_key)
     if preset is None:
-        return False, "ไม่พบ preset mob"
-
-    race_profile = copy.deepcopy(preset["race_profile"])
-    zone = copy.deepcopy(preset["zone"])
-    skills = copy.deepcopy(preset["skills"])
+        return False, "ไม่พบ preset"
 
     game["players"][user_id] = {
         "username": display_name,
@@ -1136,38 +1132,18 @@ def add_player_as_mob_preset(channel_id: int, user_id: int, display_name: str, p
         "score": 0,
         "last_roll_turn": -1,
         "reroll_left": 0,
-        "wit_reroll_left": 0,
-        "stamina_left": 8 + race_profile.get("stamina", 1),
+        "stamina_left": 0,
         "wit_mana": 100,
-        "skills": skills,
-        "skill_cooldowns": {},
-        "race_profile": race_profile,
-        "used_rush": False,
-        "used_block": False,
-        "action_locked": False,
-
-        "next_roll_flat_bonus": 0,
-        "next_roll_add_d": 0,
-        "next_roll_add_kh": 0,
-        "next_roll_floor_bonus": 0,
-        "next_roll_selected_die_bonus": 0,
-        "next_roll_cap_bonus": 0,
-
-        "gold_range_bonus_this_turn": 0,
-        "enemy_gold_range_penalty_next_turn": 0,
-
-        "no_reroll_this_turn": False,
-        "no_reroll_next_turn": False,
-
+        "wit_reroll_left": 2,
+        "takeStaminaDebuff": False,
+        "skills": preset["skills"].copy(),
+        "zone": copy.deepcopy(preset["zone"]),
         "zone_left": 1,
-        "zone": zone,
-
-        # สำคัญ: ผู้เล่นคนนี้ไม่ใช่ mob AI
-        "is_mob": False,
-        "using_mob_preset": preset_key,
+        "is_mob": False,   # สำคัญมาก
+        "race_profile": copy.deepcopy(preset["race_profile"]),
     }
 
-    return True, f"เข้าร่วมเกมโดยใช้ preset `{preset['name']}` เรียบร้อย"
+    return True, "เข้าร่วมสำเร็จ"
 
 def add_mob_from_preset(channel_id: int, preset_key: str):
     game = get_game(channel_id)
