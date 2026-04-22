@@ -62,23 +62,13 @@ def build_lobby_embed(channel_id: int) -> discord.Embed:
     embed.set_footer(text="Game Status: Waiting for players")
     return embed
 
-def normalize_distance_name(value: str) -> str:
-    mapping = {
-        "sprint": "Sprint",
-        "mile": "Mile",
-        "medium": "Medium",
-        "long": "Long",
-    }
-    return mapping.get(value.lower(), value)
 
 
 def get_stages_by_distance(distance):
-    target = normalize_distance_name(distance)
-
     return {
         key: stage
         for key, stage in RACE_PRESET.items()
-        if stage.get("distance") == target
+        if stage.get("distance") == distance
     }
 
 def build_stage_preview_embed(stage):
@@ -165,15 +155,28 @@ class StageDropdown(discord.ui.Select):
             for key, stage in stages.items()
         ]
 
+        if not options:
+            options = [
+                discord.SelectOption(
+                    label="ไม่มีสนาม",
+                    value="__empty__"
+                )
+            ]
+
         super().__init__(
             placeholder="เลือกสนาม",
-            options=options[:25]
+            options=options[:25],
+            disabled=(options[0].value == "__empty__")
         )
 
     async def callback(self, interaction: discord.Interaction):
         stage_key = self.values[0]
-        stage = RACE_PRESET[stage_key]
 
+        if stage_key == "__empty__":
+            await interaction.response.send_message("ไม่มีสนามในหมวดนี้", ephemeral=True)
+            return
+
+        stage = RACE_PRESET[stage_key]
         embed = build_stage_preview_embed(stage)
 
         view = ConfirmCreateView(
@@ -183,6 +186,7 @@ class StageDropdown(discord.ui.Select):
         )
 
         await interaction.response.edit_message(embed=embed, view=view)
+
 
 class CreateGameView(discord.ui.View):
     def __init__(self, channel_id: int, owner_id: int):
@@ -197,16 +201,26 @@ class CreateGameView(discord.ui.View):
 
         stages = get_stages_by_distance(distance)
 
+        if not stages:
+            embed = discord.Embed(
+                title=f"📍 ระยะ: {distance.title()}",
+                description="ไม่มีสนามในหมวดนี้",
+                color=discord.Color.red()
+            )
+
+            await interaction.response.edit_message(
+                embed=embed,
+                view=CreateGameView(self.channel_id, self.owner_id)
+            )
+            return
+
         embed = discord.Embed(
             title=f"📍 ระยะ: {distance.title()}",
-            description="\n".join(
-                [f"• {stage['name']}" for stage in stages.values()]
-            ) or "ไม่มีสนาม",
+            description="\n".join([f"• {stage['name']}" for stage in stages.values()]),
             color=discord.Color.blue()
         )
 
         view = StageSelectView(self.channel_id, self.owner_id, distance)
-
         await interaction.response.edit_message(embed=embed, view=view)
 
     @discord.ui.button(label="Sprint", style=discord.ButtonStyle.primary)
