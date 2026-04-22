@@ -340,11 +340,9 @@ def build_skill_detail_embed(skills: dict, title: str) -> discord.Embed:
         return embed
 
     count = 0
-
     for skill_id in skills.keys():
         desc = build_skill_description(skill_id)
 
-        # กันข้อความยาวเกิน 1024
         if len(desc) > 1024:
             desc = desc[:1000] + "..."
 
@@ -355,8 +353,6 @@ def build_skill_detail_embed(skills: dict, title: str) -> discord.Embed:
         )
 
         count += 1
-
-        # กันเกิน 25 field
         if count >= 25:
             embed.set_footer(text="แสดงสูงสุด 25 สกิล")
             break

@@ -34,7 +34,10 @@ class SkillListTagSelect(discord.ui.Select):
             embed = build_skill_list_embed(skills, "📘 รายชื่อสกิลทั้งหมด")
         else:
             skills = get_skills_by_tag(selected_tag)
-            embed = build_skill_list_embed(skills, f"📘 รายชื่อสกิล | tag: {selected_tag}")
+            embed = build_skill_detail_embed(
+                skills,
+                f"🏷️ สกิล tag: {selected_tag}"
+            )
 
         await interaction.response.edit_message(embed=embed, view=self.view)
 
