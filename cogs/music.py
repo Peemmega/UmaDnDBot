@@ -37,21 +37,22 @@ class Music(commands.Cog):
         ok, msg = play_bgm(interaction.guild, music.value)
         await interaction.followup.send(msg, ephemeral=True)
 
-    @app_commands.command(name="joinvc", description="ให้บอทเข้าห้องเสียงของคุณ")
-    async def joinvc(self, interaction: discord.Interaction):
-        ok, msg = await join_user_voice(interaction)
-        await interaction.response.send_message(msg, ephemeral=True)
+    # @app_commands.command(name="joinvc", description="ให้บอทเข้าห้องเสียงของคุณ")
+    # async def joinvc(self, interaction: discord.Interaction):
+    #     ok, msg = await join_user_voice(interaction)
+    #     await interaction.response.send_message(msg, ephemeral=True)
 
-    @app_commands.command(name="leavevc", description="ให้บอทออกจากห้องเสียง")
-    async def leavevc(self, interaction: discord.Interaction):
-        ok, msg = await leave_voice(interaction.guild)
-        await interaction.response.send_message(msg, ephemeral=True)
+    # @app_commands.command(name="leavevc", description="ให้บอทออกจากห้องเสียง")
+    # async def leavevc(self, interaction: discord.Interaction):
+    #     ok, msg = await leave_voice(interaction.guild)
+    #     await interaction.response.send_message(msg, ephemeral=True)
 
     @app_commands.command(name="music_stop", description="หยุดเพลง")
     async def music_stop(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
         ok, msg = stop_bgm(interaction.guild)
+        ok, msg = await leave_voice(interaction.guild)
         await interaction.followup.send(msg, ephemeral=True)    
 
 

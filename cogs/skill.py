@@ -10,13 +10,13 @@ from utils.skill.skill_manager import (
     find_skill_by_name,
     get_skill_display,
     build_skill_card_text,
-    build_skill_tag_embed,
     build_skill_list_embed
 )
+
 from views.skill_fillter import SkillListView
 from views.skill_equip_view import SkillEquipView
 
-from utils.database import ensure_player, set_player_skill_slot, clear_player_skill_slot, get_player_skill_slots
+from utils.database import ensure_player, set_player_skill_slot, get_player_skill_slots
 from utils.skill.skill_presets import SKILLS
 
 
@@ -78,9 +78,9 @@ class SkillCog(commands.Cog):
 
     @skill_group.command(name="check", description="ตรวจสอบข้อมูลสกิล")
     @app_commands.describe(
-        mode="โหมดที่ต้องการดู",
-        type="ประเภทสกิล",
-        tag="แท็กของสกิล",
+        # mode="โหมดที่ต้องการดู",
+        # type="ประเภทสกิล",
+        # tag="แท็กของสกิล",
         info="รหัสหรือชื่อสกิล"
     )
     @app_commands.choices(mode=[
@@ -103,27 +103,10 @@ class SkillCog(commands.Cog):
             await interaction.response.send_message(
                 embed=embed,
                 view=view,
-                ephemeral=False
+                ephemeral=True
             )
             return
-
-        if mode_value == "type":
-            if type is None:
-                await interaction.response.send_message(
-                    "กรุณาเลือก type",
-                    ephemeral=True
-                )
-                return
-
-            skills = get_skills_by_icon(type.value)
-            embed = discord.Embed(
-                title=f"📂 สกิลประเภท {type.value}",
-                description=build_skill_list_text(skills),
-                color=discord.Color.green()
-            )
-            await interaction.response.send_message(embed=embed)
-            return
-
+        
         if mode_value == "info":
             if not info:
                 await interaction.response.send_message(
@@ -175,38 +158,6 @@ class SkillCog(commands.Cog):
             slot=slot.value,
             skill_id=skill_id
         )
-
-    @skill_group.command(name="unequip", description="ถอดสกิลออกจากช่อง")
-    @app_commands.describe(slot="ช่องสกิล")
-    @app_commands.choices(slot=[
-        app_commands.Choice(name="Slot 1", value=1),
-        app_commands.Choice(name="Slot 2", value=2),
-        app_commands.Choice(name="Slot 3", value=3),
-    ])
-    async def skill_unequip(
-        self,
-        interaction: discord.Interaction,
-        slot: app_commands.Choice[int]
-    ):
-        ensure_player(interaction.user.id, interaction.user.name)
-
-        slots = get_player_skill_slots(interaction.user.id)
-        slot_key = f"slot_{slot.value}"
-        old_skill_id = slots[slot_key] if slots else None
-
-        success, message = clear_player_skill_slot(interaction.user.id, slot.value)
-
-        if not success:
-            await interaction.response.send_message(message, ephemeral=True)
-            return
-
-        if old_skill_id:
-            skill_text = get_skill_display(old_skill_id)
-            text = f"ถอด {skill_text} ออกจากช่อง {slot.value} เรียบร้อย"
-        else:
-            text = f"ช่อง {slot.value} ว่างอยู่แล้ว"
-
-        await interaction.response.send_message(text, ephemeral=True)
 
     @skill_group.command(name="my", description="ดูสกิลที่ติดตั้ง")
     async def my_skills(self, interaction: discord.Interaction):
