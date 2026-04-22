@@ -96,6 +96,9 @@ def get_path_effect(path_type: int, player: dict) -> dict:
 
     return effect
 
+def render_path(path: list[int]) -> str:
+    return "".join(PATH_TYPE_ICON.get(x, "⬜") for x in path)
+
 RACE_PRESET = {
     "NHK": {
         "name": "NHK Mile Cup 1600m",
@@ -226,8 +229,8 @@ RACE_PRESET = {
         "track": "Turf",
         "distance": "Mile",
         "path": [1, 3, 1, 2, 1, 4, 1, 1],
-        "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520361968406598/thum_race_rt_000_9002_00.png?ex=69ea2eb2&is=69e8dd32&hm=a9e922a76a711660b15e0ae75c32c770a6aa9a7feae4bab5ca6c0e894f245fd3&=&format=webp&quality=lossless&width=192&height=96",
-        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1496520361968406598/thum_race_rt_000_9002_00.png?ex=69ea2eb2&is=69e8dd32&hm=a9e922a76a711660b15e0ae75c32c770a6aa9a7feae4bab5ca6c0e894f245fd3&=&format=webp&quality=lossless&width=192&height=96",
         "auto_mobs": [
             "rookie_front",
             "rookie_pace",

@@ -4,6 +4,9 @@ from discord import app_commands
 
 from views.confirmDeleteGameView import ConfirmDeleteView
 from views.join_view import LobbyView
+from views.use_skill_view import UseSkillView
+from views.create_game_view import build_lobby_embed
+
 from utils.icon_presets import Status_Icon_Type
 from utils.skill.skill_presets import SKILLS, ICON
 from utils.narrater import (
@@ -13,12 +16,11 @@ from utils.narrater import (
 )
 from utils.music_manager import play_bgm, stop_bgm
 
-from utils.dice.race_presets import RACE_PRESET, PATH_TYPE_ICON, build_track_progress_text, build_current_track_text
-from utils.dice.roll_service import (
-    execute_player_roll
-)
-from views.use_skill_view import UseSkillView
-from utils.database import ensure_player, get_player_skill_slots
+from utils.dice.race_presets import RACE_PRESET, render_path, build_track_progress_text, build_current_track_text
+from utils.dice.roll_service import (execute_player_roll)
+
+
+from utils.database import ensure_player
 from utils.dice.race_presets import (
     get_current_path_type, 
     build_path_effect_text, 
@@ -26,13 +28,8 @@ from utils.dice.race_presets import (
 )
 
 from utils.skill.skill_manager import build_skill_card_text
-
-from utils.dice.race_dice import (
-    get_phase_from_turn,
-)
-from utils.mob.mob_presets import (
-    MOB_PRESETS
-)
+from utils.dice.race_dice import (get_phase_from_turn,)
+from utils.mob.mob_presets import (MOB_PRESETS)
 
 from utils.game_manager import (
     create_game,
@@ -53,8 +50,7 @@ from utils.game_manager import (
     process_mob_turn
 )
 
-def render_path(path: list[int]) -> str:
-    return "".join(PATH_TYPE_ICON.get(x, "⬜") for x in path)
+
 
 def build_game_end_embed(ranked_players, commentary_text: str | None = None):
     rank_lines = []
@@ -234,52 +230,7 @@ class GameCog(commands.GroupCog, name="game"):
             )
             return
 
-        stage_data = RACE_PRESET[stage_key]
-
-        embed = discord.Embed(
-            title="สนาม: " + stage_data["name"],
-            description="เตรียมตัวเข้าสู่สนามแข่ง 🏇",
-            color=discord.Color.green()
-        )
-
-        embed.set_thumbnail(url=stage_data["thumnail"])
-        embed.add_field(name="👑 ผู้ดูแล", value=interaction.user.mention, inline=False)
-        embed.add_field(name="จำนวนเทิร์น", value=f"⏱️ {stage_data['turn']}", inline=False)
-        embed.add_field(
-            name="🗺️ เส้นทาง",
-            value=render_path(stage_data["path"]),
-            inline=False
-        )
-        embed.set_image(url=stage_data["image"])
-
-        embed.add_field(
-            name="📢 วิธีเล่น",
-            value=(
-                "กดปุ่ม Join เพื่อเข้าร่วม\n"
-                "ผู้สร้างใช้กดปุ่ม Start เพื่อเริ่มเกม"
-            ),
-            inline=False
-        )
-
-        game = get_game(channel_id)
-
-        mob_lines = []
-        for user_id, info in game["players"].items():
-            if str(user_id).startswith("mob_"):
-                mob_lines.append(
-                    f"🤖 {info.get('display_name', info.get('username', 'Mob'))} | {info['style']}"
-                )
-
-        if not mob_lines:
-            mob_lines.append("ไม่มี")
-
-        embed.add_field(
-            name="🤖 Auto Mobs",
-            value="\n".join(mob_lines),
-            inline=False
-        )
-
-        embed.set_footer(text="Game Status: Waiting for players")
+        embed = build_lobby_embed(channel_id)
 
         await interaction.response.send_message(
             embed=embed,
