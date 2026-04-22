@@ -134,6 +134,32 @@ def get_mob_preset_choices():
         for key, data in MOB_PRESETS.items()
     ]
 
+async def stage_autocomplete(
+    interaction: discord.Interaction,
+    current: str
+):
+    results = []
+
+    for key, data in RACE_PRESET.items():
+        stage_name = data["name"]
+
+        if (
+            current.lower() in key.lower()
+            or current.lower() in stage_name.lower()
+        ):
+            results.append(
+                app_commands.Choice(
+                    name=stage_name,
+                    value=key
+                )
+            )
+
+    # ถ้ามี Random อยากให้ติดมาด้วยเสมอ
+    if "random".startswith(current.lower()) or current == "":
+        results.append(app_commands.Choice(name="Random", value="Random"))
+
+    return results[:25]
+
 async def mob_preset_autocomplete(
     interaction: discord.Interaction,
     current: str
@@ -194,25 +220,11 @@ class GameCog(commands.GroupCog, name="game"):
 
     @app_commands.command(name="create", description="สร้างเกมใหม่")
     @app_commands.describe(stage="เลือกสนาม")
-    @app_commands.choices(stage=[
-        app_commands.Choice(name=RACE_PRESET["NHK"]["name"], value="NHK"),
-        app_commands.Choice(name=RACE_PRESET["TakarazukaKinen"]["name"], value="TakarazukaKinen"),
-        app_commands.Choice(name=RACE_PRESET["TennoShoSpring"]["name"], value="TennoShoSpring"),
-        app_commands.Choice(name=RACE_PRESET["SatsukiSho"]["name"], value="SatsukiSho"),
-        app_commands.Choice(name=RACE_PRESET["JapaneseDerby"]["name"], value="JapaneseDerby"),
-        app_commands.Choice(name=RACE_PRESET["ArimaKinen"]["name"], value="ArimaKinen"),
-        app_commands.Choice(name=RACE_PRESET["JapanCup"]["name"], value="JapanCup"),
-        app_commands.Choice(name=RACE_PRESET["OsakaHai"]["name"], value="OsakaHai"),
-        app_commands.Choice(name=RACE_PRESET["TennoShoAutumn"]["name"], value="TennoShoAutumn"),
-        app_commands.Choice(name=RACE_PRESET["OkaSho"]["name"], value="OkaSho"),
-        app_commands.Choice(name=RACE_PRESET["MileChampionship"]["name"], value="MileChampionship"),
-        app_commands.Choice(name=RACE_PRESET["SteelBallRun"]["name"], value="SteelBallRun"),
-        app_commands.Choice(name="Random", value="Random"),
-    ])
-    async def create(self, interaction: discord.Interaction, stage: app_commands.Choice[str]):
+    @app_commands.autocomplete(stage=stage_autocomplete)
+    async def create(self, interaction: discord.Interaction, stage: str):
         channel_id = interaction.channel_id
         owner_id = interaction.user.id
-        stage_key = stage.value
+        stage_key = stage
 
         success = create_game(channel_id, stage_key, owner_id)
         if not success:
@@ -231,7 +243,6 @@ class GameCog(commands.GroupCog, name="game"):
         )
 
         embed.set_thumbnail(url=stage_data["thumnail"])
-
         embed.add_field(name="👑 ผู้ดูแล", value=interaction.user.mention, inline=False)
         embed.add_field(name="จำนวนเทิร์น", value=f"⏱️ {stage_data['turn']}", inline=False)
         embed.add_field(
@@ -239,10 +250,7 @@ class GameCog(commands.GroupCog, name="game"):
             value=render_path(stage_data["path"]),
             inline=False
         )
-
-        embed.set_image(
-            url=stage_data["image"]
-        )
+        embed.set_image(url=stage_data["image"])
 
         embed.add_field(
             name="📢 วิธีเล่น",
@@ -252,13 +260,15 @@ class GameCog(commands.GroupCog, name="game"):
             ),
             inline=False
         )
-        
+
         game = get_game(channel_id)
 
         mob_lines = []
         for user_id, info in game["players"].items():
             if str(user_id).startswith("mob_"):
-                mob_lines.append(f"🤖 {info.get('display_name', info.get('username', 'Mob'))} | {info['style']}")
+                mob_lines.append(
+                    f"🤖 {info.get('display_name', info.get('username', 'Mob'))} | {info['style']}"
+                )
 
         if not mob_lines:
             mob_lines.append("ไม่มี")
