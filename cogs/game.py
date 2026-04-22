@@ -709,41 +709,20 @@ class GameCog(commands.GroupCog, name="game"):
             interaction.user.id
         )
 
-        if playerInGame and playerInGame.get("skills"):
-            slots = {
-                "slot_1": playerInGame["skills"].get(1),
-                "slot_2": playerInGame["skills"].get(2),
-                "slot_3": playerInGame["skills"].get(3),
-            }
-            wit_mana = playerInGame.get("wit_mana", 0)
-        else:
-            playerInGame = get_player_in_game(
-                interaction.channel_id,
-                interaction.user.id
-            )
-
-            if playerInGame is None:
-                await interaction.response.send_message(
-                    "เกมยังไม่เข้าร่วม race",
-                    ephemeral=True
-                )
-                return
-
-            slots = playerInGame.get("skills", {
-                1: None,
-                2: None,
-                3: None,
-            })
-
-            wit_mana = playerInGame.get("wit_mana", 0)
-
         if playerInGame is None:
-            await interaction.response.send_message("เกมยังไม่เข้าร่วม race", ephemeral=True)
+            await interaction.response.send_message(
+                "เกมยังไม่เข้าร่วม race",
+                ephemeral=True
+            )
             return
 
-        if slots is None:
-            await interaction.response.send_message("ไม่พบข้อมูลผู้เล่น", ephemeral=True)
-            return
+        slots = playerInGame.get("skills", {
+            1: None,
+            2: None,
+            3: None,
+        })
+
+        wit_mana = playerInGame.get("wit_mana", 0)
 
         embed = discord.Embed(
             title=f"📘 Skill Menu: {interaction.user.display_name}",
@@ -752,15 +731,15 @@ class GameCog(commands.GroupCog, name="game"):
 
         zone = playerInGame.get("zone")
         if not zone:
-            return False, "ไม่พบข้อมูล Zone"
+            await interaction.response.send_message(
+                "ไม่พบข้อมูล Zone",
+                ephemeral=True
+            )
+            return
 
-        zone_text = "ยังไม่อยู่ในเกม"
-        if playerInGame:
-            zone_name = zone.get("name", "Default Zone")
-
-            zone_left = playerInGame.get("zone_left", 0)
-            zone_text = f"{zone_name}\nคงเหลือ: {zone_left}"
-
+        zone_name = zone.get("name", "Default Zone")
+        zone_left = playerInGame.get("zone_left", 0)
+        zone_text = f"{zone_name}\nคงเหลือ: {zone_left}"
 
         embed.add_field(
             name="🌌 Zone",
