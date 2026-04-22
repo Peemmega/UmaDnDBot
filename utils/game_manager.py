@@ -318,6 +318,8 @@ def start_game(channel_id: int):
         user_id: info["score"]
         for user_id, info in game["players"].items()
     }
+    
+    using_mob_preset = player.get("using_mob_preset", False)
 
     for user_id, player in game["players"].items():
         is_mob = player.get("is_mob", False)
@@ -360,6 +362,22 @@ def start_game(channel_id: int):
                 3: None,
             })
 
+        elif using_mob_preset:
+            base_player = player.get("race_profile", {}).copy()
+
+            player["reroll_left"] = 2
+            player["wit_reroll_left"] = 2
+            player["stamina_left"] = 8 + base_player.get("stamina", 1)
+            player["race_profile"] = base_player.copy()
+
+            # สำคัญ: ใช้ skills เดิมจาก preset ห้ามทับด้วย DB
+            player["skills"] = player.get("skills", {
+                1: None,
+                2: None,
+                3: None,
+            })
+
+            player["zone"] = copy.deepcopy(player.get("zone", {}))
         else:
             db_player = get_player(user_id)
 
@@ -1136,11 +1154,25 @@ def add_player_as_mob_preset(channel_id: int, user_id: int, display_name: str, p
         "wit_mana": 100,
         "wit_reroll_left": 2,
         "takeStaminaDebuff": False,
-        "skills": preset["skills"].copy(),
+        "skills": copy.deepcopy(preset["skills"]),
         "zone": copy.deepcopy(preset["zone"]),
         "zone_left": 1,
-        "is_mob": False,   # สำคัญมาก
+        "is_mob": False,
+        "using_mob_preset": True,
+        "mob_preset_key": preset_key,
         "race_profile": copy.deepcopy(preset["race_profile"]),
+        "skill_cooldowns": {},
+        "used_rush": False,
+        "used_block": False,
+        "action_locked": False,
+        "next_roll_flat_bonus": 0,
+        "next_roll_add_d": 0,
+        "next_roll_add_kh": 0,
+        "next_roll_floor_bonus": 0,
+        "next_roll_selected_die_bonus": 0,
+        "next_roll_cap_bonus": 0,
+        "no_reroll_this_turn": False,
+        "no_reroll_next_turn": False,
     }
 
     return True, "เข้าร่วมสำเร็จ"

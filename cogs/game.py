@@ -729,7 +729,6 @@ class GameCog(commands.GroupCog, name="game"):
                 )
                 return
 
-            # ✅ ใช้จาก game เท่านั้น
             slots = playerInGame.get("skills", {
                 1: None,
                 2: None,
