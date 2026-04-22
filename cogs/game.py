@@ -288,20 +288,38 @@ class GameCog(commands.GroupCog, name="game"):
         interaction: discord.Interaction,
         preset: str
     ):
-        preset_data = MOB_PRESETS.get(preset)
+        success, message = add_mob_from_preset(interaction.channel_id, preset)
 
-        if not preset_data:
-            await interaction.response.send_message("ไม่พบ preset", ephemeral=True)
+        if not success:
+            await interaction.response.send_message(message, ephemeral=True)
             return
 
-        await interaction.response.send_message(f"เพิ่ม {preset_data['name']} แล้ว")
+        game = get_game(interaction.channel_id)
+        if game is None:
+            await interaction.response.send_message("ไม่พบข้อมูลเกม", ephemeral=True)
+            return
+
+        # หา mob ที่เพิ่งเพิ่มล่าสุด
+        mob_players = [
+            info for uid, info in game["players"].items()
+            if str(uid).startswith("mob_")
+        ]
+
+        if not mob_players:
+            await interaction.response.send_message("เพิ่ม mob สำเร็จ แต่ไม่พบข้อมูล mob", ephemeral=True)
+            return
+
+        mob = mob_players[-1]
+        embed = build_mob_join_embed(game, mob)
+
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="join_as_mob", description="เข้าร่วมโดยใช้ mob preset")
     @app_commands.autocomplete(preset=mob_preset_autocomplete)
     async def join_as_mob(
         self,
         interaction: discord.Interaction,
-        preset: str 
+        preset: str
     ):
         success, message = add_player_as_mob_preset(
             interaction.channel_id,
@@ -314,13 +332,20 @@ class GameCog(commands.GroupCog, name="game"):
             await interaction.response.send_message(message, ephemeral=True)
             return
 
-        preset_data = MOB_PRESETS[preset]
+        game = get_game(interaction.channel_id)
+        if game is None:
+            await interaction.response.send_message("ไม่พบข้อมูลเกม", ephemeral=True)
+            return
 
-        embed = discord.Embed(
-            title="🏇 เข้าร่วมด้วย Mob Preset!",
-            description=f"{preset_data['name']}",
-            color=discord.Color.green()
-        )
+        player = game["players"].get(interaction.user.id)
+        if player is None:
+            await interaction.response.send_message("เข้าร่วมสำเร็จ แต่ไม่พบข้อมูลผู้เล่นในเกม", ephemeral=True)
+            return
+
+        embed = build_mob_join_embed(game, player)
+        embed.title = "🏇 ผู้เล่นเข้าร่วมด้วย Mob Preset!"
+        embed.add_field(name="ผู้เล่น", value=interaction.user.mention, inline=True)
+        embed.add_field(name="Preset", value=MOB_PRESETS[preset]["name"], inline=True)
 
         await interaction.response.send_message(embed=embed)
 

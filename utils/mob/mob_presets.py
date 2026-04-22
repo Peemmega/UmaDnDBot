@@ -21,9 +21,9 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: None,
-            2: None,
-            3: None,
+             1: "s033",
+            2: "s025",
+            3: "s034",
         },
         "zone": {
             "name": "Default Zone",
@@ -62,9 +62,9 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: None,
-            2: None,
-            3: None,
+            1: "s007",
+            2: "s021",
+            3: "s032",
         },
         "zone": {
             "name": "Default Zone",
@@ -103,9 +103,9 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: None,
-            2: None,
-            3: None,
+            1: "s014",
+            2: "s026",
+            3: "s039",
         },
         "zone": {
             "name": "Default Zone",
@@ -144,9 +144,9 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: None,
-            2: None,
-            3: None,
+            1: "s010",
+            2: "s031",
+            3: "s005",
         },
         "zone": {
             "name": "Default Zone",
@@ -185,9 +185,9 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: None,
-            2: None,
-            3: None,
+            1: "s007",
+            2: "s032",
+            3: "s015",
         },
         "zone": {
             "name": "Abyssal Lament",
@@ -204,130 +204,7 @@ MOB_PRESETS = {
         },
     },
 
-    "runner_pace": {
-        "name": "Field Pace",
-        "style": "Pace",
-        "race_profile": {
-            "speed": 3,
-            "stamina": 3,
-            "power": 2,
-            "gut": 2,
-            "wit": 2,
-
-            "turf": 2,
-            "dirt": 1,
-            "sprint": 1,
-            "mile": 2,
-            "medium": 2,
-            "long": 1,
-            "front": 1,
-            "pace": 3,
-            "late": 1,
-            "end_style": 1,
-        },
-        "skills": {
-            1: "s007",   # Technician
-            2: None,
-            3: None,
-        },
-        "zone": {
-            "name": "Pace Zone",
-            "image_url": "",
-            "points": 3,
-            "build": {
-                "flat": 0,
-                "add_dkh": 1,
-                "floor": 0,
-                "selected_die": 1,
-                "cap": 2,
-                "self_heal_stamina": 0,
-            },
-        },
-    },
-
-    "chaser_late": {
-        "name": "Oguri Cap",
-        "style": "Late",
-        "race_profile": {
-            "speed": 7,
-            "stamina": 6,
-            "power": 8,
-            "gut": 6,
-            "wit": 1,
-
-            "turf": 7,
-            "dirt": 6,
-            "sprint": 3,
-            "mile": 7,
-            "medium": 7,
-            "long": 6,
-            "front": 2,
-            "pace": 7,
-            "late": 7,
-            "end_style": 4,
-        },
-        "skills": {
-            1: "s014",   # On Your Left!
-            2: "s039",   # Rising Dragon
-            3: None,
-        },
-        "zone": {
-            "name": "Grey Phantom",
-            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910813691809813/umamusume-cinderella-gray.gif?ex=69e7f702&is=69e6a582&hm=79435ae723a1e2952da81083223166a29644bfccc6e26dc43f7d952fbe424707&=&width=561&height=317",
-            "points": 4,
-            "build": {
-                "flat": 0,
-                "add_dkh": 3,
-                "floor": 3,
-                "selected_die": 0,
-                "cap": 7,
-                "self_heal_stamina": 0,
-            }
-        },
-    },
-
-    "sprinter_end": {
-        "name": "Obey Your Master",
-        "style": "End",
-        "race_profile": {
-            "speed": 4,
-            "stamina": 4,
-            "power": 7,
-            "gut": 0,
-            "wit": 1,
-
-            "turf": 7,
-            "dirt": 1,
-            "sprint": 2,
-            "mile": 6,
-            "medium": 7,
-            "long": 1,
-            "front": 1,
-            "pace": 1,
-            "late": 6,
-            "end_style": 7,
-        },
-        "skills": {
-            1: "s002",   # Encroaching Shadow
-            2: "s016",   # Turbo Sprint
-            3: None,
-        },
-        "zone": {
-            "name": "Wild Joker",
-            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910826534637709/obey-your-master-umamusume.gif?ex=69e7f705&is=69e6a585&hm=dbb241a5960cf39bc83a4fffba9b24dcbf2888d7fc6b46257c1e0a9e004462a0&=&width=561&height=317",
-            "points": 4,
-            "build": {
-                "flat": 0,
-                "add_dkh": 2,
-                "floor": 3,
-                "selected_die": 0,   # 🔥 boost ลูกที่เลือก
-                "cap": 2,            # 🔥 สำคัญมากกับ 10d
-                "self_heal_stamina": 0,
-            }
-        },
-    },
-
-    "boss_champion": {
+    "beyond_the_light": {
         "name": "Beyond The Light",
         "style": "Pace",
         "race_profile": {
