@@ -242,6 +242,24 @@ def build_skill_description(skill_id: str) -> str:
         f"ผล:\n{effects}"
     )
     
+def split_lines_to_chunks(lines: list[str], max_len: int = 1024) -> list[str]:
+    chunks = []
+    current = ""
+
+    for line in lines:
+        add_text = line if not current else f"\n{line}"
+        if len(current) + len(add_text) > max_len:
+            if current:
+                chunks.append(current)
+            current = line
+        else:
+            current += add_text
+
+    if current:
+        chunks.append(current)
+
+    return chunks
+
 def build_skill_embed(skills: dict) -> discord.Embed:
     categories = build_skill_list_by_style(skills)
 
@@ -250,23 +268,30 @@ def build_skill_embed(skills: dict) -> discord.Embed:
         color=discord.Color.blurple()
     )
 
+    name_map = {
+        "Front": "🟥 Front",
+        "Pace": "🟦 Pace",
+        "Late": "🟩 Late",
+        "End": "🟪 End",
+        "All": "⭐ ทุกสาย",
+    }
+
     for style, lines in categories.items():
         if not lines:
             continue
 
-        name_map = {
-            "Front": "🟥 Front",
-            "Pace": "🟦 Pace",
-            "Late": "🟩 Late",
-            "End": "🟪 End",
-            "All": "⭐ ทุกสาย",
-        }
+        chunks = split_lines_to_chunks(lines, max_len=1024)
 
-        embed.add_field(
-            name=name_map.get(style, style),
-            value="\n".join(lines[:20]),  # กันยาวเกิน
-            inline=False
-        )
+        for index, chunk in enumerate(chunks):
+            field_name = name_map.get(style, style)
+            if index > 0:
+                field_name += f" ({index + 1})"
+
+            embed.add_field(
+                name=field_name,
+                value=chunk,
+                inline=False
+            )
 
     return embed
 
