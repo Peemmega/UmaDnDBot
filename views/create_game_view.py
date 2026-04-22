@@ -117,7 +117,7 @@ class ConfirmCreateView(discord.ui.View):
         self.owner_id = owner_id
         self.stage_key = stage_key
 
-    @discord.ui.button(label="Create", style=discord.ButtonStyle.success)
+    @discord.ui.button(label="สร้าง", style=discord.ButtonStyle.success)
     async def create(self, interaction: discord.Interaction, button):
         channel_id = self.channel_id
         owner_id = interaction.user.id
@@ -133,19 +133,16 @@ class ConfirmCreateView(discord.ui.View):
 
         embed = build_lobby_embed(channel_id)
 
-        # ✅ ตอบ interaction แบบ ephemeral (ไม่ให้ error)
-        await interaction.response.send_message(
-            "สร้างห้องเรียบร้อย",
-            ephemeral=True
-        )
+        # ✅ ตอบก่อน (กัน error interaction timeout)
+        await interaction.response.defer()
+        await interaction.message.delete()
 
-        # 🔥 ส่ง lobby ลงห้องจริง
         await interaction.channel.send(
             embed=embed,
             view=LobbyView(channel_id)
         )
 
-    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="ย้อนกลับ", style=discord.ButtonStyle.secondary)
     async def back(self, interaction: discord.Interaction, button):
         await interaction.response.edit_message(
             embed=build_create_menu_embed(),
