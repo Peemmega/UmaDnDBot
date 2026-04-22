@@ -1,7 +1,8 @@
 import discord
 from utils.skill.skill_manager import (
     build_skill_embed_from_dict,
-    filter_skills
+    filter_skills,
+    build_skill_detail_embed
 )
 class SkillFilterView(discord.ui.View):
     def __init__(self, skills: dict):
@@ -56,12 +57,12 @@ class SkillFilterView(discord.ui.View):
             distance=distance
         )
 
-        title = "📘 สกิล"
+        title = "📘 Skill Filter"
         if style:
             title += f" | {style}"
         if distance:
             title += f" | {distance}"
 
-        embed = build_skill_embed_from_dict(filtered, title)
+        embed = build_skill_detail_embed(filtered, title)
 
         await interaction.response.edit_message(embed=embed, view=self)

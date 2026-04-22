@@ -266,7 +266,7 @@ def filter_skills(skills: dict, *, style=None, distance=None) -> dict:
 
         # เช็ค distance
         if distance:
-            d = trigger.get("distance")
+            d = trigger.get("distance_type")
             if isinstance(d, list):
                 if distance not in d:
                     continue
@@ -287,3 +287,37 @@ def build_skill_list_text(skills: dict) -> str:
         lines.append(f"{icon} `{key}` - {skill['name']}")
 
     return "\n".join(lines)
+
+def build_skill_detail_embed(skills: dict, title: str) -> discord.Embed:
+    embed = discord.Embed(
+        title=title,
+        color=discord.Color.gold()
+    )
+
+    if not skills:
+        embed.description = "ไม่พบสกิล"
+        return embed
+
+    count = 0
+
+    for skill_id in skills.keys():
+        desc = build_skill_description(skill_id)
+
+        # กันข้อความยาวเกิน 1024
+        if len(desc) > 1024:
+            desc = desc[:1000] + "..."
+
+        embed.add_field(
+            name="",
+            value=desc,
+            inline=False
+        )
+
+        count += 1
+
+        # กันเกิน 25 field
+        if count >= 25:
+            embed.set_footer(text="แสดงสูงสุด 25 สกิล")
+            break
+
+    return embed
