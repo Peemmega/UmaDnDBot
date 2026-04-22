@@ -138,17 +138,11 @@ async def mob_preset_autocomplete(
     interaction: discord.Interaction,
     current: str
 ):
-    results = []
-
-    for key, data in MOB_PRESETS.items():
-        name = data["name"]
-
-        if current.lower() in name.lower():
-            results.append(
-                app_commands.Choice(name=name, value=key)
-            )
-
-    return results[:25]  # discord limit
+    return [
+        app_commands.Choice(name=data["name"], value=key)
+        for key, data in MOB_PRESETS.items()
+        if current.lower() in data["name"].lower()
+    ][:25]
 
 class GameCog(commands.GroupCog, name="game"):
     def __init__(self, bot):
@@ -287,25 +281,27 @@ class GameCog(commands.GroupCog, name="game"):
         await interaction.followup.send(f"⏭️ <@{interaction.user.id}> ข้ามเทิร์น {game['turn']}")
         await self.process_next_turn(interaction)
 
-    @discord.app_commands.command(name="add_mob", description="เพิ่ม mob preset เข้าการแข่งขัน")
+    @app_commands.command(name="add_mob", description="เพิ่ม mob preset")
     @app_commands.autocomplete(preset=mob_preset_autocomplete)
-    async def add_mob(self, interaction: discord.Interaction, preset: discord.app_commands.Choice[str]):
-        success, message = add_mob_from_preset(interaction.channel_id, preset.value)
+    async def add_mob(
+        self,
+        interaction: discord.Interaction,
+        preset: str
+    ):
+        preset_data = MOB_PRESETS.get(preset)
 
-        if success:
-            game = get_game(interaction.channel_id)
+        if not preset_data:
+            await interaction.response.send_message("ไม่พบ preset", ephemeral=True)
+            return
 
-            mob = list(game["players"].values())[-1]
-            embed = build_mob_join_embed(game, mob)
+        await interaction.response.send_message(f"เพิ่ม {preset_data['name']} แล้ว")
 
-            await interaction.response.send_message(embed=embed)
-
-    @discord.app_commands.command(name="join_as_mob", description="เข้าร่วมโดยใช้ mob preset")
-    @discord.app_commands.autocomplete(preset=mob_preset_autocomplete)
+    @app_commands.command(name="join_as_mob", description="เข้าร่วมโดยใช้ mob preset")
+    @app_commands.autocomplete(preset=mob_preset_autocomplete)
     async def join_as_mob(
         self,
         interaction: discord.Interaction,
-        preset: str   # ⚠️ เปลี่ยนเป็น str
+        preset: str 
     ):
         success, message = add_player_as_mob_preset(
             interaction.channel_id,
