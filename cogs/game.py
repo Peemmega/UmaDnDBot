@@ -228,7 +228,6 @@ class GameCog(commands.GroupCog, name="game"):
             title="สนาม: " + stage_data["name"],
             description="เตรียมตัวเข้าสู่สนามแข่ง 🏇",
             color=discord.Color.green()
-
         )
 
         embed.set_thumbnail(url=stage_data["thumnail"])
@@ -254,6 +253,22 @@ class GameCog(commands.GroupCog, name="game"):
             inline=False
         )
         
+        game = get_game(channel_id)
+
+        mob_lines = []
+        for user_id, info in game["players"].items():
+            if str(user_id).startswith("mob_"):
+                mob_lines.append(f"🤖 {info.get('display_name', info.get('username', 'Mob'))} | {info['style']}")
+
+        if not mob_lines:
+            mob_lines.append("ไม่มี")
+
+        embed.add_field(
+            name="🤖 Auto Mobs",
+            value="\n".join(mob_lines),
+            inline=False
+        )
+
         embed.set_footer(text="Game Status: Waiting for players")
 
         await interaction.response.send_message(

@@ -179,6 +179,9 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
         "awaiting_turn_confirm": False,
     }
 
+    for preset_key in stage.get("auto_mobs", []):
+        add_mob_from_preset(channel_id, preset_key)
+
     return True
 
 def have_all_players_rolled(channel_id: int):

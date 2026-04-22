@@ -180,10 +180,10 @@ class StyleSelectView(discord.ui.View):
 
 class LobbyView(discord.ui.View):
     def __init__(self, channel_id: int):
-        super().__init__(timeout=300)
+        super().__init__(timeout=None)
         self.channel_id = channel_id
 
-    @discord.ui.button(label="Join", style=discord.ButtonStyle.success, emoji="🏇")
+    @discord.ui.button(label="เข้าร่วม", style=discord.ButtonStyle.success, emoji="🏇")
     async def join_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if is_game_started(self.channel_id):
             await interaction.response.send_message(
@@ -206,7 +206,7 @@ class LobbyView(discord.ui.View):
             ephemeral=True
         )
 
-    @discord.ui.button(label="Start", style=discord.ButtonStyle.primary, emoji="▶️")
+    @discord.ui.button(label="เริ่มเกม", style=discord.ButtonStyle.primary, emoji="▶️")
     async def start_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         game = get_game(self.channel_id)
         if game is None:
