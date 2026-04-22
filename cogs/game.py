@@ -15,19 +15,19 @@ from utils.narrater import (
 )
 from utils.music_manager import play_bgm, stop_bgm
 
-from utils.dice.race_presets import RACE_PRESET, render_path, build_track_progress_text, build_current_track_text
+from utils.race.race_presets import RACE_PRESET, render_path, build_track_progress_text, build_current_track_text
 from utils.dice.roll_service import (execute_player_roll)
 
 
 from utils.database import ensure_player
-from utils.dice.race_presets import (
+from utils.race.race_presets import (
     get_current_path_type, 
     build_path_effect_text, 
     PATH_TYPE_TEXT
 )
 
 from utils.skill.skill_manager import build_skill_card_text
-from utils.dice.race_dice import (get_phase_from_turn,)
+from utils.race.race_dice import (get_phase_from_turn,)
 from utils.mob.mob_presets import (MOB_PRESETS)
 
 from utils.game_manager import (
@@ -333,238 +333,154 @@ class GameCog(commands.GroupCog, name="game"):
 
         await interaction.response.send_message(embed=embed)
 
+    async def _process_next_turn_core(
+        self,
+        *,
+        channel_id: int,
+        send_func,
+        guild,
+        title_suffix: str = "",
+    ):
+        game = get_game(channel_id)
+        if game is None:
+            return
+
+        previous_ranked_players = get_ranked_players(channel_id)
+        previous_players = build_narrator_players_from_ranked(previous_ranked_players)
+
+        new_turn = next_turn(channel_id)
+
+        if new_turn > game["max_turn"]:
+            ranked_players = get_ranked_players(channel_id)
+
+            commentary_text = None
+            try:
+                final_players = build_narrator_players_from_ranked(ranked_players)
+                commentary_text = await generate_finish_commentary(
+                    final_players,
+                    stage_name=game.get("stage_name")
+                )
+            except Exception as e:
+                print("Finish narrator error:", e)
+
+            embed = build_game_end_embed(ranked_players, commentary_text=commentary_text)
+            await send_func(embed=embed)
+
+            ok, msg = stop_bgm(guild)
+            print(f"[Music] stop on turn end: {msg}")
+
+            delete_game(channel_id)
+            return
+
+        game = get_game(channel_id)
+
+        phase = get_phase_from_turn(new_turn, game["max_turn"])
+        ranked_players = get_ranked_players(channel_id)
+        current_players = build_narrator_players_from_ranked(ranked_players)
+
+        rank_lines = []
+        for index, (user_id, info) in enumerate(ranked_players, start=1):
+            if str(user_id).startswith("mob_"):
+                display_name = (
+                    info.get("display_name")
+                    or info.get("username")
+                    or info.get("name")
+                    or "Mob"
+                )
+            else:
+                display_name = f"<@{user_id}>"
+
+            rank_lines.append(
+                f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
+            )
+
+        if not rank_lines:
+            rank_lines.append("ยังไม่มีผู้เล่น")
+
+        path_type = get_current_path_type(game)
+        path_label = PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง")
+
+        track_preview = build_track_progress_text(game["path"], new_turn)
+        current_track_text = build_current_track_text(game["path"], new_turn)
+
+        commentary_text = None
+        try:
+            commentary_text = await generate_commentary(
+                previous_players,
+                current_players,
+                turn=new_turn,
+                max_turn=game["max_turn"],
+                event_text=f"เริ่มเทิร์น {new_turn} เส้นทางเป็น {path_label}"
+            )
+        except Exception as e:
+            print("Narrator error:", e)
+
+        title = f"เข้าสู่เทิร์น {new_turn}"
+        if title_suffix:
+            title += f" {title_suffix}"
+
+        embed = discord.Embed(
+            title=title,
+            color=discord.Color.green(),
+            description=(
+                f"Phase: {phase}\n"
+                f"เส้นทางเทิร์นนี้:\n{track_preview}\n{current_track_text}\n\n"
+                f"อันดับคะแนน:\n" + "\n".join(rank_lines)
+            )
+        )
+
+        embed.add_field(
+            name="Effect",
+            value=build_path_effect_text(path_type),
+            inline=False
+        )
+
+        embed.set_thumbnail(
+            url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200"
+        )
+
+        if commentary_text:
+            embed.add_field(
+                name="📢 Narrator",
+                value=commentary_text[:1000],
+                inline=False
+            )
+
+        await send_func(embed=embed)
+
+        game = get_game(channel_id)
+        for user_id, player in game["players"].items():
+            if player.get("is_mob"):
+                success, payload = process_mob_turn(channel_id, user_id)
+                if success and payload.get("zone_preview"):
+                    await send_func(embed=payload["zone_preview"])
+                if success and payload.get("embed"):
+                    await send_func(embed=payload["embed"])
+
     async def process_next_turn(self, interaction: discord.Interaction):
         game = get_game(interaction.channel_id)
         if game is None:
             await interaction.followup.send("เกมยังไม่เข้าร่วม race", ephemeral=True)
             return
 
-        # เก็บสถานะก่อนขึ้นเทิร์น
-        previous_ranked_players = get_ranked_players(interaction.channel_id)
-        previous_players = build_narrator_players_from_ranked(previous_ranked_players)
-
-        # ✅ ขึ้นเทิร์นแค่ครั้งเดียว
-        new_turn = next_turn(interaction.channel_id)
-
-        # เกมจบ
-        if new_turn > game["max_turn"]:
-            ranked_players = get_ranked_players(interaction.channel_id)
-
-            commentary_text = None
-            try:
-                final_players = build_narrator_players_from_ranked(ranked_players)
-                commentary_text = await generate_finish_commentary(
-                    final_players,
-                    stage_name=game.get("stage_name")
-                )
-            except Exception as e:
-                print("Finish narrator error:", e)
-
-            embed = build_game_end_embed(ranked_players, commentary_text=commentary_text)
-            await interaction.followup.send(embed=embed)
-            stop_bgm(interaction.guild)
-            delete_game(interaction.channel_id)
-            return
-
-        # ดึง game ใหม่หลังเปลี่ยน state
-        game = get_game(interaction.channel_id)
-
-        phase = get_phase_from_turn(new_turn, game["max_turn"])
-        ranked_players = get_ranked_players(interaction.channel_id)
-        current_players = build_narrator_players_from_ranked(ranked_players)
-
-        rank_lines = []
-        for index, (user_id, info) in enumerate(ranked_players, start=1):
-            if str(user_id).startswith("mob_"):
-                display_name = (
-                    info.get("display_name")
-                    or info.get("username")
-                    or info.get("name")
-                    or "Mob"
-                )
-            else:
-                display_name = f"<@{user_id}>"
-
-            rank_lines.append(
-                f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
-            )
-
-        if not rank_lines:
-            rank_lines.append("ยังไม่มีผู้เล่น")
-
-        path_type = get_current_path_type(game)
-        path_label = PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง")
-
-        track_preview = build_track_progress_text(game["path"], new_turn)
-        current_track_text = build_current_track_text(game["path"], new_turn)
-
-        commentary_text = None
-        try:
-            commentary_text = await generate_commentary(
-                previous_players,
-                current_players,
-                turn=new_turn,
-                max_turn=game["max_turn"],
-                event_text=f"เริ่มเทิร์น {new_turn} เส้นทางเป็น {path_label}"
-            )
-        except Exception as e:
-            print("Narrator error:", e)
-
-        embed = discord.Embed(
-            title=f"เข้าสู่เทิร์น {new_turn}",
-            color=discord.Color.green(),
-            description=(
-                f"Phase: {phase}\n"
-                f"เส้นทางเทิร์นนี้:\n{track_preview}\n{current_track_text}\n\n"
-                f"อันดับคะแนน:\n" + "\n".join(rank_lines)
-            )
+        await self._process_next_turn_core(
+            channel_id=interaction.channel_id,
+            send_func=interaction.followup.send,
+            guild=interaction.guild,
+            title_suffix=""
         )
-
-        embed.add_field(
-            name="Effect",
-            value=build_path_effect_text(path_type),
-            inline=False
-        )
-
-        embed.set_thumbnail(
-            url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200"
-        )
-
-        if commentary_text:
-            embed.add_field(
-                name="📢 Narrator",
-                value=commentary_text[:1000],
-                inline=False
-            )
-
-        await interaction.followup.send(embed=embed)
-
-        for user_id, player in game["players"].items():
-            if player.get("is_mob"):
-                success, payload = process_mob_turn(interaction.channel_id, user_id)
-                if success and payload.get("zone_preview"):
-                    await interaction.followup.send(embed=payload["zone_preview"])
-                if success and payload.get("embed"):
-                    await interaction.followup.send(embed=payload["embed"])
-
+        
     async def process_next_turn_from_timeout(self, channel: discord.TextChannel):
         game = get_game(channel.id)
         if game is None:
             return
 
-        # เก็บสถานะก่อนขึ้นเทิร์น
-        previous_ranked_players = get_ranked_players(channel.id)
-        previous_players = build_narrator_players_from_ranked(previous_ranked_players)
-
-        # ✅ next_turn คืนแค่เลขเทิร์น
-        new_turn = next_turn(channel.id)
-
-        # เกมจบ
-        if new_turn > game["max_turn"]:
-            ranked_players = get_ranked_players(channel.id)
-
-            commentary_text = None
-            try:
-                final_players = build_narrator_players_from_ranked(ranked_players)
-                commentary_text = await generate_finish_commentary(
-                    final_players,
-                    stage_name=game.get("stage_name")
-                )
-            except Exception as e:
-                print("Finish narrator error:", e)
-
-            embed = build_game_end_embed(ranked_players, commentary_text=commentary_text)
-            await channel.send(embed=embed)
-
-            ok, msg = stop_bgm(channel.guild)
-            print(f"[Music] stop on timeout turn end: {msg}")
-
-            delete_game(channel.id)
-            return
-
-        # ดึง game ใหม่หลังเปลี่ยน state
-        game = get_game(channel.id)
-
-        phase = get_phase_from_turn(new_turn, game["max_turn"])
-        ranked_players = get_ranked_players(channel.id)
-        current_players = build_narrator_players_from_ranked(ranked_players)
-
-        rank_lines = []
-        for index, (user_id, info) in enumerate(ranked_players, start=1):
-            if str(user_id).startswith("mob_"):
-                display_name = (
-                    info.get("display_name")
-                    or info.get("username")
-                    or info.get("name")
-                    or "Mob"
-                )
-            else:
-                display_name = f"<@{user_id}>"
-
-            rank_lines.append(
-                f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
-            )
-
-        if not rank_lines:
-            rank_lines.append("ยังไม่มีผู้เล่น")
-
-        path_type = get_current_path_type(game)
-        path_label = PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง")
-
-        track_preview = build_track_progress_text(game["path"], new_turn)
-        current_track_text = build_current_track_text(game["path"], new_turn)
-
-        commentary_text = None
-        try:
-            commentary_text = await generate_commentary(
-                previous_players,
-                current_players,
-                turn=new_turn,
-                max_turn=game["max_turn"],
-                event_text=f"เริ่มเทิร์น {new_turn} เส้นทางเป็น {path_label}"
-            )
-        except Exception as e:
-            print("Narrator error:", e)
-
-        embed = discord.Embed(
-            title=f"เข้าสู่เทิร์น {new_turn} (Auto)",
-            color=discord.Color.green(),
-            description=(
-                f"Phase: {phase}\n"
-                f"เส้นทางเทิร์นนี้:\n{track_preview}\n{current_track_text}\n\n"
-                f"อันดับคะแนน:\n" + "\n".join(rank_lines)
-            )
-        )
-
-        embed.add_field(
-            name="Effect",
-            value=build_path_effect_text(path_type),
-            inline=False
-        )
-        embed.set_thumbnail(
-            url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200"
-        )
-
-        if commentary_text:
-            embed.add_field(
-                name="📢 Narrator",
-                value=commentary_text[:1000],
-                inline=False
-            )
-
-        # ✅ ส่ง embed เปิดเทิร์นก่อน
-        await channel.send(embed=embed)
-
-        # ✅ ค่อยให้ mob วิ่งทีหลัง
-        game = get_game(channel.id)
-        for user_id, player in game["players"].items():
-            if player.get("is_mob"):
-                success, payload = process_mob_turn(channel.id, user_id)
-                if success and payload.get("zone_preview"):
-                    await channel.send(embed=payload["zone_preview"])
-                if success and payload.get("embed"):
-                    await channel.send(embed=payload["embed"])
-                
+        await self._process_next_turn_core(
+            channel_id=channel.id,
+            send_func=channel.send,
+            guild=channel.guild,
+            title_suffix="(Auto)"
+    )
 
     @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
     async def myinfo(self, interaction: discord.Interaction):
@@ -672,7 +588,7 @@ class GameCog(commands.GroupCog, name="game"):
             return
 
         send_kwargs = {
-            "content": f"🎯 <@{interaction.user.id}> กำลังวิ่ง!",
+            "content": f"<@{interaction.user.id}>",
             "embed": payload["embed"],
         }
         if payload["view"] is not None:

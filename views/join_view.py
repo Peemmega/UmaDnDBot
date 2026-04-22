@@ -6,15 +6,14 @@ from utils.game_manager import (
     is_owner,
     start_game,
     get_player,
-    get_attitude_values,
-    build_attitude_stat_bonus,
+    build_join_embed,
     process_mob_turn,
-    build_run_embed
+    
 )
+
 from utils.dice.dice_presets import DICE_PRESET
-from utils.icon_presets import Status_Icon_Type
 from utils.dice.dice_table import format_rule
-from utils.dice.race_dice import (
+from utils.race.race_dice import (
     build_dice_table_grid
 )
 
@@ -135,25 +134,15 @@ class StyleSelectView(discord.ui.View):
         game = get_game(self.channel_id)
         db_player = get_player(interaction.user.id)
         
-        surface = game.get("surface", "Turf")
-        distance = game.get("distance", "Medium")
-
-        embed = discord.Embed(
+        embed = build_join_embed(
+            game=game,
+            display_name=interaction.user.display_name,
+            style=style,
+            attitude_source=db_player,
             title="🏇 ผู้เล่นเข้าร่วม!",
-            color=discord.Color.green()
-        )
-        embed.add_field(name="ผู้เล่น", value=interaction.user.mention, inline=True)
-        embed.add_field(name="Style", value=style, inline=True)
-
-        att = get_attitude_values(db_player, surface, distance, style)
-        att_bonus = build_attitude_stat_bonus(att)
-        
-        embed.add_field(
-            name="📊 Attitude Bonus",
-            value=(
-                f"{Status_Icon_Type['SPD']} +{att_bonus['speed']} {Status_Icon_Type['POW']} +{att_bonus['power']} {Status_Icon_Type['WIT']} +{att_bonus['wit']}"
-            ),
-            inline=False
+            color=discord.Color.green(),
+            name_field="ผู้เล่น",
+            name_value= db_player["username"] or interaction.user.mention,
         )
 
         await interaction.followup.send(embed=embed)
@@ -239,7 +228,7 @@ class LobbyView(discord.ui.View):
             description=f"สนาม: {game['stage_name']} เทิร์นที่ 1",
             color=discord.Color.gold()
         )
-        embed.add_field(name="📢 วิธีเล่น", value=f"ในแต่ละ turn สามาใช้งาน\n /game run เพื่อวิ่ง\nนอกจากนี้ยังสามารถใช้งานสกิลโดยใช้\n/game skill(แนะนำให้ใช้ก่อน run)", inline=True)
+        embed.add_field(name="📢 วิธีเล่น", value=f"ในแต่ละ turn สามาใช้งาน\n /game run เพื่อวิ่ง\nนอกจากนี้ยังสามารถใช้งานสกิลโดยใช้\n/game skill (แนะนำให้ใช้ก่อน run)", inline=True)
         
         embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1495728671300780083/uma-musume-running.gif?ex=69e74d60&is=69e5fbe0&hm=958b07dacfcb4c4b2bb82049ac1863c8d1b4ecc2122514250b3b18104b9ce09a&=&width=747&height=422")
         await interaction.followup.send(embed=embed)
@@ -247,10 +236,8 @@ class LobbyView(discord.ui.View):
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(self.channel_id, user_id)
-                
                 if success and payload.get("zone_preview"):
                     await interaction.followup.send(embed=payload["zone_preview"])
-
                 if success and payload.get("embed"):
                     await interaction.followup.send(embed=payload["embed"])
  

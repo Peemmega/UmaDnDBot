@@ -1,4 +1,4 @@
-from utils.dice.race_dice import get_phase_from_turn
+from utils.race.race_dice import get_phase_from_turn
 
 import random
 from typing import Any

@@ -2,17 +2,17 @@ import copy
 import uuid
 import discord
 
-from utils.dice.race_presets import RACE_PRESET
-from utils.database import get_player, get_player_skill_slots
+from utils.race.race_presets import RACE_PRESET
 from utils.mob.mob_presets import MOB_PRESETS
+from utils.database import get_player, get_player_skill_slots
 from utils.zone.zone_manager import apply_zone_in_game
-from utils.dice.race_presets import (
+from utils.race.race_presets import (
     get_path_effect,
     get_current_path_type, 
 )
 from utils.zone.zone_embed import build_zone_used_preview_embed
 
-from utils.dice.race_dice import (
+from utils.race.race_dice import (
     roll_race_dice,
 )
 
@@ -475,10 +475,44 @@ def start_game(channel_id: int):
     return True, "เริ่มเกมเรียบร้อยแล้ว"
 
 
-def build_mob_join_embed(game: dict, player: dict):
+def build_join_embed(
+    *,
+    game: dict,
+    display_name: str,
+    style: str,
+    attitude_source: dict,
+    title: str = "🏇 ผู้เล่นเข้าร่วม!",
+    color: discord.Color = discord.Color.green(),
+    name_field: str = "ผู้เล่น",
+    name_value: str,
+) -> discord.Embed:
     surface = game.get("surface", "Turf")
     distance = game.get("distance", "Medium")
 
+    att = get_attitude_values(attitude_source, surface, distance, style)
+    att_bonus = build_attitude_stat_bonus(att)
+
+    embed = discord.Embed(
+        title=title,
+        color=color
+    )
+
+    embed.add_field(name=name_field, value=name_value, inline=True)
+    embed.add_field(name="Style", value=style, inline=True)
+
+    embed.add_field(
+        name="📊 Attitude Bonus",
+        value=(
+            f"{Status_Icon_Type['SPD']} +{att_bonus['speed']} "
+            f"{Status_Icon_Type['POW']} +{att_bonus['power']} "
+            f"{Status_Icon_Type['WIT']} +{att_bonus['wit']}"
+        ),
+        inline=False
+    )
+
+    return embed
+
+def build_mob_join_embed(game: dict, player: dict):
     mob_name = (
         player.get("display_name")
         or player.get("username")
@@ -487,30 +521,18 @@ def build_mob_join_embed(game: dict, player: dict):
     )
 
     style = player.get("style", "Unknown")
-
-    embed = discord.Embed(
-        title="🏇 ผู้เล่นเข้าร่วม!",
-        color=discord.Color.orange()
-    )
-
-    embed.add_field(name="ชื่อ", value=mob_name, inline=True)
-    embed.add_field(name="Style", value=style, inline=True)
-
-    # 🔥 ใช้ race_profile แทน db_player
     race_profile = player.get("race_profile", {})
 
-    att = get_attitude_values(race_profile, surface, distance, style)
-    att_bonus = build_attitude_stat_bonus(att)
-
-    embed.add_field(
-        name="📊 Attitude Bonus",
-        value=(
-            f"{Status_Icon_Type['SPD']} +{att_bonus['speed']} {Status_Icon_Type['POW']} +{att_bonus['power']} {Status_Icon_Type['WIT']} +{att_bonus['wit']}"
-        ),
-        inline=False
+    return build_join_embed(
+        game=game,
+        display_name=mob_name,
+        style=style,
+        attitude_source=race_profile,
+        title="🏇 ผู้เล่นเข้าร่วม!",
+        color=discord.Color.orange(),
+        name_field="ชื่อ",
+        name_value=mob_name,
     )
-
-    return embed
 
 def get_attitude_values(db_player, surface, distance, style):
     surface_key = "turf" if surface == "Turf" else "dirt"
@@ -1029,7 +1051,7 @@ def build_run_embed(
     name_part = f"{player_name} | " if player_name else ""
 
     embed = discord.Embed(
-        title=f"{name_part}Phase {result['phase']} {path_effect['label']} สาย {game_player['style']}",
+        title=f"{name_part}Phase {result['phase']}  {path_effect['label']} สาย {game_player['style']}",
         color=discord.Color.gold()
     )
 
@@ -1043,9 +1065,9 @@ def build_run_embed(
     embed.add_field(
         name="📊 สรุปผล",
         value=(
-            f"🏁 Score รวม: **{new_score}** ({result['total']})　"
             f"{Status_Icon_Type['STA']} : **{stamina_note}**　"
-            f"{Status_Icon_Type['WIT']} : **{build_single_wit_regen_text(game_player)}**"
+            f"{Status_Icon_Type['WIT']} : **{build_single_wit_regen_text(game_player)}** "
+            f"🏁 Score รวม: **{new_score}** ({result['total']})"
         ),
         inline=False
     )

@@ -274,7 +274,7 @@ def has_front_blocked(channel_id: int, user_id: int, max_gap: int = 10) -> bool:
 
     return False
 
-def apply_non_active_skill(channel_id: int, user_id: int, skill_id: str, skill: dict):
+def apply_skill(channel_id: int, user_id: int, skill_id: str, skill: dict):
     game = get_game(channel_id)
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"

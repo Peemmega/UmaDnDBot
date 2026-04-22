@@ -1,7 +1,7 @@
 import discord
-from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player,build_run_embed, apply_stamina_debuff
-from utils.dice.race_presets import get_current_path_type, get_path_effect
-from utils.dice.race_dice import roll_race_dice
+from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player,build_run_embed
+from utils.race.race_presets import get_current_path_type, get_path_effect
+from utils.race.race_dice import roll_race_dice
 from utils.icon_presets import Status_Icon_Type
 
 async def execute_reroll(

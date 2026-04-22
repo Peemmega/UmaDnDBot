@@ -5,14 +5,14 @@ from utils.game_manager import (
     set_player_skill_cd,
     apply_next_roll_effects_to_player
 )
-from utils.dice.race_presets import (
+from utils.race.race_presets import (
     get_current_path_type,
 )
-from utils.dice.race_dice import (
+from utils.race.race_dice import (
     get_phase_from_turn,
 )
 from utils.skill.skill_runtime import (
-    apply_non_active_skill,
+    apply_skill,
     check_skill_trigger,
     build_next_roll_buff_text
 )
@@ -127,7 +127,7 @@ class UseSkillView(discord.ui.View):
             temp_skill = skill.copy()
             temp_skill["effects"] = instant_effects
 
-            success, result_text = apply_non_active_skill(
+            success, result_text = apply_skill(
                 self.channel_id,
                 interaction.user.id,
                 skill_id,

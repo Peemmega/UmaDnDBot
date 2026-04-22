@@ -122,7 +122,6 @@ def add_player_attitude(user_id: int, attitude_field: str, amount: int = 1):
     conn.close()
     return True, f"เพิ่ม {attitude_field} +{amount} สำเร็จ"
 
-
 def set_all_attitude(user_id: int, value: int):
     conn = get_connection()
     cursor = conn.cursor()
@@ -151,7 +150,6 @@ def set_all_attitude(user_id: int, value: int):
     conn.commit()
     conn.close()
 
-
 def add_player_stats_point(user_id: int, amount: int):
     conn = get_connection()
     cursor = conn.cursor()
@@ -165,7 +163,6 @@ def add_player_stats_point(user_id: int, amount: int):
     conn.commit()
     conn.close()
     return True, f"เพิ่ม stats_point +{amount} สำเร็จ"
-
 
 def add_player_skill_point(user_id: int, amount: int):
     conn = get_connection()
@@ -196,7 +193,6 @@ def set_player_zone_build(user_id: int, build: dict) -> None:
     conn.commit()
     conn.close()
 
-
 def set_player_zone_name(user_id: int, zone_name: str) -> None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -209,7 +205,6 @@ def set_player_zone_name(user_id: int, zone_name: str) -> None:
 
     conn.commit()
     conn.close()
-
 
 def set_player_zone_image_url(user_id: int, image_url: str) -> None:
     conn = get_connection()
@@ -306,7 +301,6 @@ def create_player(user_id: int, username: str):
     conn.commit()
     conn.close()
 
-
 def remove_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     valid_stats = {"speed", "stamina", "power", "gut", "wit"}
 
@@ -373,7 +367,6 @@ def add_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
 
     return get_player(user_id)
 
-
 def get_player_skill_in_slot(user_id: int, slot: int):
     if slot not in (1, 2, 3):
         return None
@@ -393,7 +386,6 @@ def get_player_skill_in_slot(user_id: int, slot: int):
         return None
 
     return row[0]
-
 
 def get_player(user_id: int) -> Optional[dict]:
     conn = get_connection()

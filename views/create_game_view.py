@@ -1,6 +1,6 @@
 import discord
 
-from utils.dice.race_presets import RACE_PRESET, render_path
+from utils.race.race_presets import RACE_PRESET, render_path
 from views.join_view import LobbyView
 
 from utils.game_manager import (
