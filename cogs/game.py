@@ -189,7 +189,7 @@ class GameCog(commands.GroupCog, name="game"):
                     if str(user_id).startswith("mob_"):
                         display_name = info.get("display_name") or info.get("username") or "Mob"
                     else:
-                        display_name = f"<@{user_id}>"
+                        display_name = info.get("username") or f"<@{user_id}>"
 
                     rank_lines.append(
                         f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
@@ -388,7 +388,7 @@ class GameCog(commands.GroupCog, name="game"):
                     or "Mob"
                 )
             else:
-                display_name = f"<@{user_id}>"
+                display_name = info.get("username") or f"<@{user_id}>"
 
             rank_lines.append(
                 f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
@@ -469,7 +469,7 @@ class GameCog(commands.GroupCog, name="game"):
             guild=interaction.guild,
             title_suffix=""
         )
-        
+
     async def process_next_turn_from_timeout(self, channel: discord.TextChannel):
         game = get_game(channel.id)
         if game is None:
