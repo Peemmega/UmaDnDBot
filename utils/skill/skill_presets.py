@@ -982,19 +982,16 @@ SKILLS = {
         "cooldown": 8,
         "cost": 80,
         "trigger": {
-            "target_distance_min": -30,
-            "target_distance_max": -11,
+            "target_distance_min": -11,
+            "target_distance_max": -30,
         },
         "target": {
             "scope": "all_back",
             "limit": 1,
         },
         "effects": [
-            {"type": "reduce_stamina", "value": 1},  # ศัตรู
-            {
-                "type": "force_rush",
-                "value": 1
-            }
+            {"type": "reduce_stamina", "value": 1},
+            {"type": "force_rush", "value": 1}
         ],
         "active_roll": False,
         "tags": ["debuff", "front", "mindgame"],
