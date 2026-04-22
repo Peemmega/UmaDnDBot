@@ -30,6 +30,9 @@ from utils.skill.skill_manager import build_skill_card_text
 from utils.dice.race_dice import (
     get_phase_from_turn,
 )
+from utils.mob.mob_presets import (
+    MOB_PRESETS
+)
 
 from utils.game_manager import (
     create_game,
@@ -121,6 +124,31 @@ def build_slot_display(skill_id: str | None, channel_id: int, user_id: int) -> s
         )
 
     return build_skill_card_text(skill_id)
+
+def get_mob_preset_choices():
+    return [
+        app_commands.Choice(
+            name=data["name"],   # ชื่อโชว์
+            value=key            # key ใช้จริง
+        )
+        for key, data in MOB_PRESETS.items()
+    ]
+
+async def mob_preset_autocomplete(
+    interaction: discord.Interaction,
+    current: str
+):
+    results = []
+
+    for key, data in MOB_PRESETS.items():
+        name = data["name"]
+
+        if current.lower() in name.lower():
+            results.append(
+                app_commands.Choice(name=name, value=key)
+            )
+
+    return results[:25]  # discord limit
 
 class GameCog(commands.GroupCog, name="game"):
     def __init__(self, bot):
@@ -260,20 +288,7 @@ class GameCog(commands.GroupCog, name="game"):
         await self.process_next_turn(interaction)
 
     @discord.app_commands.command(name="add_mob", description="เพิ่ม mob preset เข้าการแข่งขัน")
-    @discord.app_commands.describe(preset="preset ของ mob")
-    @discord.app_commands.choices(preset=[
-        discord.app_commands.Choice(name="Rookie Front", value="rookie_front"),
-        discord.app_commands.Choice(name="Rookie Pace", value="rookie_pace"),
-        discord.app_commands.Choice(name="Rookie Late", value="rookie_late"),
-        discord.app_commands.Choice(name="Rookie End", value="rookie_end"),
-        discord.app_commands.Choice(name="Fujimasa March", value="fujimasa_march"),
-        discord.app_commands.Choice(name="Field Pace", value="runner_pace"),
-        discord.app_commands.Choice(name="Oguri Cap", value="chaser_late"),
-        discord.app_commands.Choice(name="Obey Your Master", value="sprinter_end"),
-        discord.app_commands.Choice(name="Beyond The Light", value="boss_champion"),
-        discord.app_commands.Choice(name="Almond Eye", value="almond_eye"),
-        discord.app_commands.Choice(name="Equinox", value="equinox"),
-    ])
+    @app_commands.autocomplete(preset=mob_preset_autocomplete)
     async def add_mob(self, interaction: discord.Interaction, preset: discord.app_commands.Choice[str]):
         success, message = add_mob_from_preset(interaction.channel_id, preset.value)
 
@@ -285,41 +300,31 @@ class GameCog(commands.GroupCog, name="game"):
 
             await interaction.response.send_message(embed=embed)
 
-
-    @app_commands.command(name="join_as_mob", description="เข้าร่วมเกมโดยใช้ข้อมูลจาก mob preset")
-    @app_commands.describe(preset="เลือก preset ที่จะใช้แทนข้อมูลตัวเอง")
-    @app_commands.choices(preset=[
-        app_commands.Choice(name="Rookie Front", value="rookie_front"),
-        app_commands.Choice(name="Field Pace", value="runner_pace"),
-        app_commands.Choice(name="Oguri Cap", value="chaser_late"),
-        app_commands.Choice(name="Obey Your Master", value="sprinter_end"),
-        app_commands.Choice(name="Beyond The Light", value="boss_champion"),
-        app_commands.Choice(name="Almond Eye", value="almond_eye"),
-        app_commands.Choice(name="Equinox", value="equinox"),
-    ])
+    @discord.app_commands.command(name="join_as_mob", description="เข้าร่วมโดยใช้ mob preset")
+    @discord.app_commands.autocomplete(preset=mob_preset_autocomplete)
     async def join_as_mob(
         self,
         interaction: discord.Interaction,
-        preset: app_commands.Choice[str]
+        preset: str   # ⚠️ เปลี่ยนเป็น str
     ):
         success, message = add_player_as_mob_preset(
             interaction.channel_id,
             interaction.user.id,
             interaction.user.display_name,
-            preset.value
+            preset
         )
 
         if not success:
             await interaction.response.send_message(message, ephemeral=True)
             return
 
-        game = get_game(interaction.channel_id)
-        player = game["players"][interaction.user.id]
+        preset_data = MOB_PRESETS[preset]
 
-        embed = build_mob_join_embed(game, player)
-        embed.title = "🏇 ผู้เล่นเข้าร่วมด้วย Mob Preset!"
-        embed.add_field(name="ผู้เล่น", value=interaction.user.mention, inline=True)
-        embed.add_field(name="Preset", value=preset.name, inline=True)
+        embed = discord.Embed(
+            title="🏇 เข้าร่วมด้วย Mob Preset!",
+            description=f"{preset_data['name']}",
+            color=discord.Color.green()
+        )
 
         await interaction.response.send_message(embed=embed)
 
