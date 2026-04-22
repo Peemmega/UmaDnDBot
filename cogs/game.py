@@ -3,9 +3,8 @@ from discord.ext import commands
 from discord import app_commands
 
 from views.confirmDeleteGameView import ConfirmDeleteView
-from views.join_view import CreateGameView
 from views.use_skill_view import UseSkillView
-from views.create_game_view import build_lobby_embed
+from views.create_game_view import CreateGameView
 
 from utils.icon_presets import Status_Icon_Type
 from utils.skill.skill_presets import SKILLS, ICON
