@@ -62,11 +62,23 @@ def build_lobby_embed(channel_id: int) -> discord.Embed:
     embed.set_footer(text="Game Status: Waiting for players")
     return embed
 
+def normalize_distance_name(value: str) -> str:
+    mapping = {
+        "sprint": "Sprint",
+        "mile": "Mile",
+        "medium": "Medium",
+        "long": "Long",
+    }
+    return mapping.get(value.lower(), value)
+
+
 def get_stages_by_distance(distance):
+    target = normalize_distance_name(distance)
+
     return {
         key: stage
         for key, stage in RACE_PRESET.items()
-        if stage.get("distance_type") == distance
+        if stage.get("distance") == target
     }
 
 def build_stage_preview_embed(stage):
@@ -82,6 +94,21 @@ def build_stage_preview_embed(stage):
     embed.add_field(name="⏱️ เทิร์น", value=stage["turn"])
     embed.add_field(name="🗺️ เส้นทาง", value=render_path(stage["path"]), inline=False)
 
+    return embed
+
+def build_create_menu_embed() -> discord.Embed:
+    embed = discord.Embed(
+        title="🏟️ Create Game",
+        description=(
+            "เลือกระยะของสนามก่อน\n\n"
+            "• Sprint\n"
+            "• Mile\n"
+            "• Medium\n"
+            "• Long"
+        ),
+        color=discord.Color.blurple()
+    )
+    embed.set_footer(text="เลือกระยะเพื่อดูรายชื่อสนาม")
     return embed
 
 class StageSelectView(discord.ui.View):
@@ -122,7 +149,7 @@ class ConfirmCreateView(discord.ui.View):
     @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary)
     async def back(self, interaction: discord.Interaction, button):
         await interaction.response.edit_message(
-            embed=discord.Embed(title="เลือกระยะ"),
+            embed=build_create_menu_embed(),
             view=CreateGameView(self.channel_id, self.owner_id)
         )
 
@@ -172,7 +199,9 @@ class CreateGameView(discord.ui.View):
 
         embed = discord.Embed(
             title=f"📍 ระยะ: {distance.title()}",
-            description="\n".join([f"• {s['name']}" for s in stages]) or "ไม่มีสนาม",
+            description="\n".join(
+                [f"• {stage['name']}" for stage in stages.values()]
+            ) or "ไม่มีสนาม",
             color=discord.Color.blue()
         )
 

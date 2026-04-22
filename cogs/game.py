@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 
 from views.confirmDeleteGameView import ConfirmDeleteView
-from views.join_view import LobbyView
+from views.join_view import CreateGameView
 from views.use_skill_view import UseSkillView
 from views.create_game_view import build_lobby_embed
 
@@ -215,26 +215,35 @@ class GameCog(commands.GroupCog, name="game"):
                 view.message = msg
 
     @app_commands.command(name="create", description="สร้างเกมใหม่")
-    @app_commands.describe(stage="เลือกสนาม")
-    @app_commands.autocomplete(stage=stage_autocomplete)
-    async def create(self, interaction: discord.Interaction, stage: str):
+    async def create(self, interaction: discord.Interaction):
         channel_id = interaction.channel_id
         owner_id = interaction.user.id
-        stage_key = stage
 
-        success = create_game(channel_id, stage_key, owner_id)
-        if not success:
+        if get_game(channel_id) is not None:
             await interaction.response.send_message(
-                "ห้องนี้มีเกมอยู่แล้ว หรือสนามไม่ถูกต้อง",
+                "ห้องนี้มีเกมอยู่แล้ว",
                 ephemeral=True
             )
             return
 
-        embed = build_lobby_embed(channel_id)
+        embed = discord.Embed(
+            title="🏟️ Create Game",
+            description=(
+                "เลือกระยะของสนามก่อน\n\n"
+                "ปุ่มด้านล่าง:\n"
+                "• Sprint\n"
+                "• Mile\n"
+                "• Medium\n"
+                "• Long"
+            ),
+            color=discord.Color.blurple()
+        )
+        embed.set_footer(text="เลือกระยะเพื่อดูรายชื่อสนาม")
 
         await interaction.response.send_message(
             embed=embed,
-            view=LobbyView(channel_id)
+            view=CreateGameView(channel_id, owner_id),
+            ephemeral=True
         )
 
     @discord.app_commands.command(name="skip_turn", description="ข้ามไปเทิร์นถัดไปทันที (เฉพาะเจ้าของห้อง)")
