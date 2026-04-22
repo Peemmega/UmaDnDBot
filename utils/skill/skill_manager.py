@@ -2,6 +2,7 @@ from typing import Optional
 import discord
 from utils.skill.skill_presets import SKILLS, ICON
 from utils.icon_presets import Status_Icon_Type
+from utils.database import ensure_player, set_player_skill_slot, get_player_skill_slots
 
 PATH_TEXT = {
     1: "ทางตรง",
@@ -102,6 +103,7 @@ def get_skill_emoji(skill_id: str) -> str:
     if not skill:
         return "❓"
     return ICON.get(skill.get("icon"), "❓")
+
 
 def build_skill_card_text(skill_id: str | None) -> str:
     if not skill_id:
@@ -236,7 +238,7 @@ def build_skill_description(skill_id: str) -> str:
 
     return (
         f"{emoji} `{skill_id}` **{skill['name']}**\n"
-        f"CD: {skill.get('cooldown', 0)} | Cost: {skill.get('cost', 0)}\n"
+        f"⏱️: {skill.get('cooldown', 0)} | {Status_Icon_Type["WIT"]}: {skill.get('cost', 0)}\n"
         f"เป้าหมาย: {target_text}\n"
         f"เงื่อนไข: {trigger_text}\n"
         f"ผล:\n{effects}"
