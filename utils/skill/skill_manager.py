@@ -105,6 +105,37 @@ def get_skill_emoji(skill_id: str) -> str:
     return ICON.get(skill.get("icon"), "❓")
 
 
+def build_skill_tag_embed(tag_value: str):
+    skills = get_skills_by_tag(tag_value)
+
+    embed = discord.Embed(
+        title=f"🏷️ สกิล tag: {tag_value}",
+        color=discord.Color.teal()
+    )
+
+    if not skills:
+        embed.description = "ไม่พบสกิล"
+        return embed
+
+    count = 0
+    for skill_id in skills.keys():
+        desc = build_skill_description(skill_id)
+        if len(desc) > 1024:
+            desc = desc[:1000] + "..."
+
+        embed.add_field(
+            name="",
+            value=desc,
+            inline=False
+        )
+
+        count += 1
+        if count >= 25:
+            embed.set_footer(text="แสดงสูงสุด 25 สกิล")
+            break
+
+    return embed
+
 def build_skill_card_text(skill_id: str | None) -> str:
     if not skill_id:
         return "➖ **ว่าง**"

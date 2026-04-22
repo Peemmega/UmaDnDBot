@@ -10,14 +10,14 @@ from utils.skill.skill_manager import (
     find_skill_by_name,
     get_skill_display,
     build_skill_card_text,
-    get_skills_by_tag,
+    build_skill_tag_embed,
     build_skill_embed_from_dict
 )
-from views.skill_fillter import SkillFilterView
+from views.skill_fillter import SkillFilterView, SkillTagView
 from views.skill_equip_view import SkillEquipView
 
 from utils.database import ensure_player, set_player_skill_slot, clear_player_skill_slot, get_player_skill_slots
-from utils.skill.skill_presets import SKILLS
+from utils.skill.skill_presets import SKILLS, SKILL_TAG_CHOICES
 
 
 class SkillCog(commands.Cog):
@@ -100,21 +100,8 @@ class SkillCog(commands.Cog):
         app_commands.Choice(name="Blind", value="Blind"),
     ])
     @app_commands.choices(tag=[
-        app_commands.Choice(name="corner", value="corner"),
-        app_commands.Choice(name="straight", value="straight"),
-        app_commands.Choice(name="uphill", value="uphill"),
-        app_commands.Choice(name="downhill", value="downhill"),
-        app_commands.Choice(name="velocity", value="velocity"),
-        app_commands.Choice(name="acceleration", value="acceleration"),
-        app_commands.Choice(name="recovery", value="recovery"),
-        app_commands.Choice(name="debuff", value="debuff"),
-        app_commands.Choice(name="front", value="front"),
-        app_commands.Choice(name="pace", value="pace"),
-        app_commands.Choice(name="late", value="late"),
-        app_commands.Choice(name="end", value="end"),
-        app_commands.Choice(name="start", value="start"),
-        app_commands.Choice(name="late_race", value="late_race"),
-        app_commands.Choice(name="mid_race", value="mid_race"),
+        app_commands.Choice(name=name, value=value)
+        for name, value in SKILL_TAG_CHOICES
     ])
     async def skill_check(
         self,
@@ -150,20 +137,14 @@ class SkillCog(commands.Cog):
             return
 
         if mode_value == "tag":
-            if tag is None:
-                await interaction.response.send_message(
-                    "กรุณาเลือก tag",
-                    ephemeral=True
-                )
-                return
+            embed = build_skill_tag_embed("corner")
+            view = SkillTagView()
 
-            skills = get_skills_by_tag(tag.value)
-            embed = discord.Embed(
-                title=f"🏷️ สกิล tag: {tag.value}",
-                description=build_skill_list_text(skills),
-                color=discord.Color.teal()
+            await interaction.response.send_message(
+                embed=embed,
+                view=view,
+                ephemeral=True
             )
-            await interaction.response.send_message(embed=embed)
             return
 
         if mode_value == "info":

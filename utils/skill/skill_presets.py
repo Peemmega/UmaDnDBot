@@ -29,6 +29,24 @@ EFFECT_TYPES = {
     "modify_start_loss",        # ลดโอกาส/ผลเสียตอนออกตัว
 }
 
+SKILL_TAG_CHOICES = [
+    ("corner", "corner"),
+    ("straight", "straight"),
+    ("uphill", "uphill"),
+    ("downhill", "downhill"),
+    ("velocity", "velocity"),
+    ("acceleration", "acceleration"),
+    ("recovery", "recovery"),
+    ("debuff", "debuff"),
+    ("front", "front"),
+    ("pace", "pace"),
+    ("late", "late"),
+    ("end", "end"),
+    ("start", "start"),
+    ("late_race", "late_race"),
+    ("mid_race", "mid_race"),
+]
+
 TRIGGER_SCHEMA = {
     "path_type": None,
     "style": None,

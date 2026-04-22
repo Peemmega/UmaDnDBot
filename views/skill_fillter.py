@@ -2,8 +2,38 @@ import discord
 from utils.skill.skill_manager import (
     build_skill_embed_from_dict,
     filter_skills,
-    build_skill_detail_embed
+    build_skill_detail_embed,
+    build_skill_tag_embed
 )
+
+from utils.skill.skill_presets import (
+    SKILL_TAG_CHOICES
+)
+
+class SkillTagSelect(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label=name, value=value)
+            for name, value in SKILL_TAG_CHOICES
+        ]
+
+        super().__init__(
+            placeholder="เลือก tag ของสกิล",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_tag = self.values[0]
+        embed = build_skill_tag_embed(selected_tag)
+        await interaction.response.edit_message(embed=embed, view=self.view)
+        
+class SkillTagView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=180)
+        self.add_item(SkillTagSelect())
+
 class SkillFilterView(discord.ui.View):
     def __init__(self, skills: dict):
         super().__init__(timeout=120)
