@@ -45,6 +45,7 @@ from utils.game_manager import (
     start_turn_confirmation,
     is_skill_on_cooldown,
     add_mob_from_preset,
+    add_player_as_mob_preset,
     build_mob_join_embed,
     process_mob_turn
 )
@@ -284,6 +285,43 @@ class GameCog(commands.GroupCog, name="game"):
 
             await interaction.response.send_message(embed=embed)
 
+
+    @app_commands.command(name="join_as_mob", description="เข้าร่วมเกมโดยใช้ข้อมูลจาก mob preset")
+    @app_commands.describe(preset="เลือก preset ที่จะใช้แทนข้อมูลตัวเอง")
+    @app_commands.choices(preset=[
+        app_commands.Choice(name="Rookie Front", value="rookie_front"),
+        app_commands.Choice(name="Field Pace", value="runner_pace"),
+        app_commands.Choice(name="Oguri Cap", value="chaser_late"),
+        app_commands.Choice(name="Obey Your Master", value="sprinter_end"),
+        app_commands.Choice(name="Beyond The Light", value="boss_champion"),
+        app_commands.Choice(name="Almond Eye", value="almond_eye"),
+        app_commands.Choice(name="Equinox", value="equinox"),
+    ])
+    async def join_as_mob(
+        self,
+        interaction: discord.Interaction,
+        preset: app_commands.Choice[str]
+    ):
+        success, message = add_player_as_mob_preset(
+            interaction.channel_id,
+            interaction.user.id,
+            interaction.user.display_name,
+            preset.value
+        )
+
+        if not success:
+            await interaction.response.send_message(message, ephemeral=True)
+            return
+
+        game = get_game(interaction.channel_id)
+        player = game["players"][interaction.user.id]
+
+        embed = build_mob_join_embed(game, player)
+        embed.title = "🏇 ผู้เล่นเข้าร่วมด้วย Mob Preset!"
+        embed.add_field(name="ผู้เล่น", value=interaction.user.mention, inline=True)
+        embed.add_field(name="Preset", value=preset.name, inline=True)
+
+        await interaction.response.send_message(embed=embed)
 
     async def process_next_turn(self, interaction: discord.Interaction):
         game = get_game(interaction.channel_id)
