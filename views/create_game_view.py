@@ -119,21 +119,30 @@ class ConfirmCreateView(discord.ui.View):
 
     @discord.ui.button(label="Create", style=discord.ButtonStyle.success)
     async def create(self, interaction: discord.Interaction, button):
-        success = create_game(
-            self.channel_id,
-            self.stage_key,
-            self.owner_id
-        )
+        channel_id = self.channel_id
+        owner_id = interaction.user.id
+        stage_key = self.stage_key
 
+        success = create_game(channel_id, stage_key, owner_id)
         if not success:
-            await interaction.response.send_message("สร้างไม่สำเร็จ", ephemeral=True)
+            await interaction.response.send_message(
+                "สร้างไม่สำเร็จ",
+                ephemeral=True
+            )
             return
 
-        # reuse lobby UI เดิมของคุณ
-        embed = build_lobby_embed(self.channel_id)
-        await interaction.response.edit_message(
+        embed = build_lobby_embed(channel_id)
+
+        # ✅ ตอบ interaction แบบ ephemeral (ไม่ให้ error)
+        await interaction.response.send_message(
+            "สร้างห้องเรียบร้อย",
+            ephemeral=True
+        )
+
+        # 🔥 ส่ง lobby ลงห้องจริง
+        await interaction.channel.send(
             embed=embed,
-            view=LobbyView(self.channel_id)
+            view=LobbyView(channel_id)
         )
 
     @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary)
