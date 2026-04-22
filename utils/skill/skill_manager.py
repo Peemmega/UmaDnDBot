@@ -241,92 +241,41 @@ def build_skill_description(skill_id: str) -> str:
         f"เงื่อนไข: {trigger_text}\n"
         f"ผล:\n{effects}"
     )
-    
-def split_lines_to_chunks(lines: list[str], max_len: int = 1024) -> list[str]:
-    chunks = []
-    current = ""
 
-    for line in lines:
-        add_text = line if not current else f"\n{line}"
-        if len(current) + len(add_text) > max_len:
-            if current:
-                chunks.append(current)
-            current = line
-        else:
-            current += add_text
-
-    if current:
-        chunks.append(current)
-
-    return chunks
-
-def build_skill_embed(skills: dict) -> discord.Embed:
-    categories = build_skill_list_by_style(skills)
-
-    embed = discord.Embed(
-        title="📘 รายชื่อสกิลทั้งหมด",
+def build_skill_embed_from_dict(skills: dict, title: str):
+    return discord.Embed(
+        title=title,
+        description=build_skill_list_text(skills) or "ไม่พบสกิล",
         color=discord.Color.blurple()
     )
 
-    name_map = {
-        "Front": "🟥 Front",
-        "Pace": "🟦 Pace",
-        "Late": "🟩 Late",
-        "End": "🟪 End",
-        "All": "⭐ ทุกสาย",
-    }
-
-    for style, lines in categories.items():
-        if not lines:
-            continue
-
-        chunks = split_lines_to_chunks(lines, max_len=1024)
-
-        for index, chunk in enumerate(chunks):
-            field_name = name_map.get(style, style)
-            if index > 0:
-                field_name += f" ({index + 1})"
-
-            embed.add_field(
-                name=field_name,
-                value=chunk,
-                inline=False
-            )
-
-    return embed
-
-def build_skill_list_by_style(skills: dict) -> dict:
-    categories = {
-        "Front": [],
-        "Pace": [],
-        "Late": [],
-        "End": [],
-        "All": [],
-    }
+def filter_skills(skills: dict, *, style=None, distance=None) -> dict:
+    result = {}
 
     for key, skill in skills.items():
-        icon = ICON.get(skill.get("icon", ""), "")
-        line = f"{icon} `{key}` - {skill['name']}"
-
         trigger = skill.get("trigger", {})
-        style = trigger.get("style")
 
-        if style is None:
-            categories["All"].append(line)
+        # เช็ค style
+        if style:
+            s = trigger.get("style")
+            if isinstance(s, list):
+                if style not in s:
+                    continue
+            elif s != style:
+                continue
 
-        elif isinstance(style, list):
-            for s in style:
-                if s in categories:
-                    categories[s].append(line)
+        # เช็ค distance
+        if distance:
+            d = trigger.get("distance")
+            if isinstance(d, list):
+                if distance not in d:
+                    continue
+            elif d != distance:
+                continue
 
-        else:
-            if style in categories:
-                categories[style].append(line)
-            else:
-                categories["All"].append(line)
+        result[key] = skill
 
-    return categories
-
+    return result
 
 def build_skill_list_text(skills: dict) -> str:
     if not skills:
