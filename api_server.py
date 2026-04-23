@@ -2,7 +2,7 @@ import os
 import sqlite3
 
 from fastapi import FastAPI, HTTPException
-from utils.database import get_player
+from utils.database import get_player, get_connection
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -22,12 +22,6 @@ def api_get_player(user_id: int):
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
     return player
-
-DB_PATH = "/app/data/player.db"
-
-def get_connection():
-    os.makedirs("data", exist_ok=True)
-    return sqlite3.connect(DB_PATH)
 
 class UpdateStatsPayload(BaseModel):
     user_id: int
