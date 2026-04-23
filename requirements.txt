@@ -5,3 +5,5 @@ PyNaCl
 discord.py[voice]
 pynacl
 psycopg[binary]
+uvicorn
+fastapi
