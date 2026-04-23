@@ -6,14 +6,12 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",
-        "https://umabotapp-production-c99a.up.railway.app",
+        "https://umabotapp-production-c99a.up.railway.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 @app.get("/player/{user_id}")
 def api_get_player(user_id: int):
     player = get_player(user_id)
