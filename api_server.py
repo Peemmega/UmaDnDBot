@@ -38,72 +38,88 @@ def update_player_stats(payload: UpdateStatsPayload):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT speed, stamina, power, gut, wit, stats_point
-        FROM players
-        WHERE user_id = ?
-    """, (payload.user_id,))
-    row = cur.fetchone()
+    try:
+        cur.execute("""
+            SELECT speed, stamina, power, gut, wit, stats_point
+            FROM players
+            WHERE user_id = ?
+        """, (payload.user_id,))
+        row = cur.fetchone()
 
-    if row is None:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Player not found")
+        if row is None:
+            raise HTTPException(status_code=404, detail="Player not found")
 
-    old_speed, old_stamina, old_power, old_gut, old_wit, old_stats_point = row
+        old_speed, old_stamina, old_power, old_gut, old_wit, old_stats_point = row
 
-    spent = (
-        (payload.speed - old_speed)
-        + (payload.stamina - old_stamina)
-        + (payload.power - old_power)
-        + (payload.gut - old_gut)
-        + (payload.wit - old_wit)
-    )
+        # กันค่าติดลบ
+        new_values = [
+            payload.speed,
+            payload.stamina,
+            payload.power,
+            payload.gut,
+            payload.wit,
+            payload.stats_point,
+        ]
 
-    if spent < 0:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Cannot decrease below saved stats")
+        if any(v < 0 for v in new_values):
+            raise HTTPException(status_code=400, detail="Stats cannot be negative")
 
-    if spent > old_stats_point:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Not enough stats points")
+        # แต้มรวมเดิม
+        total_before = (
+            old_speed +
+            old_stamina +
+            old_power +
+            old_gut +
+            old_wit +
+            old_stats_point
+        )
 
-    new_stats_point = old_stats_point - spent
+        # แต้มรวมใหม่
+        total_after = (
+            payload.speed +
+            payload.stamina +
+            payload.power +
+            payload.gut +
+            payload.wit +
+            payload.stats_point
+        )
 
-    if payload.stats_point != new_stats_point:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Invalid stats_point value")
+        # ต้องเท่าเดิมเสมอ
+        if total_before != total_after:
+            raise HTTPException(status_code=400, detail="Invalid total stat pool")
 
-    cur.execute("""
-        UPDATE players
-        SET speed = ?,
-            stamina = ?,
-            power = ?,
-            gut = ?,
-            wit = ?,
-            stats_point = ?
-        WHERE user_id = ?
-    """, (
-        payload.speed,
-        payload.stamina,
-        payload.power,
-        payload.gut,
-        payload.wit,
-        new_stats_point,
-        payload.user_id,
-    ))
+        cur.execute("""
+            UPDATE players
+            SET speed = ?,
+                stamina = ?,
+                power = ?,
+                gut = ?,
+                wit = ?,
+                stats_point = ?
+            WHERE user_id = ?
+        """, (
+            payload.speed,
+            payload.stamina,
+            payload.power,
+            payload.gut,
+            payload.wit,
+            payload.stats_point,
+            payload.user_id,
+        ))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
 
-    return {
-        "success": True,
-        "message": "Stats updated successfully",
-        "player": {
-            "speed": payload.speed,
-            "stamina": payload.stamina,
-            "power": payload.power,
-            "gut": payload.gut,
-            "wit": payload.wit,
-            "stats_point": new_stats_point,
+        return {
+            "success": True,
+            "message": "Stats updated successfully",
+            "player": {
+                "speed": payload.speed,
+                "stamina": payload.stamina,
+                "power": payload.power,
+                "gut": payload.gut,
+                "wit": payload.wit,
+                "stats_point": payload.stats_point,
+            }
         }
-    }
+    finally:
+        conn.close()
