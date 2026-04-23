@@ -24,7 +24,7 @@ def api_get_player(user_id: int):
     return player
 
 class UpdateStatsPayload(BaseModel):
-    user_id: int
+    user_id: str
     speed: int
     stamina: int
     power: int
@@ -42,7 +42,7 @@ def update_player_stats(payload: UpdateStatsPayload):
         cur.execute("""
             SELECT speed, stamina, power, gut, wit, stats_point
             FROM players
-            WHERE user_id = ?
+            WHERE CAST(user_id AS TEXT) = ?
         """, (payload.user_id,))
         row = cur.fetchone()
 
@@ -91,7 +91,7 @@ def update_player_stats(payload: UpdateStatsPayload):
                 gut = ?,
                 wit = ?,
                 stats_point = ?
-            WHERE user_id = ?
+            WHERE CAST(user_id AS TEXT) = ?
         """, (
             payload.speed,
             payload.stamina,
