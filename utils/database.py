@@ -1,14 +1,15 @@
-import os
-import sqlite3
-from typing import Optional
-from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST
 import json
+import os
+from typing import Optional
+import psycopg
 
-DB_PATH = "/app/data/player.db"
+from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST
+
+DATABASE_URL = os.environ["DATABASE_URL"]
+
 
 def get_connection():
-    os.makedirs("data", exist_ok=True)
-    return sqlite3.connect(DB_PATH)
+    return psycopg.connect(DATABASE_URL)
 
 
 def init_db():
@@ -17,7 +18,7 @@ def init_db():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS players (
-        user_id INTEGER PRIMARY KEY,
+        user_id BIGINT PRIMARY KEY,
         username TEXT NOT NULL,
 
         speed INTEGER NOT NULL DEFAULT 1,
@@ -53,29 +54,10 @@ def init_db():
         zone_build TEXT DEFAULT '{}'
     )
     """)
-    
-    zone_columns = [
-        ("zone_name", "TEXT DEFAULT 'Default Zone'"),
-        ("zone_image_url", f"TEXT DEFAULT '{DEFAULT_ZONE_IMAGE}'"),
-        ("zone_points", "INTEGER NOT NULL DEFAULT 5"),
-        ("zone_build", "TEXT DEFAULT '{}'")
-    ]
-
-    for col, col_type in zone_columns:
-        try:
-            cursor.execute(f"ALTER TABLE players ADD COLUMN {col} {col_type}")
-        except Exception:
-            pass
-
-    # migration กันกรณี table เก่ามีอยู่แล้ว
-    for col in ["skill_slot_1", "skill_slot_2", "skill_slot_3"]:
-        try:
-            cursor.execute(f"ALTER TABLE players ADD COLUMN {col} TEXT")
-        except Exception:
-            pass
 
     conn.commit()
     conn.close()
+
 
 def reset_all_zone_data():
     conn = get_connection()
@@ -92,12 +74,13 @@ def reset_all_zone_data():
 
     cursor.execute("""
     UPDATE players
-    SET zone_build = ?,
+    SET zone_build = %s,
         zone_points = 5
     """, (json.dumps(default_build),))
 
     conn.commit()
     conn.close()
+
 
 def add_player_attitude(user_id: int, attitude_field: str, amount: int = 1):
     valid_fields = {
@@ -114,13 +97,14 @@ def add_player_attitude(user_id: int, attitude_field: str, amount: int = 1):
 
     cursor.execute(f"""
     UPDATE players
-    SET {attitude_field} = COALESCE({attitude_field}, 0) + ?
-    WHERE user_id = ?
+    SET {attitude_field} = COALESCE({attitude_field}, 0) + %s
+    WHERE user_id = %s
     """, (amount, user_id))
 
     conn.commit()
     conn.close()
     return True, f"เพิ่ม {attitude_field} +{amount} สำเร็จ"
+
 
 def set_all_attitude(user_id: int, value: int):
     conn = get_connection()
@@ -129,17 +113,17 @@ def set_all_attitude(user_id: int, value: int):
     cursor.execute("""
     UPDATE players
     SET
-        turf = ?,
-        dirt = ?,
-        sprint = ?,
-        mile = ?,
-        medium = ?,
-        long = ?,
-        front = ?,
-        pace = ?,
-        late = ?,
-        end_style = ?
-    WHERE user_id = ?
+        turf = %s,
+        dirt = %s,
+        sprint = %s,
+        mile = %s,
+        medium = %s,
+        long = %s,
+        front = %s,
+        pace = %s,
+        late = %s,
+        end_style = %s
+    WHERE user_id = %s
     """, (
         value, value,
         value, value, value, value,
@@ -150,19 +134,21 @@ def set_all_attitude(user_id: int, value: int):
     conn.commit()
     conn.close()
 
+
 def add_player_stats_point(user_id: int, amount: int):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
     UPDATE players
-    SET stats_point = COALESCE(stats_point, 0) + ?
-    WHERE user_id = ?
+    SET stats_point = COALESCE(stats_point, 0) + %s
+    WHERE user_id = %s
     """, (amount, user_id))
 
     conn.commit()
     conn.close()
     return True, f"เพิ่ม stats_point +{amount} สำเร็จ"
+
 
 def add_player_skill_point(user_id: int, amount: int):
     conn = get_connection()
@@ -170,13 +156,14 @@ def add_player_skill_point(user_id: int, amount: int):
 
     cursor.execute("""
     UPDATE players
-    SET skill_point = COALESCE(skill_point, 0) + ?
-    WHERE user_id = ?
+    SET skill_point = COALESCE(skill_point, 0) + %s
+    WHERE user_id = %s
     """, (amount, user_id))
 
     conn.commit()
     conn.close()
     return True, f"เพิ่ม skill_point +{amount} สำเร็จ"
+
 
 def set_player_zone_build(user_id: int, build: dict) -> None:
     conn = get_connection()
@@ -186,12 +173,13 @@ def set_player_zone_build(user_id: int, build: dict) -> None:
 
     cursor.execute("""
     UPDATE players
-    SET zone_build = ?
-    WHERE user_id = ?
+    SET zone_build = %s
+    WHERE user_id = %s
     """, (json.dumps(safe_build), user_id))
 
     conn.commit()
     conn.close()
+
 
 def set_player_zone_name(user_id: int, zone_name: str) -> None:
     conn = get_connection()
@@ -199,12 +187,13 @@ def set_player_zone_name(user_id: int, zone_name: str) -> None:
 
     cursor.execute("""
     UPDATE players
-    SET zone_name = ?
-    WHERE user_id = ?
+    SET zone_name = %s
+    WHERE user_id = %s
     """, (zone_name, user_id))
 
     conn.commit()
     conn.close()
+
 
 def set_player_zone_image_url(user_id: int, image_url: str) -> None:
     conn = get_connection()
@@ -212,12 +201,13 @@ def set_player_zone_image_url(user_id: int, image_url: str) -> None:
 
     cursor.execute("""
     UPDATE players
-    SET zone_image_url = ?
-    WHERE user_id = ?
+    SET zone_image_url = %s
+    WHERE user_id = %s
     """, (image_url, user_id))
 
     conn.commit()
     conn.close()
+
 
 def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
     if slot not in (1, 2, 3):
@@ -228,13 +218,14 @@ def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
 
     column = f"skill_slot_{slot}"
     cursor.execute(
-        f"UPDATE players SET {column} = ? WHERE user_id = ?",
+        f"UPDATE players SET {column} = %s WHERE user_id = %s",
         (skill_id, user_id)
     )
 
     conn.commit()
     conn.close()
     return True, f"ติดตั้งสกิล {skill_id} ลงช่อง {slot} เรียบร้อย"
+
 
 def clear_player_skill_slot(user_id: int, slot: int):
     if slot not in (1, 2, 3):
@@ -245,13 +236,14 @@ def clear_player_skill_slot(user_id: int, slot: int):
 
     column = f"skill_slot_{slot}"
     cursor.execute(
-        f"UPDATE players SET {column} = NULL WHERE user_id = ?",
+        f"UPDATE players SET {column} = NULL WHERE user_id = %s",
         (user_id,)
     )
 
     conn.commit()
     conn.close()
     return True, f"ลบสกิลในช่อง {slot} เรียบร้อย"
+
 
 def get_player_skill_slots(user_id: int):
     conn = get_connection()
@@ -260,7 +252,7 @@ def get_player_skill_slots(user_id: int):
     cursor.execute("""
     SELECT skill_slot_1, skill_slot_2, skill_slot_3
     FROM players
-    WHERE user_id = ?
+    WHERE user_id = %s
     """, (user_id,))
     row = cursor.fetchone()
 
@@ -275,31 +267,36 @@ def get_player_skill_slots(user_id: int):
         "slot_3": row[2],
     }
 
+
 def create_player(user_id: int, username: str):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-    INSERT OR IGNORE INTO players (
+    INSERT INTO players (
         user_id, username,
         speed, stamina, power, gut, wit,
         turf, dirt,
         sprint, mile, medium, long,
         front, pace, late, end_style,
-        stats_point, uma_coin, skill_point
+        stats_point, uma_coin, skill_point,
+        zone_name, zone_image_url, zone_points, zone_build
     )
     VALUES (
-        ?, ?,
+        %s, %s,
         1, 1, 1, 1, 1,
         1, 1,
         1, 1, 1, 1,
         1, 1, 1, 1,
-        12, 0, 0
+        12, 0, 0,
+        'Default Zone', %s, 5, '{}'
     )
-    """, (user_id, username))
+    ON CONFLICT (user_id) DO NOTHING
+    """, (user_id, username, DEFAULT_ZONE_IMAGE))
 
     conn.commit()
     conn.close()
+
 
 def remove_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     valid_stats = {"speed", "stamina", "power", "gut", "wit"}
@@ -323,8 +320,8 @@ def remove_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     cursor.execute(
         f"""
         UPDATE players
-        SET {stat_name} = ?, stats_point = ?
-        WHERE user_id = ?
+        SET {stat_name} = %s, stats_point = %s
+        WHERE user_id = %s
         """,
         (new_stat_value, new_stats_point, user_id)
     )
@@ -333,6 +330,7 @@ def remove_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     conn.close()
 
     return get_player(user_id)
+
 
 def add_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     valid_stats = {"speed", "stamina", "power", "gut", "wit"}
@@ -356,8 +354,8 @@ def add_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     cursor.execute(
         f"""
         UPDATE players
-        SET {stat_name} = ?, stats_point = ?
-        WHERE user_id = ?
+        SET {stat_name} = %s, stats_point = %s
+        WHERE user_id = %s
         """,
         (new_stat_value, new_stats_point, user_id)
     )
@@ -366,6 +364,7 @@ def add_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     conn.close()
 
     return get_player(user_id)
+
 
 def get_player_skill_in_slot(user_id: int, slot: int):
     if slot not in (1, 2, 3):
@@ -376,7 +375,7 @@ def get_player_skill_in_slot(user_id: int, slot: int):
 
     column = f"skill_slot_{slot}"
     cursor.execute(
-        f"SELECT {column} FROM players WHERE user_id = ?",
+        f"SELECT {column} FROM players WHERE user_id = %s",
         (user_id,)
     )
     row = cursor.fetchone()
@@ -386,6 +385,7 @@ def get_player_skill_in_slot(user_id: int, slot: int):
         return None
 
     return row[0]
+
 
 def get_player(user_id: int) -> Optional[dict]:
     conn = get_connection()
@@ -401,7 +401,7 @@ def get_player(user_id: int) -> Optional[dict]:
         stats_point, uma_coin, skill_point,
         zone_name, zone_image_url, zone_points, zone_build
     FROM players
-    WHERE user_id = ?
+    WHERE user_id = %s
     """, (user_id,))
 
     row = cursor.fetchone()
@@ -445,33 +445,6 @@ def get_player(user_id: int) -> Optional[dict]:
         }
     }
 
-def set_all_attitude(user_id: int, value: int):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE players
-    SET
-        turf = ?,
-        dirt = ?,
-        sprint = ?,
-        mile = ?,
-        medium = ?,
-        long = ?,
-        front = ?,
-        pace = ?,
-        late = ?,
-        end_style = ?
-    WHERE user_id = ?
-    """, (
-        value, value,
-        value, value, value, value,
-        value, value, value, value,
-        user_id
-    ))
-
-    conn.commit()
-    conn.close()
 
 def reset_zone_build(zone: dict) -> None:
     if "build" not in zone or not isinstance(zone["build"], dict):
@@ -480,6 +453,7 @@ def reset_zone_build(zone: dict) -> None:
     for key in ZONE_POINT_COST.keys():
         zone["build"][key] = 0
 
+
 def ensure_player(user_id: int, username: str) -> dict:
     player = get_player(user_id)
     if player is None:
@@ -487,6 +461,7 @@ def ensure_player(user_id: int, username: str) -> dict:
         player = get_player(user_id)
 
     return player
+
 
 def update_player_username(user_id: int, username: str):
     player = get_player(user_id)
@@ -498,12 +473,13 @@ def update_player_username(user_id: int, username: str):
 
     cursor.execute("""
     UPDATE players
-    SET username = ?
-    WHERE user_id = ?
+    SET username = %s
+    WHERE user_id = %s
     """, (username, user_id))
 
     conn.commit()
     conn.close()
+
 
 def update_player_stats(
     user_id: int,
@@ -513,20 +489,16 @@ def update_player_stats(
     power: Optional[int] = None,
     gut: Optional[int] = None,
     wit: Optional[int] = None,
-
     turf: Optional[int] = None,
     dirt: Optional[int] = None,
-
     sprint: Optional[int] = None,
     mile: Optional[int] = None,
     medium: Optional[int] = None,
     long: Optional[int] = None,
-
     front: Optional[int] = None,
     pace: Optional[int] = None,
     late: Optional[int] = None,
     end_style: Optional[int] = None,
-
     stats_point: Optional[int] = None,
     uma_coin: Optional[int] = None,
     skill_point: Optional[int] = None,
@@ -565,25 +537,25 @@ def update_player_stats(
     cursor.execute("""
     UPDATE players
     SET
-        speed = ?,
-        stamina = ?,
-        power = ?,
-        gut = ?,
-        wit = ?,
-        turf = ?,
-        dirt = ?,
-        sprint = ?,
-        mile = ?,
-        medium = ?,
-        long = ?,
-        front = ?,
-        pace = ?,
-        late = ?,
-        end_style = ?,
-        stats_point = ?,
-        uma_coin = ?,
-        skill_point = ?
-    WHERE user_id = ?
+        speed = %s,
+        stamina = %s,
+        power = %s,
+        gut = %s,
+        wit = %s,
+        turf = %s,
+        dirt = %s,
+        sprint = %s,
+        mile = %s,
+        medium = %s,
+        long = %s,
+        front = %s,
+        pace = %s,
+        late = %s,
+        end_style = %s,
+        stats_point = %s,
+        uma_coin = %s,
+        skill_point = %s
+    WHERE user_id = %s
     """, (
         new_speed,
         new_stamina,
