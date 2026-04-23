@@ -1,7 +1,9 @@
+import os
+import sqlite3
+
 from fastapi import FastAPI, HTTPException
 from utils.database import get_player
 from fastapi.middleware.cors import CORSMiddleware
-import sqlite3
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -21,8 +23,11 @@ def api_get_player(user_id: int):
         raise HTTPException(status_code=404, detail="Player not found")
     return player
 
+DB_PATH = "/app/data/player.db"
+
 def get_connection():
-    return sqlite3.connect("uma_database.db")
+    os.makedirs("data", exist_ok=True)
+    return sqlite3.connect(DB_PATH)
 
 class UpdateStatsPayload(BaseModel):
     user_id: int
@@ -51,20 +56,17 @@ def update_player_stats(payload: UpdateStatsPayload):
 
         old_speed, old_stamina, old_power, old_gut, old_wit, old_stats_point = row
 
-        # กันค่าติดลบ
-        new_values = [
+        stat_values = [
             payload.speed,
             payload.stamina,
             payload.power,
             payload.gut,
             payload.wit,
-            payload.stats_point,
         ]
 
-        if any(v < 0 for v in new_values):
-            raise HTTPException(status_code=400, detail="Stats cannot be negative")
+        if any(v < 1 for v in stat_values):
+            raise HTTPException(status_code=400, detail="Each stat must be at least 1")
 
-        # แต้มรวมเดิม
         total_before = (
             old_speed +
             old_stamina +
@@ -74,7 +76,6 @@ def update_player_stats(payload: UpdateStatsPayload):
             old_stats_point
         )
 
-        # แต้มรวมใหม่
         total_after = (
             payload.speed +
             payload.stamina +
@@ -84,7 +85,6 @@ def update_player_stats(payload: UpdateStatsPayload):
             payload.stats_point
         )
 
-        # ต้องเท่าเดิมเสมอ
         if total_before != total_after:
             raise HTTPException(status_code=400, detail="Invalid total stat pool")
 
