@@ -4,3 +4,4 @@ Pillow
 PyNaCl
 discord.py[voice]
 pynacl
+psycopg[binary]
