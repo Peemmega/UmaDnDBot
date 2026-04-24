@@ -1,4 +1,5 @@
 import discord
+from typing import Optional
 from discord.ext import commands
 from utils.database import (
     ensure_player,
