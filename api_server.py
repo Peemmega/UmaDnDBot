@@ -9,6 +9,7 @@ from utils.database import (
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from utils.zone.zone_preset import ZONE_POINT_COST
 
 app = FastAPI()
 app.add_middleware(
@@ -180,7 +181,7 @@ def mark_mail_read(mail_id: int):
     return {"success": True}
 
 class UpdateUsernamePayload(BaseModel):
-    user_id: int
+    user_id: str
     username: str
 
 @app.post("/player/username/update")
@@ -213,6 +214,10 @@ class ZoneUpdatePayload(BaseModel):
     build: dict
 
 
+
+def calc_zone_used(build):
+    return sum(int(build.get(k, 0)) * cost for k, cost in ZONE_POINT_COST.items())
+
 @app.post("/player/zone/update")
 def api_update_player_zone(payload: ZoneUpdatePayload):
     safe_build = {
@@ -224,18 +229,11 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
         "self_heal_stamina": int(payload.build.get("self_heal_stamina", 0)),
     }
 
-    used_points = (
-        safe_build["flat"]
-        + safe_build["floor"]
-        + safe_build["selected_die"]
-        + safe_build["cap"]
-        + safe_build["self_heal_stamina"]
-        + safe_build["add_dkh"] * 3
-    )
+    used_points = calc_zone_used(safe_build)
+    
 
     conn = get_connection()
     cur = conn.cursor()
-
     try:
         cur.execute("""
             SELECT zone_points, zone_build
@@ -251,15 +249,7 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
         old_points = row["zone_points"]
         old_build = json.loads(row["zone_build"] or "{}")
 
-        old_used = (
-            int(old_build.get("flat", 0))
-            + int(old_build.get("floor", 0))
-            + int(old_build.get("selected_die", 0))
-            + int(old_build.get("cap", 0))
-            + int(old_build.get("self_heal_stamina", 0))
-            + int(old_build.get("add_dkh", 0)) * 3
-        )
-
+        old_used = calc_zone_used(old_build)
         total_pool = old_points + old_used
 
         if used_points + payload.points != total_pool:

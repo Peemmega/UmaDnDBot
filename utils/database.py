@@ -20,7 +20,7 @@ def init_db():
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(f"""
     CREATE TABLE IF NOT EXISTS players (
         user_id INTEGER PRIMARY KEY,
         username TEXT NOT NULL,
@@ -55,7 +55,7 @@ def init_db():
         zone_name TEXT DEFAULT 'Default Zone',
         zone_image_url TEXT DEFAULT '{DEFAULT_ZONE_IMAGE}',
         zone_points INTEGER NOT NULL DEFAULT 5,
-        zone_build TEXT DEFAULT '{}'
+        zone_build TEXT DEFAULT ('{{}}')
     )
     """)
     
