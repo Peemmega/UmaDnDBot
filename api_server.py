@@ -230,7 +230,6 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
 
     new_used = calc_zone_used(safe_build)
     new_left = int(payload.points)
-
     if new_left < 0:
         raise HTTPException(status_code=400, detail="Zone points cannot be negative")
 
@@ -254,6 +253,9 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
         old_used = calc_zone_used(old_build)
 
         total_pool = old_left + old_used
+
+        print(new_used, new_left, old_left, old_used, total_pool)
+
 
         if new_used + new_left != total_pool:
             raise HTTPException(
