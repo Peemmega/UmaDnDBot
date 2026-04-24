@@ -53,7 +53,7 @@ def init_db():
         skill_slot_3 TEXT,
 
         zone_name TEXT DEFAULT 'Default Zone',
-        zone_image_url TEXT DEFAULT {DEFAULT_ZONE_IMAGE},
+        zone_image_url TEXT DEFAULT '{DEFAULT_ZONE_IMAGE}',
         zone_points INTEGER NOT NULL DEFAULT 5,
         zone_build TEXT DEFAULT '{}'
     )
@@ -63,7 +63,7 @@ def init_db():
         ("zone_name", "TEXT DEFAULT 'Default Zone'"),
         ("zone_image_url", f"TEXT DEFAULT '{DEFAULT_ZONE_IMAGE}'"),
         ("zone_points", "INTEGER NOT NULL DEFAULT 5"),
-        ("zone_build", "TEXT DEFAULT '{}'")
+        ("zone_build", "TEXT DEFAULT ('{}')")
     ]
 
     for col, col_type in zone_columns:
