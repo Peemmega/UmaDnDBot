@@ -210,30 +210,33 @@ class ZoneUpdatePayload(BaseModel):
     user_id: str
     name: str
     image_url: str = ""
-    points: int
+    points: int  # แต้มคงเหลือใหม่
     build: dict
 
 
+def calc_zone_used(build: dict) -> int:
+    return sum(
+        int(build.get(key, 0)) * cost
+        for key, cost in ZONE_POINT_COST.items()
+    )
 
-def calc_zone_used(build):
-    return sum(int(build.get(k, 0)) * cost for k, cost in ZONE_POINT_COST.items())
 
 @app.post("/player/zone/update")
 def api_update_player_zone(payload: ZoneUpdatePayload):
     safe_build = {
-        "flat": int(payload.build.get("flat", 0)),
-        "add_dkh": int(payload.build.get("add_dkh", 0)),
-        "floor": int(payload.build.get("floor", 0)),
-        "selected_die": int(payload.build.get("selected_die", 0)),
-        "cap": int(payload.build.get("cap", 0)),
-        "self_heal_stamina": int(payload.build.get("self_heal_stamina", 0)),
+        key: max(0, int(payload.build.get(key, 0)))
+        for key in ZONE_POINT_COST.keys()
     }
 
-    used_points = calc_zone_used(safe_build)
-    
+    new_used = calc_zone_used(safe_build)
+    new_left = int(payload.points)
+
+    if new_left < 0:
+        raise HTTPException(status_code=400, detail="Zone points cannot be negative")
 
     conn = get_connection()
     cur = conn.cursor()
+
     try:
         cur.execute("""
             SELECT zone_points, zone_build
@@ -246,15 +249,19 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
         if row is None:
             raise HTTPException(status_code=404, detail="Player not found")
 
-        old_points = row["zone_points"]
+        old_left = int(row["zone_points"] or 0)
         old_build = json.loads(row["zone_build"] or "{}")
-
         old_used = calc_zone_used(old_build)
-        total_pool = old_points + old_used
-        # print(old_used, old_points, total_pool, payload.points, used_points)
 
-        if used_points + payload.points > total_pool:
-            raise HTTPException(status_code=400, detail="Invalid zone point pool")
+        total_pool = old_left + old_used
+
+        if new_used + new_left != total_pool:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid zone point pool: used={new_used}, left={new_left}, total={total_pool}"
+            )
+
+        zone_name = payload.name.strip() or "Default Zone"
 
         cur.execute("""
             UPDATE players
@@ -264,9 +271,9 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
                 zone_build = ?
             WHERE CAST(user_id AS TEXT) = ?
         """, (
-            payload.name.strip() or "Default Zone",
+            zone_name,
             payload.image_url,
-            payload.points,
+            new_left,
             json.dumps(safe_build),
             str(payload.user_id),
         ))
@@ -276,9 +283,9 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
         return {
             "success": True,
             "zone": {
-                "name": payload.name.strip() or "Default Zone",
+                "name": zone_name,
                 "image_url": payload.image_url,
-                "points": payload.points,
+                "points": new_left,
                 "build": safe_build,
             }
         }
