@@ -541,19 +541,23 @@ def ensure_player(user_id: int, username: str) -> dict:
 
     return player
 
-def update_player_username(user_id: int, username: str):
+def update_player_username(user_id: str, username: str):
     player = get_player(user_id)
     if player is None:
         raise ValueError("Player not found")
-
+    
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
     UPDATE players
     SET username = ?
-    WHERE user_id = ?
-    """, (username, user_id))
+    WHERE CAST(user_id AS TEXT) = ?
+    """, (username, str(user_id)))
+
+    if cursor.rowcount == 0:
+        conn.close()
+        raise ValueError("Player not found")
 
     conn.commit()
     conn.close()

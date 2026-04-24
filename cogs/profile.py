@@ -179,8 +179,8 @@ class ProfileCog(commands.Cog):
             )
             return
 
-        update_player_username(interaction.user.id, new_name.strip())
-
+        update_player_username(str(interaction.user.id), new_name.strip())
+        
         await interaction.response.send_message(
             f"เปลี่ยนชื่อโปรไฟล์เป็น **{new_name.strip()}** เรียบร้อยแล้ว"
         )
