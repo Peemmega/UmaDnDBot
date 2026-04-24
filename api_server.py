@@ -1,8 +1,5 @@
-import os
-import sqlite3
-
 from fastapi import FastAPI, HTTPException
-from utils.database import get_player, get_connection
+from utils.database import get_player, get_connection, ensure_player
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -16,11 +13,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 @app.get("/player/{user_id}")
-def api_get_player(user_id: int):
+def api_get_player(user_id: str, username: str = "Unknown"):
     player = get_player(user_id)
+
     if not player:
-        raise HTTPException(status_code=404, detail="Player not found")
+        ensure_player(user_id, username)
+        player = get_player(user_id)
+
     return player
 
 class UpdateStatsPayload(BaseModel):
