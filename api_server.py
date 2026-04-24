@@ -251,8 +251,9 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
 
         old_used = calc_zone_used(old_build)
         total_pool = old_points + old_used
-        print(old_used, old_points, total_pool, payload.points, used_points)
-        if used_points + payload.points != total_pool:
+        # print(old_used, old_points, total_pool, payload.points, used_points)
+
+        if used_points + payload.points > total_pool:
             raise HTTPException(status_code=400, detail="Invalid zone point pool")
 
         cur.execute("""
