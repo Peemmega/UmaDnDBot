@@ -138,7 +138,7 @@ class StyleSelectView(discord.ui.View):
             game=game,
             display_name=interaction.user.display_name,
             style=style,
-            attitude_source=db_player,
+            aptitude_source=db_player,
             title="🏇 ผู้เล่นเข้าร่วม!",
             color=discord.Color.green(),
             name_field="ผู้เล่น",

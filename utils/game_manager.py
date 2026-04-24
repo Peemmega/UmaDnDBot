@@ -453,24 +453,24 @@ def start_game(channel_id: int):
         player["last_roll_turn"] = -1
         player["zone_left"] = 1
 
-        # ===== attitude bonus =====
+        # ===== aptitude bonus =====
         att_source = player["race_profile"]
 
-        att = get_attitude_values(
+        att = get_aptitude_values(
             att_source,
             game["track"],
             game["distance"],
             player["style"]
         )
 
-        att_bonus = build_attitude_stat_bonus(att)
+        att_bonus = build_aptitude_stat_bonus(att)
 
         player["race_profile"]["power"] += att_bonus["power"]
         player["race_profile"]["speed"] += att_bonus["speed"]
         player["race_profile"]["wit"] += att_bonus["wit"]
 
         # optional: เก็บไว้ดูใน UI
-        player["attitude_bonus"] = att_bonus
+        player["aptitude_bonus"] = att_bonus
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
 
@@ -480,7 +480,7 @@ def build_join_embed(
     game: dict,
     display_name: str,
     style: str,
-    attitude_source: dict,
+    aptitude_source: dict,
     title: str = "🏇 ผู้เล่นเข้าร่วม!",
     color: discord.Color = discord.Color.green(),
     name_field: str = "ผู้เล่น",
@@ -489,8 +489,8 @@ def build_join_embed(
     surface = game.get("surface", "Turf")
     distance = game.get("distance", "Medium")
 
-    att = get_attitude_values(attitude_source, surface, distance, style)
-    att_bonus = build_attitude_stat_bonus(att)
+    att = get_aptitude_values(aptitude_source, surface, distance, style)
+    att_bonus = build_aptitude_stat_bonus(att)
 
     embed = discord.Embed(
         title=title,
@@ -501,7 +501,7 @@ def build_join_embed(
     embed.add_field(name="Style", value=style, inline=True)
 
     embed.add_field(
-        name="📊 Attitude Bonus",
+        name="📊 Aptitude Bonus",
         value=(
             f"{Status_Icon_Type['SPD']} +{att_bonus['speed']} "
             f"{Status_Icon_Type['POW']} +{att_bonus['power']} "
@@ -527,14 +527,14 @@ def build_mob_join_embed(game: dict, player: dict):
         game=game,
         display_name=mob_name,
         style=style,
-        attitude_source=race_profile,
+        aptitude_source=race_profile,
         title="🏇 ผู้เล่นเข้าร่วม!",
         color=discord.Color.orange(),
         name_field="ชื่อ",
         name_value=mob_name,
     )
 
-def get_attitude_values(db_player, surface, distance, style):
+def get_aptitude_values(db_player, surface, distance, style):
     surface_key = "turf" if surface == "Turf" else "dirt"
 
     style_map = {
@@ -551,7 +551,7 @@ def get_attitude_values(db_player, surface, distance, style):
     }
 
 
-def build_attitude_stat_bonus(att):
+def build_aptitude_stat_bonus(att):
     return {
         "power": max(0, att["track"] - 1),
         "speed": max(0, att["distance"] - 1),
@@ -851,7 +851,7 @@ def can_force_rush_targets(channel_id: int, targets: list[tuple[int, dict]]) -> 
 
     return False, "ไม่มีเป้าหมายที่สามารถถูกบังคับใช้ Rush ได้"
 
-def get_attitude_values(db_player, surface, distance, style):
+def get_aptitude_values(db_player, surface, distance, style):
     surface_key = "turf" if surface == "Turf" else "dirt"
 
     style_map = {
@@ -867,7 +867,7 @@ def get_attitude_values(db_player, surface, distance, style):
         "style": db_player.get(style_map.get(style, "pace"), 1),
     }
 
-def build_attitude_stat_bonus(att):
+def build_aptitude_stat_bonus(att):
     return {
         "power": att["track"],      # Track → Power
         "speed": att["distance"],   # Distance → Speed

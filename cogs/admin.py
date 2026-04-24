@@ -4,8 +4,8 @@ from discord.ext import commands
 from utils.database import (
     ensure_player,
     reset_all_zone_data,
-    add_player_attitude,
-    set_all_attitude,
+    add_player_aptitude,
+    set_all_aptitude,
     add_player_stats_point,
     add_player_skill_point,
 )
@@ -16,7 +16,7 @@ ADMIN_IDS = {
 
 LOG_CHANNEL_ID = 1496060150929166488
 
-VALID_ATTITUDE_FIELDS = {
+VALID_APTITUDE_FIELDS = {
     "turf", "dirt",
     "sprint", "mile", "medium", "long",
     "front", "pace", "late", "end_style",
@@ -124,7 +124,7 @@ class Admin(commands.Cog):
     async def add_att(
         self,
         ctx: commands.Context,
-        attitude_name: str,
+        aptitude_name: str,
         member: Optional[discord.Member] = None,
     ):
         if not self.is_admin_user(ctx.author.id):
@@ -143,15 +143,15 @@ class Admin(commands.Cog):
         target = self.resolve_target(ctx, member)
         ensure_player(target.id, target.name)
 
-        attitude_name = attitude_name.lower().strip()
-        if attitude_name not in VALID_ATTITUDE_FIELDS:
+        aptitude_name = aptitude_name.lower().strip()
+        if aptitude_name not in VALID_APTITUDE_FIELDS:
             error_text = (
-                f"ไม่พบ attitude: `{attitude_name}`\n"
-                f"ใช้ได้: {', '.join(sorted(VALID_ATTITUDE_FIELDS))}"
+                f"ไม่พบ aptitude: `{aptitude_name}`\n"
+                f"ใช้ได้: {', '.join(sorted(VALID_APTITUDE_FIELDS))}"
             )
             await self.send_result_embed(
                 ctx,
-                title="เพิ่ม Attitude ไม่สำเร็จ",
+                title="เพิ่ม Aptitude ไม่สำเร็จ",
                 description=error_text,
                 color=discord.Color.red()
             )
@@ -164,14 +164,14 @@ class Admin(commands.Cog):
             )
             return
 
-        success, msg = add_player_attitude(target.id, attitude_name, 1)
+        success, msg = add_player_aptitude(target.id, aptitude_name, 1)
 
         if success:
-            result_text = f"เพิ่ม `{attitude_name}` +1 ให้ {target.display_name}"
+            result_text = f"เพิ่ม `{aptitude_name}` +1 ให้ {target.display_name}"
             await self.send_result_embed(
                 ctx,
-                title="เพิ่ม Attitude สำเร็จ",
-                description=f"{target.mention}\nเพิ่ม `{attitude_name}` +1 แล้ว",
+                title="เพิ่ม Aptitude สำเร็จ",
+                description=f"{target.mention}\nเพิ่ม `{aptitude_name}` +1 แล้ว",
                 color=discord.Color.green()
             )
             await self.send_log_embed(
@@ -184,7 +184,7 @@ class Admin(commands.Cog):
         else:
             await self.send_result_embed(
                 ctx,
-                title="เพิ่ม Attitude ไม่สำเร็จ",
+                title="เพิ่ม Aptitude ไม่สำเร็จ",
                 description=msg,
                 color=discord.Color.red()
             )
@@ -220,7 +220,7 @@ class Admin(commands.Cog):
             error_text = "ค่าต้องอยู่ระหว่าง `1-8`"
             await self.send_result_embed(
                 ctx,
-                title="ตั้งค่า Attitude ไม่สำเร็จ",
+                title="ตั้งค่า Aptitude ไม่สำเร็จ",
                 description=error_text,
                 color=discord.Color.red()
             )
@@ -236,13 +236,13 @@ class Admin(commands.Cog):
         target = self.resolve_target(ctx, member)
         ensure_player(target.id, target.name)
 
-        set_all_attitude(target.id, value)
+        set_all_aptitude(target.id, value)
 
-        result_text = f"ตั้งค่า Attitude ทั้งหมดของ {target.display_name} เป็น {value}"
+        result_text = f"ตั้งค่า Aptitude ทั้งหมดของ {target.display_name} เป็น {value}"
         await self.send_result_embed(
             ctx,
-            title="ตั้งค่า Attitude สำเร็จ",
-            description=f"{target.mention}\nตั้งค่า Attitude ทั้งหมดเป็น `{value}` แล้ว",
+            title="ตั้งค่า Aptitude สำเร็จ",
+            description=f"{target.mention}\nตั้งค่า Aptitude ทั้งหมดเป็น `{value}` แล้ว",
             color=discord.Color.green()
         )
         await self.send_log_embed(

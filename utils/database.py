@@ -124,22 +124,22 @@ def reset_all_zone_data():
     conn.commit()
     conn.close()
 
-def add_player_attitude(user_id, attitude_field, amount):
+def add_player_aptitude(user_id, aptitude_field, amount):
     valid_fields = {
         "turf", "dirt",
         "sprint", "mile", "medium", "long",
         "front", "pace", "late", "end_style",
     }
 
-    if attitude_field not in valid_fields:
-        return False, "ไม่พบ attitude นี้"
+    if aptitude_field not in valid_fields:
+        return False, "ไม่พบ aptitude นี้"
 
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(f"""
     UPDATE players
-    SET {attitude_field} = COALESCE({attitude_field}, 0) + ?
+    SET {aptitude_field} = COALESCE({aptitude_field}, 0) + ?
     WHERE user_id = ?
     """, (amount, user_id))
 
@@ -147,16 +147,16 @@ def add_player_attitude(user_id, attitude_field, amount):
         conn,
         user_id,
         "เลื่อนความถนัด",
-        f"คุณได้รับการเลื่อนระดับ {attitude_field}",
+        f"คุณได้รับการเลื่อนระดับ {aptitude_field}",
         "aptitude",
         1
     )
 
     conn.commit()
     conn.close()
-    return True, f"เพิ่ม {attitude_field} +{amount} สำเร็จ"
+    return True, f"เพิ่ม {aptitude_field} +{amount} สำเร็จ"
 
-def set_all_attitude(user_id: int, value: int):
+def set_all_aptitude(user_id: int, value: int):
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -498,7 +498,7 @@ def get_player(user_id: int) -> Optional[dict]:
         }
     }
 
-def set_all_attitude(user_id: int, value: int):
+def set_all_aptitude(user_id: int, value: int):
     conn = get_connection()
     cursor = conn.cursor()
 

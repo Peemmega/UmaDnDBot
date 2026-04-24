@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import io
 
-from utils.database import ensure_player, update_player_username,set_player_zone_name,set_player_zone_image_url,set_all_attitude
+from utils.database import ensure_player, update_player_username,set_player_zone_name,set_player_zone_image_url,set_all_aptitude
 from views.profile_stat_view import ProfileStatView, build_stat_embed
 from utils.player_card import create_stats_card
 from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type, GRADE_TEXT
@@ -186,7 +186,7 @@ class ProfileCog(commands.Cog):
         )
 
 
-    @discord.app_commands.command(name="set_all_att", description="ตั้งค่า attitude ทั้งหมด (สำหรับทดสอบ)")
+    @discord.app_commands.command(name="set_all_att", description="ตั้งค่า aptitude ทั้งหมด (สำหรับทดสอบ)")
     @discord.app_commands.describe(value="ระดับ 1-8")
     @discord.app_commands.choices(value=[
         discord.app_commands.Choice(name="1", value=1),
@@ -202,12 +202,12 @@ class ProfileCog(commands.Cog):
 
         ensure_player(interaction.user.id, interaction.user.name)
 
-        set_all_attitude(interaction.user.id, value.value)
+        set_all_aptitude(interaction.user.id, value.value)
 
         grade = GRADE_TEXT.get(value.value, str(value.value))
 
         await interaction.response.send_message(
-            f"📊 ตั้งค่า Attitude ทั้งหมดเป็นระดับ {grade} ({value.value})",
+            f"📊 ตั้งค่า Aptitude ทั้งหมดเป็นระดับ {grade} ({value.value})",
             ephemeral=True
         )
 
