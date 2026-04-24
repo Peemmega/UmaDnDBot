@@ -210,7 +210,6 @@ class ZoneUpdatePayload(BaseModel):
     user_id: str
     name: str
     image_url: str = ""
-    points: int  # แต้มคงเหลือใหม่
     build: dict
 
 
@@ -228,17 +227,14 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
         for key in ZONE_POINT_COST.keys()
     }
 
-    new_used = calc_zone_used(safe_build)
-    new_left = int(payload.points)
-    if new_left < 0:
-        raise HTTPException(status_code=400, detail="Zone points cannot be negative")
+    used_points = calc_zone_used(safe_build)
 
     conn = get_connection()
     cur = conn.cursor()
 
     try:
         cur.execute("""
-            SELECT zone_points, zone_build
+            SELECT zone_points
             FROM players
             WHERE CAST(user_id AS TEXT) = ?
         """, (str(payload.user_id),))
@@ -248,19 +244,12 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
         if row is None:
             raise HTTPException(status_code=404, detail="Player not found")
 
-        old_left = int(row["zone_points"] or 0)
-        old_build = json.loads(row["zone_build"] or "{}")
-        old_used = calc_zone_used(old_build)
+        max_points = int(row["zone_points"] or 0)
 
-        total_pool = old_left + old_used
-
-        print(new_used, new_left, old_left, old_used, total_pool)
-
-
-        if new_used + new_left != total_pool:
+        if used_points > max_points:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid zone point pool: used={new_used}, left={new_left}, total={total_pool}"
+                detail=f"Not enough zone points: used={used_points}, max={max_points}"
             )
 
         zone_name = payload.name.strip() or "Default Zone"
@@ -269,13 +258,11 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
             UPDATE players
             SET zone_name = ?,
                 zone_image_url = ?,
-                zone_points = ?,
                 zone_build = ?
             WHERE CAST(user_id AS TEXT) = ?
         """, (
             zone_name,
             payload.image_url,
-            old_left,
             json.dumps(safe_build),
             str(payload.user_id),
         ))
@@ -287,7 +274,7 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
             "zone": {
                 "name": zone_name,
                 "image_url": payload.image_url,
-                "points": new_left,
+                "points": max_points,
                 "build": safe_build,
             }
         }
