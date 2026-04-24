@@ -141,6 +141,14 @@ def add_player_attitude(user_id: int, attitude_field: str, amount: int = 1):
     WHERE user_id = ?
     """, (amount, user_id))
 
+    add_mail(
+        user_id,
+        "เลื่อนความถนัด",
+        f"คุณได้รับการเลื่อนระดับ {attitude_field}",
+        "aptitude",
+        1
+    )
+
     conn.commit()
     conn.close()
     return True, f"เพิ่ม {attitude_field} +{amount} สำเร็จ"
@@ -182,6 +190,23 @@ def add_player_stats_point(user_id: int, amount: int):
     SET stats_point = COALESCE(stats_point, 0) + ?
     WHERE user_id = ?
     """, (amount, user_id))
+
+    if (amount > 0):
+        add_mail(
+            user_id,
+            "ได้รับ Stats Point",
+            "คุณได้รับ stat points",
+            "stats_point",
+            amount
+        )
+    else:
+        add_mail(
+            user_id,
+            "ได้รับ Stats Point",
+            "คุณถูดลด stat points",
+            "stats_point",
+            amount
+        )
 
     conn.commit()
     conn.close()
