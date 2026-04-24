@@ -180,7 +180,7 @@ class ProfileCog(commands.Cog):
             return
 
         update_player_username(str(interaction.user.id), new_name.strip())
-        
+
         await interaction.response.send_message(
             f"เปลี่ยนชื่อโปรไฟล์เป็น **{new_name.strip()}** เรียบร้อยแล้ว"
         )
@@ -210,64 +210,6 @@ class ProfileCog(commands.Cog):
             f"📊 ตั้งค่า Aptitude ทั้งหมดเป็นระดับ {grade} ({value.value})",
             ephemeral=True
         )
-
-    # @discord.app_commands.command(name="profile", description="ดูข้อมูลผู้เล่น")
-    # async def profile(self, interaction: discord.Interaction):
-    #     player = ensure_player(interaction.user.id, interaction.user.name)
-
-    #     embed = discord.Embed(
-    #         title=f"โปรไฟล์ของ {player['username']}",
-    #         color=discord.Color.green()
-    #     )
-
-    #     embed.set_thumbnail(url=interaction.user.display_avatar.url)
-
-    #     embed.set_author(
-    #         name="Profile",
-    #         icon_url="https://media.discordapp.net/attachments/697810514448744448/1493591350535389194/utx_ico_directory_01.png"
-    #     )
-
-    #     embed.add_field(
-    #         name="ค่าสเตตัส",
-    #         value=(
-    #             f"{get_stat_icon('SPD')} : {get_stat_emoji(player['speed'])}   "
-    #             f"{get_stat_icon('STA')} : {get_stat_emoji(player['stamina'])}   "
-    #             f"{get_stat_icon('POW')} : {get_stat_emoji(player['power'])}   "
-    #             f"{get_stat_icon('GUT')} : {get_stat_emoji(player['gut'])}   "
-    #             f"{get_stat_icon('WIT')} : {get_stat_emoji(player['wit'])}\n"
-    #             f"🗺️    "
-    #             f"**Turf** : {get_stat_emoji(player['turf'])}   "
-    #             f"**Dirt** : {get_stat_emoji(player['dirt'])}\n"
-    #             f"📏    "
-    #             f"**Sprint** : {get_stat_emoji(player['sprint'])}   "
-    #             f"**Mile** : {get_stat_emoji(player['mile'])}   "
-    #             f"**Medium** : {get_stat_emoji(player['medium'])}   "
-    #             f"**Long** : {get_stat_emoji(player['long'])}\n"
-    #             f"🏇    "
-    #             f"**Front** : {get_stat_emoji(player['front'])}   "
-    #             f"**Pace** : {get_stat_emoji(player['pace'])}   "
-    #             f"**Late** : {get_stat_emoji(player['late'])}   "
-    #             f"**End** : {get_stat_emoji(player['end_style'])}"
-    #         ),
-    #         inline=False
-    #     )
-
-    #     embed.add_field(
-    #         name="ETC",
-    #         value=(
-    #             f"**Uma Coin** : {player['uma_coin']}\n"
-    #             f"**Stats Point** : {player['stats_point']}   "
-    #             f"**Skill Point** : {player['skill_point']}"
-    #         ),
-    #         inline=False
-    #     )
-
-    #     embed.set_footer(text="Eclipse first, the rest nowhere")
-
-    #     await interaction.response.send_message(
-    #         embed=embed,
-    #         view=OpenStatMenuView(interaction.user.id)
-    #     )
 
 
 async def setup(bot):
