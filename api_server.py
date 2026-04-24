@@ -275,7 +275,7 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
         """, (
             zone_name,
             payload.image_url,
-            new_left,
+            old_left,
             json.dumps(safe_build),
             str(payload.user_id),
         ))
