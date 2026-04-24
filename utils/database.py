@@ -7,8 +7,13 @@ import json
 DB_PATH = "/app/data/player.db"
 
 def get_connection():
-    os.makedirs("data", exist_ok=True)
-    return sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)  # ⬅️ เพิ่ม timeout
+    conn.row_factory = sqlite3.Row
+
+    conn.execute("PRAGMA journal_mode=WAL;")  # ⬅️ แก้ lock ได้ดีที่สุด
+    conn.execute("PRAGMA synchronous=NORMAL;")
+
+    return conn
 
 
 def init_db():
@@ -119,7 +124,7 @@ def reset_all_zone_data():
     conn.commit()
     conn.close()
 
-def add_player_attitude(user_id: int, attitude_field: str, amount: int = 1):
+def add_player_attitude(user_id, attitude_field, amount):
     valid_fields = {
         "turf", "dirt",
         "sprint", "mile", "medium", "long",
@@ -139,6 +144,7 @@ def add_player_attitude(user_id: int, attitude_field: str, amount: int = 1):
     """, (amount, user_id))
 
     add_mail(
+        conn,
         user_id,
         "เลื่อนความถนัด",
         f"คุณได้รับการเลื่อนระดับ {attitude_field}",
@@ -190,6 +196,7 @@ def add_player_stats_point(user_id: int, amount: int):
 
     if (amount > 0):
         add_mail(
+            conn,
             user_id,
             "ได้รับ Stats Point",
             "คุณได้รับ stat points",
@@ -198,6 +205,7 @@ def add_player_stats_point(user_id: int, amount: int):
         )
     else:
         add_mail(
+            conn,
             user_id,
             "ได้รับ Stats Point",
             "คุณถูดลด stat points",
