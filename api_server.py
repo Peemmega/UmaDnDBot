@@ -118,3 +118,55 @@ def update_player_stats(payload: UpdateStatsPayload):
         }
     finally:
         conn.close()
+
+@app.get("/mailbox/{user_id}")
+def get_mailbox(user_id: str):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        DELETE FROM mailbox
+        WHERE is_read = 1
+          AND created_at <= datetime('now', '-7 days')
+    """)
+
+    cur.execute("""
+        SELECT id, title, message, reward_type, reward_amount, is_read, created_at
+        FROM mailbox
+        WHERE CAST(user_id AS TEXT) = ?
+        ORDER BY id DESC
+    """, (str(user_id),))
+
+    rows = cur.fetchall()
+    conn.commit()
+    conn.close()
+
+    return [
+        {
+            "id": row[0],
+            "title": row[1],
+            "message": row[2],
+            "reward_type": row[3],
+            "reward_amount": row[4],
+            "is_read": bool(row[5]),
+            "created_at": row[6],
+        }
+        for row in rows
+    ]
+
+
+@app.post("/mailbox/{mail_id}/read")
+def mark_mail_read(mail_id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE mailbox
+        SET is_read = 1
+        WHERE id = ?
+    """, (mail_id,))
+
+    conn.commit()
+    conn.close()
+
+    return {"success": True}

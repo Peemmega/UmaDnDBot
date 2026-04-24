@@ -74,6 +74,29 @@ def init_db():
         except Exception:
             pass
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS mailbox (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        reward_type TEXT,
+        reward_amount INTEGER DEFAULT 0,
+        is_read INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+def add_mail(user_id, title, message, reward_type=None, reward_amount=0):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO mailbox (user_id, title, message, reward_type, reward_amount)
+        VALUES (?, ?, ?, ?, ?)
+    """, (str(user_id), title, message, reward_type, reward_amount))
     conn.commit()
     conn.close()
 
