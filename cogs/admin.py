@@ -124,7 +124,7 @@ class Admin(commands.Cog):
         self,
         ctx: commands.Context,
         attitude_name: str,
-        member: discord.Member | None = None,
+        member: Optional[discord.Member] = None,
     ):
         if not self.is_admin_user(ctx.author.id):
             await self.silent_delete(ctx.message)
@@ -200,7 +200,7 @@ class Admin(commands.Cog):
         self,
         ctx: commands.Context,
         value: int,
-        member: discord.Member | None = None,
+        member: Optional[discord.Member] = None,
     ):
         if not self.is_admin_user(ctx.author.id):
             await self.silent_delete(ctx.message)
@@ -257,7 +257,7 @@ class Admin(commands.Cog):
         self,
         ctx: commands.Context,
         amount: int,
-        member: discord.Member | None = None,
+        member: Optional[discord.Member] = None,
     ):
         if not self.is_admin_user(ctx.author.id):
             await self.silent_delete(ctx.message)
@@ -312,7 +312,7 @@ class Admin(commands.Cog):
         self,
         ctx: commands.Context,
         amount: int,
-        member: discord.Member | None = None,
+        member: Optional[discord.Member] = None,
     ):
         if not self.is_admin_user(ctx.author.id):
             await self.silent_delete(ctx.message)

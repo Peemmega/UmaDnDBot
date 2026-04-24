@@ -90,15 +90,12 @@ def init_db():
     conn.commit()
     conn.close()
 
-def add_mail(user_id, title, message, reward_type=None, reward_amount=0):
-    conn = get_connection()
+def add_mail(conn, user_id, title, message, reward_type, reward_amount):
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO mailbox (user_id, title, message, reward_type, reward_amount)
         VALUES (?, ?, ?, ?, ?)
     """, (str(user_id), title, message, reward_type, reward_amount))
-    conn.commit()
-    conn.close()
 
 def reset_all_zone_data():
     conn = get_connection()
