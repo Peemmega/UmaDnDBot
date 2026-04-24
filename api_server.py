@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException
+import json
+
 from utils.database import (
     get_player, 
     get_connection, 
@@ -200,3 +202,95 @@ def api_update_username(payload: UpdateUsernamePayload):
         "success": True,
         "username": username
     }
+
+
+
+class ZoneUpdatePayload(BaseModel):
+    user_id: str
+    name: str
+    image_url: str = ""
+    points: int
+    build: dict
+
+
+@app.post("/player/zone/update")
+def api_update_player_zone(payload: ZoneUpdatePayload):
+    safe_build = {
+        "flat": int(payload.build.get("flat", 0)),
+        "add_dkh": int(payload.build.get("add_dkh", 0)),
+        "floor": int(payload.build.get("floor", 0)),
+        "selected_die": int(payload.build.get("selected_die", 0)),
+        "cap": int(payload.build.get("cap", 0)),
+        "self_heal_stamina": int(payload.build.get("self_heal_stamina", 0)),
+    }
+
+    used_points = (
+        safe_build["flat"]
+        + safe_build["floor"]
+        + safe_build["selected_die"]
+        + safe_build["cap"]
+        + safe_build["self_heal_stamina"]
+        + safe_build["add_dkh"] * 3
+    )
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+            SELECT zone_points, zone_build
+            FROM players
+            WHERE CAST(user_id AS TEXT) = ?
+        """, (str(payload.user_id),))
+
+        row = cur.fetchone()
+
+        if row is None:
+            raise HTTPException(status_code=404, detail="Player not found")
+
+        old_points = row["zone_points"]
+        old_build = json.loads(row["zone_build"] or "{}")
+
+        old_used = (
+            int(old_build.get("flat", 0))
+            + int(old_build.get("floor", 0))
+            + int(old_build.get("selected_die", 0))
+            + int(old_build.get("cap", 0))
+            + int(old_build.get("self_heal_stamina", 0))
+            + int(old_build.get("add_dkh", 0)) * 3
+        )
+
+        total_pool = old_points + old_used
+
+        if used_points + payload.points != total_pool:
+            raise HTTPException(status_code=400, detail="Invalid zone point pool")
+
+        cur.execute("""
+            UPDATE players
+            SET zone_name = ?,
+                zone_image_url = ?,
+                zone_points = ?,
+                zone_build = ?
+            WHERE CAST(user_id AS TEXT) = ?
+        """, (
+            payload.name.strip() or "Default Zone",
+            payload.image_url,
+            payload.points,
+            json.dumps(safe_build),
+            str(payload.user_id),
+        ))
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "zone": {
+                "name": payload.name.strip() or "Default Zone",
+                "image_url": payload.image_url,
+                "points": payload.points,
+                "build": safe_build,
+            }
+        }
+
+    finally:
+        conn.close()
