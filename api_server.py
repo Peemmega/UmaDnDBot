@@ -7,8 +7,8 @@ from utils.database import (
     ensure_player, 
     update_player_username
 )
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 app.add_middleware(
