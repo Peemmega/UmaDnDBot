@@ -1,5 +1,10 @@
 from fastapi import FastAPI, HTTPException
-from utils.database import get_player, get_connection, ensure_player
+from utils.database import (
+    get_player, 
+    get_connection, 
+    ensure_player, 
+    update_player_username
+)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -171,3 +176,27 @@ def mark_mail_read(mail_id: int):
     conn.close()
 
     return {"success": True}
+
+class UpdateUsernamePayload(BaseModel):
+    user_id: int
+    username: str
+
+@app.post("/player/username/update")
+def api_update_username(payload: UpdateUsernamePayload):
+    username = payload.username.strip()
+
+    if not username:
+        raise HTTPException(status_code=400, detail="Username cannot be empty")
+
+    if len(username) > 24:
+        raise HTTPException(status_code=400, detail="Username too long")
+
+    try:
+        update_player_username(payload.user_id, username)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    return {
+        "success": True,
+        "username": username
+    }
