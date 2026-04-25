@@ -10,6 +10,7 @@ from utils.database import (
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from utils.zone.zone_preset import ZONE_POINT_COST
+from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET
 
 app = FastAPI()
 app.add_middleware(
@@ -281,3 +282,25 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
 
     finally:
         conn.close()
+
+@app.get("/race/calendar")
+def get_race_calendar():
+    events = []
+
+    for item in RACE_SCHEDULE:
+        race = RACE_PRESET.get(item["race_id"])
+        if not race:
+            continue
+
+        events.append({
+            "id": item["race_id"],
+            "date": item["date"],
+            "time": item["time"],
+            "name": race["name"],
+            "image": race.get("image"),
+            "thumbnail": race.get("thumnail"),
+            "track": race.get("track"),
+            "distance": race.get("distance"),
+        })
+
+    return events

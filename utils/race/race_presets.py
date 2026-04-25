@@ -99,6 +99,19 @@ def get_path_effect(path_type: int, player: dict) -> dict:
 def render_path(path: list[int]) -> str:
     return "".join(PATH_TYPE_ICON.get(x, "⬜") for x in path)
 
+RACE_SCHEDULE = [
+    {
+        "race_id": "Debut",
+        "date": "2026-04-07",
+        "time": "20:00"
+    },
+    {
+        "race_id": "MileChampionship",
+        "date": "2026-04-26",
+        "time": "20:00"
+    }
+]
+
 RACE_PRESET = {
     "NHK": {
         "name": "NHK Mile Cup 1600m",
