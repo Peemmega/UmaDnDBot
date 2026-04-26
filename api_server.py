@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from utils.zone.zone_preset import ZONE_POINT_COST
 from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET
+from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
+from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect
 
 app = FastAPI()
 app.add_middleware(
@@ -304,3 +306,39 @@ def get_race_calendar():
         })
 
     return events
+
+@app.get("/skills")
+def api_get_skills(tag: str = "all"):
+    result = []
+
+    for skill_id, skill in SKILLS.items():
+        tags = skill.get("tags", [])
+
+        if tag != "all" and tag not in tags:
+            continue
+
+        result.append({
+            "id": skill_id,
+            "name": skill["name"],
+            "icon": skill.get("icon"),
+            "cooldown": skill.get("cooldown", 0),
+            "cost": skill.get("cost", 0),
+            "active_roll": skill.get("active_roll", False),
+            "tags": tags,
+            "target": describe_target(skill.get("target", {})),
+            "trigger": describe_trigger(skill.get("trigger", {})),
+            "effects": [
+                describe_effect(effect)
+                for effect in skill.get("effects", [])
+            ],
+        })
+
+    return result
+
+
+@app.get("/skills/tags")
+def api_get_skill_tags():
+    return [
+        {"value": value, "label": label}
+        for value, label in SKILL_TAG_OPTIONS
+    ]
