@@ -135,7 +135,10 @@ class ConfirmCreateView(discord.ui.View):
 
         # ✅ ตอบก่อน (กัน error interaction timeout)
         await interaction.response.defer()
-        await interaction.message.delete()
+        try:
+            await interaction.message.delete()
+        except discord.NotFound:
+            pass
 
         await interaction.channel.send(
             embed=embed,
