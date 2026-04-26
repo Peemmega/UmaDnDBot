@@ -385,3 +385,42 @@ def api_equip_skill(payload: EquipSkillPayload):
         "skill_id": skill_id,
         "skill_text": get_skill_display(skill_id),
     }
+
+@app.get("/player/{user_id}/skills")
+def api_get_player_skills(user_id: str):
+    slots = get_player_skill_slots(int(user_id))
+
+    if slots is None:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    result = {}
+
+    for slot_key, skill_id in slots.items():
+        if not skill_id:
+            result[slot_key] = None
+            continue
+
+        skill = SKILLS.get(skill_id)
+        if not skill:
+            result[slot_key] = {
+                "id": skill_id,
+                "missing": True,
+            }
+            continue
+
+        result[slot_key] = {
+            "id": skill_id,
+            "name": skill["name"],
+            "icon": skill.get("icon"),
+            "cooldown": skill.get("cooldown", 0),
+            "cost": skill.get("cost", 0),
+            "tags": skill.get("tags", []),
+            "target": describe_target(skill.get("target", {})),
+            "trigger": describe_trigger(skill.get("trigger", {})),
+            "effects": [
+                describe_effect(effect)
+                for effect in skill.get("effects", [])
+            ],
+        }
+
+    return result
