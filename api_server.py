@@ -5,14 +5,16 @@ from utils.database import (
     get_player, 
     get_connection, 
     ensure_player, 
-    update_player_username
+    update_player_username,
+    set_player_skill_slot,
+    get_player_skill_slots,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from utils.zone.zone_preset import ZONE_POINT_COST
 from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
-from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect
+from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 
 app = FastAPI()
 app.add_middleware(
@@ -342,3 +344,44 @@ def api_get_skill_tags():
         {"value": value, "label": label}
         for value, label in SKILL_TAG_OPTIONS
     ]
+
+class EquipSkillPayload(BaseModel):
+    user_id: str
+    username: str = "Unknown"
+    slot: int
+    skill_id: str
+
+
+@app.post("/player/skill/equip")
+def api_equip_skill(payload: EquipSkillPayload):
+    user_id = int(payload.user_id)
+    skill_id = payload.skill_id.strip().lower()
+
+    ensure_player(user_id, payload.username)
+
+    if payload.slot not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="slot ต้องเป็น 1-3")
+
+    if skill_id not in SKILLS:
+        raise HTTPException(status_code=404, detail=f"ไม่พบสกิล `{skill_id}`")
+
+    slots = get_player_skill_slots(user_id)
+    if slots and skill_id in slots.values():
+        raise HTTPException(status_code=400, detail="คุณติดตั้งสกิลนี้ไว้แล้ว")
+
+    success, message = set_player_skill_slot(
+        user_id=user_id,
+        slot=payload.slot,
+        skill_id=skill_id
+    )
+
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+
+    return {
+        "success": True,
+        "message": message,
+        "slot": payload.slot,
+        "skill_id": skill_id,
+        "skill_text": get_skill_display(skill_id),
+    }
