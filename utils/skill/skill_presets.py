@@ -39,6 +39,7 @@ SKILL_TAG_OPTIONS = [
     ("acceleration", "เพิ่มความเร่ง"),
     ("recovery", "ฟื้นฟู Stamina"),
     ("debuff", "สกิลแดง ดีบัฟ"),
+    ("vision", "สกิลมองทาง"),
     ("front", "แผนวิ่ง Front"),
     ("pace", "แผนวิ่ง Pace"),
     ("late", "แผนวิ่ง Late"),
