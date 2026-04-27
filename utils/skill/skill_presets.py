@@ -19,7 +19,7 @@ EFFECT_TYPES = {
     "add_kh",                   # เพิ่มจำนวนลูกที่เลือก
     "recover_stamina",          # เพิ่ม STA
     "reduce_stamina",           # ลด STA เป้าหมาย
-    "flat_score_change",        # เพิ่ม/ลด score ทันที
+    "flat_total",        # เพิ่ม/ลด score ทันที
     "modify_gold_range",        # เพิ่มระยะนับ Gold
     "modify_enemy_gold_range",  # ลดระยะนับ Gold ของศัตรู
     "apply_debuff_next_turn",   # debuff เทิร์นหน้า

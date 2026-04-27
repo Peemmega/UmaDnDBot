@@ -305,7 +305,7 @@ def apply_skill(channel_id: int, user_id: int, skill_id: str, skill: dict):
             player["stamina_left"] += value
             applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
 
-        elif effect_type == "flat_score_change":
+        elif effect_type == "flat_total":
             # ถ้า target เป็น self ก็ลงตัวเอง ถ้าไม่ใช่ก็ลง target
             if not targets:
                 success, _ = update_player_score(channel_id, user_id, value)

@@ -248,7 +248,7 @@ def describe_effect(effect: dict) -> str:
     if effect_type == "modify_gold_range":
         return f"เพิ่มระยะตรวจ Gold +{value}"
     if effect_type == "modify_enemy_gold_range":
-        return f"ลดระยะตรวจ Gold ของศัตรู -{value}"
+        return f"ลดระยะตรวจ Gold ของศัตรู {value}"
     if effect_type == "apply_debuff_next_turn":
         stat = effect.get("stat", "unknown")
         return f"ทำให้เป้าหมายได้รับดีบัฟเทิร์นหน้า {stat} {value}"
