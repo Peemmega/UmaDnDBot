@@ -819,12 +819,12 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_velocity",
-                "value": 40,
+                "value": 50,
                 "duration": "this_roll"
             },
             {
                 "type": "modify_roll_cap",
-                "value": 5,
+                "value": 7,
                 "duration": "this_roll"
             },
             {
@@ -997,23 +997,131 @@ SKILLS = {
         "active_roll": False,
         "tags": ["debuff", "front", "mindgame"],
     },
-    
-    "s099": {
-        "name": "March Licking",
-        "icon": "LookUp",
-        "cooldown": 10,
-        "cost": 60,
+
+    "s042": {
+        "name": "Let's Pump Some Iron",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 120,
         "trigger": {
-            "style": "End",
-            "phase_min": 1,
+            "phase_min": 3,
             "phase_max": 4,
+            "path_type": 2,
         },
-        "target": {"scope": "self", "limit": 1},
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
         "effects": [
-            {"type": "modify_gold_range", "value": 100, "duration": "this_turn"},
-            {"type": "modify_roll_cap", "value": 99, "duration": "this_roll"},
+            {"type": "modify_roll_floor","value": 5,"duration": "this_roll"},
+            {"type": "add_dkh","value": 3,"duration": "this_roll"}
         ],
         "active_roll": False,
-        "tags": ["vision", "end", "positioning"],
+        "tags": ["corner", "late_race", "acceleration"],
     },
+    
+    "s043": {
+        "name": "Red Shift/LP1211-M",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 120,
+        "trigger": {
+            "phase_min": 4,
+            "phase_max": 4,
+            "position_group": "front",
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "add_dkh",
+                "value": 2,
+                "duration": "this_roll"
+            },
+            {
+                "type": "modify_roll_cap",
+                "value": 14,
+                "duration": "this_roll"
+            },
+        ],
+        "active_roll": True,
+        "tags": ["corner", "late_race", "front", "acceleration"],
+    },
+
+    "s044": {
+        "name": "Triumphant Pulse",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 120,
+        "trigger": {
+            "phase_min": 4,
+            "phase_max": 4,
+            "position_group": "front",
+            "target_distance_min": 0,
+            "target_distance_max": 200,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {"type": "modify_roll_cap","value": 21,"duration": "this_roll"},
+            {"type": "modify_roll_floor","value": 10,"duration": "this_roll"},
+        ],
+        "active_roll": True,
+        "tags": ["late_race", "front", "velocity", "positioning"],
+    },
+
+    "s045": {
+        "name": "Moving Past, and Beyond",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 120,
+        "trigger": {
+            "phase_min": 3,
+            "phase_max": 4,
+            "position_group": "middle",
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "add_dkh",
+                "value": 2,
+                "duration": "this_roll"
+            },
+            {
+                "type": "modify_roll_cap",
+                "value": 14,
+                "duration": "this_roll"
+            }
+        ],
+        "active_roll": True,
+        "tags": ["mid_race", "late_race", "acceleration"],
+    },
+
+
+
+    # "s099": {
+    #     "name": "March Licking",
+    #     "icon": "LookUp",
+    #     "cooldown": 10,
+    #     "cost": 60,
+    #     "trigger": {
+    #         "style": "End",
+    #         "phase_min": 1,
+    #         "phase_max": 4,
+    #     },
+    #     "target": {"scope": "self", "limit": 1},
+    #     "effects": [
+    #         {"type": "modify_gold_range", "value": 100, "duration": "this_turn"},
+    #         {"type": "modify_roll_cap", "value": 99, "duration": "this_roll"},
+    #     ],
+    #     "active_roll": False,
+    #     "tags": ["vision", "end", "positioning"],
+    # },
 }
