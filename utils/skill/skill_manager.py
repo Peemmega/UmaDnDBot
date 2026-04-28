@@ -172,6 +172,12 @@ def build_skill_card_text(skill_id: str | None) -> str:
         f"--------------------------------------"
     )
 
+POSITION_GROUP_TEXT = {
+    "front": "กลุ่มหน้า",
+    "middle": "กลุ่มกลาง",
+    "back": "กลุ่มท้าย",
+}
+
 def describe_trigger(trigger: dict) -> str:
     parts = []
 
@@ -207,6 +213,11 @@ def describe_trigger(trigger: dict) -> str:
             f"เมื่อมีเป้าหมายอยู่ในระยะ {trigger['target_distance_min']} ถึง {trigger['target_distance_max']}"
         )
 
+    if "position_group" in trigger:
+        parts.append(
+            f"เมื่ออยู่ใน{POSITION_GROUP_TEXT.get(trigger['position_group'], trigger['position_group'])}"
+        )
+        
     return " • ".join(parts) if parts else "ไม่มีเงื่อนไขพิเศษ"
 
 def describe_target(target: dict) -> str:

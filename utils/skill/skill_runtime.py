@@ -196,13 +196,13 @@ def check_skill_trigger(channel_id: int, user_id: int, skill: dict, *, path_type
         return False, f"ใช้ได้ถึง Phase {trigger['phase_max']}"
 
     if "front_blocked" in trigger:
-        blocked = has_front_blocked(channel_id, user_id, 10)
+        blocked = has_front_blocked(channel_id, user_id, 20)
 
         if trigger["front_blocked"] is True and not blocked:
-            return False, "ต้องมีคนอยู่ด้านหน้าในระยะ 10 ช่อง"
+            return False, "ต้องมีคนอยู่ด้านหน้าในระยะ 20 ช่อง"
 
         if trigger["front_blocked"] is False and blocked:
-            return False, "ใช้ไม่ได้เมื่อมีคนขวางด้านหน้าในระยะ 10 ช่อง"
+            return False, "ใช้ไม่ได้เมื่อมีคนขวางด้านหน้าในระยะ 20 ช่อง"
 
     if trigger.get("lastspurt") is True and not is_lastspurt(phase, path_type):
         return False, "ยังไม่เข้าสู่ Last Spurt"
