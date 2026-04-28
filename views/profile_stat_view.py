@@ -4,7 +4,7 @@ from utils.database import (
     update_player_stats,
 )
 from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
-
+STATS_CAP = 8
 
 def get_stat_emoji(value: int) -> str:
     value = max(1, min(value, 8))
@@ -95,6 +95,10 @@ class ProfileStatView(discord.ui.View):
 
         if player["stats_point"] <= 0:
             await interaction.response.send_message("แต้มไม่พอ", ephemeral=True)
+            return
+
+        if player[stat_name] >= STATS_CAP:
+            await interaction.response.send_message("ถึงขีดจำกัดแล้ว", ephemeral=True)
             return
 
         player[stat_name] += 1

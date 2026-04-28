@@ -630,8 +630,8 @@ SKILLS = {
             "phase_min": 4,
             "phase_max": 4,
             "position_group": "front",
-            "target_distance_min": -60,
-            "target_distance_max": 60,
+            "target_distance_min": -100,
+            "target_distance_max": 100,
         },
         "target": {"scope": "all_back", "limit": 5},
         "effects": [
@@ -651,7 +651,7 @@ SKILLS = {
             "phase_max": 4,
             "distance_type": "Long",
             "target_distance_min": 1,
-            "target_distance_max": 150,
+            "target_distance_max": 200,
         },
         "target": {"scope": "all_front", "limit": 4},
         "effects": [
