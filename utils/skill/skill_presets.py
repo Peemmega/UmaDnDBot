@@ -1007,6 +1007,7 @@ SKILLS = {
             "phase_min": 3,
             "phase_max": 4,
             "path_type": 2,
+            "position_group": "back",
         },
         "target": {
             "scope": "self",
