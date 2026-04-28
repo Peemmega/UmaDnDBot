@@ -1104,6 +1104,33 @@ SKILLS = {
         "tags": ["mid_race", "late_race", "acceleration"],
     },
 
+    "s046": {
+        "name": "Angling and Scheming",
+        "icon": "Acceleration",
+        "cooldown": 8,
+        "cost": 120,
+        "trigger": {
+            "phase_min": 3,
+            "phase_max": 4,
+            "path_type": 2,
+            "position_group": "front",
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "add_dkh",
+                "value": 2,
+                "duration": "this_roll"
+            },
+            {"type": "modify_roll_floor","value": 10,"duration": "this_roll"},
+
+        ],
+        "active_roll": True,
+        "tags": ["corner", "late_race", "front", "acceleration"],
+    },
 
 
     # "s099": {
