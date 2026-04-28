@@ -242,7 +242,7 @@ def describe_effect(effect: dict) -> str:
         return f"ลด {Status_Icon_Type['STA']} เป้าหมาย -{value}"
     if effect_type == "force_rush":
         return f"บังคับเป้าหมายใช้ Rush"
-    if effect_type == "flat_score_change":
+    if effect_type == "flat_total":
         sign = "+" if value >= 0 else ""
         return f"ปรับคะแนนทันที {sign}{value}"
     if effect_type == "modify_gold_range":
