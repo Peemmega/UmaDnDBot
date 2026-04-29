@@ -17,9 +17,13 @@ def get_position_group(channel_id: int, user_id: int) -> str:
     if game is None:
         return "mid"
 
+    scores = game.get("turn_snapshot_scores") or {
+        uid: p["score"] for uid, p in game["players"].items()
+    }
+
     ranked = sorted(
-        game["players"].items(),
-        key=lambda item: item[1]["score"],
+        scores.items(),
+        key=lambda item: item[1],
         reverse=True
     )
 
@@ -30,10 +34,8 @@ def get_position_group(channel_id: int, user_id: int) -> str:
     base = total // 3
     remainder = total % 3
 
-    # แจกเศษให้ front → mid → back
     front_size = base + (1 if remainder > 0 else 0)
     mid_size = base + (1 if remainder > 1 else 0)
-    back_size = base
 
     for index, (uid, _) in enumerate(ranked):
         if uid == user_id:
@@ -52,33 +54,36 @@ def get_nearest_front_gap(channel_id: int, user_id: int):
     if game is None or user_id not in game["players"]:
         return None
 
-    my_score = game["players"][user_id]["score"]
-    gaps = []
+    scores = game.get("turn_snapshot_scores") or {
+        uid: p["score"] for uid, p in game["players"].items()
+    }
 
-    for uid, info in game["players"].items():
-        if uid == user_id:
-            continue
-        gap = info["score"] - my_score
-        if gap > 0:
-            gaps.append(gap)
+    my_score = scores[user_id]
+
+    gaps = [
+        score - my_score
+        for uid, score in scores.items()
+        if uid != user_id and score > my_score
+    ]
 
     return min(gaps) if gaps else None
-
 
 def get_nearest_back_gap(channel_id: int, user_id: int):
     game = get_game(channel_id)
     if game is None or user_id not in game["players"]:
         return None
 
-    my_score = game["players"][user_id]["score"]
-    gaps = []
+    scores = game.get("turn_snapshot_scores") or {
+        uid: p["score"] for uid, p in game["players"].items()
+    }
 
-    for uid, info in game["players"].items():
-        if uid == user_id:
-            continue
-        gap = my_score - info["score"]
-        if gap > 0:
-            gaps.append(gap)
+    my_score = scores[user_id]
+
+    gaps = [
+        my_score - score
+        for uid, score in scores.items()
+        if uid != user_id and score < my_score
+    ]
 
     return min(gaps) if gaps else None
 
@@ -87,8 +92,12 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
     if game is None or user_id not in game["players"]:
         return []
 
+    scores = game.get("turn_snapshot_scores") or {
+        uid: p["score"] for uid, p in game["players"].items()
+    }
+
     player = game["players"][user_id]
-    my_score = player["score"]
+    my_score = scores[user_id]
 
     target_cfg = skill.get("target", {})
     scope = target_cfg.get("scope", "self")
@@ -104,8 +113,10 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
         if target_id == user_id:
             continue
 
-        gap_front = info["score"] - my_score
-        gap_back = my_score - info["score"]
+        target_score = scores[target_id]
+
+        gap_front = target_score - my_score
+        gap_back = my_score - target_score
 
         if gap_front > 0:
             front.append((gap_front, target_id, info))

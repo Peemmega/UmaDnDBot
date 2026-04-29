@@ -11,7 +11,7 @@ from utils.game_manager import (
     
 )
 
-from utils.dice.dice_presets import DICE_PRESET
+from utils.dice.dice_presets import DICE_PRESET, MAX_DICE_VALUE
 from utils.dice.dice_table import format_rule
 from utils.race.race_dice import (
     build_dice_table_grid
@@ -85,7 +85,7 @@ def build_join_style_embed(max_turn: int) -> discord.Embed:
         name="📘 คำอธิบาย",
         value=(
             "`d` = จำนวนลูกเต๋าที่ทอย\n"
-            "`d` 1 ลูก = สุ่ม 1-20\n"
+            f"`d` 1 ลูก = สุ่ม 1-{MAX_DICE_VALUE}\n"
             "`kh` = เลือกค่ามากสุดจำนวนที่กำหนด\n"
             "เช่น `6dkh2` = ทอย 6 ลูก แล้วเลือก 2 ลูกที่มากสุดมารวม\n"
             "`White / Gold` = ประเภทการทอยตามระยะห่างกับผู้เล่นอื่น"

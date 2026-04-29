@@ -760,14 +760,14 @@ def use_block(channel_id: int, user_id: int):
         return False, "คุณใช้ Block ไปแล้ว"
 
     behind_players = get_players_behind(channel_id, user_id)
-    valid_targets = [(uid, gap, info) for uid, gap, info in behind_players if gap > 10]
+    valid_targets = [(uid, gap, info) for uid, gap, info in behind_players if gap > 20]
 
     if not valid_targets:
-        return False, "ไม่มีคนด้านหลังที่ห่างเกิน 10"
+        return False, "ไม่มีคนด้านหลังที่ห่างเกิน 20"
 
     target_id, gap, target_info = valid_targets[0]
 
-    move_back = gap - 10
+    move_back = gap - 20
     player["score"] -= move_back
 
     target_info["next_roll_flat_bonus"] -= 10
