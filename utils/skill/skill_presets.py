@@ -92,10 +92,10 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 35,
+                "value": 30,
                 "duration": "this_roll"
             },
-            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
         "active_roll": True,
         "tags": ["corner", "velocity"],
@@ -232,12 +232,12 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_roll_floor",
-                "value": 7,
+                "value": 5,
                 "duration": "this_roll"
             },
             {
                 "type": "modify_roll_cap",
-                "value": 12,
+                "value": 14,
                 "duration": "this_roll"
             }
         ],
@@ -322,7 +322,7 @@ SKILLS = {
             {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
         "active_roll": True,
-        "tags": ["medium", "front", "velocity"],
+        "tags": ["medium", "lead", "velocity"],
     },
 
     "s012": {
@@ -561,7 +561,7 @@ SKILLS = {
             {"type": "recover_stamina", "value": 2}
         ],
         "active_roll": False,
-        "tags": ["medium", "front", "recovery"],
+        "tags": ["medium", "lead", "recovery"],
     },
 
     "s025": {
@@ -637,10 +637,10 @@ SKILLS = {
         },
         "target": {"scope": "all_back", "limit": 5},
         "effects": [
-            {"type": "modify_enemy_gold_range", "value": -8, "duration": "next_turn"}
+            {"type": "modify_enemy_gold_range", "value": -15, "duration": "next_turn"}
         ],
         "active_roll": False,
-        "tags": ["blind", "pace", "debuff"],
+        "tags": ["blind", "pace", "debuff", "lead"],
     },
 
     "s029": {
@@ -941,13 +941,8 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "modify_roll_floor",
-                "value": 10,
-                "duration": "this_roll"
-            },
-            {
                 "type": "modify_roll_cap",
-                "value": 12,
+                "value": 21,
                 "duration": "this_roll"
             }
         ],
@@ -983,7 +978,7 @@ SKILLS = {
         "name": "Tantalizing Trick",
         "icon": "ReduceSTA",
         "cooldown": 8,
-        "cost": 60,
+        "cost": 50,
         "trigger": {
             "target_distance_min": -11,
             "target_distance_max": -30,
@@ -997,7 +992,7 @@ SKILLS = {
             {"type": "force_rush", "value": 1}
         ],
         "active_roll": False,
-        "tags": ["debuff", "front", "mindgame"],
+        "tags": ["debuff", "mindgame"],
     },
 
     "s042": {
@@ -1016,7 +1011,6 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_floor","value": 5,"duration": "this_roll"},
             {"type": "add_dkh","value": 3,"duration": "this_roll"}
         ],
         "active_roll": False,
@@ -1050,7 +1044,7 @@ SKILLS = {
             },
         ],
         "active_roll": True,
-        "tags": ["corner", "late_race", "front", "acceleration"],
+        "tags": ["corner", "late_race", "lead", "acceleration"],
     },
 
     "s044": {
@@ -1074,7 +1068,7 @@ SKILLS = {
             {"type": "modify_roll_floor","value": 10,"duration": "this_roll"},
         ],
         "active_roll": True,
-        "tags": ["late_race", "front", "velocity", "positioning"],
+        "tags": ["late_race", "lead", "velocity", "positioning"],
     },
 
     "s045": {
@@ -1132,7 +1126,7 @@ SKILLS = {
 
         ],
         "active_roll": True,
-        "tags": ["corner", "late_race", "front", "acceleration"],
+        "tags": ["corner", "late_race", "lead", "acceleration"],
     },
 
 
