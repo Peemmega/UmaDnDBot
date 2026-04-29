@@ -7,6 +7,8 @@ ICON = {
     "ReduceSTA": "<:ReduceSTA:1494389406109270026>",
     "LookUp": "<:LookUp:1494389526359969873>",
     "Blind": "<:Blind:1494389451114151939>",
+    "UniqueVelocity": "<:UniqueSkillVelocity:1499064862888824923>",
+    "UniqueAcceleration": "<:UniqueSkillVelocity:1499064862888824923>",
 }
 
 EFFECT_TYPES = {
@@ -1000,7 +1002,7 @@ SKILLS = {
 
     "s042": {
         "name": "Let's Pump Some Iron",
-        "icon": "Acceleration",
+        "icon": "UniqueAcceleration",
         "cooldown": 8,
         "cost": 120,
         "trigger": {
@@ -1023,7 +1025,7 @@ SKILLS = {
     
     "s043": {
         "name": "Red Shift/LP1211-M",
-        "icon": "Acceleration",
+        "icon": "UniqueAcceleration",
         "cooldown": 8,
         "cost": 120,
         "trigger": {
@@ -1053,7 +1055,7 @@ SKILLS = {
 
     "s044": {
         "name": "Triumphant Pulse",
-        "icon": "Velocity",
+        "icon": "UniqueVelocity",
         "cooldown": 8,
         "cost": 120,
         "trigger": {
@@ -1077,7 +1079,7 @@ SKILLS = {
 
     "s045": {
         "name": "Moving Past, and Beyond",
-        "icon": "Acceleration",
+        "icon": "UniqueAcceleration",
         "cooldown": 8,
         "cost": 120,
         "trigger": {
@@ -1107,7 +1109,7 @@ SKILLS = {
 
     "s046": {
         "name": "Angling and Scheming",
-        "icon": "Acceleration",
+        "icon": "UniqueAcceleration",
         "cooldown": 8,
         "cost": 120,
         "trigger": {
