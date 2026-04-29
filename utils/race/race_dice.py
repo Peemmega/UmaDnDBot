@@ -12,7 +12,7 @@ def get_stat_emoji(value: int) -> str:
 def get_stat_icon(value: str) -> str:
     return Status_Icon_Type[value]
 
-def count_nearby_players(player_id: int, score_map: dict[int, int], radius: int = 10) -> int:
+def count_nearby_players(player_id: int, score_map: dict[int, int], radius: int = 20) -> int:
     if player_id not in score_map:
         return 0
 
@@ -153,8 +153,9 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     spd_bonus = int(spd_bonus_raw * spd_multiplier)
 
     power_bonus = player.get("power", 1) * 3
-    nearby_count = min(context.get("nearby_count", 0), 3)
-    gut_bonus = (player.get("gut", 1) * nearby_count * 3) if context.get("distance_color") == "Gold" else 0
+    nearby_count = min(context.get("nearby_count", 0), 2)
+    gut_scale = player.get("gut", 1) * 5
+    gut_bonus = (gut_scale * nearby_count ) if context.get("distance_color") == "Gold" else 0
 
     total_spd_bonus = 0
 
