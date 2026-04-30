@@ -29,13 +29,13 @@ games = {}
 
 def get_last_corner_index(path: list[int]) -> int:
     for i in range(len(path) - 1, -1, -1):
-        if path[i] == 1:  # 1 = corner
+        if path[i] == 2:
             return i
     return -1
 
 def is_last_corner(game: dict) -> bool:
     path = game["path"]
-    turn_index = game["turn"] - 1  # index เริ่ม 0
+    turn_index = game["turn"]
 
     last_corner_index = get_last_corner_index(path)
     print(last_corner_index)
