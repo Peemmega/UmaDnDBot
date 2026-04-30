@@ -22,7 +22,7 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
     )
 
     scale_up = 0.30 if phase == 4 else 0.2
-    increase_speed = 1 + (scale_up * power_stat) * multiple
+    increase_speed = 1 + (scale_up * power_stat * multiple) 
 
     new_speed = min(max_speed_cap, current_max_speed + increase_speed)
     player["current_max_speed"] = new_speed
