@@ -151,10 +151,6 @@ class ZoneManageView(discord.ui.View):
 
         # ✅ update ทั้ง build + points
         set_player_zone_build(self.user_id, self.temp_zone["build"])
-
-        from utils.database import set_player_zone_points
-        set_player_zone_points(self.user_id, new_left)
-
         self.original_zone = copy.deepcopy(self.temp_zone)
 
         embed = build_zone_manage_embed_from_zone(
