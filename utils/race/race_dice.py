@@ -187,7 +187,7 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     if flat_velocity_bonus > 0:
         bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
     if total_selected_die_bonus > 0:
-        bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
+        bonus_parts.append(f"+{total_selected_die_bonus}{ICON['Velocity']}")
 
 
     bonus_display = " ".join(bonus_parts) if bonus_parts else "-"
