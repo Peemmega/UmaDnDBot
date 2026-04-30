@@ -1124,7 +1124,7 @@ def incrase_speed_by_acceleration(channel_id: int):
         power_stat = race_profile.get("power", 0)
 
         max_speed_cap = (
-            MAX_SPEED_PHASE[race_profile["style"]]["max"]
+            MAX_SPEED_PHASE[player["style"]]["max"]
             + race_profile.get("speed", 0)
         )
 
