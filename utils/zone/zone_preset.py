@@ -4,7 +4,7 @@ ZONE_FIELDS = {
     "floor", 
     "selected_die", 
     "cap", 
-    "self_heal_stamina"
+    "self_heal_stamina",
     "modify_current_speed"
 }
 
