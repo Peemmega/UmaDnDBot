@@ -33,7 +33,7 @@ ZONE_VALUE = {
     "add_dkh": 2,
     "floor": 5,
     "selected_die": 3,
-    "cap": 7,
+    "cap": 5,
     "self_heal_stamina": 1,
 }
 
