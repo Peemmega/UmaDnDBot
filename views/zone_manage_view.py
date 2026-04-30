@@ -125,7 +125,36 @@ class ZoneManageView(discord.ui.View):
 
     @discord.ui.button(label="💾 บันทึก", style=discord.ButtonStyle.primary)
     async def save_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        # ✅ คำนวณแต้มที่ใช้
+        used = sum(
+            int(self.temp_zone["build"].get(k, 0)) * ZONE_POINT_COST[k]
+            for k in ZONE_POINT_COST
+        )
+
+        # ✅ total pool เดิม
+        original_used = sum(
+            int(self.original_zone["build"].get(k, 0)) * ZONE_POINT_COST[k]
+            for k in ZONE_POINT_COST
+        )
+
+        original_left = get_zone_points_left(self.original_zone)
+        total_pool = original_left + original_used
+
+        # ✅ คำนวณแต้มใหม่
+        new_left = total_pool - used
+
+        # ❗ กันติดลบ
+        if new_left < 0:
+            await interaction.response.send_message("แต้มเกิน!", ephemeral=True)
+            return
+
+        # ✅ update ทั้ง build + points
         set_player_zone_build(self.user_id, self.temp_zone["build"])
+
+        from utils.database import set_player_zone_points
+        set_player_zone_points(self.user_id, new_left)
+
         self.original_zone = copy.deepcopy(self.temp_zone)
 
         embed = build_zone_manage_embed_from_zone(
@@ -134,6 +163,7 @@ class ZoneManageView(discord.ui.View):
             selected_field=self.selected_field,
             note="บันทึกค่า Zone เรียบร้อยแล้ว"
         )
+
         await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="↺ รีเซ็ต", style=discord.ButtonStyle.secondary)
