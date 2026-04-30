@@ -116,10 +116,8 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {
-                "type": "modify_current_speed",
-                "value": 2.5,
-            }
+            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "add_dkh", "value": 1},
         ],
         "active_roll": True,
         "tags": ["straight", "lastspurt", "end", "acceleration"],
@@ -355,7 +353,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 2.5}
+            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "add_dkh", "value": 1},
         ],
         "active_roll": True,
         "tags": ["pace", "downhill", "acceleration"],
@@ -373,7 +372,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 2.5},
+            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "add_dkh", "value": 1},
         ],
         "active_roll": True,
         "tags": ["late", "acceleration", "late_race"],
@@ -740,10 +740,8 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {
-                "type": "modify_current_speed",
-                "value": 2.5,
-            }
+            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "add_dkh", "value": 1},
         ],
         "active_roll": True,
         "tags": ["pace", "late_race", "acceleration", "burst"],
@@ -766,7 +764,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_current_speed",
-                "value": 2.5,
+                "value": 1.5,
             },
             {
                 "type": "reduce_stamina", 
@@ -818,7 +816,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_current_speed",
-                "value": 2,
+                "value": 1.25,
             },
             {
                 "type": "modify_roll_cap",
