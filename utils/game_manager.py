@@ -354,7 +354,6 @@ def start_game(channel_id: int):
             player["reroll_left"] = player.get("reroll_left", 0)
             player["wit_reroll_left"] = player.get("wit_reroll_left", 0)
             player["stamina_left"] = 8 + base_player["stamina"]
-            player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"] + base_player["speed"]
 
             # reset race_profile ใหม่จากฐาน preset
             player["race_profile"] = base_player.copy()
@@ -439,6 +438,7 @@ def start_game(channel_id: int):
         player["used_rush"] = False
         player["used_block"] = False
         player["action_locked"] = False
+        player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"] + base_player["speed"]
 
         player["next_roll_flat_bonus"] = 0
         player["next_roll_add_d"] = 0
