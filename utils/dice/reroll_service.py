@@ -43,7 +43,7 @@ async def execute_reroll(
     
   
     result = roll_race_dice(
-        style=game_player["style"],
+        game_player=game_player,
         player_stats=race_player,
         player_id=interaction.user.id,
         score_map=snapshot_scores,
