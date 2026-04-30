@@ -820,7 +820,7 @@ SKILLS = {
             },
             {
                 "type": "modify_roll_cap",
-                "value": 7,
+                "value": 5,
                 "duration": "this_roll"
             },
             {
