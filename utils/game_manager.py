@@ -1131,7 +1131,7 @@ def incrase_speed_by_acceleration(channel_id: int):
         increase_speed = 1 + (0.2 * power_stat)
 
         new_speed = min(max_speed_cap, current_max_speed + increase_speed)
-
+        print(increase_speed)
         player["current_max_speed"] = new_speed
 
 def apply_wit_regen(channel_id: int):
