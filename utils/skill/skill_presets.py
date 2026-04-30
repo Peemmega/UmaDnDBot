@@ -1005,7 +1005,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed","value": 4}
+            {"type": "modify_current_speed","value": 3}
         ],
         "active_roll": False,
         "tags": ["corner", "late_race", "acceleration"],
