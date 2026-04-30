@@ -7,7 +7,7 @@ from utils.zone.zone_preset import (
     ZONE_VALUE
 )
 from utils.database import set_player_zone_build, get_player
-from utils.game_manager import incrase_speed_by_acceleration
+from utils.in_game_manager import incrase_speed_by_acceleration
 
 
 def get_player_zone(user_id: int) -> Optional[dict]:

@@ -8,8 +8,8 @@ from utils.game_manager import (
     use_rush,
     can_force_rush_targets,
     is_lastspurt,
-    incrase_speed_by_acceleration
 )
+from utils.in_game_manager import incrase_speed_by_acceleration
 
 def get_position_group(channel_id: int, user_id: int) -> str:
     game = get_game(channel_id)
