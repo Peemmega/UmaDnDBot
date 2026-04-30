@@ -38,7 +38,9 @@ def is_last_corner(game: dict) -> bool:
     turn_index = game["turn"] - 1  # index เริ่ม 0
 
     last_corner_index = get_last_corner_index(path)
-
+    print(last_corner_index)
+    print(turn_index)
+    
     return turn_index == last_corner_index
 
 def is_lastspurt(phase: int, path_type: int) -> bool:
