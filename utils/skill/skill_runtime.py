@@ -7,7 +7,8 @@ from utils.game_manager import (
     update_player_score,
     use_rush,
     can_force_rush_targets,
-    is_lastspurt
+    is_lastspurt,
+    incrase_speed_by_acceleration
 )
 
 def get_position_group(channel_id: int, user_id: int) -> str:
@@ -309,6 +310,10 @@ def apply_skill(channel_id: int, user_id: int, skill_id: str, skill: dict):
         if effect_type == "recover_stamina":
             player["stamina_left"] += value
             applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
+
+        elif effect_type == "modify_current_speed":
+            incrase_speed_by_acceleration(game, player, effect["value"])
+            applied_texts.append(f"เร่งความเร็วขึ้น {value} ระดับ")
 
         elif effect_type == "self_heal_stamina":
             player["stamina_left"] += value

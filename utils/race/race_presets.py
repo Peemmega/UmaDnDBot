@@ -66,11 +66,10 @@ def build_current_track_text(path: list[int], current_turn: int) -> str:
     return f"ตอนนี้อยู่ช่วงที่ {current_turn}/{len(path)} : {path_label}"
 
 def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dict:
-    max_speed = game_player.get("current_max_speed", 0)
     effect = {
         "stamina_cost": 0,
         "stamina_gain": 0,
-        "max_dice_value": max_speed,
+        "reduce_dice_value": 0,
         "spd_multiplier": 1.0,
         "power_total_multiplier": 1.0,
         "extra_max_from_wit": 0,
@@ -82,7 +81,7 @@ def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dic
 
     elif path_type == 2:  # ทางโค้ง
         effect["stamina_cost"] = 1
-        effect["max_dice_value"] = (max_speed - 5)
+        effect["reduce_dice_value"] = 5
 
     elif path_type == 3:  # เนินขึ้น
         effect["stamina_cost"] = 2

@@ -28,7 +28,7 @@ EFFECT_TYPES = {
     "apply_buff_next_turn",     # buff เทิร์นหน้า
     "block_reroll",             # ห้าม reroll
     "force_path_bonus",         # เปลี่ยนผลของ path
-    "modify_start_loss",        # ลดโอกาส/ผลเสียตอนออกตัว
+    "modify_current_speed",   # เพิ่ม current speed โดยตรง
 }
 
 SKILL_TAG_OPTIONS = [
@@ -117,8 +117,8 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "add_dkh",
-                "value": 2,
+                "type": "modify_current_speed",
+                "value": 2.5,
                 "duration": "this_roll"
             }
         ],
@@ -356,7 +356,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "add_dkh", "value": 2, "duration": "this_roll"}
+            {"type": "modify_current_speed", "value": 2.5, "duration": "this_roll"}
         ],
         "active_roll": True,
         "tags": ["pace", "downhill", "acceleration"],
@@ -374,7 +374,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "add_dkh", "value": 2, "duration": "this_roll"},
+            {"type": "modify_current_speed", "value": 2.5, "duration": "this_roll"},
         ],
         "active_roll": True,
         "tags": ["late", "acceleration", "late_race"],
@@ -703,7 +703,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "add_dkh", "value": 2, "duration": "this_roll"},
+            {"type": "modify_current_speed", "value": 3, "duration": "this_roll"},
             {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
         ],
         "active_roll": True,
@@ -742,8 +742,8 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "add_dkh",
-                "value": 2,
+                "type": "modify_current_speed",
+                "value": 2.5,
                 "duration": "this_roll"
             }
         ],
@@ -767,8 +767,8 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "add_dkh",
-                "value": 2,
+                "type": "modify_current_speed",
+                "value": 2.5,
                 "duration": "this_roll"
             },
             {
@@ -820,8 +820,8 @@ SKILLS = {
         },
         "effects": [
             {
-                "type": "modify_velocity",
-                "value": 50,
+                "type": "modify_current_speed",
+                "value": 2,
                 "duration": "this_roll"
             },
             {
@@ -1011,7 +1011,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "add_dkh","value": 3,"duration": "this_roll"}
+            {"type": "modify_current_speed","value": 4,"duration": "this_roll"}
         ],
         "active_roll": False,
         "tags": ["corner", "late_race", "acceleration"],

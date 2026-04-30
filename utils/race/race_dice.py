@@ -136,8 +136,10 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         current_max_speed
         + roll_cap_increase
         + path_effect.get("extra_max_from_wit", 0)
+        - path_effect.get("reduce_dice_value", 0)
     )
     
+    max_dice_value
     roll_min = math.floor(max_dice_value * 0.25) + extra_floor
     max_dice_value = max(max_dice_value, roll_min)
 
@@ -164,15 +166,11 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     gut_scale = player_stats.get("gut", 1) * 5
     gut_bonus = (gut_scale * nearby_count ) if context.get("distance_color") == "Gold" else 0
 
-    total_spd_bonus = 0
     total_selected_die_bonus = 0
+    speedBonus = spd_bonus * 3
 
     for r in selected:
         value = r
-
-        if spd_bonus > 0:
-            value += spd_bonus
-            total_spd_bonus += spd_bonus
 
         if selected_die_bonus > 0:
             value += selected_die_bonus
@@ -183,11 +181,11 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     base_total = sum(selected)
 
     final_power_bonus = int(power_bonus * power_total_multiplier)
-    total = sum(modified_selected) + final_power_bonus + gut_bonus + flat_velocity_bonus
+    total = sum(modified_selected) + final_power_bonus + gut_bonus + flat_velocity_bonus + speedBonus
 
     bonus_parts = []
-    if total_spd_bonus > 0:
-        bonus_parts.append(f"+{total_spd_bonus}{get_stat_icon('SPD')}")
+    if speedBonus > 0:
+        bonus_parts.append(f"+{speedBonus}{get_stat_icon('SPD')}")
     if gut_bonus > 0:
         bonus_parts.append(f"+{gut_bonus}{get_stat_icon('GUT')}")
     if final_power_bonus > 0:
