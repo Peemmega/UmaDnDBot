@@ -1,5 +1,6 @@
 import copy
 import uuid
+import math
 import discord
 
 from utils.race.race_presets import RACE_PRESET
@@ -1054,10 +1055,12 @@ def build_run_embed(
         color=discord.Color.gold()
     )
 
-    embed.add_field(name=f"🏇 ความเร็ว {result["distance_color"]}", value= f"{result["display"]} {result["bonus_display"]}" , inline=False)
     reroll = game_player.get("reroll_left", 0)
+    current_max_speed = game_player.get("current_max_speed", 0)
     wit_reroll = game_player.get("wit_reroll_left", 0)
 
+    embed.add_field(name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {result["distance_color"]}", value= f"{result["display"]} {result["bonus_display"]}" , inline=False)
+    
     if stamina_note == None:
         stamina_note = str(game_player["stamina_left"])
 
@@ -1117,10 +1120,19 @@ def incrase_speed_by_acceleration(channel_id: int):
     for _, player in game["players"].items():
         race_profile = player.get("race_profile", {})
         current_max_speed = player.get("current_max_speed", 0)
+
         power_stat = race_profile.get("power", 0)
+
+        max_speed_cap = (
+            MAX_SPEED_PHASE[race_profile["style"]]["max"]
+            + race_profile.get("speed", 0)
+        )
+
         increase_speed = 1 + (0.2 * power_stat)
-       
-        player["current_max_speed"] = current_max_speed + increase_speed
+
+        new_speed = min(max_speed_cap, current_max_speed + increase_speed)
+
+        player["current_max_speed"] = new_speed
 
 def apply_wit_regen(channel_id: int):
     game = get_game(channel_id)
