@@ -1105,8 +1105,22 @@ def next_turn(channel_id: int):
     }
 
     apply_wit_regen(channel_id)
+    incrase_speed_by_acceleration(channel_id)
 
     return game["turn"]
+
+def incrase_speed_by_acceleration(channel_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return
+
+    for _, player in game["players"].items():
+        race_profile = player.get("race_profile", {})
+        current_max_speed = player.get("current_max_speed", 0)
+        power_stat = race_profile.get("power", 0)
+        increase_speed = 1 + (0.2 * power_stat)
+       
+        player["current_max_speed"] = current_max_speed + increase_speed
 
 def apply_wit_regen(channel_id: int):
     game = get_game(channel_id)

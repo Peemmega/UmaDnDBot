@@ -129,7 +129,8 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
 
    
     # Roll Dice --------------------------------------
-    current_max_speed = game_player.get("current_max_speed", 0)
+    current_max_speed = int(game_player.get("current_max_speed", 0))
+
     print(current_max_speed)
     max_dice_value = path_effect.get("max_dice_value", current_max_speed) + roll_cap_increase + path_effect.get("extra_max_from_wit", 0)
 
