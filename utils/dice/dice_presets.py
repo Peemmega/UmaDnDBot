@@ -1,5 +1,3 @@
-# MAX_DICE_VALUE = 25
-
 MAX_SPEED_PHASE = {
     "Front": {
         "start": 26,

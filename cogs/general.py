@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from utils.dice.dice_presets import DICE_PRESET #, MAX_DICE_VALUE
+from utils.dice.dice_presets import DICE_PRESET
 from utils.race.race_dice import (
     build_dice_table_grid
 )

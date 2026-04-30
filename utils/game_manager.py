@@ -49,7 +49,7 @@ def execute_roll_core(
     pending_effects, merged_stats = build_pending_effects_from_player(game_player)
 
     path_type = get_current_path_type(game)
-    path_effect = get_path_effect(path_type, race_player)
+    path_effect = get_path_effect(path_type, game_player, race_player)
 
     stamina_note, stamina_penalty_active = apply_stamina_debuff(game_player,path_effect,pending_effects)
     new_stamina_note = apply_stamina_for_roll(game_player,path_effect)

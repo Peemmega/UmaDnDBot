@@ -1,4 +1,3 @@
-from utils.dice.dice_presets import MAX_DICE_VALUE
 from utils.icon_presets import Status_Icon_Type
 
 PATH_TYPE = {
@@ -66,11 +65,12 @@ def build_current_track_text(path: list[int], current_turn: int) -> str:
 
     return f"ตอนนี้อยู่ช่วงที่ {current_turn}/{len(path)} : {path_label}"
 
-def get_path_effect(path_type: int, player: dict) -> dict:
+def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dict:
+    max_speed = game_player.get("current_max_speed", 0)
     effect = {
         "stamina_cost": 0,
         "stamina_gain": 0,
-        "max_dice_value": MAX_DICE_VALUE,
+        "max_dice_value": max_speed,
         "spd_multiplier": 1.0,
         "power_total_multiplier": 1.0,
         "extra_max_from_wit": 0,
@@ -82,7 +82,7 @@ def get_path_effect(path_type: int, player: dict) -> dict:
 
     elif path_type == 2:  # ทางโค้ง
         effect["stamina_cost"] = 1
-        effect["max_dice_value"] = (MAX_DICE_VALUE - 5)
+        effect["max_dice_value"] = (max_speed - 5)
 
     elif path_type == 3:  # เนินขึ้น
         effect["stamina_cost"] = 2
@@ -92,7 +92,7 @@ def get_path_effect(path_type: int, player: dict) -> dict:
     elif path_type == 4:  # เนินลง
         # effect["stamina_gain"] = 1
         effect["stamina_cost"] = 0
-        effect["extra_max_from_wit"] = player.get("wit", 0)
+        effect["extra_max_from_wit"] = player_stat.get("wit", 0)
 
     return effect
 
