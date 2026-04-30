@@ -144,7 +144,6 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
         selected = rolls.copy()
 
     modified_selected = []
-    bonus_log = []
 
     spd_multiplier = path_effect.get("spd_multiplier", 1.0)
     power_total_multiplier = path_effect.get("power_total_multiplier", 1.0)
@@ -158,22 +157,20 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     gut_bonus = (gut_scale * nearby_count ) if context.get("distance_color") == "Gold" else 0
 
     total_spd_bonus = 0
+    total_selected_die_bonus = 0
 
     for r in selected:
         value = r
-        bonuses = []
 
         if spd_bonus > 0:
             value += spd_bonus
             total_spd_bonus += spd_bonus
-            bonuses.append(f"SPD+{spd_bonus}")
 
         if selected_die_bonus > 0:
             value += selected_die_bonus
-            bonuses.append(f"SKILL+{selected_die_bonus}")
+            total_selected_die_bonus += selected_die_bonus
 
         modified_selected.append(value)
-        bonus_log.append(bonuses)
 
     base_total = sum(selected)
 
@@ -189,6 +186,9 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
         bonus_parts.append(f"+{final_power_bonus}{get_stat_icon('POW')}")
     if flat_velocity_bonus > 0:
         bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
+    if total_selected_die_bonus > 0:
+        bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
+
 
     bonus_display = " ".join(bonus_parts) if bonus_parts else "-"
     total_display = str(total)
@@ -207,7 +207,6 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
         "rolls": original_rolls,
         "selected": selected,
         "modified_selected": modified_selected,
-        "bonus_log": bonus_log,
         "display": " , ".join(display_parts),
         "base_total": base_total,
         "total": total,
@@ -243,7 +242,6 @@ def roll_race_dice(
         "rolls": dice_result["rolls"],
         "selected": dice_result["selected"],
         "modified_selected": dice_result["modified_selected"],
-        "bonus_log": dice_result["bonus_log"],
         "display": dice_result["display"],
         "base_total": dice_result["base_total"],
         "total": dice_result["total"],
