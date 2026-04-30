@@ -119,7 +119,6 @@ SKILLS = {
             {
                 "type": "modify_current_speed",
                 "value": 2.5,
-                "duration": "this_roll"
             }
         ],
         "active_roll": True,
@@ -356,7 +355,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 2.5, "duration": "this_roll"}
+            {"type": "modify_current_speed", "value": 2.5}
         ],
         "active_roll": True,
         "tags": ["pace", "downhill", "acceleration"],
@@ -374,7 +373,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 2.5, "duration": "this_roll"},
+            {"type": "modify_current_speed", "value": 2.5},
         ],
         "active_roll": True,
         "tags": ["late", "acceleration", "late_race"],
@@ -703,7 +702,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed", "value": 3, "duration": "this_roll"},
+            {"type": "modify_current_speed", "value": 3},
             {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
         ],
         "active_roll": True,
@@ -744,7 +743,6 @@ SKILLS = {
             {
                 "type": "modify_current_speed",
                 "value": 2.5,
-                "duration": "this_roll"
             }
         ],
         "active_roll": True,
@@ -769,7 +767,6 @@ SKILLS = {
             {
                 "type": "modify_current_speed",
                 "value": 2.5,
-                "duration": "this_roll"
             },
             {
                 "type": "reduce_stamina", 
@@ -822,7 +819,6 @@ SKILLS = {
             {
                 "type": "modify_current_speed",
                 "value": 2,
-                "duration": "this_roll"
             },
             {
                 "type": "modify_roll_cap",
@@ -1011,7 +1007,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed","value": 4,"duration": "this_roll"}
+            {"type": "modify_current_speed","value": 4}
         ],
         "active_roll": False,
         "tags": ["corner", "late_race", "acceleration"],
