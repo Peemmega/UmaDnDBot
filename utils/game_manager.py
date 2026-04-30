@@ -59,7 +59,7 @@ def execute_roll_core(
 
     result = roll_race_dice(
         game_player=game_player,
-        player=race_player,
+        player_stats=race_player,
         player_id=user_id,
         score_map=snapshot_scores,
         turn=game["turn"],
