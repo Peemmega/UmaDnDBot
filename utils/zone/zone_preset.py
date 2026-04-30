@@ -5,7 +5,8 @@ ZONE_FIELDS = {
     "selected_die", 
     "cap", 
     "self_heal_stamina"
-    }
+    "modify_current_speed"
+}
 
 DEFAULT_ZONE_IMAGE = "https://media.discordapp.net/attachments/697810514448744448/1495378081085657162/tm_zone.gif"
 
@@ -26,6 +27,7 @@ ZONE_POINT_COST = {
     "selected_die": 1,
     "cap": 1,
     "self_heal_stamina": 1,
+    "modify_current_speed": 1,
 }
 
 ZONE_VALUE = {
@@ -35,6 +37,7 @@ ZONE_VALUE = {
     "selected_die": 3,
     "cap": 5,
     "self_heal_stamina": 1,
+    "modify_current_speed": 1,
 }
 
 DEFAULT_ZONE = {
@@ -48,5 +51,6 @@ DEFAULT_ZONE = {
         "selected_die": 0,
         "cap": 0,
         "self_heal_stamina": 0,
+        "modify_current_speed": 0,
     }
 }

@@ -213,7 +213,7 @@ class UseSkillView(discord.ui.View):
             await interaction.response.send_message("Zone ถูกใช้ไปแล้ว", ephemeral=True)
             return
 
-        success, result_text = apply_zone_in_game(player)
+        success, result_text = apply_zone_in_game(game, player)
         if not success:
             await interaction.response.send_message(result_text, ephemeral=True)
             return

@@ -19,6 +19,7 @@ ZONE_LABELS = {
     "selected_die": "Selected Die",
     "cap": "Cap",
     "self_heal_stamina": "Self Heal STA",
+    "modify_current_speed": "Acceleration",
 }
 
 def build_zone_manage_embed(user_id: int, display_name: str) -> discord.Embed:
@@ -52,6 +53,7 @@ def build_zone_manage_embed_from_zone(
         "selected_die": f"{ICONS['Aoharu']} เพิ่มแต้มลูกที่เลือก",
         "cap": f"{ICONS['Aoharu']} เพิ่มแต้มลูกเต๋าสูงสุด",
         "self_heal_stamina": f"{ICONS['Aoharu']} ฟื้นฟู Stamina",
+        "modify_current_speed": f"{ICONS['Aoharu']} เพิ่มความเร่ง",
     }
 
     for key, label in zone_labels.items():
@@ -73,6 +75,9 @@ def build_zone_manage_embed_from_zone(
         preview_lines.append(f"📈 เพิ่มแต้มสูงสุด **+{preview['cap']}**")
     if preview["self_heal_stamina"]:
         preview_lines.append(f"{Status_Icon_Type['STA']} ฟื้นฟู STA ตัวเอง +{preview['self_heal_stamina']}")
+    if preview["modify_current_speed"]:
+        preview_lines.append(f"👟 ความความเร่งขึ้น {preview['modify_current_speed']} ระดับ")
+        
     if not preview_lines:
         preview_lines.append("ยังไม่มีการอัป Zone")
 

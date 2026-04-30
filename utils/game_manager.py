@@ -997,7 +997,7 @@ def process_mob_turn(channel_id: int, user_id: str):
         and game["turn"] == game["max_turn"]  # 🔥 เทิร์นสุดท้าย
         and player.get("zone_left", 0) > 0
     ):
-        zone_success, zone_text = apply_zone_in_game(player)
+        zone_success = apply_zone_in_game(game, player)
         if zone_success:
             player["zone_left"] -= 1   # 🔥 สำคัญ
 

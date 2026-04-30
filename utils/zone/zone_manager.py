@@ -7,6 +7,7 @@ from utils.zone.zone_preset import (
     ZONE_VALUE
 )
 from utils.database import set_player_zone_build, get_player
+from utils.game_manager import incrase_speed_by_acceleration
 
 
 def get_player_zone(user_id: int) -> Optional[dict]:
@@ -24,6 +25,7 @@ def get_player_zone(user_id: int) -> Optional[dict]:
         "selected_die": int(build.get("selected_die", 0)),
         "cap": int(build.get("cap", 0)),
         "self_heal_stamina": int(build.get("self_heal_stamina", 0)), 
+        "modify_current_speed": int(build.get("modify_current_speed", 0)), 
     }
 
     if build != normalized_build:
@@ -99,6 +101,7 @@ def get_zone_effects_from_build(zone_build: dict) -> dict:
         "selected_die": int(zone_build.get("selected_die", 0)) * ZONE_VALUE["selected_die"],
         "cap": int(zone_build.get("cap", 0)) * ZONE_VALUE["cap"],
         "self_heal_stamina": int(zone_build.get("self_heal_stamina", 0)) * ZONE_VALUE["self_heal_stamina"],
+        "modify_current_speed": int(zone_build.get("modify_current_speed", 0)) * ZONE_VALUE["modify_current_speed"],
     }
 
 def get_zone_effect(zone: dict) -> tuple[bool, str]:
@@ -111,6 +114,7 @@ def get_zone_effect(zone: dict) -> tuple[bool, str]:
 
     effects = get_zone_effects_from_build(zone_build)
     heal_value = effects.get("self_heal_stamina", 0)
+    modify_current_speed = effects.get("modify_current_speed", 0)
 
     lines = []
     if effects["flat"]:
@@ -125,13 +129,14 @@ def get_zone_effect(zone: dict) -> tuple[bool, str]:
         lines.append(f"📈 เพิ่มแต้มสูงสุด +{effects['cap']}")
     if heal_value:
         lines.append(f"❤️ ฟื้นฟู STA ตัวเอง +{heal_value}")
-
+    if modify_current_speed:
+        lines.append(f"👟 เพิ่มความเร่ง {modify_current_speed} ระดับ")
     if not lines:
         lines.append("Zone ทำงาน แต่ยังไม่มีค่าที่อัปไว้")   
 
     return "\n".join(lines)
 
-def apply_zone_in_game(player: dict) -> tuple[bool, str]:
+def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
     zone = player.get("zone")
     if not zone:
         return False, "ไม่พบข้อมูล Zone"
@@ -153,6 +158,10 @@ def apply_zone_in_game(player: dict) -> tuple[bool, str]:
     heal_value = effects.get("self_heal_stamina", 0)
     if heal_value > 0:
         player["stamina_left"] = player.get("stamina_left", 0) + heal_value
+        
+    modify_current_speed = effects.get("modify_current_speed", 0)
+    if modify_current_speed > 0:
+        incrase_speed_by_acceleration(game, player, modify_current_speed)
 
     zone_left -= 1
 
@@ -170,4 +179,5 @@ def get_zone_effect_preview(zone: dict) -> dict:
         "selected_die": int(build.get("selected_die", 0)) * ZONE_VALUE["selected_die"],
         "cap": int(build.get("cap", 0)) * ZONE_VALUE["cap"],
         "self_heal_stamina": int(build.get("self_heal_stamina", 0)) * ZONE_VALUE["self_heal_stamina"],
+        "modify_current_speed": int(build.get("modify_current_speed", 0)) * ZONE_VALUE["modify_current_speed"],
     }

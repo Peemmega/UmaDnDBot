@@ -113,6 +113,7 @@ def reset_all_zone_data():
         "selected_die": 0,
         "cap": 0,
         "self_heal_stamina": 0,
+        "modify_current_speed": 0,
     }
 
     cursor.execute("""
