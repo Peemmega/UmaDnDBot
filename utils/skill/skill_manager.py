@@ -245,6 +245,7 @@ def describe_effect(effect: dict) -> str:
         return f"เพิ่มจำนวนลูกเต๋า +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "add_kh":
         return f"เพิ่มจำนวนลูกที่เลือก +{value}" + (f" ({dur})" if dur else "")
+    
     if effect_type in ["recover_stamina"]:
         return f"ฟื้นฟู {Status_Icon_Type['STA']} +{value}"
     

@@ -284,7 +284,7 @@ def has_front_blocked(channel_id: int, user_id: int, max_gap: int = 10) -> bool:
 
     return False
 
-def apply_skill(channel_id: int, user_id: int, skill_id: str, skill: dict):
+def apply_skill(channel_id: int, user_id: int, skill: dict):
     game = get_game(channel_id)
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
@@ -306,12 +306,15 @@ def apply_skill(channel_id: int, user_id: int, skill_id: str, skill: dict):
     for effect in skill.get("effects", []):
         effect_type = effect.get("type")
         value = effect.get("value", 0)
+        print(effect_type)
 
         if effect_type == "recover_stamina":
             player["stamina_left"] += value
             applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
 
         elif effect_type == "modify_current_speed":
+            print(effect["value"])
+
             incrase_speed_by_acceleration(game, player, effect["value"])
             applied_texts.append(f"เร่งความเร็วขึ้น {value} ระดับ")
 

@@ -130,7 +130,6 @@ class UseSkillView(discord.ui.View):
             success, result_text = apply_skill(
                 self.channel_id,
                 interaction.user.id,
-                skill_id,
                 temp_skill
             )
             if not success:
