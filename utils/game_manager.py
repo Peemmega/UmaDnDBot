@@ -438,7 +438,6 @@ def start_game(channel_id: int):
         player["used_rush"] = False
         player["used_block"] = False
         player["action_locked"] = False
-        player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"] + base_player["speed"]
 
         player["next_roll_flat_bonus"] = 0
         player["next_roll_add_d"] = 0
@@ -470,6 +469,8 @@ def start_game(channel_id: int):
         player["race_profile"]["speed"] += att_bonus["speed"]
         player["race_profile"]["wit"] += att_bonus["wit"]
 
+        player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"] + player["race_profile"]["speed"]
+        print("player power ", player["race_profile"]["power"])
         # optional: เก็บไว้ดูใน UI
         player["aptitude_bonus"] = att_bonus
 
@@ -1122,7 +1123,7 @@ def incrase_speed_by_acceleration(channel_id: int):
         race_profile = player.get("race_profile", {})
         current_max_speed = player.get("current_max_speed", 0)
 
-        power_stat = race_profile.get("power", 0)
+        power_stat = race_profile.get("power", 1)
 
         max_speed_cap = (
             MAX_SPEED_PHASE[player["style"]]["max"]
@@ -1132,8 +1133,9 @@ def incrase_speed_by_acceleration(channel_id: int):
         increase_speed = 1 + (0.2 * power_stat)
 
         new_speed = min(max_speed_cap, current_max_speed + increase_speed)
-        print(increase_speed)
         player["current_max_speed"] = new_speed
+        print(power_stat , increase_speed)
+
 
 def apply_wit_regen(channel_id: int):
     game = get_game(channel_id)
