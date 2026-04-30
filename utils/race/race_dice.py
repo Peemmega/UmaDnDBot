@@ -1,6 +1,6 @@
 import random
 import math
-from utils.dice.dice_presets import DICE_PRESET, MAX_DICE_VALUE
+from utils.dice.dice_presets import DICE_PRESET
 from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
 from utils.skill.skill_presets import ICON
 from utils.dice.dice_table import format_rule
@@ -93,7 +93,7 @@ def get_distance_color(
 def get_dice_rule(style: str, distance_color: str, phase: int) -> dict:
     return DICE_PRESET[style][distance_color][phase]
 
-def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
+def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dict) -> dict:
     d = rule["d"]
     kh = rule.get("kh")
 
@@ -127,14 +127,16 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
 
     path_effect = context.get("path_effect", {})
 
-    max_dice_value = path_effect.get("max_dice_value", MAX_DICE_VALUE) + roll_cap_increase
-    max_dice_value += path_effect.get("extra_max_from_wit", 0)
+   
+    # Roll Dice --------------------------------------
+    current_max_speed = game_player.get("current_max_speed", 0)
+    print(current_max_speed)
+    max_dice_value = path_effect.get("max_dice_value", current_max_speed) + roll_cap_increase + path_effect.get("extra_max_from_wit", 0)
 
-    roll_min = player.get("power", 1) + extra_floor
+    roll_min = player_stats.get("power", 1) + extra_floor
     max_dice_value = max(max_dice_value, roll_min)
 
     rolls = [random.randint(roll_min, max_dice_value) for _ in range(d)]
-
     original_rolls = rolls.copy()
 
     if kh is not None:
@@ -142,18 +144,19 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
         selected = sorted(rolls, reverse=True)[:kh]
     else:
         selected = rolls.copy()
+    # Roll Dice --------------------------------------
 
     modified_selected = []
 
     spd_multiplier = path_effect.get("spd_multiplier", 1.0)
     power_total_multiplier = path_effect.get("power_total_multiplier", 1.0)
 
-    spd_bonus_raw = player.get("speed", 0)
+    spd_bonus_raw = player_stats.get("speed", 1)
     spd_bonus = int(spd_bonus_raw * spd_multiplier)
 
-    power_bonus = player.get("power", 1) * 3
+    power_bonus = player_stats.get("power", 1) * 3
     nearby_count = min(context.get("nearby_count", 0), 2)
-    gut_scale = player.get("gut", 1) * 5
+    gut_scale = player_stats.get("gut", 1) * 5
     gut_bonus = (gut_scale * nearby_count ) if context.get("distance_color") == "Gold" else 0
 
     total_spd_bonus = 0
@@ -215,8 +218,8 @@ def roll_by_rule(rule: dict, player: dict, context: dict) -> dict:
     }
 
 def roll_race_dice(
-    style: str,
-    player: dict,
+    game_player: dict,
+    player_stats: dict,
     player_id: int,
     score_map: dict[int, int],
     turn: int,
@@ -226,9 +229,9 @@ def roll_race_dice(
 ) -> dict:
     phase = get_phase_from_turn(turn, max_turn)
     distance_color,nearby_count = get_distance_color(player_id, score_map, skill_effects or [])
-    rule = get_dice_rule(style, distance_color, phase)
+    rule = get_dice_rule(game_player["style"], distance_color, phase)
 
-    dice_result = roll_by_rule(rule, player, {
+    dice_result = roll_by_rule(rule, player_stats, game_player, {
         "distance_color": distance_color,
         "nearby_count": nearby_count,
         "path_effect": path_effect or {},

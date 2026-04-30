@@ -1,4 +1,27 @@
-MAX_DICE_VALUE = 25
+# MAX_DICE_VALUE = 25
+
+MAX_SPEED_PHASE = {
+    "Front": {
+        "start": 26,
+        "max": 34,
+        "last_spurt": 35,
+    },
+    "Pace": {
+        "start": 22,
+        "max": 30,
+        "last_spurt": 47,
+    },
+    "Late": {
+        "start": 21,
+        "max": 28,
+        "last_spurt": 52,
+    },
+    "End": {
+        "start": 20,
+        "max": 26,
+        "last_spurt": 57,
+    },
+}
 
 DICE_PRESET = {
     "Front": {

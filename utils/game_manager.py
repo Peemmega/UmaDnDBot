@@ -15,6 +15,9 @@ from utils.zone.zone_embed import build_zone_used_preview_embed
 from utils.race.race_dice import (
     roll_race_dice,
 )
+from utils.dice.dice_presets import (
+    MAX_SPEED_PHASE
+)
 
 from utils.icon_presets import Status_Icon_Type
 
@@ -28,10 +31,6 @@ def execute_roll_core(
     user_id,
     title_prefix: str = "วิ่งในเทิร์นนี้",
     mark_roll: bool = True,
-    build_embed: bool = False,
-    build_reroll_view: bool = False,
-    owner_id: int | None = None,
-    player_name: str | None = None,
 ):
     game = get_game(channel_id)
     if game is None:
@@ -59,7 +58,7 @@ def execute_roll_core(
         stamina_note = new_stamina_note
 
     result = roll_race_dice(
-        style=game_player["style"],
+        game_player=game_player,
         player=race_player,
         player_id=user_id,
         score_map=snapshot_scores,
@@ -1152,6 +1151,7 @@ def add_player(channel_id, user_id, display_name: str, style):
         "username": player_data.get("username"),
         "display_name": display_name,
         "style": style,
+        "current_max_speed": MAX_SPEED_PHASE[style]["start"],
         "score": 0,
         "last_roll_turn": -1,
         "reroll_left": 0,
@@ -1213,6 +1213,7 @@ def add_player_as_mob_preset(
         "username": preset["name"],
         "display_name": preset["name"],
         "style": preset["style"],
+        "current_max_speed": MAX_SPEED_PHASE[preset["style"]]["start"],
         "score": 0,
         "last_roll_turn": -1,
         "reroll_left": 0,

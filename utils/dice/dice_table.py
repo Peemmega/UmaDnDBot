@@ -1,4 +1,4 @@
-from utils.dice.dice_presets import DICE_PRESET, MAX_DICE_VALUE
+from utils.dice.dice_presets import DICE_PRESET
 
 STYLES = ["Front", "Pace", "Late", "End"]
 PHASES = [1, 2, 3, 4]
