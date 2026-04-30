@@ -8,6 +8,7 @@ from utils.game_manager import (
     use_rush,
     can_force_rush_targets,
     is_lastspurt,
+    is_last_corner,
 )
 from utils.in_game_manager import incrase_speed_by_acceleration
 
@@ -216,6 +217,9 @@ def check_skill_trigger(channel_id: int, user_id: int, skill: dict, *, path_type
 
     if trigger.get("lastspurt") is True and not is_lastspurt(phase, path_type):
         return False, "ยังไม่เข้าสู่ Last Spurt"
+    
+    if trigger.get("last_corner") is True and not is_last_corner(game):
+        return False, "ยังไม่ถึงโค้งสุดท้าย"
 
     if "position_group" in trigger:
         position_group = get_position_group(channel_id, user_id)

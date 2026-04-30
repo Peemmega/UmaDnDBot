@@ -205,6 +205,9 @@ def describe_trigger(trigger: dict) -> str:
     if trigger.get("lastspurt") is True:
         parts.append("ในช่วง Last Spurt")
 
+    if trigger.get("last_corner") is True:
+            parts.append("ในโค้งสุดท้าย")
+
     if trigger.get("front_blocked") is True:
         parts.append("มีคู่แข่งในระยะ 10 ช่องด้านหน้า")
 

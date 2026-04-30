@@ -49,6 +49,7 @@ SKILL_TAG_OPTIONS = [
     ("start", "ช่วง Early Race"),
     ("mid_race", "ช่วง Mid Race"),
     ("late_race", "ช่วง Late Race"),
+    ("unique", "Unique Skill"),
 ]
 
 TRIGGER_SCHEMA = {
@@ -59,6 +60,7 @@ TRIGGER_SCHEMA = {
     "phase_min": None,
     "phase_max": None,
     "lastspurt": None,
+    "last_corner": None,
     "distance_color": None,
     "overtaking": None,
     "being_overtaken": None,
@@ -329,9 +331,7 @@ SKILLS = {
         "cost": 80,
         "trigger": {
             "style": "Pace",
-            "phase_min": 4,
-            "phase_max": 4,
-            "path_type": 2,
+            "last_corner": True
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
@@ -995,9 +995,7 @@ SKILLS = {
         "cooldown": 8,
         "cost": 120,
         "trigger": {
-            "phase_min": 3,
-            "phase_max": 4,
-            "path_type": 2,
+            "last_corner": True,
             "position_group": "back",
         },
         "target": {
@@ -1008,7 +1006,7 @@ SKILLS = {
             {"type": "modify_current_speed","value": 3}
         ],
         "active_roll": False,
-        "tags": ["corner", "late_race", "acceleration"],
+        "tags": ["corner", "late_race", "acceleration", "unique"],
     },
     
     "s043": {
@@ -1038,7 +1036,7 @@ SKILLS = {
             },
         ],
         "active_roll": True,
-        "tags": ["corner", "late_race", "lead", "acceleration"],
+        "tags": ["corner", "late_race", "lead", "acceleration", "unique"],
     },
 
     "s044": {
@@ -1062,7 +1060,7 @@ SKILLS = {
             {"type": "modify_roll_floor","value": 10,"duration": "this_roll"},
         ],
         "active_roll": True,
-        "tags": ["late_race", "lead", "velocity", "positioning"],
+        "tags": ["late_race", "lead", "velocity", "positioning", "unique"],
     },
 
     "s045": {
@@ -1092,7 +1090,7 @@ SKILLS = {
             }
         ],
         "active_roll": True,
-        "tags": ["mid_race", "late_race", "acceleration"],
+        "tags": ["mid_race", "late_race", "acceleration", "unique"],
     },
 
     "s046": {
@@ -1101,9 +1099,7 @@ SKILLS = {
         "cooldown": 8,
         "cost": 120,
         "trigger": {
-            "phase_min": 3,
-            "phase_max": 4,
-            "path_type": 2,
+            "last_corner": True,
             "position_group": "front",
         },
         "target": {
@@ -1120,7 +1116,7 @@ SKILLS = {
 
         ],
         "active_roll": True,
-        "tags": ["corner", "late_race", "lead", "acceleration"],
+        "tags": ["corner", "late_race", "lead", "acceleration", "unique"],
     },
 
     "s047": {

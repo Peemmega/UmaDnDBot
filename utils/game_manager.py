@@ -27,6 +27,20 @@ VALID_STYLES = {"Front", "Pace", "Late", "End"}
 games = {}
 
 
+def get_last_corner_index(path: list[int]) -> int:
+    for i in range(len(path) - 1, -1, -1):
+        if path[i] == 1:  # 1 = corner
+            return i
+    return -1
+
+def is_last_corner(game: dict) -> bool:
+    path = game["path"]
+    turn_index = game["turn"] - 1  # index เริ่ม 0
+
+    last_corner_index = get_last_corner_index(path)
+
+    return turn_index == last_corner_index
+
 def is_lastspurt(phase: int, path_type: int) -> bool:
     return phase == 4 and path_type == 1
 
