@@ -15,6 +15,7 @@ from utils.zone.zone_embed import build_zone_used_preview_embed
 
 from utils.race.race_dice import (
     roll_race_dice,
+    get_phase_from_turn,
 )
 from utils.dice.dice_presets import (
     MAX_SPEED_PHASE
@@ -25,6 +26,9 @@ from utils.icon_presets import Status_Icon_Type
 VALID_STYLES = {"Front", "Pace", "Late", "End"}
 games = {}
 
+
+def is_lastspurt(phase: int, path_type: int) -> bool:
+    return phase == 4 and path_type == 1
 
 def execute_roll_core(
     *,
@@ -470,8 +474,6 @@ def start_game(channel_id: int):
         player["race_profile"]["wit"] += att_bonus["wit"]
 
         player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"] + player["race_profile"]["speed"]
-        print("player power ", player["race_profile"]["power"])
-        # optional: เก็บไว้ดูใน UI
         player["aptitude_bonus"] = att_bonus
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
@@ -1058,7 +1060,7 @@ def build_run_embed(
     )
 
     reroll = game_player.get("reroll_left", 0)
-    current_max_speed = game_player.get("current_max_speed", 0)
+    current_max_speed = math.floor(game_player.get("current_max_speed", 0))
     wit_reroll = game_player.get("wit_reroll_left", 0)
 
     embed.add_field(name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {result["distance_color"]}", value= f"{result["display"]} {result["bonus_display"]}" , inline=False)
@@ -1125,8 +1127,13 @@ def incrase_speed_by_acceleration(channel_id: int):
 
         power_stat = race_profile.get("power", 1)
 
+        speed_cap_base = 0
+        phase = get_phase_from_turn(game["turn"], game["max_turn"])
+
+        speed_cap_base = MAX_SPEED_PHASE[player["style"]]["last_spurt" if phase == 4 else "max"]
+
         max_speed_cap = (
-            MAX_SPEED_PHASE[player["style"]]["max"]
+            speed_cap_base
             + race_profile.get("speed", 0)
         )
 

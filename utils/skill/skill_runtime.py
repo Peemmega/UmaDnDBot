@@ -6,11 +6,9 @@ from utils.game_manager import (
     get_player_in_game,
     update_player_score,
     use_rush,
-    can_force_rush_targets
+    can_force_rush_targets,
+    is_lastspurt
 )
-
-def is_lastspurt(phase: int, path_type: int) -> bool:
-    return phase == 4 and path_type == 1
 
 def get_position_group(channel_id: int, user_id: int) -> str:
     game = get_game(channel_id)

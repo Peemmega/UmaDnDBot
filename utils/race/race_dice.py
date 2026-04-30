@@ -137,8 +137,8 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         + roll_cap_increase
         + path_effect.get("extra_max_from_wit", 0)
     )
-
-    roll_min = math.floor(max_dice_value/2) + extra_floor
+    
+    roll_min = math.floor(max_dice_value * 0.25) + extra_floor
     max_dice_value = max(max_dice_value, roll_min)
 
     rolls = [random.randint(roll_min, max_dice_value) for _ in range(d)]
