@@ -1129,6 +1129,34 @@ SKILLS = {
         "tags": ["corner", "late_race", "lead", "acceleration"],
     },
 
+    "s047": {
+        "name": "Ramp Up",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 50,
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+            "target_distance_min": -30,
+            "target_distance_max": -1,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 35,
+                "duration": "this_roll"
+            }
+        ],
+        "active_roll": True,
+        "tags": ["mid_race", "velocity", "positioning"],
+    },
+
+    
 
     # "s099": {
     #     "name": "March Licking",
