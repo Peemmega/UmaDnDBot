@@ -440,6 +440,7 @@ def start_game(channel_id: int):
                 1: slots["slot_1"],
                 2: slots["slot_2"],
                 3: slots["slot_3"],
+                4: slots["slot_4"],
             }
 
             # zone ของผู้เล่นจริง ถ้ายังใช้ในเกม

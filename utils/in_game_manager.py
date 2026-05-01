@@ -15,14 +15,14 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
     phase = get_phase_from_turn(game["turn"], game["max_turn"])
 
     style_rule = MAX_SPEED_PHASE[player["style"]]
-    scale_up = 0.25
+    scale_up = 0.2
 
     if phase == 4:
         speed_cap_base = style_rule["last_spurt"]
-        scale_up = 0.35
+        scale_up = 0.25
     elif phase == 3:
         speed_cap_base = style_rule["late"]
-        scale_up = 0.3
+        scale_up = 0.25
     else:
         speed_cap_base = style_rule["mid"]
 

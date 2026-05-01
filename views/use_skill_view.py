@@ -197,7 +197,7 @@ class UseSkillView(discord.ui.View):
     async def slot3(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.use_slot(interaction, 3)
 
-    @discord.ui.button(label="3", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="4", style=discord.ButtonStyle.primary)
     async def slot3(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.use_slot(interaction, 4)
 
