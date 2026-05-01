@@ -88,7 +88,7 @@ def parse_display_text(text: str):
     tokens = []
 
     # split ด้วย __ __ และ emoji
-    pattern = r"(__.*?__|<:.*?:\d+>)"
+    pattern = r"(__.*?__|<:.*?:\d+>|Speed|Power|Gut|Velocity)"
     parts = re.split(pattern, text)
 
     for part in parts:
