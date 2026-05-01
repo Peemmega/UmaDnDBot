@@ -453,10 +453,7 @@ def start_game(channel_id: int):
                 }
 
         # reset กลางเกม ใช้ร่วมกันทั้ง player จริงและ mob
-        base_player = player.get("race_profile", {}).copy()
-
         player["skill_cooldowns"] = {}
-        player["wit_mana"] = 100 + (base_player["wit"] * 2)
         player["used_rush"] = False
         player["used_block"] = False
         player["action_locked"] = False
@@ -493,6 +490,7 @@ def start_game(channel_id: int):
 
         player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"] #+ math.floor(player["race_profile"]["power"]/2)
         player["aptitude_bonus"] = att_bonus
+        player["wit_mana"] = 100 + (player["race_profile"]["wit"] * 3)
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
 
