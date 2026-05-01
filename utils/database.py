@@ -73,7 +73,7 @@ def init_db():
             pass
 
     # migration กันกรณี table เก่ามีอยู่แล้ว
-    for col in ["skill_slot_1", "skill_slot_2", "skill_slot_3"]:
+    for col in ["skill_slot_1", "skill_slot_2", "skill_slot_3", "skill_slot_4"]:
         try:
             cursor.execute(f"ALTER TABLE players ADD COLUMN {col} TEXT")
         except Exception:
@@ -274,8 +274,8 @@ def set_player_zone_image_url(user_id: int, image_url: str) -> None:
     conn.close()
 
 def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
-    if slot not in (1, 2, 3):
-        return False, "slot ต้องเป็น 1-3"
+    if slot not in (1, 2, 3, 4):
+        return False, "slot ต้องเป็น 1-4"
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -291,8 +291,8 @@ def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
     return True, f"ติดตั้งสกิล {skill_id} ลงช่อง {slot} เรียบร้อย"
 
 def clear_player_skill_slot(user_id: int, slot: int):
-    if slot not in (1, 2, 3):
-        return False, "slot ต้องเป็น 1-3"
+    if slot not in (1, 2, 3, 4):
+        return False, "slot ต้องเป็น 1-4"
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -312,7 +312,7 @@ def get_player_skill_slots(user_id: int):
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT skill_slot_1, skill_slot_2, skill_slot_3
+    SELECT skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4
     FROM players
     WHERE user_id = ?
     """, (user_id,))
@@ -327,6 +327,7 @@ def get_player_skill_slots(user_id: int):
         "slot_1": row[0],
         "slot_2": row[1],
         "slot_3": row[2],
+        "slot_4": row[3],
     }
 
 def create_player(user_id: int, username: str):
@@ -422,7 +423,7 @@ def add_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     return get_player(user_id)
 
 def get_player_skill_in_slot(user_id: int, slot: int):
-    if slot not in (1, 2, 3):
+    if slot not in (1, 2, 3, 4):
         return None
 
     conn = get_connection()

@@ -146,6 +146,7 @@ class SkillCog(commands.Cog):
         app_commands.Choice(name="Slot 1", value=1),
         app_commands.Choice(name="Slot 2", value=2),
         app_commands.Choice(name="Slot 3", value=3),
+        app_commands.Choice(name="Slot 4", value=4),
     ])
     async def skill_equip(
         self,
@@ -188,7 +189,12 @@ class SkillCog(commands.Cog):
             value=build_skill_card_text(slots["slot_3"]),
             inline=False
         )
-
+        embed.add_field(
+            name="🎯 Skill Slot 4",
+            value=build_skill_card_text(slots["slot_4"]),
+            inline=False
+        )
+        
         embed.set_footer(text="ใช้ /skill info <id> เพื่อดูรายละเอียดเพิ่มเติม")
         await interaction.response.send_message(embed=embed, ephemeral=True)
         

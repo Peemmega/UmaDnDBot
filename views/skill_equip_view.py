@@ -17,3 +17,7 @@ class SkillEquipView(discord.ui.View):
     @discord.ui.button(label="ติดตั้ง Slot 3", style=discord.ButtonStyle.primary)
     async def equip_slot_3(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.equip_callback(interaction, slot=3, skill_id=self.skill_id)
+
+    @discord.ui.button(label="ติดตั้ง Slot 4", style=discord.ButtonStyle.primary)
+    async def equip_slot_4(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.equip_callback(interaction, slot=4, skill_id=self.skill_id)

@@ -736,7 +736,12 @@ class GameCog(commands.GroupCog, name="game"):
             value=build_slot_display(slots.get(3), interaction.channel_id, interaction.user.id),
             inline=False
         )
-
+        embed.add_field(
+            name="🎯 Skill Slot 4",
+            value=build_skill_card_text(slots["slot_4"]),
+            inline=False
+        )
+        
         embed.add_field(
             name=f"{Status_Icon_Type['WIT']} Skill pt",
             value=str(wit_mana),

@@ -359,8 +359,8 @@ def api_equip_skill(payload: EquipSkillPayload):
 
     ensure_player(user_id, payload.username)
 
-    if payload.slot not in (1, 2, 3):
-        raise HTTPException(status_code=400, detail="slot ต้องเป็น 1-3")
+    if payload.slot not in (1, 2, 3, 4):
+        raise HTTPException(status_code=400, detail="slot ต้องเป็น 1-4")
 
     if skill_id not in SKILLS:
         raise HTTPException(status_code=404, detail=f"ไม่พบสกิล `{skill_id}`")
