@@ -15,7 +15,7 @@ from utils.in_game_manager import incrase_speed_by_acceleration
 def get_position_group(channel_id: int, user_id: int) -> str:
     game = get_game(channel_id)
     if game is None:
-        return "mid"
+        return "middle"
 
     scores = game.get("turn_snapshot_scores") or {
         uid: p["score"] for uid, p in game["players"].items()
@@ -42,11 +42,11 @@ def get_position_group(channel_id: int, user_id: int) -> str:
             if index < front_size:
                 return "front"
             elif index < front_size + mid_size:
-                return "mid"
+                return "middle"
             else:
                 return "back"
 
-    return "mid"
+    return "middle"
 
 
 def get_nearest_front_gap(channel_id: int, user_id: int):
