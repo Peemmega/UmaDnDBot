@@ -21,14 +21,14 @@ result = {
     "turn": 2,
     "display": "28, 25",
     "bonus_display": "+21 +20 +15",
-    "total": 81
+    "total": 181
 }
 
 async def main():
     card = await create_race_dice_preview(
         game_player=player,
         result=result,
-        new_score=1244,
+        new_score=81,
         path_label="ทางตรง",
         character_image_url=player["image_url"],
 

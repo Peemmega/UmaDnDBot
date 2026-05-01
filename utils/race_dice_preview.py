@@ -59,13 +59,13 @@ def crop_cover(img: Image.Image, size: tuple[int, int]) -> Image.Image:
     return img.crop((left, top, left + tw, top + th))
 
 
-def draw_text_outline(draw, xy, text, font, fill, outline=(255, 255, 255), width=3):
+def draw_text_outline(draw, xy, text, font, fill, outline=(255, 255, 255), width=3, anchor="la"):
     x, y = xy
     for dx in range(-width, width + 1):
         for dy in range(-width, width + 1):
             if dx or dy:
-                draw.text((x + dx, y + dy), text, font=font, fill=outline)
-    draw.text((x, y), text, font=font, fill=fill)
+                draw.text((x + dx, y + dy), text, font=font, fill=outline, anchor=anchor)
+    draw.text((x, y), text, font=font, fill=fill, anchor=anchor)
 
 
 def paste_icon(card: Image.Image, path: Path, pos, size):
@@ -108,11 +108,10 @@ def parse_display_text(text: str):
 
     return tokens
 
-def draw_rich_text(draw, base_pos, tokens, font, color):
+def draw_rich_text(card, draw, base_pos, tokens, font, color):
     x, y = base_pos
 
     for t_type, value in tokens:
-
         if t_type == "text":
             draw.text((x, y), value, font=font, fill=color)
             bbox = draw.textbbox((x, y), value, font=font)
@@ -123,12 +122,11 @@ def draw_rich_text(draw, base_pos, tokens, font, color):
 
             bbox = draw.textbbox((x, y), value, font=font)
             w = bbox[2] - bbox[0]
-            h = bbox[3] - bbox[1]
 
             draw.line(
-                (x, y + h + 2, x + w, y + h + 2),
+                (x, y + 46, x + w, y + 46),
                 fill=color,
-                width=3
+                width=4
             )
             x += w
 
@@ -136,13 +134,13 @@ def draw_rich_text(draw, base_pos, tokens, font, color):
             icon_path = ICON_MAP.get(value)
 
             if icon_path and icon_path.exists():
-                icon = Image.open(icon_path).convert("RGBA").resize((36, 36))
-                draw.bitmap((x, y + 5), icon)
-                x += 40
+                icon = Image.open(icon_path).convert("RGBA").resize((42, 42), Image.LANCZOS)
+                card.paste(icon, (x + 4, y + 6), icon)
+                x += 52
             else:
-                # fallback text
-                draw.text((x, y), value, font=font, fill=color)
-                bbox = draw.textbbox((x, y), value, font=font)
+                fallback = value
+                draw.text((x, y), fallback, font=font, fill=color)
+                bbox = draw.textbbox((x, y), fallback, font=font)
                 x += bbox[2] - bbox[0]
 
 async def create_race_dice_preview(
@@ -237,12 +235,13 @@ async def create_race_dice_preview(
 
     draw_text_outline(
         draw,
-        (300, 405),
+        (435, 405),
         str(new_score),
         font_big,
         fill=white,
         outline=(80, 45, 20),
         width=4,
+        anchor="ra",
     )
 
     # ===== right content =====
@@ -271,6 +270,7 @@ async def create_race_dice_preview(
     tokens = parse_display_text(full_text)
 
     draw_rich_text(
+        card,
         draw,
         (520, 155),
         tokens,
@@ -281,7 +281,7 @@ async def create_race_dice_preview(
     # total score this roll
     total = result.get("total", 0)
     draw.text(
-        (1190, 175),
+        (1250, 175),
         str(total),
         font=font_score,
         fill=brown,
