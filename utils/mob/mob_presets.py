@@ -6,9 +6,9 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 6,
             "stamina": 4,
-            "power": 4,
-            "gut": 2,
-            "wit": 1,
+            "power": 5,
+            "gut": 1,
+            "wit": 3,
 
             "turf": 1,
             "dirt": 1,
@@ -51,7 +51,7 @@ MOB_PRESETS = {
             "stamina": 4,
             "power": 4,
             "gut": 2,
-            "wit": 1,
+            "wit": 3,
 
             "turf": 1,
             "dirt": 1,
@@ -90,11 +90,11 @@ MOB_PRESETS = {
         "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499637820585672714/2026-05-01_120327.png?ex=69f5860e&is=69f4348e&hm=4c242e8681cef2f822cd66c048b8f9f300da9117c6be92af97b9bb956b26fa7f&=&format=webp&quality=lossless&width=429&height=446",
         "style": "Late",
         "race_profile": {
-            "speed": 6,
+            "speed": 4,
             "stamina": 4,
-            "power": 4,
+            "power": 6,
             "gut": 2,
-            "wit": 1,
+            "wit": 3,
 
             "turf": 1,
             "dirt": 1,
@@ -133,11 +133,11 @@ MOB_PRESETS = {
         "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499637821181530152/2026-05-01_120159.png?ex=69f5860e&is=69f4348e&hm=faecd6d32c321bdc3e388b5292a75e9b61ef75ff477622b8f07716b92a7aa1bc&=&format=webp&quality=lossless&width=1211&height=1202",
         "style": "End",
         "race_profile": {
-            "speed": 6,
+            "speed": 4,
             "stamina": 4,
-            "power": 5,
+            "power": 7,
             "gut": 1,
-            "wit": 1,
+            "wit": 3,
 
             "turf": 1,
             "dirt": 1,
