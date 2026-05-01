@@ -259,13 +259,9 @@ class LobbyView(discord.ui.View):
                 file = discord.File(buffer, filename="race_dice_preview.png")
 
                 send_kwargs = {
-                    "content": f"<@{interaction.user.id}>",
+                    "content": f"{player.get("username")}",
                     "file": file,
                 }
-
-                if payload["view"] is not None:
-                    send_kwargs["view"] = payload["view"]
-
                 await interaction.followup.send(**send_kwargs)
  
 

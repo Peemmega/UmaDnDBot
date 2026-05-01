@@ -457,8 +457,26 @@ class GameCog(commands.GroupCog, name="game"):
                 success, payload = process_mob_turn(channel_id, user_id)
                 if success and payload.get("zone_preview"):
                     await send_func(embed=payload["zone_preview"])
-                if success and payload.get("embed"):
-                    await send_func(embed=payload["embed"])
+                
+                card = await create_race_dice_preview(
+                    game_player=player,
+                    result= payload["result"],
+                    payload=payload,
+                    path_label=payload["path_effect"],
+                    character_image_url=player.get("avatar"),
+                )
+
+                buffer = BytesIO()
+                card.save(buffer, format="PNG")
+                buffer.seek(0)
+
+                file = discord.File(buffer, filename="race_dice_preview.png")
+
+                send_kwargs = {
+                    "content": f"{player.get("username")}",
+                    "file": file,
+                }
+                await send_func(**send_kwargs)
 
     async def process_next_turn(self, interaction: discord.Interaction):
         game = get_game(interaction.channel_id)
