@@ -694,6 +694,7 @@ class GameCog(commands.GroupCog, name="game"):
             1: None,
             2: None,
             3: None,
+            4: None,
         })
 
         wit_mana = playerInGame.get("wit_mana", 0)
@@ -738,7 +739,7 @@ class GameCog(commands.GroupCog, name="game"):
         )
         embed.add_field(
             name="🎯 Skill Slot 4",
-            value=build_skill_card_text(slots["slot_4"]),
+            value=build_slot_display(slots.get(4), interaction.channel_id, interaction.user.id),
             inline=False
         )
         
