@@ -55,7 +55,7 @@ async def execute_reroll(
 
     staminaNote = None
     if game_player.get("takeStaminaDebuff", False):
-        staminaNote = f"{Status_Icon_Type['STA']} ไม่พอ แต้มสูงสุดลูกเต๋า -10"
+        staminaNote = f"ไม่พอ Cap ลูกเต๋า -10"
         if result["bonus_display"] == "-":
             result["bonus_display"] = "-10CAP"
         else:

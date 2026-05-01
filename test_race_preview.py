@@ -27,7 +27,7 @@ result = {
 }
 
 payload = {
-    "stamina_note": "8",
+    "stamina_note": "ไม่พอ Cap ลูกเต๋า -10",
     "new_score": 81
 }
 

@@ -141,7 +141,7 @@ def apply_stamina_debuff(game_player: dict,
             "value": -10,
             "duration": "this_roll"
         })
-        stamina_note = f"{Status_Icon_Type['STA']} ไม่พอ แต้มสูงสุดลูกเต๋า -10"
+        stamina_note = f"ไม่พอ Cap ลูกเต๋า -10"
         return stamina_note, True
 
 def apply_stamina_for_roll(
