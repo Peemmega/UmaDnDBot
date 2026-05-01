@@ -192,18 +192,17 @@ class GameCog(commands.GroupCog, name="game"):
                         display_name = info.get("username") or f"<@{user_id}>"
 
                     rank_lines.append(
-                        f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
+                        f"ลำดับที่ {index}: {display_name} | Score: {info['score']} ({info['style']})"
                     )
 
                 if not rank_lines:
                     rank_lines.append("ยังไม่มีผู้เล่น")
 
                 confirm_embed = discord.Embed(
-                    title=f"📊 จบเทิร์น {game['turn']}",
+                    title=f"📊ผลสรุป ช่วงที่ {phase} เทิร์นที่ {game['turn']}",
                     color=discord.Color.blurple(),
                     description=(
-                        f"Phase: {phase}\n\n"
-                        f"อันดับคะแนน:\n" + "\n".join(rank_lines)
+                        f"อันดับคะแนน:🏆\n" + "\n".join(rank_lines)
                     )
                 )
                 confirm_embed.set_footer(text="ทุกคนต้องกดยืนยันก่อนจะไปเทิร์นถัดไป")
