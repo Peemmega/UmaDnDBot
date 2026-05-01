@@ -453,6 +453,8 @@ def start_game(channel_id: int):
                 }
 
         # reset กลางเกม ใช้ร่วมกันทั้ง player จริงและ mob
+        base_player = player.get("race_profile", {}).copy()
+
         player["skill_cooldowns"] = {}
         player["wit_mana"] = 100 + (base_player["wit"] * 2)
         player["used_rush"] = False
