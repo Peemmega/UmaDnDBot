@@ -454,7 +454,7 @@ def start_game(channel_id: int):
 
         # reset กลางเกม ใช้ร่วมกันทั้ง player จริงและ mob
         player["skill_cooldowns"] = {}
-        player["wit_mana"] = 100
+        player["wit_mana"] = 100 + (base_player["wit"] * 2)
         player["used_rush"] = False
         player["used_block"] = False
         player["action_locked"] = False
