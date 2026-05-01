@@ -47,9 +47,9 @@ MOB_PRESETS = {
         "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499637819352813669/2026-05-01_120449.png?ex=69f5860e&is=69f4348e&hm=8265d9885609b112aa8f1f6e4fe8d6ed042d39587b7072b4664c45314171d1de&=&format=webp&quality=lossless&width=477&height=479",
         "style": "Pace",
         "race_profile": {
-            "speed": 6,
+            "speed": 5,
             "stamina": 4,
-            "power": 4,
+            "power": 5,
             "gut": 2,
             "wit": 3,
 
