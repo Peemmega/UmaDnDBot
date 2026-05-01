@@ -3,7 +3,7 @@ from io import BytesIO
 import aiohttp
 import math
 from PIL import Image, ImageDraw, ImageFont
-from game_manager import build_single_wit_regen_text
+from utils.game_manager import build_single_wit_regen_text
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = BASE_DIR / "assets"
