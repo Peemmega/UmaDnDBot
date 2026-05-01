@@ -1095,11 +1095,7 @@ def build_run_embed(
     )
 
     embed.add_field(
-        name= f"Reroll คงเหลือ: **{reroll}**　"
-            f"{Status_Icon_Type['WIT']} Reroll: **{wit_reroll}**",
-        # value=(
-            
-        # ),
+        name= f"Reroll คงเหลือ: **{reroll}** {Status_Icon_Type['WIT']} Reroll: **{wit_reroll}**",
         inline=False
     )
 
