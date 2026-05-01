@@ -627,8 +627,7 @@ class GameCog(commands.GroupCog, name="game"):
         path_effect = payload["path_effect"]
 
         image_url = (
-            game_player.get("image_url")
-            or game_player.get("avatar_url")
+            game_player.get("avartar")
         )
 
         card = await create_race_dice_preview(
