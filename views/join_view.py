@@ -137,6 +137,7 @@ class StyleSelectView(discord.ui.View):
         embed = build_join_embed(
             game=game,
             display_name=interaction.user.display_name,
+            display_image=interaction.user.display_avatar.url,
             style=style,
             aptitude_source=db_player,
             title="🏇 ผู้เล่นเข้าร่วม!",

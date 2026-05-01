@@ -496,6 +496,7 @@ def build_join_embed(
     *,
     game: dict,
     display_name: str,
+    display_image: str,
     style: str,
     aptitude_source: dict,
     title: str = "🏇 ผู้เล่นเข้าร่วม!",
@@ -527,22 +528,25 @@ def build_join_embed(
         inline=False
     )
 
+    embed.set_thumbnail(url=display_image)
     return embed
 
-def build_mob_join_embed(game: dict, player: dict):
+def build_mob_join_embed(game: dict, mob: dict):
     mob_name = (
-        player.get("display_name")
-        or player.get("username")
-        or player.get("name")
+        mob.get("display_name")
+        or mob.get("username")
+        or mob.get("name")
         or "Mob"
     )
 
-    style = player.get("style", "Unknown")
-    race_profile = player.get("race_profile", {})
+    style = mob.get("style", "Unknown")
+    mob_avatar = mob.get("avatar", "")
+    race_profile = mob.get("race_profile", {})
 
     return build_join_embed(
         game=game,
         display_name=mob_name,
+        display_image=mob_avatar,
         style=style,
         aptitude_source=race_profile,
         title="🏇 ผู้เล่นเข้าร่วม!",
@@ -1295,6 +1299,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str):
     game["players"][mob_id] = {
         "username": preset["name"],
         "display_name": preset["name"],
+        "avatar": preset["avatar"],
         "is_mob": True,
         "style": preset["style"],
         "score": 0,
