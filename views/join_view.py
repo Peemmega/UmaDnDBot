@@ -115,6 +115,7 @@ class StyleSelectView(discord.ui.View):
             interaction.channel_id,
             interaction.user.id,
             interaction.user.display_name,
+            interaction.user.display_avatar.url,
             style
         )
 

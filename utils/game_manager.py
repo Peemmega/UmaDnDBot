@@ -1076,6 +1076,7 @@ def build_run_embed(
         color=discord.Color.gold()
     )
 
+    avatar = game_player.get("avatar", "0")
     reroll = game_player.get("reroll_left", 0)
     current_max_speed = math.floor(game_player.get("current_max_speed", 0))
     wit_reroll = game_player.get("wit_reroll_left", 0)
@@ -1099,6 +1100,8 @@ def build_run_embed(
         value="",
         inline=False
     )
+
+    embed.set_thumbnail(url=avatar)
 
     return embed
 
@@ -1160,7 +1163,7 @@ def get_ranked_players(channel_id: int):
         reverse=True
     )
 
-def add_player(channel_id, user_id, display_name: str, style):
+def add_player(channel_id, user_id, display_name: str, display_avatar: str, style):
     player_data = get_player(user_id)
     game = get_game(channel_id)
     if game is None:
@@ -1179,6 +1182,7 @@ def add_player(channel_id, user_id, display_name: str, style):
 
     game["players"][user_id] = {
         "username": player_data.get("username"),
+        "avatar": display_avatar,
         "display_name": display_name,
         "style": style,
         "current_max_speed": MAX_SPEED_PHASE[style]["start"],

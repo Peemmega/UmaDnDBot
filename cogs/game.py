@@ -390,7 +390,7 @@ class GameCog(commands.GroupCog, name="game"):
                 display_name = info.get("username") or f"<@{user_id}>"
 
             rank_lines.append(
-                f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
+                f"ลำดับที่ {index}: {display_name} | Score: {info['score']} ({info['style']})"
             )
 
         if not rank_lines:
@@ -424,7 +424,7 @@ class GameCog(commands.GroupCog, name="game"):
             description=(
                 f"Phase: {phase}\n"
                 f"เส้นทางเทิร์นนี้:\n{track_preview}\n{current_track_text}\n\n"
-                f"อันดับคะแนน:\n" + "\n".join(rank_lines)
+                f"อันดับคะแนน:🏆\n" + "\n".join(rank_lines)
             )
         )
 
