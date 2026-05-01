@@ -10,12 +10,38 @@ ASSETS_DIR = BASE_DIR / "assets"
 BG_PATH = ASSETS_DIR / "race_dice_preview_bg.png"
 FONT_PATH = ASSETS_DIR / "fonts" / "Prompt-Bold.ttf"
 
+ICON_MAP = {
+    "Speed": ASSETS_DIR / "icons/utx_ico_obtain_00.png",
+    "Power": ASSETS_DIR / "icons/utx_ico_obtain_02.png",
+    "Gut": ASSETS_DIR / "icons/utx_ico_obtain_03.png",
+    "Velocity": ASSETS_DIR / "skill_icons/Velocity.png",
+}
+
 async def load_image_url(url: str) -> Image.Image:
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             data = await resp.read()
     return Image.open(BytesIO(data)).convert("RGBA")
 
+def draw_text_with_underline(draw, xy, text, font, fill, underline_offset=5, thickness=3):
+    x, y = xy
+
+    # วาดข้อความ
+    draw.text((x, y), text, font=font, fill=fill)
+
+    # วัดขนาดข้อความ
+    bbox = draw.textbbox((x, y), text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+
+    # วาดเส้นใต้
+    underline_y = y + text_height + underline_offset
+
+    draw.line(
+        (x, underline_y, x + text_width, underline_y),
+        fill=fill,
+        width=thickness
+    )
 
 def crop_cover(img: Image.Image, size: tuple[int, int]) -> Image.Image:
     img = img.convert("RGBA")
@@ -54,6 +80,70 @@ def draw_debug_grid(draw):
     for y in range(0, 800, 50):
         draw.line((0, y, 1500, y), fill=(0, 0, 255, 90), width=1)
         draw.text((2, y + 2), str(y), fill=(0, 0, 255))
+
+import re
+
+def parse_display_text(text: str):
+    tokens = []
+
+    # split ด้วย __ __ และ emoji
+    pattern = r"(__.*?__|<:.*?:\d+>)"
+    parts = re.split(pattern, text)
+
+    for part in parts:
+        if not part:
+            continue
+
+        # underline
+        if part.startswith("__") and part.endswith("__"):
+            tokens.append(("underline", part[2:-2]))
+
+        # discord emoji
+        elif part.startswith("<:"):
+            name = part.split(":")[1]
+            tokens.append(("icon", name))
+
+        else:
+            tokens.append(("text", part))
+
+    return tokens
+
+def draw_rich_text(draw, base_pos, tokens, font, color):
+    x, y = base_pos
+
+    for t_type, value in tokens:
+
+        if t_type == "text":
+            draw.text((x, y), value, font=font, fill=color)
+            bbox = draw.textbbox((x, y), value, font=font)
+            x += bbox[2] - bbox[0]
+
+        elif t_type == "underline":
+            draw.text((x, y), value, font=font, fill=color)
+
+            bbox = draw.textbbox((x, y), value, font=font)
+            w = bbox[2] - bbox[0]
+            h = bbox[3] - bbox[1]
+
+            draw.line(
+                (x, y + h + 2, x + w, y + h + 2),
+                fill=color,
+                width=3
+            )
+            x += w
+
+        elif t_type == "icon":
+            icon_path = ICON_MAP.get(value)
+
+            if icon_path and icon_path.exists():
+                icon = Image.open(icon_path).convert("RGBA").resize((36, 36))
+                draw.bitmap((x, y + 5), icon)
+                x += 40
+            else:
+                # fallback text
+                draw.text((x, y), value, font=font, fill=color)
+                bbox = draw.textbbox((x, y), value, font=font)
+                x += bbox[2] - bbox[0]
 
 async def create_race_dice_preview(
     *,
@@ -176,11 +266,16 @@ async def create_race_dice_preview(
     display = result.get("display", "")
     bonus = result.get("bonus_display", "")
 
-    draw.text(
+    full_text = f"{display} {bonus}"
+
+    tokens = parse_display_text(full_text)
+
+    draw_rich_text(
+        draw,
         (520, 155),
-        f"{display} {bonus}",
-        font=font_mid,
-        fill=brown,
+        tokens,
+        font_mid,
+        brown
     )
 
     # total score this roll

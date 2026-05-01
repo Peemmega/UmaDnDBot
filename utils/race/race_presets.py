@@ -8,10 +8,10 @@ PATH_TYPE = {
 }
 
 PATH_TYPE_TEXT = {
-    1: "➡️ ทางตรง",
-    2: "⤵️ ทางโค้ง",
-    3: "↗️ เนินขึ้น",
-    4: "↘️ เนินลง",
+    1: "→ ทางตรง",
+    2: "⤵ ทางโค้ง",
+    3: "↗ เนินขึ้น",
+    4: "↘ เนินลง",
 }
 
 PATH_TYPE_ICON = {
@@ -61,7 +61,7 @@ def build_current_track_text(path: list[int], current_turn: int) -> str:
 
     current_turn = max(1, min(current_turn, len(path)))
     path_type = path[current_turn - 1]
-    path_label = PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง")
+    path_label = PATH_TYPE_TEXT.get(path_type, "ทางตรง")
 
     return f"ตอนนี้อยู่ช่วงที่ {current_turn}/{len(path)} : {path_label}"
 
@@ -73,7 +73,7 @@ def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dic
         "spd_multiplier": 1.0,
         "power_total_multiplier": 1.0,
         "extra_max_from_wit": 0,
-        "label": PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง"),
+        "label": PATH_TYPE_TEXT.get(path_type, "ทางตรง"),
     }
 
     if path_type == 1:  # ทางตรง
