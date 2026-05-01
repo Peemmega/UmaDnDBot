@@ -136,9 +136,9 @@ def draw_rich_text(card, draw, base_pos, tokens, font, color):
             icon_path = ICON_MAP.get(value)
 
             if icon_path and icon_path.exists():
-                icon = Image.open(icon_path).convert("RGBA").resize((36, 36), Image.LANCZOS)
+                icon = Image.open(icon_path).convert("RGBA").resize((42, 42), Image.LANCZOS)
                 card.paste(icon, (x + 4, y + 6), icon)
-                x += 46
+                x += 52
             else:
                 fallback = value
                 draw.text((x, y), fallback, font=font, fill=color)
@@ -256,16 +256,22 @@ async def create_race_dice_preview(
     display = result.get("display", "")
     bonus = result.get("bonus_display", "")
 
-    full_text = f"{display} {bonus}"
-
-    tokens = parse_display_text(full_text)
 
     draw_rich_text(
         card,
         draw,
-        (520, 155),
-        tokens,
-        font_small,
+        (520, 160),
+        parse_display_text(display),
+        font_mid,
+        brown
+    )
+
+    draw_rich_text(
+        card,
+        draw,
+        (520, 225),
+        parse_display_text(bonus),
+        font_mid,
         brown
     )
 
