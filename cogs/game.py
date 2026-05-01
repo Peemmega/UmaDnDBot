@@ -632,7 +632,7 @@ class GameCog(commands.GroupCog, name="game"):
         card = await create_race_dice_preview(
             game_player=game_player,
             result=result,
-            new_score=payload["new_score"],
+            payload=payload,
             path_label=path_effect["label"],
             character_image_url=avatar_url,
         )

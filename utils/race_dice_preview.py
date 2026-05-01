@@ -3,6 +3,7 @@ from io import BytesIO
 import aiohttp
 import math
 from PIL import Image, ImageDraw, ImageFont
+from game_manager import build_single_wit_regen_text
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = BASE_DIR / "assets"
@@ -124,13 +125,14 @@ def draw_rich_text(card, draw, base_pos, tokens, font, color):
             w = bbox[2] - bbox[0]
 
             draw.line(
-                (x, y + 46, x + w, y + 46),
+                (x, y + 50, x + w, y + 50),
                 fill=color,
                 width=4
             )
             x += w
 
         elif t_type == "icon":
+            print(value)
             icon_path = ICON_MAP.get(value)
 
             if icon_path and icon_path.exists():
@@ -147,7 +149,7 @@ async def create_race_dice_preview(
     *,
     game_player: dict,
     result: dict,
-    new_score: int,
+    payload: dict,
     path_label: str,
     character_image_url: str,
     stamina_before: int | None = None,
@@ -233,10 +235,11 @@ async def create_race_dice_preview(
         width=3,
     )
 
+    newscore = payload["new_score"]
     draw_text_outline(
         draw,
         (435, 405),
-        str(new_score),
+        str(newscore),
         font_big,
         fill=white,
         outline=(80, 45, 20),
@@ -289,21 +292,13 @@ async def create_race_dice_preview(
     )
   
     # stamina
-    sta_text = "-"
-    if stamina_before is not None and stamina_after is not None:
-        sta_text = f"{stamina_before} → {stamina_after}"
-    else:
-        sta_text = str(game_player.get("stamina_left", 0))
-
+    sta_text = payload["stamina_note"]
     draw.text((595, 340), sta_text, font=font_mid, fill=brown)
 
     # wit mana
-    if wit_before is None:
-        wit_before = game_player.get("wit_mana", 0)
-    if wit_after is None:
-        wit_after = wit_before
+    wit_text = build_single_wit_regen_text(game_player)
 
-    draw.text((595, 415), f"{wit_before} → {wit_after} pt.", font=font_mid, fill=brown)
+    draw.text((595, 415), f"{wit_text} pt.", font=font_mid, fill=brown)
 
     # reroll
     draw.text((1130, 400), str(game_player.get("reroll_left", 0)), font=font_mid, fill=brown)
