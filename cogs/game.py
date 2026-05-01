@@ -749,7 +749,7 @@ class GameCog(commands.GroupCog, name="game"):
             inline=True
         )
 
-        embed.set_footer(text="กดปุ่ม 1 / 2 / 3 เพื่อใช้สกิล หรือกด 🌌 เพื่อใช้ Zone")
+        embed.set_footer(text="กดปุ่ม 1 / 2 / 3 / 4 เพื่อใช้สกิล หรือกด 🌌 เพื่อใช้ Zone")
 
         await interaction.response.send_message(
             embed=embed,

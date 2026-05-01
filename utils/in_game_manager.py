@@ -19,10 +19,10 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
 
     if phase == 4:
         speed_cap_base = style_rule["last_spurt"]
-        scale_up = 0.5
+        scale_up = 0.35
     elif phase == 3:
         speed_cap_base = style_rule["late"]
-        scale_up = 0.35
+        scale_up = 0.3
     else:
         speed_cap_base = style_rule["mid"]
 

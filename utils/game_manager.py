@@ -381,6 +381,7 @@ def start_game(channel_id: int):
                 1: None,
                 2: None,
                 3: None,
+                4: None,
             })
 
         elif using_mob_preset:
@@ -396,6 +397,7 @@ def start_game(channel_id: int):
                 1: None,
                 2: None,
                 3: None,
+                4: None,
             })
 
             player["zone"] = copy.deepcopy(player.get("zone", {}))
@@ -642,6 +644,7 @@ def initialize_player_skills(channel_id: int):
             1: slots["slot_1"],
             2: slots["slot_2"],
             3: slots["slot_3"],
+            4: slots["slot_4"],
         }
 
         # optional (ไว้ใช้ต่อ)
@@ -1197,6 +1200,7 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
             1: None,
             2: None,
             3: None,
+            4: None,
         },
         "skill_cooldowns": {},
         "race_profile": {},

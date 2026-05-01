@@ -163,7 +163,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
 
     power_bonus = player_stats.get("power", 1) * 3
     nearby_count = min(context.get("nearby_count", 0), 2)
-    gut_scale = player_stats.get("gut", 1) * 5
+    gut_scale = player_stats.get("gut", 1) * 4
     gut_bonus = (gut_scale * nearby_count ) if context.get("distance_color") == "Gold" else 0
 
     total_selected_die_bonus = 0
