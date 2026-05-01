@@ -1072,7 +1072,7 @@ def build_run_embed(
     name_part = f"{player_name} | " if player_name else ""
 
     embed = discord.Embed(
-        title=f"{name_part}Phase {result['phase']}  {path_effect['label']} สาย {game_player['style']}",
+        title=f"{name_part} ช่วงที่ {result['phase']} เทิร์นที่ {result['turn']} : {path_effect['label']} สาย {game_player['style']}",
         color=discord.Color.gold()
     )
 
@@ -1086,21 +1086,20 @@ def build_run_embed(
         stamina_note = str(game_player["stamina_left"])
 
     embed.add_field(
-        name="📊 สรุปผล",
+        name= f"🏁 Score รวม: **{new_score}** ({result['total']})",
         value=(
             f"{Status_Icon_Type['STA']} : **{stamina_note}**　"
             f"{Status_Icon_Type['WIT']} : **{build_single_wit_regen_text(game_player)}** "
-            f"🏁 Score รวม: **{new_score}** ({result['total']})"
         ),
         inline=False
     )
 
     embed.add_field(
-        name="🎲 Reroll",
-        value=(
-            f"Reroll คงเหลือ: **{reroll}**　"
-            f"{Status_Icon_Type['WIT']} Reroll: **{wit_reroll}**"
-        ),
+        name= f"Reroll คงเหลือ: **{reroll}**　"
+            f"{Status_Icon_Type['WIT']} Reroll: **{wit_reroll}**",
+        # value=(
+            
+        # ),
         inline=False
     )
 

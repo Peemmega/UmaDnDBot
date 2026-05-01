@@ -243,6 +243,7 @@ def roll_race_dice(
 
     return {
         "phase": phase,
+        "turn": turn,
         "distance_color": distance_color,
         "rule": rule,
         "rolls": dice_result["rolls"],
