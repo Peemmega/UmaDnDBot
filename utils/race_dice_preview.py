@@ -278,7 +278,7 @@ async def create_race_dice_preview(
     # total score this roll
     total = result.get("total", 0)
     draw.text(
-        (1250, 175),
+        (1300, 200),
         str(total),
         font=font_score,
         fill=brown,
