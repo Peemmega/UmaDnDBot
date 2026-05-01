@@ -253,7 +253,7 @@ def describe_effect(effect: dict) -> str:
         return f"ฟื้นฟู {Status_Icon_Type['STA']} +{value}"
     
     if effect_type in ["modify_current_speed"]:
-        return f"เพิ่มความเร็วปัจจุบัน {value} ระดับ"
+        return f"เร่งความเร็วปัจจุบัน {value} ระดับ"
     
     if effect_type == "self_heal_stamina":
         return f"ฟื้นฟู {Status_Icon_Type['STA']} ให้ตัวเอง +{value}"
