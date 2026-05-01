@@ -1012,10 +1012,10 @@ def process_mob_turn(channel_id: int, user_id: str):
     # ✅ ใช้ zone_left
     zone_success = False
     
-    
+    turn_trigger = (game["turn"] == game["max_turn"]) or (game["turn"] == 1 and player.get("style","Front") == "Front")
     if (
         player.get("is_mob")
-        and game["turn"] == game["max_turn"]  # 🔥 เทิร์นสุดท้าย
+        and turn_trigger  # 🔥 เทิร์นสุดท้าย
         and player.get("zone_left", 0) > 0
     ):
         zone_success = apply_zone_in_game(game, player)
