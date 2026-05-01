@@ -489,7 +489,7 @@ def start_game(channel_id: int):
         player["race_profile"]["speed"] += att_bonus["speed"]
         player["race_profile"]["wit"] += att_bonus["wit"]
 
-        player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"] + math.floor(player["race_profile"]["power"]/2)
+        player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"] #+ math.floor(player["race_profile"]["power"]/2)
         player["aptitude_bonus"] = att_bonus
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
