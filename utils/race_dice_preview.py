@@ -12,9 +12,9 @@ BG_PATH = ASSETS_DIR / "race_dice_preview_bg.png"
 FONT_PATH = ASSETS_DIR / "fonts" / "Prompt-Bold.ttf"
 
 ICON_MAP = {
-    "Speed": ASSETS_DIR / "icons/utx_ico_obtain_00.png",
-    "Power": ASSETS_DIR / "icons/utx_ico_obtain_02.png",
-    "Gut": ASSETS_DIR / "icons/utx_ico_obtain_03.png",
+    "Speed": ASSETS_DIR / "stats_icon/utx_ico_obtain_00.png",
+    "Power": ASSETS_DIR / "stats_icon/utx_ico_obtain_02.png",
+    "Gut": ASSETS_DIR / "stats_icon/utx_ico_obtain_03.png",
     "Velocity": ASSETS_DIR / "skill_icons/Velocity.png",
 }
 
