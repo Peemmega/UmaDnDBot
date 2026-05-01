@@ -626,16 +626,15 @@ class GameCog(commands.GroupCog, name="game"):
         result = payload["result"]
         path_effect = payload["path_effect"]
 
-        image_url = (
-            game_player.get("avartar")
-        )
+        avatar_url = interaction.user.display_avatar.url
+
 
         card = await create_race_dice_preview(
             game_player=game_player,
             result=result,
             new_score=payload["new_score"],
             path_label=path_effect["label"],
-            character_image_url=image_url,
+            character_image_url=avatar_url,
         )
 
         buffer = BytesIO()
