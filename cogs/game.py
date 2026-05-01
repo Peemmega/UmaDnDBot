@@ -2,6 +2,10 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
+from io import BytesIO
+import discord
+from utils.race_dice_preview import create_race_dice_preview
+
 from views.confirmDeleteGameView import ConfirmDeleteView
 from views.use_skill_view import UseSkillView
 from views.create_game_view import CreateGameView
@@ -566,6 +570,38 @@ class GameCog(commands.GroupCog, name="game"):
             ephemeral=True
         )
 
+    # @app_commands.command(name="run", description="ทอยเต๋าเดินในเทิร์นนี้")
+    # async def run(self, interaction: discord.Interaction):
+    #     await interaction.response.defer()
+
+    #     can_roll, message = can_player_roll(interaction.channel_id, interaction.user.id)
+    #     if not can_roll:
+    #         await interaction.followup.send(message, ephemeral=True)
+    #         return
+
+    #     success, payload = await execute_player_roll(
+    #         interaction,
+    #         title_prefix="วิ่งในเทิร์นนี้",
+    #         mark_roll=True,
+    #         allow_reroll_view=True,
+    #     )
+
+    #     if not success:
+    #         await interaction.followup.send(payload["message"], ephemeral=True)
+    #         return
+
+    #     send_kwargs = {
+    #         "content": f"<@{interaction.user.id}>",
+    #         "embed": payload["embed"],
+    #     }
+    #     if payload["view"] is not None:
+    #         send_kwargs["view"] = payload["view"]
+
+    #     await interaction.followup.send(**send_kwargs)
+
+    #     game = payload["game"]
+    #     await self.handle_after_roll(interaction, game)
+
     @app_commands.command(name="run", description="ทอยเต๋าเดินในเทิร์นนี้")
     async def run(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -586,10 +622,34 @@ class GameCog(commands.GroupCog, name="game"):
             await interaction.followup.send(payload["message"], ephemeral=True)
             return
 
+        game_player = payload["game_player"]
+        result = payload["result"]
+        path_effect = payload["path_effect"]
+
+        image_url = (
+            game_player.get("image_url")
+            or game_player.get("avatar_url")
+        )
+
+        card = await create_race_dice_preview(
+            game_player=game_player,
+            result=result,
+            new_score=payload["new_score"],
+            path_label=path_effect["label"],
+            character_image_url=image_url,
+        )
+
+        buffer = BytesIO()
+        card.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        file = discord.File(buffer, filename="race_dice_preview.png")
+
         send_kwargs = {
             "content": f"<@{interaction.user.id}>",
-            "embed": payload["embed"],
+            "file": file,
         }
+
         if payload["view"] is not None:
             send_kwargs["view"] = payload["view"]
 
@@ -597,7 +657,6 @@ class GameCog(commands.GroupCog, name="game"):
 
         game = payload["game"]
         await self.handle_after_roll(interaction, game)
-
 
     @discord.app_commands.command(name="skill", description="เปิดเมนูใช้สกิล")
     async def skill(self, interaction: discord.Interaction):
