@@ -31,7 +31,7 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
         + race_profile.get("speed", 0)
     )
 
-    increase_speed = (scale_up * power_stat * multiple) 
+    increase_speed = 0.5 + (scale_up * power_stat * multiple) 
 
     new_speed = min(max_speed_cap, current_max_speed + increase_speed)
     player["current_max_speed"] = new_speed
