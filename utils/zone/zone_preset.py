@@ -37,7 +37,7 @@ ZONE_VALUE = {
     "selected_die": 3,
     "cap": 5,
     "self_heal_stamina": 1,
-    "modify_current_speed": 0.75,
+    "modify_current_speed": 0.5,
 }
 
 DEFAULT_ZONE = {
