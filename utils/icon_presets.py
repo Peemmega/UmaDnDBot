@@ -19,6 +19,7 @@ Status_Icon_Type = {
 
 ICONS = {
     "Aoharu": "<:Aoharu:1495417469328949258>",
+    "AlarmClock": "<:AlarmClock:1499708925711487116>",
 }
 
 GRADE_TEXT = {

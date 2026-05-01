@@ -21,7 +21,7 @@ from utils.dice.dice_presets import (
 )
 from utils.in_game_manager import incrase_speed_by_acceleration
 
-from utils.icon_presets import Status_Icon_Type
+from utils.icon_presets import Status_Icon_Type, ICONS
 
 VALID_STYLES = {"Front", "Pace", "Late", "End"}
 games = {}
@@ -1096,7 +1096,7 @@ def build_run_embed(
     )
 
     embed.add_field(
-        name= f"Reroll คงเหลือ: **{reroll}** {Status_Icon_Type['WIT']} Reroll: **{wit_reroll}**",
+        name= f"{ICONS['AlarmClock']} : **{reroll}** {Status_Icon_Type['WIT']} Reroll: **{wit_reroll}**",
         value="",
         inline=False
     )
