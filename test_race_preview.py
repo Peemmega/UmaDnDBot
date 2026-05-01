@@ -17,26 +17,27 @@ player = {
 
 # mock result (สำคัญมาก)
 result = {
-    "phase": 2,
+    "phase": 1,
     "turn": 2,
     "display": "28, 25",
     "bonus_display": "+21 +20 +15",
-    "total": 181
+    "total": 181,
+    "distance_color": "White",
+    "new_score": 81
+}
+
+payload = {
+    "stamina_note": "8",
+    "new_score": 81
 }
 
 async def main():
     card = await create_race_dice_preview(
         game_player=player,
         result=result,
-        new_score=81,
+        payload=payload,
         path_label="ทางตรง",
         character_image_url=player["image_url"],
-
-        # optional (ใส่ก็ได้ ไม่ใส่ก็ได้)
-        stamina_before=10,
-        stamina_after=9,
-        wit_before=100,
-        wit_after=150,
     )
 
     card.save("test_dice_preview.png")

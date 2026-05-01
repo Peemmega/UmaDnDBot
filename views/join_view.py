@@ -13,11 +13,14 @@ from utils.game_manager import (
 
 from utils.dice.dice_presets import DICE_PRESET
 from utils.dice.dice_table import format_rule
+from utils.race_dice_preview import create_race_dice_preview
+
 from utils.race.race_dice import (
     build_dice_table_grid
 )
 
 import math
+from io import BytesIO
 
 STYLES = ["Front", "Pace", "Late", "End"]
 PHASES = [1, 2, 3, 4]
@@ -240,8 +243,30 @@ class LobbyView(discord.ui.View):
                 success, payload = process_mob_turn(self.channel_id, user_id)
                 if success and payload.get("zone_preview"):
                     await interaction.followup.send(embed=payload["zone_preview"])
-                if success and payload.get("embed"):
-                    await interaction.followup.send(embed=payload["embed"])
+                
+                card = await create_race_dice_preview(
+                    game_player=player,
+                    result= payload["result"],
+                    payload=payload,
+                    path_label=payload["path_effect"],
+                    character_image_url=player.get("avatar"),
+                )
+
+                buffer = BytesIO()
+                card.save(buffer, format="PNG")
+                buffer.seek(0)
+
+                file = discord.File(buffer, filename="race_dice_preview.png")
+
+                send_kwargs = {
+                    "content": f"<@{interaction.user.id}>",
+                    "file": file,
+                }
+
+                if payload["view"] is not None:
+                    send_kwargs["view"] = payload["view"]
+
+                await interaction.followup.send(**send_kwargs)
  
 
 

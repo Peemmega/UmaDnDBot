@@ -152,10 +152,6 @@ async def create_race_dice_preview(
     payload: dict,
     path_label: str,
     character_image_url: str,
-    stamina_before: int | None = None,
-    stamina_after: int | None = None,
-    wit_before: int | None = None,
-    wit_after: int | None = None,
 ):
     card = Image.open(BG_PATH).convert("RGBA")
     draw = ImageDraw.Draw(card)
@@ -193,16 +189,18 @@ async def create_race_dice_preview(
     # ===== left text =====
     phase = result.get("phase", "?")
     turn = result.get("turn", "?")
+    distance_color = "อยู่ในกลุ่ม" if result.get("distance_color", "White") == "Gold" else "อยู่นอกกลุ่ม"
     style = game_player.get("style", "-")
 
     draw_text_outline(
         draw,
-        (35, 20),
+        (90, 20),
         f"{phase}",
         font_score,
         fill=(255, 205, 80),
         outline=(80, 45, 20),
         width=4,
+        anchor="ra",
     )
 
     draw_text_outline(
@@ -259,7 +257,7 @@ async def create_race_dice_preview(
 
     draw.text(
         (520, 100),
-        f"{path_label} / อยู่ในกลุ่ม",
+        f"{path_label} / {distance_color}",
         font=font_mid,
         fill=brown,
     )

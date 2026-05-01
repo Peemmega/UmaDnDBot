@@ -1036,16 +1036,16 @@ def process_mob_turn(channel_id: int, user_id: str):
         or "Mob"
     )
 
-    embed = build_run_embed(
-        game_player=payload["game_player"],
-        result=payload["result"],
-        new_score=payload["new_score"],
-        stamina_note=payload["stamina_note"],
-        path_effect=payload["path_effect"],
-        player_name=f"🤖 {mob_name}",
-    )
+    # embed = build_run_embed(
+    #     game_player=payload["game_player"],
+    #     result=payload["result"],
+    #     new_score=payload["new_score"],
+    #     stamina_note=payload["stamina_note"],
+    #     path_effect=payload["path_effect"],
+    #     player_name=f"🤖 {mob_name}",
+    # )
 
-    payload["embed"] = embed
+    # payload["embed"] = embed
     if zone_success:
         payload["zone_preview"] = build_zone_used_preview_embed(player)
     
