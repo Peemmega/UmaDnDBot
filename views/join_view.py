@@ -248,7 +248,7 @@ class LobbyView(discord.ui.View):
                     game_player=player,
                     result= payload["result"],
                     payload=payload,
-                    path_label=payload["path_effect"],
+                    path_label=payload["path_effect"]["label"],
                     character_image_url=player.get("avatar"),
                 )
 

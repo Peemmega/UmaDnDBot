@@ -176,16 +176,6 @@ async def create_race_dice_preview(
     char_img = crop_cover(char_img, LEFT_SIZE)
     card.paste(char_img, LEFT_POS, char_img)
 
-    # dark gradient
-    # gradient = Image.new("RGBA", LEFT_SIZE, (0, 0, 0, 0))
-    # gdraw = ImageDraw.Draw(gradient)
-
-    # for y in range(LEFT_SIZE[1]):
-    #     alpha = int(120 * (y / LEFT_SIZE[1]))
-    #     gdraw.line((0, y, LEFT_SIZE[0], y), fill=(0, 0, 0, alpha))
-
-    # card.paste(gradient, LEFT_POS, gradient)
-
     # ===== left text =====
     phase = result.get("phase", "?")
     turn = result.get("turn", "?")
