@@ -99,7 +99,7 @@ SKILLS = {
             },
             {"type": "modify_roll_cap", "value": 15, "duration": "this_roll"},
         ],
-        "active_roll": True,
+
         "tags": ["corner", "velocity"],
     },
 
@@ -121,7 +121,7 @@ SKILLS = {
             {"type": "modify_current_speed", "value": 1.5},
             {"type": "add_dkh", "value": 1},
         ],
-        "active_roll": True,
+
         "tags": ["straight", "lastspurt", "end", "acceleration"],
     },
 
@@ -145,7 +145,7 @@ SKILLS = {
                 "duration": "this_roll"
             }
         ],
-        "active_roll": True,
+
         "tags": ["start", "concentration"],
     },
 
@@ -167,7 +167,7 @@ SKILLS = {
                 "value": 2
             }
         ],
-        "active_roll": False,
+
         "tags": ["corner", "recovery"],
     },
 
@@ -190,7 +190,7 @@ SKILLS = {
                 "value": 2
             }
         ],
-        "active_roll": False,
+
         "tags": ["downhill", "recovery", "end"],
     },
 
@@ -214,7 +214,7 @@ SKILLS = {
             {"type": "recover_stamina","value": 1},
             {"type": "modify_roll_cap", "value": -7, "duration": "this_roll"},
         ],
-        "active_roll": False,
+
         "tags": ["recovery", "debuff", "front_target"],
     },
 
@@ -240,7 +240,7 @@ SKILLS = {
                 "duration": "this_roll"
             }
         ],
-        "active_roll": False,
+
         "tags": ["corner", "pace", "stability"],
     },
 
@@ -260,7 +260,7 @@ SKILLS = {
             {"type": "modify_gold_range", "value": 60, "duration": "this_turn"},
             {"type": "modify_roll_cap", "value": 15, "duration": "this_roll"},
         ],
-        "active_roll": True,
+
         "tags": ["medium", "positioning", "back"],
     },
 
@@ -280,7 +280,7 @@ SKILLS = {
             {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
-        "active_roll": True,
+
         "tags": ["velocity", "long", "lead"],
     },
 
@@ -299,7 +299,7 @@ SKILLS = {
             {"type": "modify_gold_range", "value": 100, "duration": "this_turn"},
             {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
         ],
-        "active_roll": False,
+
         "tags": ["vision", "end", "positioning"],
     },
 
@@ -319,7 +319,7 @@ SKILLS = {
             {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
-        "active_roll": True,
+
         "tags": ["medium", "lead", "velocity"],
     },
 
@@ -337,7 +337,7 @@ SKILLS = {
             {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
-        "active_roll": True,
+
         "tags": ["pace", "final_corner", "velocity"],
     },
 
@@ -355,7 +355,7 @@ SKILLS = {
             {"type": "modify_current_speed", "value": 1.5},
             {"type": "add_dkh", "value": 1},
         ],
-        "active_roll": True,
+
         "tags": ["pace", "downhill", "acceleration"],
     },
 
@@ -374,7 +374,7 @@ SKILLS = {
             {"type": "modify_current_speed", "value": 1.5},
             {"type": "add_dkh", "value": 1},
         ],
-        "active_roll": True,
+
         "tags": ["late", "acceleration", "late_race"],
     },
 
@@ -391,7 +391,7 @@ SKILLS = {
             {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
-        "active_roll": True,
+
         "tags": ["straight", "velocity"],
     },
 
@@ -408,7 +408,7 @@ SKILLS = {
         "effects": [
             {"type": "add_dkh", "value": 2, "duration": "this_roll"},
         ],
-        "active_roll": True,
+
         "tags": ["sprint", "straight", "acceleration"],
     },
 
@@ -426,7 +426,7 @@ SKILLS = {
             {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
-        "active_roll": True,
+
         "tags": ["medium", "straight", "velocity"],
     },
 
@@ -444,7 +444,7 @@ SKILLS = {
             {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
-        "active_roll": True,
+
         "tags": ["long", "straight", "velocity"],
     },
 
@@ -465,7 +465,7 @@ SKILLS = {
         "effects": [
             {"type": "modify_roll_cap", "value": -12, "duration": "this_roll"},
         ],
-        "active_roll": False,
+
         "tags": ["debuff", "mile", "early_race"],
     },
 
@@ -487,7 +487,7 @@ SKILLS = {
             {"type": "reduce_stamina", "value": 1},  # ศัตรู
             {"type": "self_heal_stamina", "value": 1}     # ตัวเอง
         ],
-        "active_roll": False,
+
         "tags": ["debuff", "long", "stamina"],
     },
 
@@ -506,7 +506,7 @@ SKILLS = {
         "effects": [
             {"type": "recover_stamina", "value": 2}
         ],
-        "active_roll": False,
+
         "tags": ["pace", "recovery", "mid_race"],
     },
 
@@ -522,7 +522,7 @@ SKILLS = {
         "effects": [
             {"type": "recover_stamina", "value": 2}
         ],
-        "active_roll": False,
+
         "tags": ["straight", "recovery"],
     },
 
@@ -539,7 +539,7 @@ SKILLS = {
         "effects": [
             {"type": "recover_stamina", "value": 2}
         ],
-        "active_roll": False,
+
         "tags": ["long", "straight", "recovery"],
     },
 
@@ -558,7 +558,7 @@ SKILLS = {
         "effects": [
             {"type": "recover_stamina", "value": 2}
         ],
-        "active_roll": False,
+
         "tags": ["medium", "lead", "recovery"],
     },
 
@@ -575,7 +575,7 @@ SKILLS = {
         "effects": [
             {"type": "recover_stamina", "value": 2}
         ],
-        "active_roll": False,
+
         "tags": ["front", "uphill", "recovery"],
     },
 
@@ -593,7 +593,7 @@ SKILLS = {
         "effects": [
             {"type": "recover_stamina", "value": 2}
         ],
-        "active_roll": False,
+
         "tags": ["late", "recovery", "late_race"],
     },
 
@@ -616,7 +616,7 @@ SKILLS = {
             {"type": "modify_roll_cap", "value": -10, "duration": "this_roll"},
             {"type": "apply_debuff_next_turn", "stat": "flat_total", "value": -35}
         ],
-        "active_roll": False,
+
         "tags": ["debuff", "medium", "late_race"],
     },
 
@@ -637,7 +637,7 @@ SKILLS = {
         "effects": [
             {"type": "modify_enemy_gold_range", "value": -15, "duration": "next_turn"}
         ],
-        "active_roll": False,
+
         "tags": ["blind", "pace", "debuff", "lead"],
     },
 
@@ -657,7 +657,7 @@ SKILLS = {
         "effects": [
             {"type": "modify_enemy_gold_range", "value": -12, "duration": "next_turn"}
         ],
-        "active_roll": False,
+
         "tags": ["blind", "long", "debuff"],
     },
 
@@ -672,18 +672,9 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {
-                "type": "add_dkh",
-                "value": 1,
-                "duration": "this_roll"
-            },
-            {
-                "type": "modify_roll_cap",
-                "value": 10,
-                "duration": "this_roll"
-            }
+            {"type": "modify_current_speed", "value": 1.25},
         ],
-        "active_roll": True,
+
         "tags": ["start", "acceleration"],
     },
 
@@ -704,7 +695,7 @@ SKILLS = {
             {"type": "modify_current_speed", "value": 2.25},
             {"type": "modify_roll_cap", "value": 15, "duration": "this_roll"},
         ],
-        "active_roll": True,
+
         "tags": ["lastspurt", "blocked", "acceleration"],
     },
 
@@ -721,7 +712,6 @@ SKILLS = {
     #     "effects": [
     #         {"type": "apply_debuff_next_turn", "stat": "flat_total", "value": -50}
     #     ],
-    #     "active_roll": False,
     #     "tags": ["blind", "long", "debuff"],
     # },
     "s032": {
@@ -742,7 +732,7 @@ SKILLS = {
             {"type": "modify_current_speed", "value": 1.5},
             {"type": "add_dkh", "value": 1},
         ],
-        "active_roll": True,
+
         "tags": ["pace", "late_race", "acceleration", "burst"],
     },
 
@@ -770,7 +760,7 @@ SKILLS = {
                 "value": 1
             }
         ],
-        "active_roll": True,
+
         "tags": ["front", "start", "acceleration", "stamina_cost"],
     },
 
@@ -796,7 +786,7 @@ SKILLS = {
                 "duration": "this_roll"
             }
         ],
-        "active_roll": False,
+
         "tags": ["front", "final_corner", "acceleration", "burst"],
     },
     "s035": {
@@ -832,7 +822,7 @@ SKILLS = {
                 "value": 1
             }
         ],
-        "active_roll": False,
+
         "tags": ["mid_late", "acceleration", "sustain"],
     },
 
@@ -858,7 +848,7 @@ SKILLS = {
             },
             {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
         ],
-        "active_roll": False,
+
         "tags": ["late_race", "back", "velocity"],
     },
 
@@ -886,7 +876,7 @@ SKILLS = {
             "duration": "this_roll"
         }
     ],
-        "active_roll": False,
+
         "tags": ["last_spurt", "velocity", "stability"],
     },
 
@@ -913,7 +903,7 @@ SKILLS = {
                 "value": 1
             }
         ],
-        "active_roll": False,
+
         "tags": ["late", "debuff", "stamina", "all_front"],
     },
 
@@ -939,7 +929,7 @@ SKILLS = {
                 "duration": "this_roll"
             }
         ],
-        "active_roll": True,
+
         "tags": ["late", "corner", "burst", "stability"],
     },
 
@@ -963,7 +953,7 @@ SKILLS = {
                 "duration": "this_roll"
             }
         ],
-        "active_roll": True,
+
         "tags": ["mid_race", "velocity", "cap_boost"],
     },
 
@@ -984,7 +974,7 @@ SKILLS = {
             {"type": "reduce_stamina", "value": 1},
             {"type": "force_rush", "value": 1}
         ],
-        "active_roll": False,
+
         "tags": ["debuff", "mindgame"],
     },
 
@@ -1004,7 +994,7 @@ SKILLS = {
         "effects": [
             {"type": "modify_current_speed","value": 3}
         ],
-        "active_roll": False,
+
         "tags": ["corner", "late_race", "acceleration", "unique"],
     },
     
@@ -1034,7 +1024,7 @@ SKILLS = {
                 "duration": "this_roll"
             },
         ],
-        "active_roll": True,
+
         "tags": ["corner", "late_race", "lead", "acceleration", "unique"],
     },
 
@@ -1058,7 +1048,7 @@ SKILLS = {
             {"type": "modify_roll_cap","value": 30,"duration": "this_roll"},
             {"type": "add_dkh","value": 1,"duration": "this_roll"},
         ],
-        "active_roll": True,
+
         "tags": ["late_race", "lead", "velocity", "positioning", "unique"],
     },
 
@@ -1081,7 +1071,7 @@ SKILLS = {
             {"type": "modify_current_speed","value": 2}
 
         ],
-        "active_roll": True,
+
         "tags": ["mid_race", "late_race", "acceleration", "unique"],
     },
 
@@ -1107,7 +1097,7 @@ SKILLS = {
             {"type": "modify_roll_floor","value": 10,"duration": "this_roll"},
 
         ],
-        "active_roll": True,
+
         "tags": ["corner", "late_race", "lead", "acceleration", "unique"],
     },
 
@@ -1134,7 +1124,7 @@ SKILLS = {
                 "duration": "this_roll"
             }
         ],
-        "active_roll": True,
+
         "tags": ["mid_race", "velocity", "positioning"],
     },
 
@@ -1155,7 +1145,6 @@ SKILLS = {
     #         {"type": "modify_gold_range", "value": 100, "duration": "this_turn"},
     #         {"type": "modify_roll_cap", "value": 99, "duration": "this_roll"},
     #     ],
-    #     "active_roll": False,
     #     "tags": ["vision", "end", "positioning"],
     # },
 }

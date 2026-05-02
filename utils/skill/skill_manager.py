@@ -91,13 +91,6 @@ def get_skills_by_tag(tag: str) -> dict:
     }
 
 
-def get_skills_by_active_roll(active_roll: bool) -> dict:
-    return {
-        key: skill
-        for key, skill in SKILLS.items()
-        if skill.get("active_roll", False) == active_roll
-    }
-
 def get_skill_emoji(skill_id: str) -> str:
     skill = SKILLS.get(skill_id)
     if not skill:
@@ -156,7 +149,6 @@ def build_skill_card_text(skill_id: str | None) -> str:
     name = skill["name"]
     cooldown = skill.get("cooldown", 0)
     cost = skill.get("cost", 0)
-    active_text = "เทส" #"ใช้แทน Run" if skill.get("active_roll") else "ใช้ได้ทันที"
 
     trigger_text = describe_trigger(skill.get("trigger", {}))
     target_text = describe_target(skill.get("target", {}))
@@ -165,7 +157,7 @@ def build_skill_card_text(skill_id: str | None) -> str:
 
     return (
         f"{emoji} `{skill_id}` **{name}**\n"
-        f"⏱️ {cooldown} | {Status_Icon_Type['WIT']} {cost} | {active_text}\n"
+        f"⏱️ {cooldown} | {Status_Icon_Type['WIT']} {cost}\n"
         f"**เป้าหมาย:** {target_text}\n"
         f"**เงื่อนไข:** {trigger_text}\n"
         f"ผล: {effect_text}\n"
