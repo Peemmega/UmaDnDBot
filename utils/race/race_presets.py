@@ -85,13 +85,13 @@ def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dic
 
     elif path_type == 3:  # เนินขึ้น
         effect["stamina_cost"] = 2
-        effect["spd_multiplier"] = 0.5
+        # effect["spd_multiplier"] = 0.5
+        game_player["current_max_speed"] *= 0.95
         effect["power_total_multiplier"] = 3.0
 
     elif path_type == 4:  # เนินลง
-        # effect["stamina_gain"] = 1
         effect["stamina_cost"] = 0
-        effect["extra_max_from_wit"] = player_stat.get("wit", 0)
+        effect["extra_max_from_wit"] = player_stat.get("wit", 0) * 3
 
     return effect
 
