@@ -1,10 +1,10 @@
 from pathlib import Path
 from io import BytesIO
 import os
-import requests
 import math
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from utils.game_manager import build_single_wit_regen_text
+import aiohttp
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = BASE_DIR / "assets"
@@ -21,20 +21,25 @@ ICON_MAP = {
 
 async def load_image_url(path_or_url):
     try:
-        # ✅ ถ้าเป็นไฟล์ local
-        if os.path.exists(path_or_url):
+        # ✅ 1. local file
+        if path_or_url and os.path.exists(path_or_url):
             return Image.open(path_or_url).convert("RGBA")
 
-        # ✅ ถ้าเป็น URL
-        response = requests.get(path_or_url)
+        # ✅ 2. URL
+        if path_or_url and path_or_url.startswith(("http://", "https://")):
+            async with aiohttp.ClientSession() as session:
+                async with session.get(path_or_url) as resp:
+                    if resp.status != 200:
+                        raise ValueError(f"HTTP {resp.status}")
 
-        if response.status_code != 200:
-            raise ValueError("โหลด URL ไม่สำเร็จ")
+                    data = await resp.read()
+                    return Image.open(BytesIO(data)).convert("RGBA")
 
-        return Image.open(BytesIO(response.content)).convert("RGBA")
+        # ❌ fallback ถ้า path แปลก
+        raise ValueError("invalid path_or_url")
 
-    except (UnidentifiedImageError, Exception):
-        print(f"[WARN] โหลดรูปไม่ได้: {path_or_url}")
+    except (UnidentifiedImageError, Exception) as e:
+        print(f"[WARN] โหลดรูปไม่ได้: {path_or_url} | {e}")
         return Image.open("assets/default.png").convert("RGBA")
 
 def draw_text_with_underline(draw, xy, text, font, fill, underline_offset=5, thickness=3):
