@@ -161,7 +161,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     spd_bonus = int(spd_bonus_raw * spd_multiplier)
 
     power_bonus = player_stats.get("power", 1) * 2
-    stamina_bonus = player_stats.get("stamina", 1) * 5
+    stamina_bonus = player_stats.get("stamina", 1) * 4
     speed_Bonus = spd_bonus * 3
 
     nearby_count = min(context.get("nearby_count", 0), 2)
