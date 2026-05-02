@@ -1285,7 +1285,28 @@ def add_player_as_mob_preset(
 
     return True, "เข้าร่วมสำเร็จ"
 
-def add_mob_from_preset(channel_id: int, preset_key: str):
+def apply_mob_level(race_profile: dict, level: int):
+    level = max(1, min(level, 8))
+
+    # level 1 = ไม่บวกเพิ่ม
+    bonus = level - 1
+
+    stat_fields = ["speed", "stamina", "power", "gut", "wit"]
+    aptitude_fields = [
+        "turf", "dirt",
+        "sprint", "mile", "medium", "long",
+        "front", "pace", "late", "end_style",
+    ]
+
+    for field in stat_fields:
+        race_profile[field] = min(99, race_profile.get(field, 1) + bonus)
+
+    for field in aptitude_fields:
+        race_profile[field] = min(8, race_profile.get(field, 1) + bonus)
+
+    return race_profile
+
+def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
     game = get_game(channel_id)
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
@@ -1297,28 +1318,36 @@ def add_mob_from_preset(channel_id: int, preset_key: str):
     if preset is None:
         return False, "ไม่พบ preset mob"
 
+    level = max(1, min(level, 8))
+
     mob_id = f"mob_{uuid.uuid4().hex[:8]}"
 
     race_profile = copy.deepcopy(preset["race_profile"])
+    race_profile = apply_mob_level(race_profile, level)
+
     zone = copy.deepcopy(preset["zone"])
     skills = copy.deepcopy(preset["skills"])
 
     game["players"][mob_id] = {
         "username": preset["name"],
-        "display_name": preset["name"],
+        "display_name": f"{preset['name']} Lv.{level}",
         "avatar": preset["avatar"],
-        "thumnail": preset["thumnail"],
+        "thumnail": preset.get("thumnail", preset.get("avatar")),
         "is_mob": True,
+        "mob_level": level,
         "style": preset["style"],
+
         "score": 0,
         "last_roll_turn": -1,
         "reroll_left": 0,
         "wit_reroll_left": 0,
         "stamina_left": 8 + race_profile.get("stamina", 1),
         "wit_mana": 100,
+
         "skills": skills,
         "skill_cooldowns": {},
         "race_profile": race_profile,
+
         "used_rush": False,
         "used_block": False,
         "action_locked": False,
@@ -1337,10 +1366,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str):
         "zone": zone,
     }
 
-    
-
-    return True, f"เพิ่ม mob `{preset['name']}` เรียบร้อย"
-
+    return True, f"เพิ่ม mob `{preset['name']}` Lv.{level} เรียบร้อย"
 
 def grant_start_rerolls(channel_id: int, amount: int = 2):
     game = get_game(channel_id)

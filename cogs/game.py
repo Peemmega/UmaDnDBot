@@ -301,6 +301,49 @@ class GameCog(commands.GroupCog, name="game"):
 
         await interaction.response.send_message(embed=embed)
 
+    @app_commands.command(name="add_rookies", description="เพิ่ม rookie ทั้ง 4 ตัวลงสนาม")
+    @app_commands.describe(level="ระดับ mob 1-8")
+    @app_commands.choices(level=[
+        app_commands.Choice(name="Level 1", value=1),
+        app_commands.Choice(name="Level 2", value=2),
+        app_commands.Choice(name="Level 3", value=3),
+        app_commands.Choice(name="Level 4", value=4),
+        app_commands.Choice(name="Level 5", value=5),
+        app_commands.Choice(name="Level 6", value=6),
+        app_commands.Choice(name="Level 7", value=7),
+        app_commands.Choice(name="Level 8", value=8),
+    ])
+    async def add_rookies(
+        self,
+        interaction: discord.Interaction,
+        level: app_commands.Choice[int],
+    ):
+        rookie_presets = [
+            "rookie_front",
+            "rookie_pace",
+            "rookie_late",
+            "rookie_end",
+        ]
+
+        added = []
+
+        for preset_key in rookie_presets:
+            success, message = add_mob_from_preset(
+                interaction.channel_id,
+                preset_key,
+                level.value
+            )
+
+            if not success:
+                await interaction.response.send_message(message, ephemeral=True)
+                return
+
+            added.append(message)
+
+        await interaction.response.send_message(
+            "เพิ่ม Rookie ทั้ง 4 ตัวเรียบร้อย\n" + "\n".join(added)
+        )
+
     @app_commands.command(name="join_as_mob", description="เข้าร่วมโดยใช้ mob preset")
     @app_commands.autocomplete(preset=mob_preset_autocomplete)
     async def join_as_mob(
