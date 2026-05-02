@@ -2,7 +2,7 @@ from pathlib import Path
 from io import BytesIO
 import os
 import math
-from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
+from PIL import Image, ImageDraw, ImageFont
 from utils.game_manager import build_single_wit_regen_text
 import aiohttp
 
@@ -14,6 +14,7 @@ FONT_PATH = ASSETS_DIR / "fonts" / "Prompt-Bold.ttf"
 
 ICON_MAP = {
     "Speed": ASSETS_DIR / "stats_icon/utx_ico_obtain_00.png",
+    "Stamina": ASSETS_DIR / "stats_icon/utx_ico_obtain_01.png",
     "Power": ASSETS_DIR / "stats_icon/utx_ico_obtain_02.png",
     "Gut": ASSETS_DIR / "stats_icon/utx_ico_obtain_03.png",
     "Velocity": ASSETS_DIR / "skill_icons/Velocity.png",
@@ -119,7 +120,7 @@ def parse_display_text(text: str):
     tokens = []
 
     # split ด้วย __ __ และ emoji
-    pattern = r"(__.*?__|<:.*?:\d+>|Speed|Power|Gut|Velocity)"
+    pattern = r"(__.*?__|<:.*?:\d+>|Speed|Power|Gut|Velocity|Stamina)"
     parts = re.split(pattern, text)
 
     for part in parts:

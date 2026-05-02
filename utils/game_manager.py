@@ -138,10 +138,10 @@ def apply_stamina_debuff(game_player: dict,
     else:
         pending_effects.append({
             "type": "modify_roll_cap",
-            "value": -10,
+            "value": -20,
             "duration": "this_roll"
         })
-        stamina_note = f"ไม่พอ Cap ลูกเต๋า -10"
+        stamina_note = f"ไม่พอ Cap ลูกเต๋า -20"
         return stamina_note, True
 
 def apply_stamina_for_roll(

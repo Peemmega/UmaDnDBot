@@ -130,7 +130,6 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
    
     # Roll Dice --------------------------------------
     current_max_speed = math.floor(game_player.get("current_max_speed", 0))
-    print(current_max_speed)
 
     max_dice_value = (
         current_max_speed
@@ -151,8 +150,8 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         selected = sorted(rolls, reverse=True)[:kh]
     else:
         selected = rolls.copy()
-    # Roll Dice --------------------------------------
 
+    # Roll Dice --------------------------------------
     modified_selected = []
 
     spd_multiplier = path_effect.get("spd_multiplier", 1.0)
@@ -162,12 +161,14 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     spd_bonus = int(spd_bonus_raw * spd_multiplier)
 
     power_bonus = player_stats.get("power", 1) * 2
+    stamina_bonus = player_stats.get("stamina", 1) * 5
+    speed_Bonus = spd_bonus * 3
+
     nearby_count = min(context.get("nearby_count", 0), 2)
     gut_scale = player_stats.get("gut", 1) * 4
     gut_bonus = (gut_scale * nearby_count ) if context.get("distance_color") == "Gold" else 0
 
     total_selected_die_bonus = 0
-    speedBonus = spd_bonus * 3
 
     for r in selected:
         value = r
@@ -181,15 +182,17 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     base_total = sum(selected)
 
     final_power_bonus = int(power_bonus * power_total_multiplier)
-    total = sum(modified_selected) + final_power_bonus + gut_bonus + flat_velocity_bonus + speedBonus
+    total = sum(modified_selected) + final_power_bonus + gut_bonus + flat_velocity_bonus + speed_Bonus + stamina_bonus
 
     bonus_parts = []
-    if speedBonus > 0:
-        bonus_parts.append(f"+{speedBonus}{get_stat_icon('SPD')}")
+    if speed_Bonus > 0:
+        bonus_parts.append(f"+{speed_Bonus}{get_stat_icon('SPD')}")
     if gut_bonus > 0:
         bonus_parts.append(f"+{gut_bonus}{get_stat_icon('GUT')}")
     if final_power_bonus > 0:
         bonus_parts.append(f"+{final_power_bonus}{get_stat_icon('POW')}")
+    if stamina_bonus > 0:
+        bonus_parts.append(f"+{stamina_bonus}{get_stat_icon('STA')}")   
     if flat_velocity_bonus > 0:
         bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
     if total_selected_die_bonus > 0:
