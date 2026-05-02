@@ -549,7 +549,7 @@ def build_mob_join_embed(game: dict, mob: dict):
     return build_join_embed(
         game=game,
         display_name=mob_name,
-        display_image="",
+        display_image=mob.get("thumnail", ""),
         style=style,
         aptitude_source=race_profile,
         title="🏇 ผู้เล่นเข้าร่วม!",
@@ -1251,6 +1251,8 @@ def add_player_as_mob_preset(
     game["players"][user_id] = {
         "username": preset["name"],
         "display_name": preset["name"],
+        "avatar": preset["avatar"],
+        "thumnail": preset["thumnail"],
         "style": preset["style"],
         "current_max_speed": MAX_SPEED_PHASE[preset["style"]]["start"],
         "score": 0,
@@ -1305,6 +1307,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str):
         "username": preset["name"],
         "display_name": preset["name"],
         "avatar": preset["avatar"],
+        "thumnail": preset["thumnail"],
         "is_mob": True,
         "style": preset["style"],
         "score": 0,

@@ -2,10 +2,27 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 CHARACTER_DIR = BASE_DIR / "assets" / "characters"
 
+thumnails = {
+    "Rookie1": "https://media.discordapp.net/attachments/697810514448744448/1499637818228604978/2026-05-01_115945.png?ex=69f6d78d&is=69f5860d&hm=5b1d9d621d0d05111445415dc3dbfc7bd622432e9d2e21bc2ec2342506484685&=&format=webp&quality=lossless&width=554&height=497",
+    "Rookie2": "https://media.discordapp.net/attachments/697810514448744448/1499637819352813669/2026-05-01_120449.png?ex=69f6d78e&is=69f5860e&hm=400d694636b583a161e87d6fd55c3dc01cfab83dca40db7b4fe88952c576e723&=&format=webp&quality=lossless&width=477&height=479",
+    "Rookie3": "https://media.discordapp.net/attachments/697810514448744448/1499637820585672714/2026-05-01_120327.png?ex=69f6d78e&is=69f5860e&hm=62cb74c9d9c39e68cda4dece69b4e374ea392627662e5721f4675f7d99ea83d5&=&format=webp&quality=lossless&width=429&height=446",
+    "Rookie4": "https://media.discordapp.net/attachments/697810514448744448/1499637821181530152/2026-05-01_120159.png?ex=69f6d78e&is=69f5860e&hm=6f5dd0a4417abe109486594b70cc920803bc573608b09b2ed6c999cac43722e1&=&format=webp&quality=lossless&width=1211&height=1202",
+    
+    "FujimasaMarch": "https://media.discordapp.net/attachments/697810514448744448/1499644108015272017/2026-05-01_121038.png?ex=69f6dd69&is=69f58be9&hm=d9b57dc56a1125aa67a0d29f9609caa63a90fb997c607fdf846651587bf28659&=&format=webp&quality=lossless&width=609&height=617",
+    "OguriCap": "https://media.discordapp.net/attachments/697810514448744448/1499644107721674862/oguri-cap-icons-v0-u9uln20fic7g1.png?ex=69f6dd69&is=69f58be9&hm=8252a4885b7f65582e561addfb770b0bea7b9ad35bcae8a35ba6deaf7094f094&=&format=webp&quality=lossless&width=1080&height=1080",
+    "ObeyYourMaster": "https://media.discordapp.net/attachments/697810514448744448/1499644108841549965/3a7b0a372020f36c86bd9ee53eb64184.jpg?ex=69f6dd69&is=69f58be9&hm=ccb67c0aee388e56cb5ef039578a2b915e5581b57208ceb15547c8744b045999&=&format=webp&width=354&height=354",
+    "BeyondTheLight": "https://media.discordapp.net/attachments/697810514448744448/1499644108577312839/4c0fa686a849947746b5c1a06720c9ab.jpg?ex=69f6dd69&is=69f58be9&hm=4789496a55fa43f4baa21ac13806fda80d06672872a10a9804e61b70b59f7125&=&format=webp&width=1104&height=1104",
+    "AlmondEye": "https://media.discordapp.net/attachments/697810514448744448/1499644108292231208/2026-05-01_122211.png?ex=69f6dd69&is=69f58be9&hm=d4a5b420ac0ec8f5ec50790f6cb0826ca80291209110b683dfb6e64e433b064c&=&format=webp&quality=lossless&width=528&height=533",
+    "Equinox": "https://media.discordapp.net/attachments/697810514448744448/1499644107398844577/image.png?ex=69f6dd69&is=69f58be9&hm=9ffefbc037f34ffe3dbfdddec12b5a6114befa93cc95700214f2f15411468bd4&=&format=webp&quality=lossless&width=1059&height=1013",
+
+    "aaa": "",
+}
+
 MOB_PRESETS = {
     "rookie_front": {
         "name": "Rookie Runner",
         "avatar": CHARACTER_DIR / "mob_01.png",
+        "thumnail": thumnails["Rookie1"],
         "style": "Front",
         "race_profile": {
             "speed": 6,
@@ -49,6 +66,7 @@ MOB_PRESETS = {
     "rookie_pace": {
         "name": "Rookie Pace",
         "avatar": CHARACTER_DIR / "mob_02.png",
+        "thumnail": thumnails["Rookie2"],
         "style": "Pace",
         "race_profile": {
             "speed": 5,
@@ -92,6 +110,7 @@ MOB_PRESETS = {
     "rookie_late": {
         "name": "Rookie Late",
         "avatar": CHARACTER_DIR / "mob_03.png",
+        "thumnail": thumnails["Rookie3"],
         "style": "Late",
         "race_profile": {
             "speed": 4,
@@ -135,6 +154,7 @@ MOB_PRESETS = {
     "rookie_end": {
         "name": "Rookie End",
         "avatar": CHARACTER_DIR / "mob_04.png",
+        "thumnail": thumnails["Rookie4"],
         "style": "End",
         "race_profile": {
             "speed": 4,
@@ -178,6 +198,7 @@ MOB_PRESETS = {
     "fujimasa_march": {
         "name": "Fujimasa March",
         "avatar": CHARACTER_DIR / "fujimasa_march.png",
+        "thumnail": thumnails["FujimasaMarch"],
         "style": "Pace",
         "race_profile": {
             "speed": 6,
@@ -221,6 +242,7 @@ MOB_PRESETS = {
     "oguri_cap": {
         "name": "Oguri Cap",
         "avatar": CHARACTER_DIR / "oguri_cap.png",
+        "thumnail": thumnails["OguriCap"],
         "style": "Late",
         "race_profile": {
             "speed": 7,
@@ -264,6 +286,7 @@ MOB_PRESETS = {
     "obey_your_master": {
         "name": "Obey Your Master",
         "avatar": CHARACTER_DIR / "obey_your_master.png",
+        "thumnail": thumnails["ObeyYourMaster"],
         "style": "End",
         "race_profile": {
             "speed": 4,
@@ -307,6 +330,7 @@ MOB_PRESETS = {
     "beyond_the_light": {
         "name": "Beyond The Light",
         "avatar": CHARACTER_DIR / "beyond_the_light.png",
+        "thumnail": thumnails["BeyondTheLight"],
         "style": "Pace",
         "race_profile": {
             "speed": 8,
@@ -351,6 +375,7 @@ MOB_PRESETS = {
     "almond_eye": {
         "name": "Almond Eye",
         "avatar": CHARACTER_DIR / "almond_eye.png",
+        "thumnail": thumnails["AlmondEye"],
         "style": "Pace",
         "race_profile": {
             "speed": 8,
@@ -396,6 +421,7 @@ MOB_PRESETS = {
     "equinox": {
         "name": "Equinox",
         "avatar": CHARACTER_DIR / "equinox.png",
+        "thumnail": thumnails["Equinox"],
         "style": "Pace",
         "race_profile": {
             "speed": 8,
