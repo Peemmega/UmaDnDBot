@@ -325,7 +325,6 @@ def api_get_skills(tag: str = "all"):
             "icon": skill.get("icon"),
             "cooldown": skill.get("cooldown", 0),
             "cost": skill.get("cost", 0),
-            "active_roll": skill.get("active_roll", False),
             "tags": tags,
             "target": describe_target(skill.get("target", {})),
             "trigger": describe_trigger(skill.get("trigger", {})),

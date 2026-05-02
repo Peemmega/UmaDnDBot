@@ -1,11 +1,12 @@
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = BASE_DIR / "assets"
+CHARACTER_DIR = ASSETS_DIR / "utils" / "characters"
 
 MOB_PRESETS = {
     "rookie_front": {
         "name": "Rookie Runner",
-        "avatar": BASE_DIR / "characters/mob_01.png",
+        "avatar": CHARACTER_DIR / "mob_01.png",
         "style": "Front",
         "race_profile": {
             "speed": 6,
@@ -48,7 +49,7 @@ MOB_PRESETS = {
 
     "rookie_pace": {
         "name": "Rookie Pace",
-        "avatar": BASE_DIR / "characters/mob_02.png",
+        "avatar": CHARACTER_DIR / "mob_02.png",
         "style": "Pace",
         "race_profile": {
             "speed": 5,
@@ -91,7 +92,7 @@ MOB_PRESETS = {
 
     "rookie_late": {
         "name": "Rookie Late",
-        "avatar": BASE_DIR / "characters/mob_03.png",
+        "avatar": CHARACTER_DIR / "mob_03.png",
         "style": "Late",
         "race_profile": {
             "speed": 4,
@@ -134,7 +135,7 @@ MOB_PRESETS = {
 
     "rookie_end": {
         "name": "Rookie End",
-        "avatar": BASE_DIR / "characters/mob_04.png",
+        "avatar": CHARACTER_DIR / "mob_04.png",
         "style": "End",
         "race_profile": {
             "speed": 4,
@@ -177,7 +178,7 @@ MOB_PRESETS = {
 
     "fujimasa_march": {
         "name": "Fujimasa March",
-        "avatar": BASE_DIR / "characters/fujimasa_march.png",
+        "avatar": CHARACTER_DIR / "fujimasa_march.png",
         "style": "Pace",
         "race_profile": {
             "speed": 6,
@@ -220,7 +221,7 @@ MOB_PRESETS = {
 
     "oguri_cap": {
         "name": "Oguri Cap",
-        "avatar": BASE_DIR / "characters/oguri_cap.png",
+        "avatar": CHARACTER_DIR / "oguri_cap.png",
         "style": "Late",
         "race_profile": {
             "speed": 7,
@@ -263,7 +264,7 @@ MOB_PRESETS = {
 
     "obey_your_master": {
         "name": "Obey Your Master",
-        "avatar": BASE_DIR / "characters/obey_your_master.png",
+        "avatar": CHARACTER_DIR / "obey_your_master.png",
         "style": "End",
         "race_profile": {
             "speed": 4,
@@ -306,7 +307,7 @@ MOB_PRESETS = {
 
     "beyond_the_light": {
         "name": "Beyond The Light",
-        "avatar": BASE_DIR / "characters/beyond_the_light.png",
+        "avatar": CHARACTER_DIR / "beyond_the_light.png",
         "style": "Pace",
         "race_profile": {
             "speed": 8,
@@ -350,7 +351,7 @@ MOB_PRESETS = {
 
     "almond_eye": {
         "name": "Almond Eye",
-        "avatar": BASE_DIR / "characters/almond_eye.png",
+        "avatar": CHARACTER_DIR / "almond_eye.png",
         "style": "Pace",
         "race_profile": {
             "speed": 8,
@@ -395,7 +396,7 @@ MOB_PRESETS = {
 
     "equinox": {
         "name": "Equinox",
-        "avatar": BASE_DIR / "characters/equinox.png",
+        "avatar": CHARACTER_DIR / "equinox.png",
         "style": "Pace",
         "race_profile": {
             "speed": 8,
