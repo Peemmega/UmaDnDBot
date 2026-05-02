@@ -19,14 +19,23 @@ ICON_MAP = {
     "Velocity": ASSETS_DIR / "skill_icons/Velocity.png",
 }
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_IMAGE = BASE_DIR / "assets" / "mob_01.png"
+
 async def load_image_url(path_or_url):
     try:
-        # ✅ 1. local file
-        if path_or_url and os.path.exists(path_or_url):
-            return Image.open(path_or_url).convert("RGBA")
+        if not path_or_url:
+            raise ValueError("empty image path")
 
-        # ✅ 2. URL
-        if path_or_url and path_or_url.startswith(("http://", "https://")):
+        path_or_url = str(path_or_url)
+
+        # local file
+        local_path = Path(path_or_url)
+        if local_path.exists():
+            return Image.open(local_path).convert("RGBA")
+
+        # URL
+        if path_or_url.startswith(("http://", "https://")):
             async with aiohttp.ClientSession() as session:
                 async with session.get(path_or_url) as resp:
                     if resp.status != 200:
@@ -35,12 +44,16 @@ async def load_image_url(path_or_url):
                     data = await resp.read()
                     return Image.open(BytesIO(data)).convert("RGBA")
 
-        # ❌ fallback ถ้า path แปลก
-        raise ValueError("invalid path_or_url")
+        raise ValueError(f"invalid image path: {path_or_url}")
 
-    except (UnidentifiedImageError, Exception) as e:
+    except Exception as e:
         print(f"[WARN] โหลดรูปไม่ได้: {path_or_url} | {e}")
-        return Image.open("assets/default.png").convert("RGBA")
+
+        if DEFAULT_IMAGE.exists():
+            return Image.open(DEFAULT_IMAGE).convert("RGBA")
+
+        # fallback สุดท้าย: สร้างรูปโปร่งใส กัน crash
+        return Image.new("RGBA", (512, 512), (0, 0, 0, 0))
 
 def draw_text_with_underline(draw, xy, text, font, fill, underline_offset=5, thickness=3):
     x, y = xy
