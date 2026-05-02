@@ -543,7 +543,7 @@ def build_mob_join_embed(game: dict, mob: dict):
     )
 
     style = mob.get("style", "Unknown")
-    mob_avatar = mob.get("avatar", "")
+    # mob_avatar = mob.get("avatar", "")
     race_profile = mob.get("race_profile", {})
 
     return build_join_embed(
