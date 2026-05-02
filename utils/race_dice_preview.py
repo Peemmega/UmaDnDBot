@@ -1,8 +1,9 @@
 from pathlib import Path
 from io import BytesIO
-import aiohttp
+import os
+import requests
 import math
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from utils.game_manager import build_single_wit_regen_text
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,11 +19,23 @@ ICON_MAP = {
     "Velocity": ASSETS_DIR / "skill_icons/Velocity.png",
 }
 
-async def load_image_url(url: str) -> Image.Image:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            data = await resp.read()
-    return Image.open(BytesIO(data)).convert("RGBA")
+async def load_image_url(path_or_url):
+    try:
+        # ✅ ถ้าเป็นไฟล์ local
+        if os.path.exists(path_or_url):
+            return Image.open(path_or_url).convert("RGBA")
+
+        # ✅ ถ้าเป็น URL
+        response = requests.get(path_or_url)
+
+        if response.status_code != 200:
+            raise ValueError("โหลด URL ไม่สำเร็จ")
+
+        return Image.open(BytesIO(response.content)).convert("RGBA")
+
+    except (UnidentifiedImageError, Exception):
+        print(f"[WARN] โหลดรูปไม่ได้: {path_or_url}")
+        return Image.open("assets/default.png").convert("RGBA")
 
 def draw_text_with_underline(draw, xy, text, font, fill, underline_offset=5, thickness=3):
     x, y = xy

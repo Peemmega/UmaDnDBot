@@ -549,7 +549,7 @@ def build_mob_join_embed(game: dict, mob: dict):
     return build_join_embed(
         game=game,
         display_name=mob_name,
-        display_image=mob_avatar,
+        display_image="",
         style=style,
         aptitude_source=race_profile,
         title="🏇 ผู้เล่นเข้าร่วม!",

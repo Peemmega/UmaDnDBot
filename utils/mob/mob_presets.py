@@ -1,7 +1,7 @@
 MOB_PRESETS = {
     "rookie_front": {
         "name": "Rookie Runner",
-        "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499637818228604978/2026-05-01_115945.png?ex=69f5860d&is=69f4348d&hm=600ee13bbb65930fc4e541aa2488924b6f0cdda033b79eb4e973298225e931d3&=&format=webp&quality=lossless&width=554&height=497",
+        "avatar": "assets/characters/mob_01.png",
         "style": "Front",
         "race_profile": {
             "speed": 6,
@@ -44,7 +44,7 @@ MOB_PRESETS = {
 
     "rookie_pace": {
         "name": "Rookie Pace",
-        "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499637819352813669/2026-05-01_120449.png?ex=69f5860e&is=69f4348e&hm=8265d9885609b112aa8f1f6e4fe8d6ed042d39587b7072b4664c45314171d1de&=&format=webp&quality=lossless&width=477&height=479",
+        "avatar": "assets/characters/mob_02.png",
         "style": "Pace",
         "race_profile": {
             "speed": 5,
@@ -87,7 +87,7 @@ MOB_PRESETS = {
 
     "rookie_late": {
         "name": "Rookie Late",
-        "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499637820585672714/2026-05-01_120327.png?ex=69f5860e&is=69f4348e&hm=4c242e8681cef2f822cd66c048b8f9f300da9117c6be92af97b9bb956b26fa7f&=&format=webp&quality=lossless&width=429&height=446",
+        "avatar": "assets/characters/mob_03.png",
         "style": "Late",
         "race_profile": {
             "speed": 4,
@@ -130,7 +130,7 @@ MOB_PRESETS = {
 
     "rookie_end": {
         "name": "Rookie End",
-        "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499637821181530152/2026-05-01_120159.png?ex=69f5860e&is=69f4348e&hm=faecd6d32c321bdc3e388b5292a75e9b61ef75ff477622b8f07716b92a7aa1bc&=&format=webp&quality=lossless&width=1211&height=1202",
+        "avatar": "assets/characters/mob_04.png",
         "style": "End",
         "race_profile": {
             "speed": 4,
@@ -173,7 +173,7 @@ MOB_PRESETS = {
 
     "fujimasa_march": {
         "name": "Fujimasa March",
-        "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499644108015272017/2026-05-01_121038.png?ex=69f58be9&is=69f43a69&hm=fd8c3f582085bf99b7a8a8d9fad0c1d6721918d140e0f969e8cb56615b3624b3&=&format=webp&quality=lossless&width=609&height=617",
+        "avatar": "assets/characters/fujimasa_march.png",
         "style": "Pace",
         "race_profile": {
             "speed": 6,
@@ -216,7 +216,7 @@ MOB_PRESETS = {
 
     "oguri_cap": {
         "name": "Oguri Cap",
-        "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499644107721674862/oguri-cap-icons-v0-u9uln20fic7g1.png?ex=69f58be9&is=69f43a69&hm=71a26a4c5feec711021e06d0e53fb2ccaf26a8f06b907da51b4667aaf7f5cd8c&=&format=webp&quality=lossless&width=1080&height=1080",
+        "avatar": "assets/characters/oguri_cap.png",
         "style": "Late",
         "race_profile": {
             "speed": 7,
@@ -259,7 +259,7 @@ MOB_PRESETS = {
 
     "obey_your_master": {
         "name": "Obey Your Master",
-        "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499644108841549965/3a7b0a372020f36c86bd9ee53eb64184.jpg?ex=69f58be9&is=69f43a69&hm=3cea6a25a962509c963d36ef6a5501ea6a89d72e401050109f608a30a47f67a4&=&format=webp&width=354&height=354",
+        "avatar": "assets/characters/obey_your_master.png",
         "style": "End",
         "race_profile": {
             "speed": 4,
@@ -302,7 +302,7 @@ MOB_PRESETS = {
 
     "beyond_the_light": {
         "name": "Beyond The Light",
-        "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499644108577312839/4c0fa686a849947746b5c1a06720c9ab.jpg?ex=69f58be9&is=69f43a69&hm=934f3b369788f92fec70d551ec7a1ace124f2f49a8e504e06827382e9f15ebc3&=&format=webp&width=1104&height=1104",
+        "avatar": "assets/characters/beyond_the_light.png",
         "style": "Pace",
         "race_profile": {
             "speed": 8,
@@ -346,7 +346,7 @@ MOB_PRESETS = {
 
     "almond_eye": {
         "name": "Almond Eye",
-        "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499644108292231208/2026-05-01_122211.png?ex=69f58be9&is=69f43a69&hm=d88cd8646dbf9d696c5e21d3d8be714587e7cda7ee5da5d408e39915969678d8&=&format=webp&quality=lossless&width=528&height=533",
+        "avatar": "assets/characters/almond_eye.png",
         "style": "Pace",
         "race_profile": {
             "speed": 8,
@@ -391,7 +391,7 @@ MOB_PRESETS = {
 
     "equinox": {
         "name": "Equinox",
-        "avatar": "https://media.discordapp.net/attachments/697810514448744448/1499644107398844577/image.png?ex=69f58be9&is=69f43a69&hm=f61a3ad6621bc75db7513a00a9b391d75edf853963cd5a60e538e0a9af892267&=&format=webp&quality=lossless&width=1059&height=1013",
+        "avatar": "assets/characters/equinox.png",
         "style": "Pace",
         "race_profile": {
             "speed": 8,
