@@ -17,7 +17,7 @@ from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game
 from views.create_game_view import LobbyView, build_lobby_embed
-from bot_instance import bot
+import bot_instance
 
 app = FastAPI()
 app.add_middleware(
@@ -326,8 +326,15 @@ class CreateRaceRoomPayload(BaseModel):
 
 @app.post("/race/room/create")
 async def api_create_race_room(payload: CreateRaceRoomPayload):
+
+    bot = bot_instance.bot   # ✅ ดึงตอน runtime
+
+    if bot is None:
+        return {"success": False, "message": "Bot ยังไม่พร้อม"}
+
     for channel_id in RACE_ROOM_CHANNEL_IDS:
         if get_game(channel_id) is None:
+
             success = create_game(
                 channel_id=channel_id,
                 stage_key=payload.race_id,
@@ -340,7 +347,7 @@ async def api_create_race_room(payload: CreateRaceRoomPayload):
             channel = bot.get_channel(channel_id)
             if channel is None:
                 channel = await bot.fetch_channel(channel_id)
-                
+
             embed = build_lobby_embed(channel_id)
 
             await channel.send(
@@ -350,8 +357,7 @@ async def api_create_race_room(payload: CreateRaceRoomPayload):
 
             return {
                 "success": True,
-                "message": "สร้างห้องสำเร็จ",
-                "channel_id": str(channel_id),
+                "message": "สร้างห้องสำเร็จ"
             }
 
     return {"success": False, "message": "ไม่มีห้องว่าง"}
