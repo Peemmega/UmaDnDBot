@@ -59,7 +59,7 @@ def build_game_end_embed(ranked_players, commentary_text: str | None = None):
     rank_lines = []
     for index, (user_id, info) in enumerate(ranked_players, start=1):
         if str(user_id).startswith("mob_"):
-            display_name = info.get("display_name") or info.get("username") or "Mob"
+            display_name = info.get("display_name") or info.get('username') or "Mob"
         else:
             display_name = f"<@{user_id}>"
 
@@ -191,9 +191,9 @@ class GameCog(commands.GroupCog, name="game"):
                 rank_lines = []
                 for index, (user_id, info) in enumerate(ranked_players, start=1):
                     if str(user_id).startswith("mob_"):
-                        display_name = info.get("display_name") or info.get("username") or "Mob"
+                        display_name = info.get("display_name") or info.get('username') or "Mob"
                     else:
-                        display_name = info.get("username") or f"<@{user_id}>"
+                        display_name = info.get('username') or f"<@{user_id}>"
 
                     rank_lines.append(
                         f"ลำดับที่ {index}: {display_name} | Score: {info['score']} ({info['style']})"
@@ -434,7 +434,7 @@ class GameCog(commands.GroupCog, name="game"):
                     or "Mob"
                 )
             else:
-                display_name = info.get("username") or f"<@{user_id}>"
+                display_name = info.get('username') or f"<@{user_id}>"
 
             rank_lines.append(
                 f"ลำดับที่ {index}: {display_name} | Score: {info['score']} ({info['style']})"
