@@ -300,7 +300,7 @@ def get_race_calendar():
             "id": item["race_id"],
             "date": item["date"],
             "time": item["time"],
-            "name": race["name"],
+            "name": race['name'],
             "image": race.get("image"),
             "thumbnail": race.get("thumnail"),
             "track": race.get("track"),
@@ -321,7 +321,7 @@ def api_get_skills(tag: str = "all"):
 
         result.append({
             "id": skill_id,
-            "name": skill["name"],
+            "name": skill['name'],
             "icon": skill.get("icon"),
             "cooldown": skill.get("cooldown", 0),
             "cost": skill.get("cost", 0),
@@ -409,7 +409,7 @@ def api_get_player_skills(user_id: str):
 
         result[slot_key] = {
             "id": skill_id,
-            "name": skill["name"],
+            "name": skill['name'],
             "icon": skill.get("icon"),
             "cooldown": skill.get("cooldown", 0),
             "cost": skill.get("cost", 0),

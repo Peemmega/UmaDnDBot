@@ -113,7 +113,7 @@ def build_slot_display(skill_id: str | None, channel_id: int, user_id: int) -> s
 
     skill = SKILLS.get(skill_id)
     emoji = ICON.get(skill.get("icon"), "❓")
-    name = skill["name"]
+    name = skill['name']
     
     if on_cd:
         return (
@@ -127,7 +127,7 @@ def build_slot_display(skill_id: str | None, channel_id: int, user_id: int) -> s
 def get_mob_preset_choices():
     return [
         app_commands.Choice(
-            name=data["name"],   # ชื่อโชว์
+            name=data['name'],   # ชื่อโชว์
             value=key            # key ใช้จริง
         )
         for key, data in MOB_PRESETS.items()
@@ -140,7 +140,7 @@ async def stage_autocomplete(
     results = []
 
     for key, data in RACE_PRESET.items():
-        stage_name = data["name"]
+        stage_name = data['name']
 
         if (
             current.lower() in key.lower()
@@ -164,9 +164,9 @@ async def mob_preset_autocomplete(
     current: str
 ):
     return [
-        app_commands.Choice(name=data["name"], value=key)
+        app_commands.Choice(name=data['name'], value=key)
         for key, data in MOB_PRESETS.items()
-        if current.lower() in data["name"].lower()
+        if current.lower() in data['name'].lower()
     ][:25]
 
 class GameCog(commands.GroupCog, name="game"):
@@ -375,7 +375,7 @@ class GameCog(commands.GroupCog, name="game"):
         embed = build_mob_join_embed(game, player)
         embed.title = "🏇 ผู้เล่นเข้าร่วมด้วย Mob Preset!"
         embed.add_field(name="ผู้เล่น", value=interaction.user.mention, inline=True)
-        embed.add_field(name="Preset", value=MOB_PRESETS[preset]["name"], inline=True)
+        embed.add_field(name="Preset", value=MOB_PRESETS[preset]['name'], inline=True)
 
         await interaction.response.send_message(embed=embed)
 

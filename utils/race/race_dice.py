@@ -252,11 +252,11 @@ def roll_race_dice(
         "rolls": dice_result["rolls"],
         "selected": dice_result["selected"],
         "modified_selected": dice_result["modified_selected"],
-        "display": dice_result["display"],
+        "display": dice_result['display'],
         "base_total": dice_result["base_total"],
         "total": dice_result["total"],
         "total_display": dice_result["total_display"],
-        "bonus_display": dice_result["bonus_display"],
+        "bonus_display": dice_result['bonus_display'],
     }
 
 def build_dice_table_grid(dice_preset: dict, color: str) -> str:

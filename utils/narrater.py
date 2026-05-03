@@ -140,7 +140,7 @@ def is_first_turn_of_phase(turn: int, max_turn: int) -> bool:
 
 
 def build_player_lookup(players: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    return {p["name"]: p for p in players}
+    return {p['name']: p for p in players}
 
 
 def classify_movement(pos_delta: int, score_delta: int, pos: int) -> str:
@@ -169,7 +169,7 @@ def analyze_changes(
     analyzed: list[dict[str, Any]] = []
 
     for current in current_players:
-        name = current["name"]
+        name = current['name']
         prev = prev_lookup.get(name, {})
 
         prev_pos = prev.get("pos")
@@ -285,7 +285,7 @@ def build_leader_line(
 
 def build_interest_line(player):
     tag = player.get("movement_tag")
-    name = player["name"]
+    name = player['name']
 
     if tag in MOVEMENT_LINES:
         return random.choice(MOVEMENT_LINES[tag]).format(name=name)

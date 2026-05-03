@@ -101,10 +101,10 @@ def execute_roll_core(
     game_player["enemy_gold_range_penalty_next_turn"] = 0
 
     if stamina_penalty_active:
-        if result["bonus_display"] == "-":
-            result["bonus_display"] = "-10CAP"
+        if result['bonus_display'] == "-":
+            result['bonus_display'] = "-10CAP"
         else:
-            result["bonus_display"] += " -10CAP"
+            result['bonus_display'] += " -10CAP"
             
     success, new_score = update_player_score(
         channel_id,
@@ -182,7 +182,7 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
 
     games[channel_id] = {
         "stage_key": stage_key,
-        "stage_name": stage["name"],
+        "stage_name": stage['name'],
         "max_turn": stage["turn"],
         "track": stage["track"],
         "distance": stage["distance"],
@@ -446,7 +446,7 @@ def start_game(channel_id: int):
             # zone ของผู้เล่นจริง ถ้ายังใช้ในเกม
             if "zone" not in player and "zone" in db_player:
                 player["zone"] = {
-                    "name": db_player["zone"]["name"],
+                    "name": db_player["zone"]['name'],
                     "image_url": db_player["zone"]["image_url"],
                     "points": db_player["zone"]["points"],
                     "build": db_player["zone"]["build"],
@@ -1085,7 +1085,7 @@ def build_run_embed(
     current_max_speed = math.floor(game_player.get("current_max_speed", 0))
     wit_reroll = game_player.get("wit_reroll_left", 0)
 
-    embed.add_field(name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {result["distance_color"]}", value= f"{result["display"]} {result["bonus_display"]}" , inline=False)
+    embed.add_field(name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {result['distance_color']}", value= f"{result['display']} {result['bonus_display']}" , inline=False)
     
     if stamina_note == None:
         stamina_note = str(game_player["stamina_left"])
@@ -1219,7 +1219,7 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
         "zone_left": 1,
 
         "zone": {
-            "name": db_player["zone"]["name"],
+            "name": db_player["zone"]['name'],
             "image_url": db_player["zone"]["image_url"],
             "points": db_player["zone"]["points"],
             "build": db_player["zone"]["build"],
@@ -1249,8 +1249,8 @@ def add_player_as_mob_preset(
         return False, "ไม่พบ preset"
 
     game["players"][user_id] = {
-        "username": preset["name"],
-        "display_name": preset["name"],
+        "username": preset['name'],
+        "display_name": preset['name'],
         "avatar": preset["avatar"],
         "thumnail": preset["thumnail"],
         "style": preset["style"],
@@ -1329,7 +1329,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
     skills = copy.deepcopy(preset["skills"])
 
     game["players"][mob_id] = {
-        "username": preset["name"],
+        "username": preset['name'],
         "display_name": f"{preset['name']} Lv.{level}",
         "avatar": preset["avatar"],
         "thumnail": preset.get("thumnail", preset.get("avatar")),

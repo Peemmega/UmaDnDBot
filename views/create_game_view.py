@@ -19,7 +19,7 @@ def build_lobby_embed(channel_id: int) -> discord.Embed:
     stage_data = RACE_PRESET[stage_key]
 
     embed = discord.Embed(
-        title="สนาม: " + stage_data["name"],
+        title="สนาม: " + stage_data['name'],
         description="เตรียมตัวเข้าสู่สนามแข่ง 🏇",
         color=discord.Color.green()
     )
@@ -158,7 +158,7 @@ class StageDropdown(discord.ui.Select):
 
         options = [
             discord.SelectOption(
-                label=stage["name"],
+                label=stage['name'],
                 value=key
             )
             for key, stage in stages.items()

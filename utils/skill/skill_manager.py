@@ -68,7 +68,7 @@ def find_skill_by_name(name: str) -> Optional[tuple[str, dict]]:
     name_lower = name.strip().lower()
 
     for key, skill in SKILLS.items():
-        if key.lower() == name_lower or skill["name"].lower() == name_lower:
+        if key.lower() == name_lower or skill['name'].lower() == name_lower:
             return key, skill
 
     return None
@@ -146,7 +146,7 @@ def build_skill_card_text(skill_id: str | None) -> str:
         return f"❓ `{skill_id}` ไม่พบข้อมูล"
 
     emoji = ICON.get(skill.get("icon"), "❓")
-    name = skill["name"]
+    name = skill['name']
     cooldown = skill.get("cooldown", 0)
     cost = skill.get("cost", 0)
 
