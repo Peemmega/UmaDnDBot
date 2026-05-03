@@ -719,8 +719,6 @@ class GameCog(commands.GroupCog, name="game"):
 
     @discord.app_commands.command(name="skill", description="เปิดเมนูใช้สกิล")
     async def skill(self, interaction: discord.Interaction):
-        ensure_player(interaction.user.id, interaction.user.name)
-
         playerInGame = get_player_in_game(
             interaction.channel_id,
             interaction.user.id

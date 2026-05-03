@@ -33,12 +33,13 @@ class SkillCog(commands.Cog):
         slot: int,
         skill_id: str,
     ):
+        await interaction.response.defer(ephemeral=True)
         ensure_player(interaction.user.id, interaction.user.name)
 
         skill_id = skill_id.strip().lower()
 
         if skill_id not in SKILLS:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"ไม่พบสกิล `{skill_id}`",
                 ephemeral=True
             )
@@ -46,7 +47,7 @@ class SkillCog(commands.Cog):
 
         slots = get_player_skill_slots(interaction.user.id)
         if skill_id in slots.values():
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "คุณติดตั้งสกิลนี้ไว้แล้ว",
                 ephemeral=True
             )
@@ -59,7 +60,7 @@ class SkillCog(commands.Cog):
         )
 
         if not success:
-            await interaction.response.send_message(message, ephemeral=True)
+            await interaction.followup.send(message, ephemeral=True)
             return
 
         skill_text = get_skill_display(skill_id)
@@ -73,7 +74,7 @@ class SkillCog(commands.Cog):
             )
         )
 
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.followup.send(embed=embed, ephemeral=True)
         
 
     @skill_group.command(name="check", description="ตรวจสอบข้อมูลสกิล")
@@ -162,11 +163,12 @@ class SkillCog(commands.Cog):
 
     @skill_group.command(name="my", description="ดูสกิลที่ติดตั้ง")
     async def my_skills(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
         ensure_player(interaction.user.id, interaction.user.name)
 
         slots = get_player_skill_slots(interaction.user.id)
         if slots is None:
-            await interaction.response.send_message("ไม่พบข้อมูลผู้เล่น", ephemeral=True)
+            await interaction.followup.send("ไม่พบข้อมูลผู้เล่น", ephemeral=True)
             return
 
         embed = discord.Embed(
@@ -196,7 +198,7 @@ class SkillCog(commands.Cog):
         )
         
         embed.set_footer(text="ใช้ /skill info <id> เพื่อดูรายละเอียดเพิ่มเติม")
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.followup.send(embed=embed, ephemeral=True)
         
 async def setup(bot):
     await bot.add_cog(SkillCog(bot))

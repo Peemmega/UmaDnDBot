@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from views.action_view import ActionView
-from utils.database import ensure_player
 
 class ActionCog(commands.Cog):
     def __init__(self, bot):
