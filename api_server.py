@@ -16,6 +16,8 @@ from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game
+from views.create_game_view import LobbyView, build_lobby_embed
+from bot_instance import bot
 
 app = FastAPI()
 app.add_middleware(
@@ -323,7 +325,7 @@ class CreateRaceRoomPayload(BaseModel):
     race_id: str
 
 @app.post("/race/room/create")
-def api_create_race_room(payload: CreateRaceRoomPayload):
+async def api_create_race_room(payload: CreateRaceRoomPayload):
     for channel_id in RACE_ROOM_CHANNEL_IDS:
         if get_game(channel_id) is None:
             success = create_game(
@@ -333,21 +335,26 @@ def api_create_race_room(payload: CreateRaceRoomPayload):
             )
 
             if not success:
-                return {
-                    "success": False,
-                    "message": "สร้างห้องไม่สำเร็จ"
-                }
+                return {"success": False, "message": "สร้างห้องไม่สำเร็จ"}
+
+            channel = bot.get_channel(channel_id)
+            if channel is None:
+                channel = await bot.fetch_channel(channel_id)
+                
+            embed = build_lobby_embed(channel_id)
+
+            await channel.send(
+                embed=embed,
+                view=LobbyView(channel_id)
+            )
 
             return {
                 "success": True,
-                "channel_id": channel_id,
-                "message": "สร้างห้องสำเร็จ"
+                "message": "สร้างห้องสำเร็จ",
+                "channel_id": str(channel_id),
             }
 
-    return {
-        "success": False,
-        "message": "ไม่มีห้องว่าง"
-    }
+    return {"success": False, "message": "ไม่มีห้องว่าง"}
 
 @app.get("/race/calendar")
 def get_race_calendar():

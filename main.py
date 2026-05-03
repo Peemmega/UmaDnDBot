@@ -6,6 +6,7 @@ import uvicorn
 from discord.ext import commands
 from dotenv import load_dotenv
 
+import bot_instance
 from api_server import app
 from utils.database import init_db
 
@@ -49,7 +50,11 @@ class Client(commands.Bot):
 intents = discord.Intents.default()
 intents.message_content = True
 
+client = Client(command_prefix="!", intents=intents)
+
+# ให้ api_server เรียกใช้ bot ตัวนี้ได้
+bot_instance.bot = client
+
 threading.Thread(target=run_api, daemon=True).start()
 
-client = Client(command_prefix="!", intents=intents)
 client.run(TOKEN)
