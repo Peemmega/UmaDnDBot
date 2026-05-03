@@ -96,7 +96,7 @@ def build_join_style_embed(max_turn: int) -> discord.Embed:
         inline=False
     )
     
-    embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1495065428349816842/Screen_Recording_20260418_210653_Umamusume-ezgif.com-crop.gif?ex=69e4e3af&is=69e3922f&hm=067329e7060809a86e0e62ee11ac1fa51893c0b4f59603e9837bf591e864ca4b&=&width=935&height=417")
+    embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1500584591461978163/Uma_musume_Bot_Discord_2.png?ex=69f8f7ce&is=69f7a64e&hm=435b6b5dfb170b359f0e3732cc3f607d683ebe977e56f1ab4925e173839233f8&=&format=webp&quality=lossless&width=2249&height=1265Z")
     embed.set_footer(text="กดปุ่มด้านล่างเพื่อเลือก Front / Pace / Late / End")
     return embed
 
@@ -235,7 +235,7 @@ class LobbyView(discord.ui.View):
         )
         embed.add_field(name="📢 วิธีเล่น", value=f"ในแต่ละ turn สามาใช้งาน\n /game run เพื่อวิ่ง\nนอกจากนี้ยังสามารถใช้งานสกิลโดยใช้\n/game skill (แนะนำให้ใช้ก่อน run)", inline=True)
         
-        embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1500584591461978163/Uma_musume_Bot_Discord_2.png?ex=69f8f7ce&is=69f7a64e&hm=435b6b5dfb170b359f0e3732cc3f607d683ebe977e56f1ab4925e173839233f8&=&format=webp&quality=lossless&width=2249&height=1265")
+        embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1495728671300780083/uma-musume-running.gif?ex=69e74d60&is=69e5fbe0&hm=958b07dacfcb4c4b2bb82049ac1863c8d1b4ecc2122514250b3b18104b9ce09a&=&width=747&height=422")
         await interaction.followup.send(embed=embed)
 
         for user_id, player in game["players"].items():
