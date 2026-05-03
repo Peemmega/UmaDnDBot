@@ -31,10 +31,10 @@ ZONE_POINT_COST = {
 }
 
 ZONE_VALUE = {
-    "flat": 18,
+    "flat": 35,
     "add_dkh": 2,
-    "floor": 5,
-    "selected_die": 3,
+    "floor": 7,
+    "selected_die": 5,
     "cap": 7,
     "self_heal_stamina": 1,
     "modify_current_speed": 0.5,
