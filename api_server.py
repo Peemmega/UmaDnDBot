@@ -15,6 +15,7 @@ from utils.zone.zone_preset import ZONE_POINT_COST
 from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
+from utils.game_manager import get_game, create_game
 
 app = FastAPI()
 app.add_middleware(
@@ -309,6 +310,44 @@ def api_get_all_races(distance: str = "all"):
         })
 
     return result
+
+
+RACE_ROOM_CHANNEL_IDS = [
+    1496059539085201529,
+    1496124234240622673,
+    1496124268352639007,
+]
+
+class CreateRaceRoomPayload(BaseModel):
+    user_id: str
+    race_id: str
+
+@app.post("/race/room/create")
+def api_create_race_room(payload: CreateRaceRoomPayload):
+    for channel_id in RACE_ROOM_CHANNEL_IDS:
+        if get_game(channel_id) is None:
+            success = create_game(
+                channel_id=channel_id,
+                stage_key=payload.race_id,
+                owner_id=int(payload.user_id),
+            )
+
+            if not success:
+                return {
+                    "success": False,
+                    "message": "สร้างห้องไม่สำเร็จ"
+                }
+
+            return {
+                "success": True,
+                "channel_id": channel_id,
+                "message": "สร้างห้องสำเร็จ"
+            }
+
+    return {
+        "success": False,
+        "message": "ไม่มีห้องว่าง"
+    }
 
 @app.get("/race/calendar")
 def get_race_calendar():
