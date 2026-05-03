@@ -287,6 +287,29 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
     finally:
         conn.close()
 
+@app.get("/races")
+def api_get_all_races(distance: str = "all"):
+    result = []
+
+    for race_id, race in RACE_PRESET.items():
+        race_distance = race.get("distance", "unknown")
+
+        if distance != "all" and race_distance.lower() != distance.lower():
+            continue
+
+        result.append({
+            "id": race_id,
+            "name": race.get("name"),
+            "image": race.get("image"),
+            "thumbnail": race.get("thumnail"),
+            "track": race.get("track"),
+            "distance": race_distance,
+            "turn": race.get("turn"),
+            "path": race.get("path", []),
+        })
+
+    return result
+
 @app.get("/race/calendar")
 def get_race_calendar():
     events = []
