@@ -14,4 +14,4 @@ class ActionView(discord.ui.View):
 
     @discord.ui.button(label="Test 3", style=discord.ButtonStyle.grey, emoji="💪")
     async def pose_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("โอกุริเกรับทำฟอม")
+        await interaction.response.send_message("โอกุริเกรับทำฟอมFFF")
