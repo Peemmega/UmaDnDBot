@@ -290,7 +290,7 @@ def build_skill_description(skill_id: str) -> str:
 
     return (
         f"{emoji} `{skill_id}` **{skill['name']}**\n"
-        f"⏱️: {skill.get('cooldown', 0)} | {Status_Icon_Type["WIT"]}: {skill.get('cost', 0)}\n"
+        f"⏱️: {skill.get('cooldown', 0)} | {Status_Icon_Type['WIT']}: {skill.get('cost', 0)}\n"
         f"เป้าหมาย: {target_text}\n"
         f"เงื่อนไข: {trigger_text}\n"
         f"ผล:\n{effects}"
