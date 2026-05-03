@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 import json
+import asyncio
 
 from utils.database import (
     get_player, 
@@ -324,17 +325,34 @@ class CreateRaceRoomPayload(BaseModel):
     user_id: str
     race_id: str
 
+async def send_lobby_message(channel_id: int):
+    bot = bot_instance.bot
+
+    if bot is None or not bot.is_ready():
+        return False, "Bot ยังไม่พร้อม"
+
+    channel = bot.get_channel(channel_id)
+    if channel is None:
+        channel = await bot.fetch_channel(channel_id)
+
+    embed = build_lobby_embed(channel_id)
+
+    await channel.send(
+        embed=embed,
+        view=LobbyView(channel_id)
+    )
+
+    return True, "ส่ง lobby embed แล้ว"
+
 @app.post("/race/room/create")
 async def api_create_race_room(payload: CreateRaceRoomPayload):
+    bot = bot_instance.bot
 
-    bot = bot_instance.bot   # ✅ ดึงตอน runtime
-
-    if bot is None:
+    if bot is None or not bot.is_ready():
         return {"success": False, "message": "Bot ยังไม่พร้อม"}
 
     for channel_id in RACE_ROOM_CHANNEL_IDS:
         if get_game(channel_id) is None:
-
             success = create_game(
                 channel_id=channel_id,
                 stage_key=payload.race_id,
@@ -344,20 +362,20 @@ async def api_create_race_room(payload: CreateRaceRoomPayload):
             if not success:
                 return {"success": False, "message": "สร้างห้องไม่สำเร็จ"}
 
-            channel = bot.get_channel(channel_id)
-            if channel is None:
-                channel = await bot.fetch_channel(channel_id)
-
-            embed = build_lobby_embed(channel_id)
-
-            await channel.send(
-                embed=embed,
-                view=LobbyView(channel_id)
+            future = asyncio.run_coroutine_threadsafe(
+                send_lobby_message(channel_id),
+                bot.loop
             )
+
+            ok, msg = future.result(timeout=10)
+
+            if not ok:
+                return {"success": False, "message": msg}
 
             return {
                 "success": True,
-                "message": "สร้างห้องสำเร็จ"
+                "message": "สร้างห้องสำเร็จ",
+                "channel_id": str(channel_id),
             }
 
     return {"success": False, "message": "ไม่มีห้องว่าง"}
