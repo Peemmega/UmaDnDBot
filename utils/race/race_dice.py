@@ -168,6 +168,9 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     gut_scale = player_stats.get("gut", 1) * 4
     gut_bonus = (gut_scale * nearby_count ) if context.get("distance_color") == "Gold" else 0
 
+    if (context.get("phase", 1) == 4):
+        gut_bonus = math.floor(gut_bonus * 1.5)
+
     total_selected_die_bonus = 0
 
     for r in selected:
@@ -242,6 +245,8 @@ def roll_race_dice(
         "nearby_count": nearby_count,
         "path_effect": path_effect or {},
         "skill_effects": skill_effects or [],
+        "turn": turn,
+        "phase": phase,
     })
 
     return {
