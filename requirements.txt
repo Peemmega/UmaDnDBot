@@ -1,9 +1,5 @@
-discord.py
+discord.py[voice]
 python-dotenv
 Pillow
-PyNaCl
-discord.py[voice]
-pynacl
-psycopg[binary]
-uvicorn
 fastapi
+uvicorn[standard]
