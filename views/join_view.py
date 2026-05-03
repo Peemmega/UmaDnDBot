@@ -259,7 +259,7 @@ class LobbyView(discord.ui.View):
                 file = discord.File(buffer, filename="race_dice_preview.png")
 
                 send_kwargs = {
-                    "content": f"{player.get("username")}",
+                    "content": f"{player.get('username') }",
                     "file": file,
                 }
                 await interaction.followup.send(**send_kwargs)

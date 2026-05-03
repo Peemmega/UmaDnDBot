@@ -537,7 +537,7 @@ def build_join_embed(
 def build_mob_join_embed(game: dict, mob: dict):
     mob_name = (
         mob.get("display_name")
-        or mob.get("username")
+        or mob.get('username') 
         or mob.get("name")
         or "Mob"
     )
@@ -1035,7 +1035,7 @@ def process_mob_turn(channel_id: int, user_id: str):
     # ✅ สร้าง embed เอง
     mob_name = (
         player.get("display_name")
-        or player.get("username")
+        or player.get('username') 
         or player.get("name")
         or "Mob"
     )
@@ -1185,7 +1185,7 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
     db_player = get_player(user_id)
 
     game["players"][user_id] = {
-        "username": player_data.get("username"),
+        "username": player_data.get('username') ,
         "avatar": display_avatar,
         "display_name": display_name,
         "style": style,

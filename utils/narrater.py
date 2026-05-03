@@ -398,7 +398,7 @@ def build_narrator_players_from_ranked(ranked_players: list[tuple[int, dict]]) -
 
         # ✅ ใช้ username จาก playerInGame ก่อน
         player_name = (
-            info.get("username")
+            info.get('username') 
             or info.get("display_name")
             or info.get("name")
             or f"Player {index}"
@@ -437,7 +437,7 @@ def convert_game_players_to_ranked_list(players: dict[int, dict[str, Any]]) -> l
 
         # ✅ ใช้ username จาก playerInGame ก่อน
         player_name = (
-            info.get("username")
+            info.get('username') 
             or info.get("display_name")
             or info.get("name")
             or f"Player {index}"

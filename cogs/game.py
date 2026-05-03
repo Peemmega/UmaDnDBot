@@ -429,7 +429,7 @@ class GameCog(commands.GroupCog, name="game"):
             if str(user_id).startswith("mob_"):
                 display_name = (
                     info.get("display_name")
-                    or info.get("username")
+                    or info.get('username') 
                     or info.get("name")
                     or "Mob"
                 )
@@ -516,7 +516,7 @@ class GameCog(commands.GroupCog, name="game"):
                 file = discord.File(buffer, filename="race_dice_preview.png")
 
                 send_kwargs = {
-                    "content": f"{player.get("username")}",
+                    "content": f"{player.get('username') }",
                     "file": file,
                 }
                 await send_func(**send_kwargs)
