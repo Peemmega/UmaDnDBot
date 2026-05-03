@@ -4,3 +4,5 @@ __pycache__/
 .venv/
 dist/
 .env
+/test_*.py
+/test_*.png
