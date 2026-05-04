@@ -1298,8 +1298,8 @@ def apply_mob_level(race_profile: dict, level: int):
         "front", "pace", "late", "end_style",
     ]
 
-    for field in stat_fields:
-        race_profile[field] = min(99, race_profile.get(field, 1) + bonus)
+    # for field in stat_fields:
+    #     race_profile[field] = min(99, race_profile.get(field, 1) + bonus)
 
     for field in aptitude_fields:
         race_profile[field] = min(8, race_profile.get(field, 1) + bonus)

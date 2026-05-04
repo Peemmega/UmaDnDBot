@@ -605,7 +605,6 @@ class GameCog(commands.GroupCog, name="game"):
 
         await interaction.response.send_message(embed=embed)
 
-    
 
     @app_commands.command(name="close", description="ลบหรือจบเกมในห้องนี้")
     async def close(self, interaction: discord.Interaction):
@@ -618,9 +617,12 @@ class GameCog(commands.GroupCog, name="game"):
             )
             return
 
-        if not is_owner(interaction.channel_id, interaction.user.id):
+        is_game_owner = is_owner(interaction.channel_id, interaction.user.id)
+        is_admin = interaction.user.guild_permissions.administrator
+
+        if not (is_game_owner or is_admin):
             await interaction.response.send_message(
-                "มีแค่ผู้สร้างเกมเท่านั้นที่ลบเกมได้",
+                "มีแค่ผู้สร้างเกมหรือผู้ดูแลเซิร์ฟเวอร์เท่านั้นที่ลบเกมได้",
                 ephemeral=True
             )
             return

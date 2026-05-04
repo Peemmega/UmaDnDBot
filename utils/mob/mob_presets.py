@@ -251,16 +251,9 @@ MOB_PRESETS = {
             "gut": 6,
             "wit": 1,
 
-            "turf": 7,
-            "dirt": 6,
-            "sprint": 3,
-            "mile": 7,
-            "medium": 7,
-            "long": 6,
-            "front": 2,
-            "pace": 7,
-            "late": 7,
-            "end_style": 4,
+            "turf": 7,"dirt": 6,
+            "sprint": 3,"mile": 7,"medium": 7,"long": 6,
+            "front": 2,"pace": 7,"late": 7,"end_style": 4,
         },
         "skills": {
             1: "s014",   # On Your Left!
