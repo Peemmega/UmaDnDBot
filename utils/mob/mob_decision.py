@@ -8,98 +8,31 @@ from utils.race.race_dice import (
 )
 
 # =========================================================
-# MOB AI SKILL DECISION SYSTEM
+# CONFIG
+# =========================================================
+
+FUTURE_LOOKAHEAD_TURNS = 2
+MIN_FUTURE_GAIN_TO_HOLD = 40
+BIG_FUTURE_GAIN_TO_HOLD = 80
+
+
+# =========================================================
+# FUTURE DICE EVALUATION
 # =========================================================
 
 def estimate_rule_value(rule: dict) -> float:
     dice = rule.get("dice", 1)
     kh = rule.get("kh", 0)
 
-    value = dice * 15
-    if (kh != 0):
-        value = dice * 15
+    # dice หลายลูก scale แรงกว่าตรง ๆ
+    value = (dice ** 2) * 20
+    if kh <= 0:
+        value = (kh ** 2) * 20
 
     return value
 
 
-def get_future_dice_context(game, user_id, lookahead_turns=2):
-    cache_key = f"dice_future:{game.get('turn', 1)}:{user_id}:{lookahead_turns}"
-    cache = game.setdefault("_mob_ai_future_cache", {})
-
-    if cache_key in cache:
-        return cache[cache_key]
-
-    player = game["players"][user_id]
-
-    current_turn = game.get("turn", 1)
-    max_turn = game.get("max_turn", 20)
-
-    score_map = {
-        pid: p.get("score", 0)
-        for pid, p in game["players"].items()
-    }
-
-    skill_effects = player.get("active_effects", [])
-
-    distance_color, nearby_count = get_distance_color(
-        user_id,
-        score_map,
-        skill_effects or []
-    )
-
-    current_phase = get_phase_from_turn(current_turn, max_turn)
-
-    current_rule = get_dice_rule(
-        player.get("style", "Pace"),
-        distance_color,
-        current_phase,
-    )
-
-    current_value = estimate_rule_value(current_rule)
-
-    best_future_value = current_value
-    best_future_turn = current_turn
-    best_future_phase = current_phase
-    best_future_rule = current_rule
-
-    for offset in range(1, lookahead_turns + 1):
-        future_turn = min(max_turn, current_turn + offset)
-        future_phase = get_phase_from_turn(future_turn, max_turn)
-
-        future_rule = get_dice_rule(
-            player.get("style", "Pace"),
-            distance_color,
-            future_phase,
-        )
-
-        future_value = estimate_rule_value(future_rule)
-
-        if future_value > best_future_value:
-            best_future_value = future_value
-            best_future_turn = future_turn
-            best_future_phase = future_phase
-            best_future_rule = future_rule
-
-    context = {
-        "distance_color": distance_color,
-        "nearby_count": nearby_count,
-        "current_turn": current_turn,
-        "current_phase": current_phase,
-        "current_rule": current_rule,
-        "current_value": current_value,
-        "best_future_turn": best_future_turn,
-        "best_future_phase": best_future_phase,
-        "best_future_rule": best_future_rule,
-        "best_future_value": best_future_value,
-        "future_gain": best_future_value - current_value,
-        "has_better_future_dice": best_future_value > current_value + 15,
-    }
-
-    cache[cache_key] = context
-    return context
-
-
-def estimate_roll_value(game, user_id):
+def get_current_dice_context(game, user_id):
     player = game["players"][user_id]
 
     turn = game.get("turn", 1)
@@ -113,10 +46,10 @@ def estimate_roll_value(game, user_id):
 
     skill_effects = player.get("active_effects", [])
 
-    distance_color, _nearby_count = get_distance_color(
+    distance_color, nearby_count = get_distance_color(
         user_id,
         score_map,
-        skill_effects or []
+        skill_effects or [],
     )
 
     rule = get_dice_rule(
@@ -125,27 +58,113 @@ def estimate_roll_value(game, user_id):
         phase,
     )
 
-    base_dice = rule.get("dice", 1)
-    base_kh = rule.get("kh", 0)
+    return {
+        "turn": turn,
+        "phase": phase,
+        "distance_color": distance_color,
+        "nearby_count": nearby_count,
+        "rule": rule,
+        "dice": rule.get("dice", 1),
+        "kh": rule.get("kh", 0),
+        "rule_value": estimate_rule_value(rule),
+    }
 
-    dice_count = base_dice + player.get("next_roll_add_d", 0)
-    kh = base_kh + player.get("next_roll_add_kh", 0)
+
+def get_future_dice_context(game, user_id, lookahead_turns=FUTURE_LOOKAHEAD_TURNS):
+    cache_key = f"dice_future:{game.get('turn', 1)}:{user_id}:{lookahead_turns}"
+    cache = game.setdefault("_mob_ai_future_cache", {})
+
+    if cache_key in cache:
+        return cache[cache_key]
+
+    player = game["players"][user_id]
+
+    current = get_current_dice_context(game, user_id)
+
+    current_turn = game.get("turn", 1)
+    max_turn = game.get("max_turn", 20)
+
+    best_future_value = current["rule_value"]
+    best_future_turn = current_turn
+    best_future_phase = current["phase"]
+    best_future_rule = current["rule"]
+
+    for offset in range(1, lookahead_turns + 1):
+        future_turn = min(max_turn, current_turn + offset)
+        future_phase = get_phase_from_turn(future_turn, max_turn)
+
+        future_rule = get_dice_rule(
+            player.get("style", "Pace"),
+            current["distance_color"],
+            future_phase,
+        )
+
+        future_value = estimate_rule_value(future_rule)
+
+        if future_value > best_future_value:
+            best_future_value = future_value
+            best_future_turn = future_turn
+            best_future_phase = future_phase
+            best_future_rule = future_rule
+
+    context = {
+        "current_turn": current_turn,
+        "current_phase": current["phase"],
+        "current_rule": current["rule"],
+        "current_dice": current["dice"],
+        "current_kh": current["kh"],
+        "current_value": current["rule_value"],
+
+        "best_future_turn": best_future_turn,
+        "best_future_phase": best_future_phase,
+        "best_future_rule": best_future_rule,
+        "best_future_dice": best_future_rule.get("dice", 1),
+        "best_future_kh": best_future_rule.get("kh", 0),
+        "best_future_value": best_future_value,
+
+        "future_gain": best_future_value - current["rule_value"],
+        "has_better_future_dice": (
+            best_future_value - current["rule_value"]
+            >= MIN_FUTURE_GAIN_TO_HOLD
+        ),
+        "has_much_better_future_dice": (
+            best_future_value - current["rule_value"]
+            >= BIG_FUTURE_GAIN_TO_HOLD
+        ),
+
+        "distance_color": current["distance_color"],
+        "nearby_count": current["nearby_count"],
+    }
+
+    cache[cache_key] = context
+    return context
+
+
+def estimate_roll_value(game, user_id):
+    player = game["players"][user_id]
+    current = get_current_dice_context(game, user_id)
+
+    dice_count = current["dice"] + player.get("next_roll_add_d", 0)
+    kh = current["kh"] + player.get("next_roll_add_kh", 0)
 
     dkh = player.get("next_roll_add_dkh", 0)
-
     selected_bonus = player.get("next_roll_selected_die_bonus", 0)
     floor_bonus = player.get("next_roll_floor_bonus", 0)
     cap_bonus = player.get("next_roll_cap_bonus", 0)
 
-    value = dice_count * 18
-    value += kh * 20
-    value += dkh * 35
-    value += floor_bonus * 1.2
-    value += cap_bonus * 0.9
+    value = (dice_count ** 2) * 18
+    value += kh * 30
+    value += dkh * 45
+    value += floor_bonus * 1.4
+    value += cap_bonus * 1.0
     value += selected_bonus * 2
 
     return value
 
+
+# =========================================================
+# MAIN DECISION
+# =========================================================
 
 def decide_mob_skill_combo(
     game,
@@ -158,12 +177,15 @@ def decide_mob_skill_combo(
 ):
     if debug:
         print(f"[MOB AI] {user_id} usable_skills = {[sid for sid, _ in usable_skills]}")
+
         future = get_future_dice_context(game, user_id)
         print(
             "[MOB AI] dice_future "
             f"now={future['current_value']} "
             f"future={future['best_future_value']} "
             f"gain={future['future_gain']} "
+            f"dice={future['current_dice']}->{future['best_future_dice']} "
+            f"kh={future['current_kh']}->{future['best_future_kh']} "
             f"phase={future['current_phase']}->{future['best_future_phase']}"
         )
 
@@ -253,10 +275,17 @@ def decide_mob_skill_combo(
     return [item["skill_id"] for item in best_combo]
 
 
+# =========================================================
+# SKILL SCORE
+# =========================================================
+
 def evaluate_skill_score(game, user_id, skill):
     player = game["players"][user_id]
+
     score = 10
     roll_value = estimate_roll_value(game, user_id)
+    future = get_future_dice_context(game, user_id)
+    current_dice = future["current_dice"]
 
     current_turn = game.get("turn", 1)
     max_turn = game.get("max_turn", 20)
@@ -264,22 +293,75 @@ def evaluate_skill_score(game, user_id, skill):
 
     stamina_left = player.get("stamina_left", 0)
     style = player.get("style", "Pace")
+
     position_group = get_position_group(game, user_id)
     distance_to_front = get_distance_to_front(game, user_id)
     nearby_count = get_nearby_count(game, user_id)
     path_type = get_current_path_type(game)
+
     is_last_spurt = phase >= 4
 
     tags = set(skill.get("tags", []))
     effects = skill.get("effects", [])
 
+    is_burst_skill = (
+        "burst" in tags
+        or "last_spurt" in tags
+        or "late_race" in tags
+    )
+
+    has_big_roll_scaling = any(
+        effect.get("type") in [
+            "modify_roll_cap",
+            "modify_roll_floor",
+            "add_dkh",
+            "add_d",
+            "add_kh",
+        ]
+        for effect in effects
+    )
+
+    # -----------------------------
+    # save important skill
+    # -----------------------------
     if phase <= 2:
         if "burst" in tags:
-            score -= 40
+            score -= 50
 
         if "late_race" in tags:
-            score -= 25
+            score -= 40
 
+        if style in ["Late", "End"] and is_burst_skill:
+            score -= 50
+
+    # -----------------------------
+    # future dice hold
+    # -----------------------------
+    future_gain = future["future_gain"]
+
+    if phase < 4:
+        if future["has_much_better_future_dice"]:
+            if is_burst_skill:
+                score -= 140
+            if has_big_roll_scaling:
+                score -= 120
+
+        elif future["has_better_future_dice"]:
+            if is_burst_skill:
+                score -= 75
+            if has_big_roll_scaling:
+                score -= 60
+
+    # current dice too weak
+    if phase < 4:
+        if current_dice <= 1 and has_big_roll_scaling:
+            score -= 90
+        elif current_dice == 2 and has_big_roll_scaling:
+            score -= 35
+
+    # -----------------------------
+    # position logic
+    # -----------------------------
     if position_group == "back":
         if "acceleration" in tags:
             score += 25
@@ -300,6 +382,9 @@ def evaluate_skill_score(game, user_id, skill):
         if "positioning" in tags:
             score += 20
 
+    # -----------------------------
+    # phase logic
+    # -----------------------------
     if phase == 1:
         if "start" in tags:
             score += 30
@@ -308,24 +393,27 @@ def evaluate_skill_score(game, user_id, skill):
 
     elif phase == 2:
         if "mid_race" in tags:
-            score += 25
+            score += 20
 
     elif phase == 3:
         if "burst" in tags:
-            score += 20
+            score += 35
         if "acceleration" in tags:
-            score += 15
+            score += 20
 
     elif phase >= 4:
         if "last_spurt" in tags:
-            score += 50
+            score += 60
         if "burst" in tags:
-            score += 40
+            score += 50
         if "velocity" in tags:
-            score += 20
+            score += 25
         if "acceleration" in tags:
-            score += 35
+            score += 40
 
+    # -----------------------------
+    # path logic
+    # -----------------------------
     if path_type == 2:
         if "corner" in tags:
             score += 35
@@ -346,6 +434,9 @@ def evaluate_skill_score(game, user_id, skill):
         if "velocity" in tags:
             score += 15
 
+    # -----------------------------
+    # stamina logic
+    # -----------------------------
     if stamina_left <= 2:
         if "recovery" in tags:
             score += 60
@@ -356,23 +447,31 @@ def evaluate_skill_score(game, user_id, skill):
         if "recovery" in tags:
             score += 25
 
+    # -----------------------------
+    # pack racing
+    # -----------------------------
     if nearby_count >= 2:
         if "positioning" in tags:
             score += 20
         if "velocity" in tags:
             score += 10
 
+    # -----------------------------
+    # last spurt chase
+    # -----------------------------
     if is_last_spurt:
         if distance_to_front <= 50:
             if "acceleration" in tags:
                 score += 35
             if "burst" in tags:
                 score += 35
-
         elif distance_to_front >= 120:
             if "velocity" in tags:
                 score += 20
 
+    # -----------------------------
+    # style logic
+    # -----------------------------
     if style == "Front":
         if "lead" in tags:
             score += 30
@@ -397,6 +496,9 @@ def evaluate_skill_score(game, user_id, skill):
         if "last_spurt" in tags:
             score += 25
 
+    # -----------------------------
+    # effect value
+    # -----------------------------
     for effect in effects:
         effect_type = effect.get("type")
         value = effect.get("value", 0)
@@ -407,6 +509,11 @@ def evaluate_skill_score(game, user_id, skill):
             if roll_value <= 25:
                 score += value * 0.2
 
+            if future_gain >= BIG_FUTURE_GAIN_TO_HOLD and phase < 4:
+                score -= value * 0.6
+            elif future_gain >= MIN_FUTURE_GAIN_TO_HOLD and phase < 4:
+                score -= value * 0.3
+
         elif effect_type == "modify_current_speed":
             score += value * 18
 
@@ -414,9 +521,9 @@ def evaluate_skill_score(game, user_id, skill):
             score += value * 1.5
 
             if roll_value <= 25:
-                score -= value * 1.4
+                score -= value * 1.8
             elif roll_value <= 45:
-                score -= value * 0.6
+                score -= value * 0.9
             elif roll_value >= 80:
                 score += value * 0.8
 
@@ -424,12 +531,12 @@ def evaluate_skill_score(game, user_id, skill):
             score += value
 
             if roll_value <= 30:
-                score -= value * 0.7
+                score -= value * 0.9
             elif roll_value >= 70:
                 score += value * 0.5
 
         elif effect_type == "add_dkh":
-            score += value * 16
+            score += value * 18
 
         elif effect_type == "recover_stamina":
             if stamina_left <= 4:
@@ -452,12 +559,16 @@ def evaluate_skill_score(game, user_id, skill):
     cooldown = skill.get("cooldown", 0)
 
     if cooldown >= 10 and phase <= 2:
-        score -= 20
+        score -= 25
 
     score += random.randint(-5, 5)
 
     return max(0, int(score))
 
+
+# =========================================================
+# COMBO SCORE
+# =========================================================
 
 def evaluate_skill_combo_score(game, user_id, combo):
     player = game["players"][user_id]
@@ -465,6 +576,8 @@ def evaluate_skill_combo_score(game, user_id, combo):
     current_turn = game.get("turn", 1)
     max_turn = game.get("max_turn", 20)
     phase = get_phase_from_turn(current_turn, max_turn)
+
+    future = get_future_dice_context(game, user_id)
 
     position_group = get_position_group(game, user_id)
     stamina_left = player.get("stamina_left", 0)
@@ -477,13 +590,23 @@ def evaluate_skill_combo_score(game, user_id, combo):
     total_cap = 0
     total_floor = 0
     total_dkh = 0
+    total_add_d = 0
+    total_add_kh = 0
     total_accel = 0
     total_recovery = 0
     total_debuff = 0
+    has_burst_tag = False
+    has_late_tag = False
 
     for item in combo:
         skill = item["skill"]
         total_cost += item["cost"]
+
+        tags = set(skill.get("tags", []))
+        if "burst" in tags:
+            has_burst_tag = True
+        if "late_race" in tags or "last_spurt" in tags:
+            has_late_tag = True
 
         for effect in skill.get("effects", []):
             effect_type = effect.get("type")
@@ -497,6 +620,10 @@ def evaluate_skill_combo_score(game, user_id, combo):
                 total_floor += value
             elif effect_type == "add_dkh":
                 total_dkh += value
+            elif effect_type == "add_d":
+                total_add_d += value
+            elif effect_type == "add_kh":
+                total_add_kh += value
             elif effect_type == "modify_current_speed":
                 total_accel += value
             elif effect_type in ("recover_stamina", "self_heal_stamina"):
@@ -508,13 +635,21 @@ def evaluate_skill_combo_score(game, user_id, combo):
             ):
                 total_debuff += abs(value)
 
+    has_big_roll_scaling = (
+        total_cap > 0
+        or total_floor > 0
+        or total_dkh > 0
+        or total_add_d > 0
+        or total_add_kh > 0
+    )
+
     if total_cap > 0 and total_velocity > 0:
         score += 25
 
     if total_floor > 0 and total_cap > 0:
         score += 18
 
-    if total_accel > 0 and total_dkh > 0:
+    if total_accel > 0 and (total_dkh > 0 or total_add_d > 0 or total_add_kh > 0):
         score += 25
 
     if phase >= 4:
@@ -533,7 +668,7 @@ def evaluate_skill_combo_score(game, user_id, combo):
         if roll_value >= 70:
             score += 25
         elif roll_value <= 25:
-            score -= 35
+            score -= 45
 
     if position_group == "back":
         if total_accel > 0:
@@ -565,61 +700,32 @@ def evaluate_skill_combo_score(game, user_id, combo):
     if phase >= 4 and total_cost >= 160:
         score += 20
 
-    future_value = estimate_future_value(game, user_id, combo)
+    future_gain = future["future_gain"]
 
-    if future_value > 0:
-        score -= future_value
-    elif future_value < 0:
-        score += abs(future_value)
+    if phase < 4:
+        if future["has_much_better_future_dice"]:
+            if has_big_roll_scaling:
+                score -= 120
+            if has_burst_tag or has_late_tag:
+                score -= 120
+
+        elif future["has_better_future_dice"]:
+            if has_big_roll_scaling:
+                score -= 65
+            if has_burst_tag or has_late_tag:
+                score -= 75
+
+        if future["current_dice"] <= 1 and has_big_roll_scaling:
+            score -= 90
+        elif future["current_dice"] == 2 and has_big_roll_scaling:
+            score -= 35
+
+        if total_velocity > 0 and future_gain >= BIG_FUTURE_GAIN_TO_HOLD:
+            score -= total_velocity * 0.6
+        elif total_velocity > 0 and future_gain >= MIN_FUTURE_GAIN_TO_HOLD:
+            score -= total_velocity * 0.3
 
     return int(max(0, score))
-
-
-def estimate_future_value(game, user_id, combo):
-    future = get_future_dice_context(game, user_id, lookahead_turns=2)
-
-    total_cap = 0
-    total_floor = 0
-    total_velocity = 0
-    total_dkh = 0
-    cooldown_sum = 0
-
-    for item in combo:
-        skill = item["skill"]
-        cooldown_sum += skill.get("cooldown", 0)
-
-        for effect in skill.get("effects", []):
-            effect_type = effect.get("type")
-            value = effect.get("value", 0)
-
-            if effect_type == "modify_roll_cap":
-                total_cap += value
-            elif effect_type == "modify_roll_floor":
-                total_floor += value
-            elif effect_type == "modify_velocity":
-                total_velocity += value
-            elif effect_type == "add_dkh":
-                total_dkh += value
-
-    penalty = 0
-
-    if future["has_better_future_dice"]:
-        if total_cap > 0 or total_floor > 0:
-            penalty += 35
-
-        if total_dkh > 0:
-            penalty += 25
-
-        if total_velocity > 0:
-            penalty += 10
-
-        if cooldown_sum >= 16:
-            penalty += 20
-
-    else:
-        penalty -= 15
-
-    return penalty
 
 
 # =========================================================
