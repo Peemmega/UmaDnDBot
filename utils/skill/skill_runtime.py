@@ -238,7 +238,9 @@ def check_skill_trigger(channel_id: int, user_id: int, skill: dict, *, path_type
 
         if gap is None:
             return False, "ไม่มีเป้าหมายในระยะ"
-
+        
+        print(f"gap is {gap}")
+        
         if min_d is not None:
             if min_d >= 0 and gap < min_d:
                 return False, "ระยะเป้าหมายไม่ถึงขั้นต่ำ"
