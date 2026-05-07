@@ -1615,7 +1615,7 @@ def check_skill_trigger(
                 f"{required_nearby_count} คน"
             )
 
-        return True, "ใช้สกิลได้"
+    return True, "ใช้สกิลได้"
 
 def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
     player = game["players"].get(user_id)
@@ -1714,6 +1714,7 @@ def process_mob_turn(channel_id: int, user_id: str):
     )
 
     for skill_id in skill_ids_to_use:
+        print(skill_id)
         success, skill_payload = execute_skill_core(
             channel_id=channel_id,
             user_id=user_id,
