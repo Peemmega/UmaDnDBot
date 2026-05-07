@@ -5,6 +5,12 @@ from itertools import combinations
 # MOB AI SKILL DECISION SYSTEM
 # =========================================================
 
+import random
+from itertools import combinations
+
+import random
+from itertools import combinations
+
 def decide_mob_skill_combo(
     game,
     user_id,
@@ -83,6 +89,331 @@ def decide_mob_skill_combo(
 # =========================================================
 # MAIN EVALUATION
 # =========================================================
+
+def evaluate_skill_score(game, user_id, skill):
+    player = game["players"][user_id]
+
+    race = game.get("race", {})
+
+    score = 10
+
+    # =====================================================
+    # BASIC INFO
+    # =====================================================
+
+    current_turn = game.get("turn", 1)
+    max_turn = race.get("max_turn", 20)
+
+    phase = game.get("phase", 1)
+
+    stamina_left = player.get("stamina_left", 0)
+
+    style = player.get("style", "Pace")
+
+    position_group = get_position_group(game, user_id)
+
+    current_speed = player.get("current_speed", 0)
+
+    distance_to_front = get_distance_to_front(game, user_id)
+
+    nearby_count = get_nearby_count(game, user_id)
+
+    path_type = get_current_path_type(game)
+
+    is_last_spurt = phase >= 4
+
+    tags = set(skill.get("tags", []))
+
+    effects = skill.get("effects", [])
+
+    # =====================================================
+    # SAVE IMPORTANT SKILLS
+    # =====================================================
+
+    if phase <= 2:
+        if "burst" in tags:
+            score -= 40
+
+        if "late_race" in tags:
+            score -= 25
+
+    # =====================================================
+    # POSITION LOGIC
+    # =====================================================
+
+    if position_group == "back":
+
+        if "acceleration" in tags:
+            score += 25
+
+        if "velocity" in tags:
+            score += 10
+
+        if "debuff" in tags:
+            score += 15
+
+    elif position_group == "front":
+
+        if "lead" in tags:
+            score += 20
+
+        if "recovery" in tags:
+            score += 10
+
+        if "debuff" in tags:
+            score -= 10
+
+    elif position_group == "middle":
+
+        if "positioning" in tags:
+            score += 20
+
+    # =====================================================
+    # PHASE LOGIC
+    # =====================================================
+
+    if phase == 1:
+
+        if "start" in tags:
+            score += 30
+
+        if "acceleration" in tags:
+            score += 15
+
+    elif phase == 2:
+
+        if "mid_race" in tags:
+            score += 25
+
+    elif phase == 3:
+
+        if "burst" in tags:
+            score += 20
+
+        if "acceleration" in tags:
+            score += 15
+
+    elif phase >= 4:
+
+        if "last_spurt" in tags:
+            score += 50
+
+        if "burst" in tags:
+            score += 40
+
+        if "velocity" in tags:
+            score += 20
+
+        if "acceleration" in tags:
+            score += 35
+
+    # =====================================================
+    # PATH LOGIC
+    # =====================================================
+
+    if path_type == 2:
+
+        if "corner" in tags:
+            score += 35
+
+    elif path_type == 1:
+
+        if "straight" in tags:
+            score += 30
+
+    elif path_type == 3:
+
+        if "uphill" in tags:
+            score += 35
+
+        if "acceleration" in tags:
+            score += 10
+
+    elif path_type == 4:
+
+        if "downhill" in tags:
+            score += 30
+
+        if "velocity" in tags:
+            score += 15
+
+    # =====================================================
+    # STAMINA LOGIC
+    # =====================================================
+
+    if stamina_left <= 2:
+
+        if "recovery" in tags:
+            score += 60
+
+        if "stamina" in tags:
+            score += 30
+
+    elif stamina_left <= 4:
+
+        if "recovery" in tags:
+            score += 25
+
+    # =====================================================
+    # PACK RACING
+    # =====================================================
+
+    if nearby_count >= 2:
+
+        if "positioning" in tags:
+            score += 20
+
+        if "velocity" in tags:
+            score += 10
+
+    # =====================================================
+    # LAST SPURT CHASE
+    # =====================================================
+
+    if is_last_spurt:
+
+        if distance_to_front <= 50:
+
+            if "acceleration" in tags:
+                score += 35
+
+            if "burst" in tags:
+                score += 35
+
+        elif distance_to_front >= 120:
+
+            if "velocity" in tags:
+                score += 20
+
+    # =====================================================
+    # STYLE LOGIC
+    # =====================================================
+
+    if style == "Front":
+
+        if "lead" in tags:
+            score += 30
+
+        if "front" in tags:
+            score += 25
+
+    elif style == "Pace":
+
+        if "pace" in tags:
+            score += 25
+
+        if "positioning" in tags:
+            score += 15
+
+    elif style == "Late":
+
+        if "late" in tags:
+            score += 30
+
+        if "acceleration" in tags:
+            score += 15
+
+    elif style == "End":
+
+        if "end" in tags:
+            score += 35
+
+        if "last_spurt" in tags:
+            score += 25
+
+    # =====================================================
+    # EFFECT ANALYSIS
+    # =====================================================
+
+    for effect in effects:
+
+        effect_type = effect.get("type")
+
+        value = effect.get("value", 0)
+
+        # ---------------------------
+        # Velocity
+        # ---------------------------
+
+        if effect_type == "modify_velocity":
+            score += value / 5
+
+        # ---------------------------
+        # Acceleration
+        # ---------------------------
+
+        elif effect_type == "modify_current_speed":
+            score += value * 18
+
+        # ---------------------------
+        # Roll cap
+        # ---------------------------
+
+        elif effect_type == "modify_roll_cap":
+            score += value * 1.5
+
+        # ---------------------------
+        # Roll floor
+        # ---------------------------
+
+        elif effect_type == "modify_roll_floor":
+            score += value
+
+        # ---------------------------
+        # dkh
+        # ---------------------------
+
+        elif effect_type == "add_dkh":
+            score += value * 16
+
+        # ---------------------------
+        # Recovery
+        # ---------------------------
+
+        elif effect_type == "recover_stamina":
+
+            if stamina_left <= 4:
+                score += value * 25
+            else:
+                score += value * 8
+
+        # ---------------------------
+        # Debuff
+        # ---------------------------
+
+        elif effect_type == "reduce_stamina":
+            score += value * 20
+
+        elif effect_type == "modify_enemy_gold_range":
+            score += 15
+
+    # =====================================================
+    # UNIQUE SKILLS
+    # =====================================================
+
+    if "unique" in tags:
+
+        if phase >= 3:
+            score += 25
+        else:
+            score -= 15
+
+    # =====================================================
+    # COOLDOWN MANAGEMENT
+    # =====================================================
+
+    cooldown = skill.get("cooldown", 0)
+
+    if cooldown >= 10 and phase <= 2:
+        score -= 20
+
+    # =====================================================
+    # RANDOMNESS
+    # =====================================================
+
+    score += random.randint(-5, 5)
+
+    return max(0, int(score))
 
 def evaluate_skill_combo_score(game, user_id, combo):
     player = game["players"][user_id]

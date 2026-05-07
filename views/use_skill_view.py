@@ -47,9 +47,10 @@ class UseSkillView(discord.ui.View):
             return
 
         success, payload = execute_skill_core(
-            self.channel_id,
-            interaction.user.id,
-            skill_id,
+            channel_id=self.channel_id,
+            user_id=interaction.user.id,
+            skill_id=skill_id,
+            consume_cost=True,
         )
 
         if not success:

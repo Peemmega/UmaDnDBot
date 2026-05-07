@@ -1614,6 +1614,7 @@ def check_skill_trigger(
                 f"ต้องมีคนในระยะทองอย่างน้อย "
                 f"{required_nearby_count} คน"
             )
+
         return True, "ใช้สกิลได้"
 
 def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
@@ -1665,7 +1666,6 @@ def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
     return usable
 
 def process_mob_turn(channel_id: int, user_id: str):
-
     game = get_game(channel_id)
     if game is None:
         return False, {"message": "ยังไม่มีเกมในห้องนี้"}
