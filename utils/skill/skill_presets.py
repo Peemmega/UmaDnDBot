@@ -666,7 +666,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 1.25},
+            {"type": "modify_roll_floor","value": 15,"duration": "this_roll"},
         ],
 
         "tags": ["start", "acceleration"],

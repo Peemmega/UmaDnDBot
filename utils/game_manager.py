@@ -802,7 +802,7 @@ def use_block(channel_id: int, user_id: int):
     move_back = gap - 20
     player["score"] -= move_back
 
-    target_info["next_roll_flat_bonus"] -= 10
+    target_info["next_roll_flat_bonus"] -= 20
     player["used_block"] = True
     player["action_locked"] = True
 
@@ -848,7 +848,7 @@ def use_rush(channel_id: int, user_id: int):
     move_forward = max(gap - 10, 0)
     player["score"] += move_forward
 
-    player["next_roll_flat_bonus"] -= 10
+    player["next_roll_flat_bonus"] -= 20
     player["no_reroll_this_turn"] = True
     player["used_rush"] = True
     player["action_locked"] = True
