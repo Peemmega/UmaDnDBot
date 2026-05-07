@@ -1238,21 +1238,17 @@ def add_player_as_mob_preset(
 def apply_mob_level(race_profile: dict, level: int):
     level = max(1, min(level, 8))
 
-    # level 1 = ไม่บวกเพิ่ม
     bonus = level - 1
 
-    stat_fields = ["speed", "stamina", "power", "gut", "wit"]
     aptitude_fields = [
         "turf", "dirt",
         "sprint", "mile", "medium", "long",
         "front", "pace", "late", "end_style",
     ]
 
-    # for field in stat_fields:
-    #     race_profile[field] = min(99, race_profile.get(field, 1) + bonus)
-
     for field in aptitude_fields:
         race_profile[field] = min(8, race_profile.get(field, 1) + bonus)
+        print(field, race_profile[field])
 
     return race_profile
 
