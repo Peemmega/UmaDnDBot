@@ -1,15 +1,11 @@
 import random
 from itertools import combinations
 
+from utils.race.race_dice import get_phase_from_turn
+
 # =========================================================
 # MOB AI SKILL DECISION SYSTEM
 # =========================================================
-
-import random
-from itertools import combinations
-
-import random
-from itertools import combinations
 
 def decide_mob_skill_combo(
     game,
@@ -92,7 +88,6 @@ def decide_mob_skill_combo(
 
 def evaluate_skill_score(game, user_id, skill):
     player = game["players"][user_id]
-
     race = game.get("race", {})
 
     score = 10
@@ -104,7 +99,7 @@ def evaluate_skill_score(game, user_id, skill):
     current_turn = game.get("turn", 1)
     max_turn = race.get("max_turn", 20)
 
-    phase = game.get("phase", 1)
+    phase = get_phase_from_turn(current_turn, max_turn)
 
     stamina_left = player.get("stamina_left", 0)
 
