@@ -5,9 +5,7 @@ import discord
 
 from utils.race.race_presets import RACE_PRESET
 from utils.skill.skill_presets import SKILLS
-from utils.skill.skill_runtime import check_skill_trigger, execute_skill_core
 from utils.mob.mob_decision import decide_mob_skill_combo
-
 
 from utils.mob.mob_presets import MOB_PRESETS
 from utils.database import get_player, get_player_skill_slots
@@ -1007,6 +1005,8 @@ def use_reroll(channel_id: int, user_id: int):
     return True, player["reroll_left"]
 
 def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
+    from utils.skill.skill_runtime import check_skill_trigger
+
     player = game["players"].get(user_id)
     if not player:
         return []
@@ -1050,6 +1050,8 @@ def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
     return usable
 
 def process_mob_turn(channel_id: int, user_id: str):
+    from utils.skill.skill_runtime import execute_skill_core
+
     game = get_game(channel_id)
     if game is None:
         return False, {"message": "ยังไม่มีเกมในห้องนี้"}

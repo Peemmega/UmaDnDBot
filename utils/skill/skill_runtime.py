@@ -1,6 +1,5 @@
 import random
-import discord
-from utils.database import get_player_skill_in_slot, ensure_player
+from utils.database import get_player_skill_in_slot
 from utils.skill.skill_presets import SKILLS, ICON
 from utils.game_manager import (
     get_game,
@@ -18,8 +17,6 @@ from utils.game_manager import (
 )
 from utils.in_game_manager import incrase_speed_by_acceleration
 from utils.race.race_dice import get_distance_color, get_phase_from_turn
-from utils.icon_presets import Status_Icon_Type
-
 
 
 def get_position_group(channel_id: int, user_id: int) -> str:
