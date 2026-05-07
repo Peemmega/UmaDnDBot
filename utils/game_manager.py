@@ -1540,8 +1540,8 @@ def check_skill_trigger(
     # last corner
     required_last_corner = trigger.get("last_corner")
     if required_last_corner is not None:
-        is_last_corner = is_last_corner(game)
-        if is_last_corner != required_last_corner:
+        on_last_corner = is_last_corner(game)
+        if on_last_corner != required_last_corner:
             return False, "ยังไม่ใช่โค้งสุดท้าย"
 
     # distance color
