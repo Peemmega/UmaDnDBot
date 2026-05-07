@@ -1539,7 +1539,7 @@ def check_skill_trigger(
     # last corner
     required_last_corner = trigger.get("last_corner")
     if required_last_corner is not None:
-        is_last_corner = bool(game.get("last_corner", False))
+        is_last_corner = is_last_corner(game)
         if is_last_corner != required_last_corner:
             return False, "ยังไม่ใช่โค้งสุดท้าย"
 
@@ -1708,7 +1708,7 @@ def process_mob_turn(channel_id: int, user_id: str):
         min_combo_score=45,
         debug=True,
     )
-    
+
     for skill_id in skill_ids_to_use:
         success, skill_payload = execute_skill_core(
             channel_id=channel_id,
