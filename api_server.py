@@ -54,7 +54,7 @@ class UpdateStatsPayload(BaseModel):
 def update_player_stats(payload: UpdateStatsPayload):
     conn = get_connection()
     cur = conn.cursor()
-    print(payload)
+    # print(payload)
 
     try:
         cur.execute("""

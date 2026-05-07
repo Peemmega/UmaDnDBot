@@ -21,12 +21,6 @@ if platform.system() == "Windows":
 else:
     FFMPEG_EXECUTABLE = "/usr/bin/ffmpeg"
 
-print(f"Checking FFmpeg Path: {FFMPEG_EXECUTABLE}")
-print(f"Default BGM Path: {os.path.abspath(MUSICS[DEFAULT_MUSIC_KEY])}")
-print(f"FFmpeg file exists: {os.path.exists(FFMPEG_EXECUTABLE)}")
-print(f"which ffmpeg: {shutil.which('ffmpeg')}")
-
-
 def get_music_path(music_key: str) -> str | None:
     return MUSICS.get(music_key)
 

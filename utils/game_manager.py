@@ -44,9 +44,7 @@ def is_last_corner(game: dict) -> bool:
     turn_index = game["turn"]
 
     last_corner_index = get_last_corner_index(path)
-    print(last_corner_index)
-    print(turn_index)
-    
+
     return turn_index == last_corner_index
 
 def is_lastspurt(game: dict) -> bool:
@@ -490,6 +488,7 @@ def start_game(channel_id: int):
         )
 
         att_bonus = build_aptitude_stat_bonus(att)
+        print(att_bonus["power"], att_bonus["speed"], att_bonus["wit"])
 
         player["race_profile"]["power"] += att_bonus["power"]
         player["race_profile"]["speed"] += att_bonus["speed"]
@@ -579,14 +578,6 @@ def get_aptitude_values(db_player, surface, distance, style):
         "track": db_player.get(surface_key, 1),
         "distance": db_player.get(distance.lower(), 1),
         "style": db_player.get(style_map.get(style, "pace"), 1),
-    }
-
-
-def build_aptitude_stat_bonus(att):
-    return {
-        "power": max(0, att["track"] - 1),
-        "speed": max(0, att["distance"] - 1),
-        "wit": max(0, att["style"] - 1),
     }
 
 def get_player_skill_cd(channel_id: int, user_id: int, skill_id: str) -> int:
@@ -882,22 +873,6 @@ def can_force_rush_targets(channel_id: int, targets: list[tuple[int, dict]]) -> 
             return True, None
 
     return False, "ไม่มีเป้าหมายที่สามารถถูกบังคับใช้ Rush ได้"
-
-def get_aptitude_values(db_player, surface, distance, style):
-    surface_key = "turf" if surface == "Turf" else "dirt"
-
-    style_map = {
-        "Front": "front",
-        "Pace": "pace",
-        "Late": "late",
-        "End": "end_style",
-    }
-
-    return {
-        "track": db_player.get(surface_key, 1),
-        "distance": db_player.get(distance.lower(), 1),
-        "style": db_player.get(style_map.get(style, "pace"), 1),
-    }
 
 def build_aptitude_stat_bonus(att):
     return {
@@ -1248,7 +1223,6 @@ def apply_mob_level(race_profile: dict, level: int):
 
     for field in aptitude_fields:
         race_profile[field] = min(8, race_profile.get(field, 1) + bonus)
-        print(field, race_profile[field])
 
     return race_profile
 
@@ -1955,14 +1929,12 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
     for effect in skill.get("effects", []):
         effect_type = effect.get("type")
         value = effect.get("value", 0)
-        print(effect_type)
 
         if effect_type == "recover_stamina":
             player["stamina_left"] += value
             applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
 
         elif effect_type == "modify_current_speed":
-            print(effect["value"])
 
             incrase_speed_by_acceleration(game, player, effect["value"])
             applied_texts.append(f"เร่งความเร็วขึ้น {value} ระดับ")
