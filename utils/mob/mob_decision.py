@@ -95,10 +95,10 @@ def decide_mob_skill_combo(
             print("[MOB AI] best combo score too low")
         return []
 
-    if random.random() < 0.12:
-        if debug:
-            print("[MOB AI] random skip")
-        return []
+    # if random.random() < 0.12:
+    #     if debug:
+    #         print("[MOB AI] random skip")
+    #     return []
 
     return [item["skill_id"] for item in best_combo]
 
