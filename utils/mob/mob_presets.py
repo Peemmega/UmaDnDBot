@@ -582,7 +582,7 @@ MOB_PRESETS = {
                 "selected_die": 0,
                 "cap": 0,
                 "self_heal_stamina": 0,
-                "modify_current_speed": 7,
+                "modify_current_speed": 5,
             }
         },
     },
