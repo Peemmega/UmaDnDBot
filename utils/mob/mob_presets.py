@@ -354,7 +354,7 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 4,
+                "add_dkh": 1,
                 "floor": 5,
                 "selected_die": 0,
                 "cap": 7,
@@ -429,10 +429,10 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 4,
-                "floor": 5,
+                "add_dkh": 1,
+                "floor": 0,
                 "selected_die": 0,
-                "cap": 7,
+                "cap": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             }
@@ -466,12 +466,12 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 4,
-                "floor": 5,
+                "add_dkh": 0,
+                "floor": 0,
                 "selected_die": 0,
-                "cap": 7,
+                "cap": 0,
                 "self_heal_stamina": 0,
-                "modify_current_speed": 0,
+                "modify_current_speed": 5,
             }
         },
     },
@@ -503,12 +503,12 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 4,
-                "floor": 5,
+                "add_dkh": 0,
+                "floor": 0,
                 "selected_die": 0,
-                "cap": 7,
+                "cap": 2,
                 "self_heal_stamina": 0,
-                "modify_current_speed": 0,
+                "modify_current_speed": 3,
             }
         },
     },
@@ -540,8 +540,8 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 4,
-                "floor": 5,
+                "add_dkh": 0,
+                "floor": 0,
                 "selected_die": 0,
                 "cap": 7,
                 "self_heal_stamina": 0,

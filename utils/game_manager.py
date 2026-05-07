@@ -1682,11 +1682,23 @@ def process_mob_turn(channel_id: int, user_id: str):
     used_skill_payloads = []
     skill_embeds = []
 
+    phase = get_phase_from_turn(
+        game["turn"],
+        game["max_turn"]
+    )
+
     turn_trigger = (
         game["turn"] == game["max_turn"]
         or (
             game["turn"] == 1
             and player.get("style", "Front") == "Front"
+        ) or (
+            phase == 3
+            and player.get("style") == "Late"
+        )
+        or (
+            phase == 4
+            and player.get("style") == "End"
         )
     )
 
