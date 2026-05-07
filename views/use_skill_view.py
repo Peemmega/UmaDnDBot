@@ -1,10 +1,11 @@
 import discord
 from utils.game_manager import (
-    get_game,execute_skill_core
+    get_game,execute_skill_core,build_skill_use_embed
 )
 
 from utils.zone.zone_manager import apply_zone_in_game
 from utils.zone.zone_embed import build_zone_used_preview_embed
+from utils.skill.skill_presets import SKILLS
 
 class UseSkillView(discord.ui.View):
     def __init__(self, cog, owner_id: int, channel_id: int):
@@ -50,7 +51,6 @@ class UseSkillView(discord.ui.View):
             channel_id=self.channel_id,
             user_id=interaction.user.id,
             skill_id=skill_id,
-            consume_cost=True,
         )
 
         if not success:
@@ -59,6 +59,20 @@ class UseSkillView(discord.ui.View):
                 ephemeral=True
             )
             return
+        
+        skill = SKILLS.get(skill_id)
+
+        embed = build_skill_use_embed(
+            player_name=interaction.user.display_name,
+            player=player,
+            skill= skill,
+            payload=payload,
+        )
+
+        await interaction.response.send_message(
+            embed=embed,
+            ephemeral=False
+        )
 
     @discord.ui.button(label="1", style=discord.ButtonStyle.primary)
     async def slot1(self, interaction: discord.Interaction, button: discord.ui.Button):

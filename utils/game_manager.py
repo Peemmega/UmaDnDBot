@@ -1679,10 +1679,8 @@ def process_mob_turn(channel_id: int, user_id: str):
 
     zone_success = False
     used_skill_payloads = []
+    skill_embeds = []
 
-    # =========================
-    # 1. BOT ใช้ Zone ก่อน
-    # =========================
     turn_trigger = (
         game["turn"] == game["max_turn"]
         or (
@@ -1696,9 +1694,6 @@ def process_mob_turn(channel_id: int, user_id: str):
         if zone_success:
             player["zone_left"] -= 1
 
-    # =========================
-    # 2. BOT ตัดสินใจใช้สกิลก่อนทอย
-    # =========================
     usable_skills = get_mob_usable_skills(
         channel_id=channel_id,
         game=game,
@@ -1714,7 +1709,6 @@ def process_mob_turn(channel_id: int, user_id: str):
     )
 
     for skill_id in skill_ids_to_use:
-        print(skill_id)
         success, skill_payload = execute_skill_core(
             channel_id=channel_id,
             user_id=user_id,
@@ -1722,12 +1716,25 @@ def process_mob_turn(channel_id: int, user_id: str):
             consume_cost=True,
         )
 
-        if success:
-            used_skill_payloads.append(skill_payload)
+        if not success:
+            continue
 
-    # =========================
-    # 3. ทอยหลังจาก zone/skill แล้ว
-    # =========================
+        used_skill_payloads.append(skill_payload)
+
+        skill = skill_payload.get("skill") or SKILLS.get(skill_id)
+
+        if skill:
+            skill_embeds.append(
+                build_skill_use_embed(
+                    player_name=player.get("display_name")
+                    or player.get("username")
+                    or "Mob",
+                    player=player,
+                    skill=skill,
+                    payload=skill_payload,
+                )
+            )
+
     success, payload = execute_roll_core(
         channel_id=channel_id,
         user_id=user_id,
@@ -1738,9 +1745,6 @@ def process_mob_turn(channel_id: int, user_id: str):
     if not success:
         return False, payload
 
-    # =========================
-    # 4. แนบผลลัพธ์เสริม
-    # =========================
     if zone_success:
         payload["zone_preview"] = build_zone_used_preview_embed(player)
 
@@ -1749,6 +1753,9 @@ def process_mob_turn(channel_id: int, user_id: str):
         payload["used_skill_ids"] = [
             item["skill_id"] for item in used_skill_payloads
         ]
+
+    if skill_embeds:
+        payload["skill_embeds"] = skill_embeds
 
     return True, payload
 
@@ -2101,3 +2108,74 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
         return enemies[:limit]
 
     return []
+
+def build_skill_use_embed(
+    *,
+    player_name: str,
+    player,
+    skill,
+    payload,
+):
+    emoji = ICONS.get(skill.get("icon"), "❓")
+
+    embed = discord.Embed(
+        title=f"{emoji} {player_name} ใช้สกิล {skill['name']}",
+        description="\n".join(
+            payload.get("result_texts", [])
+        ),
+        color=discord.Color.green()
+    )
+
+    embed.add_field(
+        name=f"{Status_Icon_Type['WIT']} คงเหลือ",
+        value=str(player.get("wit_mana", 0)),
+        inline=True
+    )
+
+    embed.add_field(
+        name="⏳ Cooldown",
+        value=f"{skill.get('cooldown', 0)} เทิร์น",
+        inline=True
+    )
+
+    embed.add_field(
+        name="✨ บัพรวมทั้งหมด",
+        value=build_next_roll_buff_text(player),
+        inline=False
+    )
+
+    return embed
+
+def build_next_roll_buff_text(player: dict) -> str:
+    lines = []
+
+    flat = player.get("next_roll_flat_bonus", 0)
+    if flat:
+        lines.append(f"เพิ่มผลรวม +{flat}")
+
+    add_d = player.get("next_roll_add_d", 0)
+    if add_d:
+        lines.append(f"เพิ่มลูกเต๋า +{add_d}")
+
+    add_kh = player.get("next_roll_add_kh", 0)
+    if add_kh:
+        lines.append(f"เพิ่มจำนวนลูกที่เลือก +{add_kh}")
+
+    floor = player.get("next_roll_floor_bonus", 0)
+    if floor:
+        lines.append(f"เพิ่มแต้มขั้นต่ำ +{floor}")
+
+    gold_range = player.get("gold_range_bonus_this_turn", 0)
+    if gold_range:
+        lines.append(f"เพิ่มระยะในการนับโรล Gold +{gold_range}")
+
+    selected = player.get("next_roll_selected_die_bonus", 0)
+    if selected:
+        lines.append(f"เพิ่มแต้มลูกที่เลือก +{selected}")
+
+    cap = player.get("next_roll_cap_bonus", 0)
+    if cap:
+        sign = "+" if cap > 0 else ""
+        lines.append(f"ปรับแต้มสูงสุดลูกเต๋า {sign}{cap}")
+
+    return "\n".join(lines) if lines else "ไม่มีบัฟค้าง"

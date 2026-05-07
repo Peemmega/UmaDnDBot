@@ -98,7 +98,6 @@ def evaluate_skill_score(game, user_id, skill):
 
     current_turn = game.get("turn", 1)
     max_turn = race.get("max_turn", 20)
-
     phase = get_phase_from_turn(current_turn, max_turn)
 
     stamina_left = player.get("stamina_left", 0)
@@ -412,7 +411,11 @@ def evaluate_skill_score(game, user_id, skill):
 
 def evaluate_skill_combo_score(game, user_id, combo):
     player = game["players"][user_id]
-    phase = game.get("phase", 1)
+    race = game.get("race", {})
+    current_turn = game.get("turn", 1)
+    max_turn = race.get("max_turn", 20)
+    phase = get_phase_from_turn(current_turn, max_turn)
+
     position_group = get_position_group(game, user_id)
     stamina_left = player.get("stamina_left", 0)
 
