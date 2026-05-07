@@ -37,7 +37,8 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "s033",
-            2: "s025",
+            2: "s035",
+            4: "s030",
             3: "s034",
         },
         "zone": {
@@ -73,9 +74,10 @@ MOB_PRESETS = {
             "front": 1,"pace": 1,"late": 1,"end_style": 1,
         },
         "skills": {
-            1: "s007",
-            2: "s021",
+            1: "s013",
+            2: "s015",
             3: "s032",
+            4: "s047",
         },
         "zone": {
             "name": "Default Zone",
@@ -111,8 +113,9 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "s014",
-            2: "s026",
-            3: "s039",
+            2: "s015",
+            3: "s037",
+            4: "s049",
         },
         "zone": {
             "name": "Default Zone",
@@ -149,7 +152,8 @@ MOB_PRESETS = {
         "skills": {
             1: "s010",
             2: "s031",
-            3: "s005",
+            3: "s036",
+            4: "s002",
         },
         "zone": {
             "name": "Default Zone",
