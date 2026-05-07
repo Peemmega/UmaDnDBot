@@ -15,8 +15,9 @@ def estimate_rule_value(rule: dict) -> float:
     dice = rule.get("dice", 1)
     kh = rule.get("kh", 0)
 
-    value = dice * 18
-    value += kh * 22
+    value = dice * 15
+    if (kh != 0):
+        value = dice * 15
 
     return value
 
