@@ -227,33 +227,36 @@ def check_skill_trigger(channel_id: int, user_id: int, skill: dict, *, path_type
             return False, f"ต้องอยู่ตำแหน่งกลุ่ม {trigger['position_group']}"
 
     if "target_distance_min" in trigger or "target_distance_max" in trigger:
-        min_d = trigger.get("target_distance_min")
-        max_d = trigger.get("target_distance_max")
+        min_d = trigger.get("target_distance_min", -float('inf')) # Default เป็นน้อยมากๆ
+        max_d = trigger.get("target_distance_max", float('inf'))  # Default เป็นมากที่สุด
 
-        gap = None
-        if max_d is not None and max_d >= 0:
-            gap = get_nearest_front_gap(channel_id, user_id)
-        elif min_d is not None and min_d < 0:
-            gap = get_nearest_back_gap(channel_id, user_id)
+        candidates = []
 
-        if gap is None:
-            return False, "ไม่มีเป้าหมายในระยะ"
+        if max_d >= 0:
+            f_gap = get_nearest_front_gap(channel_id, user_id)
+            if f_gap is not None:
+                lower_bound = max(0, min_d)
+                if lower_bound <= f_gap <= max_d:
+                    candidates.append(f_gap)
+
+        if min_d < 0:
+            b_gap = get_nearest_back_gap(channel_id, user_id)
+            if b_gap is not None:
+                back_limit_min = abs(min_d)
+                back_limit_max = abs(max_d) if max_d < 0 else 0 
+
+                if min(back_limit_min, back_limit_max) <= b_gap <= max(back_limit_min, back_limit_max):
+                    candidates.append(-b_gap) # เก็บเป็นค่าติดลบเพื่อให้รู้ว่าเป็นด้านหลัง
+
+        if not candidates:
+            return False, "ไม่มีเป้าหมายในระยะที่กำหนด"
+
+        gap_val = min(candidates, key=abs)
+        gap = abs(gap_val) 
         
-        print(f"gap is {gap}")
-        
-        if min_d is not None:
-            if min_d >= 0 and gap < min_d:
-                return False, "ระยะเป้าหมายไม่ถึงขั้นต่ำ"
-            if min_d < 0 and gap < abs(min_d):
-                return False, "ระยะเป้าหมายด้านหลังไม่ถึงขั้นต่ำ"
+        print(f"Selected gap: {gap_val} (distance: {gap})")
 
-        if max_d is not None:
-            if max_d >= 0 and gap > max_d:
-                return False, "เป้าหมายไกลเกินไป"
-            if max_d < 0 and gap > abs(max_d):
-                return False, "เป้าหมายด้านหลังไกลเกินไป"
-
-    return True, None
+        return True, None
 
 def get_skill_emoji(skill_id: str) -> str:
     skill = SKILLS.get(skill_id)
