@@ -1,4 +1,5 @@
 import random
+import discord
 from utils.database import get_player_skill_in_slot, ensure_player
 from utils.skill.skill_presets import SKILLS, ICON
 from utils.game_manager import (
@@ -9,8 +10,17 @@ from utils.game_manager import (
     can_force_rush_targets,
     is_lastspurt,
     is_last_corner,
+    build_pending_effects_from_player,
+    apply_next_roll_effects_to_player,
+    set_player_skill_cd,
+    is_skill_on_cooldown,
+    get_current_path_type,
 )
 from utils.in_game_manager import incrase_speed_by_acceleration
+from utils.race.race_dice import get_distance_color, get_phase_from_turn
+from utils.icon_presets import Status_Icon_Type
+
+
 
 def get_position_group(channel_id: int, user_id: int) -> str:
     game = get_game(channel_id)
@@ -215,6 +225,15 @@ def check_skill_trigger(channel_id: int, user_id: int, skill: dict, *, path_type
         if trigger["front_blocked"] is False and blocked:
             return False, "ใช้ไม่ได้เมื่อมีคนขวางด้านหน้าในระยะ 20 ช่อง"
 
+    if trigger.get("nearby_uma_count") is not None:
+        score_map = game["turn_snapshot_scores"]
+        skill_effects = []
+        skill_effects,merged_stats = build_pending_effects_from_player(player)
+        distance_color,nearby_count = get_distance_color(player, score_map, skill_effects or [])
+
+        if nearby_count < trigger.get("nearby_uma_count"):
+            return False
+
     if trigger.get("lastspurt") is True and not is_lastspurt(phase, path_type):
         return False, "ยังไม่เข้าสู่ Last Spurt"
     
@@ -292,6 +311,170 @@ def has_front_blocked(channel_id: int, user_id: int, max_gap: int = 10) -> bool:
             return True
 
     return False
+
+def execute_skill_core(
+    channel_id: int,
+    user_id,
+    skill_id: str,
+    *,
+    consume_cost: bool = True,
+):
+    game = get_game(channel_id)
+    if game is None:
+        return False, {"message": "ไม่พบเกม"}
+
+    player = game["players"].get(user_id)
+    if player is None:
+        return False, {"message": "ไม่พบผู้เล่น"}
+
+    skill = SKILLS.get(skill_id)
+    if not skill:
+        return False, {"message": "ไม่พบข้อมูลสกิล"}
+
+    # =====================================
+    # Cooldown
+    # =====================================
+
+    on_cd, cd_left = is_skill_on_cooldown(
+        channel_id,
+        user_id,
+        skill_id
+    )
+
+    if on_cd:
+        return False, {
+            "message": f"สกิลติด cooldown {cd_left}"
+        }
+
+    # =====================================
+    # Trigger
+    # =====================================
+
+    path_type = get_current_path_type(game)
+
+    phase = get_phase_from_turn(
+        game["turn"],
+        game["max_turn"]
+    )
+
+    ok, reason = check_skill_trigger(
+        channel_id,
+        user_id,
+        skill,
+        path_type=path_type,
+        phase=phase
+    )
+
+    if not ok:
+        return False, {"message": reason}
+
+    # =====================================
+    # Cost
+    # =====================================
+
+    cost = skill.get("cost", 0)
+
+    if consume_cost:
+        if player.get("wit_mana", 0) < cost:
+            return False, {
+                "message": f"Wit ไม่พอ ({cost})"
+            }
+
+    # =====================================
+    # Split effects
+    # =====================================
+
+    instant_effects = []
+    queued_effects = []
+
+    for effect in skill.get("effects", []):
+
+        effect_type = effect.get("type")
+        duration = effect.get("duration")
+
+        if (
+            effect_type in [
+                "modify_velocity",
+                "modify_selected_die",
+                "modify_roll_floor",
+                "modify_roll_cap",
+                "add_d",
+                "add_kh",
+                "add_dkh",
+            ]
+            or duration == "this_roll"
+        ):
+            queued_effects.append(effect)
+
+        else:
+            instant_effects.append(effect)
+
+    result_texts = []
+
+    # =====================================
+    # Instant
+    # =====================================
+
+    if instant_effects:
+
+        temp_skill = skill.copy()
+        temp_skill["effects"] = instant_effects
+
+        success, result_text = apply_skill(
+            channel_id,
+            user_id,
+            temp_skill
+        )
+
+        if not success:
+            return False, {"message": result_text}
+
+        result_texts.append(result_text)
+
+    # =====================================
+    # Queued
+    # =====================================
+
+    if queued_effects:
+        apply_next_roll_effects_to_player(
+            player,
+            queued_effects
+        )
+
+        result_texts.append(
+            "บัฟถูกสะสมไว้สำหรับการวิ่งครั้งถัดไป"
+        )
+
+    if not instant_effects and not queued_effects:
+        return False, {
+            "message": "ยังไม่มี effect รองรับ"
+        }
+
+    # =====================================
+    # Consume resource
+    # =====================================
+
+    if consume_cost:
+        player["wit_mana"] -= cost
+
+    # =====================================
+    # Cooldown
+    # =====================================
+
+    set_player_skill_cd(
+        channel_id,
+        user_id,
+        skill_id,
+        skill.get("cooldown", 0)
+    )
+
+    return True, {
+        "skill_id": skill_id,
+        "skill_name": skill["name"],
+        "skill": skill,
+        "result_texts": result_texts,
+        "cost": cost,
+    }
 
 def apply_skill(channel_id: int, user_id: int, skill: dict):
     game = get_game(channel_id)

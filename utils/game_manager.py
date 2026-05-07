@@ -4,6 +4,11 @@ import math
 import discord
 
 from utils.race.race_presets import RACE_PRESET
+from utils.skill.skill_presets import SKILLS
+from utils.skill.skill_runtime import check_skill_trigger, execute_skill_core
+from utils.mob.mob_decision import decide_mob_skill_combo
+
+
 from utils.mob.mob_presets import MOB_PRESETS
 from utils.database import get_player, get_player_skill_slots
 from utils.zone.zone_manager import apply_zone_in_game
@@ -15,6 +20,7 @@ from utils.zone.zone_embed import build_zone_used_preview_embed
 
 from utils.race.race_dice import (
     roll_race_dice,
+    get_phase_from_turn
 )
 from utils.dice.dice_presets import (
     MAX_SPEED_PHASE
@@ -1000,6 +1006,49 @@ def use_reroll(channel_id: int, user_id: int):
     player["reroll_left"] -= 1
     return True, player["reroll_left"]
 
+def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
+    player = game["players"].get(user_id)
+    if not player:
+        return []
+
+    equipped = player.get("skills", {})
+    cooldowns = player.get("skill_cooldowns", {})
+    wit_mana = player.get("wit_mana", 0)
+
+    path_type = get_current_path_type(game)
+    phase = get_phase_from_turn(game["turn"], game["max_turn"])
+
+    usable = []
+
+    for slot, skill_id in equipped.items():
+        if not skill_id:
+            continue
+
+        skill = SKILLS.get(skill_id)
+        if not skill:
+            continue
+
+        if cooldowns.get(skill_id, 0) > 0:
+            continue
+
+        if wit_mana < skill.get("cost", 0):
+            continue
+
+        ok, _reason = check_skill_trigger(
+            channel_id,
+            user_id,
+            skill,
+            path_type=path_type,
+            phase=phase,
+        )
+
+        if not ok:
+            continue
+
+        usable.append((skill_id, skill))
+
+    return usable
+
 def process_mob_turn(channel_id: int, user_id: str):
     game = get_game(channel_id)
     if game is None:
@@ -1009,19 +1058,59 @@ def process_mob_turn(channel_id: int, user_id: str):
     if player is None:
         return False, {"message": "ไม่พบ mob"}
 
-    # ✅ ใช้ zone_left
+    if not player.get("is_mob"):
+        return False, {"message": "ผู้เล่นนี้ไม่ใช่ mob"}
+
     zone_success = False
-    
-    turn_trigger = (game["turn"] == game["max_turn"]) or (game["turn"] == 1 and player.get("style","Front") == "Front")
-    if (
-        player.get("is_mob")
-        and turn_trigger  # 🔥 เทิร์นสุดท้าย
-        and player.get("zone_left", 0) > 0
-    ):
+    used_skill_payloads = []
+
+    # =========================
+    # 1. BOT ใช้ Zone ก่อน
+    # =========================
+    turn_trigger = (
+        game["turn"] == game["max_turn"]
+        or (
+            game["turn"] == 1
+            and player.get("style", "Front") == "Front"
+        )
+    )
+
+    if turn_trigger and player.get("zone_left", 0) > 0:
         zone_success = apply_zone_in_game(game, player)
         if zone_success:
-            player["zone_left"] -= 1   # 🔥 สำคัญ
+            player["zone_left"] -= 1
 
+    # =========================
+    # 2. BOT ตัดสินใจใช้สกิลก่อนทอย
+    # =========================
+    usable_skills = get_mob_usable_skills(
+        channel_id=channel_id,
+        game=game,
+        user_id=user_id,
+    )
+
+    skill_ids_to_use = decide_mob_skill_combo(
+        game=game,
+        user_id=user_id,
+        usable_skills=usable_skills,
+        max_skill_per_turn=3,
+        min_combo_score=45,
+    )
+
+    for skill_id in skill_ids_to_use:
+        success, skill_payload = execute_skill_core(
+            channel_id=channel_id,
+            user_id=user_id,
+            skill_id=skill_id,
+            consume_cost=True,
+        )
+
+        if success:
+            used_skill_payloads.append(skill_payload)
+
+    # =========================
+    # 3. ทอยหลังจาก zone/skill แล้ว
+    # =========================
     success, payload = execute_roll_core(
         channel_id=channel_id,
         user_id=user_id,
@@ -1032,29 +1121,18 @@ def process_mob_turn(channel_id: int, user_id: str):
     if not success:
         return False, payload
 
-    # ✅ สร้าง embed เอง
-    mob_name = (
-        player.get("display_name")
-        or player.get('username') 
-        or player.get("name")
-        or "Mob"
-    )
-
-    # embed = build_run_embed(
-    #     game_player=payload["game_player"],
-    #     result=payload["result"],
-    #     new_score=payload["new_score"],
-    #     stamina_note=payload["stamina_note"],
-    #     path_effect=payload["path_effect"],
-    #     player_name=f"🤖 {mob_name}",
-    # )
-
-    # payload["embed"] = embed
+    # =========================
+    # 4. แนบผลลัพธ์เสริม
+    # =========================
     if zone_success:
         payload["zone_preview"] = build_zone_used_preview_embed(player)
-    
-    # print(player.get("is_mob"), game["turn"] == game["max_turn"], player.get("zone_left", 0) > 0 ,game["turn"], game["max_turn"])
-        
+
+    if used_skill_payloads:
+        payload["used_skills"] = used_skill_payloads
+        payload["used_skill_ids"] = [
+            item["skill_id"] for item in used_skill_payloads
+        ]
+
     return True, payload
 
 def build_single_wit_regen_text(game_player: dict) -> str:

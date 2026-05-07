@@ -22,8 +22,6 @@ async def execute_reroll(
     if race_player is None:
         return False, {"message": "ไม่พบข้อมูล stat ตอนเริ่มเกม"}
 
-    snapshot_scores = game["turn_snapshot_scores"]
-
     success, _ = update_player_score(
         interaction.channel_id,
         interaction.user.id,
@@ -32,11 +30,12 @@ async def execute_reroll(
     if not success:
         return False, {"message": "ไม่สามารถลบคะแนนเดิมได้"}
 
+    score_map = game["turn_snapshot_scores"]
     # Buff
-    pending_effects = []
+    skill_effects = []
     merged_stats = {}
 
-    pending_effects,merged_stats = build_pending_effects_from_player(game_player)
+    skill_effects,merged_stats = build_pending_effects_from_player(game_player)
 
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, game_player, race_player)
@@ -46,11 +45,11 @@ async def execute_reroll(
         game_player=game_player,
         player_stats=race_player,
         player_id=interaction.user.id,
-        score_map=snapshot_scores,
+        score_map=score_map,
         turn=game["turn"],
         max_turn=game["max_turn"],
         path_effect=path_effect,
-        skill_effects=pending_effects,
+        skill_effects=skill_effects,
     )
 
     staminaNote = None

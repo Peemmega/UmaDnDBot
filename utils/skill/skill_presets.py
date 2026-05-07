@@ -62,14 +62,13 @@ TRIGGER_SCHEMA = {
     "lastspurt": None,
     "last_corner": None,
     "distance_color": None,
-    "overtaking": None,
-    "being_overtaken": None,
     "position_group": None,
     "distance_type": None,
     "surface": None,
     "target_distance_min": None,
     "target_distance_max": None,
     "front_blocked": None, 
+    "nearby_uma_count": None,
 }
 
 TARGET_SCHEMA = {
@@ -1098,7 +1097,7 @@ SKILLS = {
     "s047": {
         "name": "Ramp Up",
         "icon": "Velocity",
-        "cooldown": 8,
+        "cooldown": 20,
         "cost": 50,
         "trigger": {
             "phase_min": 2,
@@ -1114,7 +1113,7 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 50,
+                "value": 40,
                 "duration": "this_roll"
             }
         ],
@@ -1123,6 +1122,78 @@ SKILLS = {
     },
 
     
+    "s048": {
+        "name": "Uma Stan",
+        "icon": "Velocity",
+        "cooldown": 20,
+        "cost": 50,
+        "trigger": {
+            "nearby_uma_count": 2,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {"type": "modify_roll_floor","value": 7,"duration": "this_roll"},
+            {"type": "modify_roll_cap","value": 7,"duration": "this_roll"},
+        ],
+
+        "tags": ["velocity"],
+    },
+
+    "s049": {
+        "name": "Homestretch Haste",
+        "icon": "Velocity",
+        "cooldown": 20,
+        "cost": 50,
+        "trigger": {
+            "last_corner": True,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
+        ],
+
+        "tags": ["velocity"],
+    },
+
+    "s050": {
+        "name": "Daring Strike",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 80,
+
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "back",
+        },
+
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+
+        "effects": [
+            {
+                "type": "modify_roll_cap",
+                "value": 12,
+                "duration": "this_roll"
+            },
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 60,
+                "duration": "this_roll"
+            }
+        ],
+
+        "tags": ["velocity", "mid_race", "back"],
+    },
 
     # "s099": {
     #     "name": "March Licking",
