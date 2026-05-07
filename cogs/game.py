@@ -421,7 +421,6 @@ class GameCog(commands.GroupCog, name="game"):
             await send_func(embed=embed)
 
             ok, msg = stop_bgm(guild)
-            print(f"[Music] stop on turn end: {msg}")
 
             delete_game(channel_id)
             return

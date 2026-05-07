@@ -48,8 +48,6 @@ async def load_image_url(path_or_url):
         raise ValueError(f"invalid image path: {path_or_url}")
 
     except Exception as e:
-        print(f"[WARN] โหลดรูปไม่ได้: {path_or_url} | {e}")
-
         if DEFAULT_IMAGE.exists():
             return Image.open(DEFAULT_IMAGE).convert("RGBA")
 
@@ -164,7 +162,6 @@ def draw_rich_text(card, draw, base_pos, tokens, font, color):
             x += w
 
         elif t_type == "icon":
-            print(value)
             icon_path = ICON_MAP.get(value)
 
             if icon_path and icon_path.exists():
