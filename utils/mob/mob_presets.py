@@ -32,11 +32,11 @@ MOB_PRESETS = {
         "thumnail": thumnails["Rookie1"],
         "style": "Front",
         "race_profile": {
-            "speed": 6,
+            "speed": 5,
             "stamina": 4,
-            "power": 5,
-            "gut": 1,
-            "wit": 3,
+            "power": 4,
+            "gut": 2,
+            "wit": 2,
 
             "turf": 1,"dirt": 1,
             "sprint": 1,"mile": 1,"medium": 1,"long": 1,
@@ -72,7 +72,7 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 5,
             "stamina": 4,
-            "power": 5,
+            "power": 3,
             "gut": 2,
             "wit": 3,
 
@@ -110,9 +110,9 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 4,
             "stamina": 4,
-            "power": 6,
+            "power": 5,
             "gut": 2,
-            "wit": 3,
+            "wit": 2,
 
             "turf": 1,"dirt": 1,
             "sprint": 1,"mile": 1,"medium": 1,"long": 1,
@@ -148,9 +148,9 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 4,
             "stamina": 4,
-            "power": 7,
-            "gut": 1,
-            "wit": 3,
+            "power": 6,
+            "gut": 2,
+            "wit": 1,
 
             "turf": 1,"dirt": 1,
             "sprint": 1,"mile": 1,"medium": 1,"long": 1,

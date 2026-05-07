@@ -48,8 +48,10 @@ def is_last_corner(game: dict) -> bool:
     return turn_index == last_corner_index
 
 def is_lastspurt(game: dict) -> bool:
+    path = game["path"]
     turn_index = game["turn"]
-    return turn_index == 1 and game["phase"] == 4
+
+    return path[turn_index] == 1 and game["phase"] == 4
 
 def execute_roll_core(
     *,
