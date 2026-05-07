@@ -1433,155 +1433,190 @@ def get_position_group(channel_id: int, user_id: int) -> str:
 
     return "middle"
 
-
-def get_nearest_front_gap(channel_id: int, user_id: int):
-    game = get_game(channel_id)
-    if game is None or user_id not in game["players"]:
+def get_nearest_target_distance(game, user_id):
+    player = game["players"].get(user_id)
+    if not player:
         return None
 
-    scores = game.get("turn_snapshot_scores") or {
-        uid: p["score"] for uid, p in game["players"].items()
-    }
+    player_score = player.get("score", 0)
 
-    my_score = scores[user_id]
+    distances = []
 
-    gaps = [
-        score - my_score
-        for uid, score in scores.items()
-        if uid != user_id and score > my_score
-    ]
-
-    return min(gaps) if gaps else None
-
-def get_nearest_back_gap(channel_id: int, user_id: int):
-    game = get_game(channel_id)
-    if game is None or user_id not in game["players"]:
-        return None
-
-    scores = game.get("turn_snapshot_scores") or {
-        uid: p["score"] for uid, p in game["players"].items()
-    }
-
-    my_score = scores[user_id]
-
-    gaps = [
-        my_score - score
-        for uid, score in scores.items()
-        if uid != user_id and score < my_score
-    ]
-
-    return min(gaps) if gaps else None
-
-
-def has_front_blocked(channel_id: int, user_id: int, max_gap: int = 10) -> bool:
-    game = get_game(channel_id)
-    if game is None or user_id not in game["players"]:
-        return False
-
-    my_score = game["players"][user_id]["score"]
-
-    for uid, info in game["players"].items():
-        if uid == user_id:
+    for other_id, other in game["players"].items():
+        if other_id == user_id:
             continue
 
-        gap = info["score"] - my_score
-        if 0 < gap <= max_gap:
+        distance = other.get("score", 0) - player_score
+        distances.append(distance)
+
+    if not distances:
+        return None
+
+    return min(distances, key=lambda d: abs(d))
+
+
+def is_front_blocked(game, user_id):
+    player = game["players"].get(user_id)
+    if not player:
+        return False
+
+    player_score = player.get("score", 0)
+
+    for other_id, other in game["players"].items():
+        if other_id == user_id:
+            continue
+
+        distance = other.get("score", 0) - player_score
+
+        if 0 < distance <= 20:
             return True
 
     return False
 
-
-def check_skill_trigger(channel_id: int, user_id: int, skill: dict, *, path_type: int, phase: int) -> tuple[bool, str | None]:
+def check_skill_trigger(
+    channel_id: int,
+    user_id,
+    skill: dict,
+    *,
+    path_type=None,
+    phase=None,
+):
     game = get_game(channel_id)
-    player = get_player_in_game(channel_id, user_id)
+    if game is None:
+        return False, "ไม่พบเกม"
 
-    if game is None or player is None:
-        return False, "ไม่พบข้อมูลเกมหรือผู้เล่น"
+    player = game["players"].get(user_id)
+    if player is None:
+        return False, "ไม่พบผู้เล่น"
 
     trigger = skill.get("trigger", {})
 
-    if "style" in trigger and trigger["style"] != player["style"]:
-        return False, f"ใช้ได้เฉพาะสาย {trigger['style']}"
+    if not trigger:
+        return True, "ใช้สกิลได้"
 
-    if "path_type" in trigger and trigger["path_type"] != path_type:
-        return False, "เงื่อนไขสนามไม่ตรง"
+    if phase is None:
+        phase = get_phase_from_turn(game["turn"], game["max_turn"])
 
-    if "turn_min" in trigger and game["turn"] < trigger["turn_min"]:
-        return False, f"ใช้ได้ตั้งแต่เทิร์น {trigger['turn_min']}"
+    if path_type is None:
+        path_type = get_current_path_type(game)
 
-    if "turn_max" in trigger and game["turn"] > trigger["turn_max"]:
-        return False, f"ใช้ได้ถึงเทิร์น {trigger['turn_max']}"
+    # path type
+    required_path = trigger.get("path_type")
+    if required_path is not None and path_type != required_path:
+        return False, "เงื่อนไขเส้นทางไม่ตรง"
 
-    if "phase_min" in trigger and phase < trigger["phase_min"]:
-        return False, f"ใช้ได้ตั้งแต่ Phase {trigger['phase_min']}"
+    # style
+    required_style = trigger.get("style")
+    if required_style is not None:
+        if player.get("style") != required_style:
+            return False, "แผนวิ่งไม่ตรงเงื่อนไข"
 
-    if "phase_max" in trigger and phase > trigger["phase_max"]:
-        return False, f"ใช้ได้ถึง Phase {trigger['phase_max']}"
+    # turn min/max
+    turn_min = trigger.get("turn_min")
+    if turn_min is not None and game["turn"] < turn_min:
+        return False, f"ต้องใช้ตั้งแต่เทิร์น {turn_min}"
 
-    if "front_blocked" in trigger:
-        blocked = has_front_blocked(channel_id, user_id, 20)
+    turn_max = trigger.get("turn_max")
+    if turn_max is not None and game["turn"] > turn_max:
+        return False, f"ใช้ได้ไม่เกินเทิร์น {turn_max}"
 
-        if trigger["front_blocked"] is True and not blocked:
-            return False, "ต้องมีคนอยู่ด้านหน้าในระยะ 20 ช่อง"
+    # phase min/max
+    phase_min = trigger.get("phase_min")
+    if phase_min is not None and phase < phase_min:
+        return False, f"ต้องใช้ตั้งแต่ Phase {phase_min}"
 
-        if trigger["front_blocked"] is False and blocked:
-            return False, "ใช้ไม่ได้เมื่อมีคนขวางด้านหน้าในระยะ 20 ช่อง"
+    phase_max = trigger.get("phase_max")
+    if phase_max is not None and phase > phase_max:
+        return False, f"ใช้ได้ไม่เกิน Phase {phase_max}"
 
-    if trigger.get("nearby_uma_count") is not None:
-        score_map = game["turn_snapshot_scores"]
-        skill_effects = []
-        skill_effects,merged_stats = build_pending_effects_from_player(player)
-        distance_color,nearby_count = get_distance_color(player, score_map, skill_effects or [])
+    # last spurt
+    required_lastspurt = trigger.get("lastspurt")
+    if required_lastspurt is not None:
+        is_lastspurt = phase >= 4
+        if is_lastspurt != required_lastspurt:
+            return False, "ยังไม่เข้า Last Spurt"
 
-        if nearby_count < trigger.get("nearby_uma_count"):
-            return False
+    # last corner
+    required_last_corner = trigger.get("last_corner")
+    if required_last_corner is not None:
+        is_last_corner = bool(game.get("last_corner", False))
+        if is_last_corner != required_last_corner:
+            return False, "ยังไม่ใช่โค้งสุดท้าย"
 
-    if trigger.get("lastspurt") is True and not is_lastspurt(phase, path_type):
-        return False, "ยังไม่เข้าสู่ Last Spurt"
-    
-    if trigger.get("last_corner") is True and not is_last_corner(game):
-        return False, "ยังไม่ถึงโค้งสุดท้าย"
+    # distance color
+    required_distance_color = trigger.get("distance_color")
+    if required_distance_color is not None:
+        distance_color = player.get("distance_color")
+        if distance_color != required_distance_color:
+            return False, "สีระยะไม่ตรงเงื่อนไข"
 
-    if "position_group" in trigger:
-        position_group = get_position_group(channel_id, user_id)
-        if position_group != trigger["position_group"]:
-            return False, f"ต้องอยู่ตำแหน่งกลุ่ม {trigger['position_group']}"
+    # position group
+    required_position_group = trigger.get("position_group")
+    if required_position_group is not None:
+        position_group = get_position_group(game, user_id)
+        if position_group != required_position_group:
+            return False, "ตำแหน่งกลุ่มไม่ตรงเงื่อนไข"
 
-    if "target_distance_min" in trigger or "target_distance_max" in trigger:
-        min_d = trigger.get("target_distance_min", -float('inf')) # Default เป็นน้อยมากๆ
-        max_d = trigger.get("target_distance_max", float('inf'))  # Default เป็นมากที่สุด
+    # distance type
+    required_distance_type = trigger.get("distance_type")
+    if required_distance_type is not None:
+        distance_type = game.get("distance_type") or game.get("distance")
+        if distance_type != required_distance_type:
+            return False, "ประเภทระยะไม่ตรงเงื่อนไข"
 
-        candidates = []
+    # surface
+    required_surface = trigger.get("surface")
+    if required_surface is not None:
+        surface = game.get("surface")
+        if surface != required_surface:
+            return False, "พื้นสนามไม่ตรงเงื่อนไข"
 
-        if max_d >= 0:
-            f_gap = get_nearest_front_gap(channel_id, user_id)
-            if f_gap is not None:
-                lower_bound = max(0, min_d)
-                if lower_bound <= f_gap <= max_d:
-                    candidates.append(f_gap)
+    # target distance
+    target_distance_min = trigger.get("target_distance_min")
+    target_distance_max = trigger.get("target_distance_max")
 
-        if min_d < 0:
-            b_gap = get_nearest_back_gap(channel_id, user_id)
-            if b_gap is not None:
-                back_limit_min = abs(min_d)
-                back_limit_max = abs(max_d) if max_d < 0 else 0 
+    if target_distance_min is not None or target_distance_max is not None:
+        target_distance = get_nearest_target_distance(game, user_id)
 
-                if min(back_limit_min, back_limit_max) <= b_gap <= max(back_limit_min, back_limit_max):
-                    candidates.append(-b_gap) # เก็บเป็นค่าติดลบเพื่อให้รู้ว่าเป็นด้านหลัง
+        if target_distance is None:
+            return False, "ไม่มีเป้าหมายในระยะ"
 
-        if not candidates:
-            return False, "ไม่มีเป้าหมายในระยะที่กำหนด"
+        if target_distance_min is not None and target_distance < target_distance_min:
+            return False, "เป้าหมายอยู่ใกล้/หลังเกินเงื่อนไข"
 
-        gap_val = min(candidates, key=abs)
-        gap = abs(gap_val) 
-        
-        print(f"Selected gap: {gap_val} (distance: {gap})")
+        if target_distance_max is not None and target_distance > target_distance_max:
+            return False, "เป้าหมายอยู่ไกลเกินเงื่อนไข"
 
-        return True, None
+    # front blocked
+    required_front_blocked = trigger.get("front_blocked")
+    if required_front_blocked is not None:
+        is_blocked = is_front_blocked(game, user_id)
+        if is_blocked != required_front_blocked:
+            return False, "เงื่อนไขถูกบล็อกด้านหน้าไม่ตรง"
 
+    required_nearby_count = trigger.get("nearby_uma_count")
+    if required_nearby_count is not None:
+        score_map = {
+            pid: p.get("score", 0)
+            for pid, p in game["players"].items()
+        }
+
+        skill_effects = player.get("active_effects", [])
+
+        _, nearby_count = get_distance_color(
+            user_id,
+            score_map,
+            skill_effects or []
+        )
+
+        if nearby_count < required_nearby_count:
+            return False, (
+                f"ต้องมีคนในระยะทองอย่างน้อย "
+                f"{required_nearby_count} คน"
+            )
+        return True, "ใช้สกิลได้"
 
 def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
-
     player = game["players"].get(user_id)
     if not player:
         return []
@@ -1595,7 +1630,7 @@ def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
 
     usable = []
 
-    for slot, skill_id in equipped.items():
+    for _, skill_id in equipped.items():
         if not skill_id:
             continue
 
@@ -1609,13 +1644,18 @@ def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
         if wit_mana < skill.get("cost", 0):
             continue
 
-        ok, _reason = check_skill_trigger(
+        trigger_result = check_skill_trigger(
             channel_id,
             user_id,
             skill,
             path_type=path_type,
             phase=phase,
         )
+
+        if not isinstance(trigger_result, tuple):
+            continue
+
+        ok, _reason = trigger_result
 
         if not ok:
             continue
