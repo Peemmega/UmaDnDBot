@@ -243,6 +243,10 @@ class LobbyView(discord.ui.View):
                 success, payload = process_mob_turn(self.channel_id, user_id)
                 if success and payload.get("zone_preview"):
                     await interaction.followup.send(embed=payload["zone_preview"])
+
+                if payload.get("skill_embeds"):
+                    for skill_embed in payload["skill_embeds"]:
+                        await interaction.followup.send(embed=skill_embed)
                 
                 card = await create_race_dice_preview(
                     game_player=player,

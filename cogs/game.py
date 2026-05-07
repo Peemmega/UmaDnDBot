@@ -500,6 +500,10 @@ class GameCog(commands.GroupCog, name="game"):
                 success, payload = process_mob_turn(channel_id, user_id)
                 if success and payload.get("zone_preview"):
                     await send_func(embed=payload["zone_preview"])
+
+                if payload.get("skill_embeds"):
+                    for skill_embed in payload["skill_embeds"]:
+                        await send_func(embed=skill_embed)
                 
                 card = await create_race_dice_preview(
                     game_player=player,
