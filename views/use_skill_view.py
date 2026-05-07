@@ -1,9 +1,8 @@
 import discord
 from utils.game_manager import (
-    get_game,
+    get_game,execute_skill_core
 )
 
-from utils.skill.skill_runtime import execute_skill_core
 from utils.zone.zone_manager import apply_zone_in_game
 from utils.zone.zone_embed import build_zone_used_preview_embed
 
