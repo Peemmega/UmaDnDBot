@@ -5,7 +5,7 @@ import discord
 import random
 
 from utils.race.race_presets import RACE_PRESET
-from utils.skill.skill_presets import SKILLS
+from utils.skill.skill_presets import SKILLS, ICON
 from utils.mob.mob_decision import decide_mob_skill_combo
 
 from utils.mob.mob_presets import MOB_PRESETS
@@ -1553,7 +1553,7 @@ def check_skill_trigger(
     # position group
     required_position_group = trigger.get("position_group")
     if required_position_group is not None:
-        position_group = get_position_group(game, user_id)
+        position_group = get_position_group(channel_id, user_id)
         if position_group != required_position_group:
             return False, "ตำแหน่งกลุ่มไม่ตรงเงื่อนไข"
 
@@ -1706,8 +1706,9 @@ def process_mob_turn(channel_id: int, user_id: str):
         usable_skills=usable_skills,
         max_skill_per_turn=3,
         min_combo_score=45,
+        debug=True,
     )
-
+    
     for skill_id in skill_ids_to_use:
         success, skill_payload = execute_skill_core(
             channel_id=channel_id,
@@ -2116,7 +2117,7 @@ def build_skill_use_embed(
     skill,
     payload,
 ):
-    emoji = ICONS.get(skill.get("icon"), "❓")
+    emoji = ICON.get(skill.get("icon"), "❓")
 
     embed = discord.Embed(
         title=f"{emoji} {player_name} ใช้สกิล {skill['name']}",

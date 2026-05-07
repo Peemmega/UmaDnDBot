@@ -14,15 +14,14 @@ def decide_mob_skill_combo(
     *,
     max_skill_per_turn=3,
     min_combo_score=45,
+    debug=False,
 ):
-    """
-    เลือกหลายสกิลพร้อมกันสำหรับ mob
-
-    usable_skills: list[(skill_id, skill_data)]
-    return: list[str]
-    """
+    if debug:
+        print(f"[MOB AI] {user_id} usable_skills = {[sid for sid, _ in usable_skills]}")
 
     if not usable_skills:
+        if debug:
+            print("[MOB AI] no usable skills")
         return []
 
     player = game["players"][user_id]
@@ -32,13 +31,20 @@ def decide_mob_skill_combo(
 
     for skill_id, skill in usable_skills:
         score = evaluate_skill_score(game, user_id, skill)
+        cost = skill.get("cost", 0)
+
+        if debug:
+            print(
+                f"[MOB AI] skill={skill_id} name={skill.get('name')} "
+                f"score={score} cost={cost} wit={skill_point}"
+            )
 
         if score <= 0:
             continue
 
-        cost = skill.get("cost", 0)
-
         if cost > skill_point:
+            if debug:
+                print(f"[MOB AI] skip {skill_id}: cost too high")
             continue
 
         scored.append({
@@ -49,6 +55,8 @@ def decide_mob_skill_combo(
         })
 
     if not scored:
+        if debug:
+            print("[MOB AI] no scored skills")
         return []
 
     best_combo = []
@@ -61,23 +69,35 @@ def decide_mob_skill_combo(
             total_cost = sum(item["cost"] for item in combo)
 
             if total_cost > skill_point:
+                if debug:
+                    ids = [item["skill_id"] for item in combo]
+                    print(f"[MOB AI] skip combo={ids}: total_cost={total_cost} > wit={skill_point}")
                 continue
 
-            combo_score = evaluate_skill_combo_score(
-                game,
-                user_id,
-                combo,
-            )
+            combo_score = evaluate_skill_combo_score(game, user_id, combo)
+            ids = [item["skill_id"] for item in combo]
+
+            if debug:
+                print(f"[MOB AI] combo={ids} combo_score={combo_score} total_cost={total_cost}")
 
             if combo_score > best_combo_score:
                 best_combo_score = combo_score
                 best_combo = combo
 
+    if debug:
+        print(
+            f"[MOB AI] best_combo={[item['skill_id'] for item in best_combo]} "
+            f"best_score={best_combo_score} min={min_combo_score}"
+        )
+
     if best_combo_score < min_combo_score:
+        if debug:
+            print("[MOB AI] best combo score too low")
         return []
 
-    # ทำให้บอทไม่ perfect 100%
     if random.random() < 0.12:
+        if debug:
+            print("[MOB AI] random skip")
         return []
 
     return [item["skill_id"] for item in best_combo]
@@ -88,16 +108,13 @@ def decide_mob_skill_combo(
 
 def evaluate_skill_score(game, user_id, skill):
     player = game["players"][user_id]
-    race = game.get("race", {})
-
     score = 10
 
     # =====================================================
     # BASIC INFO
     # =====================================================
-
     current_turn = game.get("turn", 1)
-    max_turn = race.get("max_turn", 20)
+    max_turn = game.get("max_turn", 20)
     phase = get_phase_from_turn(current_turn, max_turn)
 
     stamina_left = player.get("stamina_left", 0)
@@ -411,9 +428,8 @@ def evaluate_skill_score(game, user_id, skill):
 
 def evaluate_skill_combo_score(game, user_id, combo):
     player = game["players"][user_id]
-    race = game.get("race", {})
     current_turn = game.get("turn", 1)
-    max_turn = race.get("max_turn", 20)
+    max_turn = game.get("max_turn", 20)
     phase = get_phase_from_turn(current_turn, max_turn)
 
     position_group = get_position_group(game, user_id)
