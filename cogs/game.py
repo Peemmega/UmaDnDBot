@@ -1,9 +1,9 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import random
 
 from io import BytesIO
-import discord
 from utils.race_dice_preview import create_race_dice_preview
 
 from views.confirmDeleteGameView import ConfirmDeleteView
@@ -21,6 +21,14 @@ from utils.music_manager import play_bgm, stop_bgm
 
 from utils.race.race_presets import RACE_PRESET, render_path, build_track_progress_text, build_current_track_text
 from utils.dice.roll_service import (execute_player_roll)
+
+WIN_IMAGE = [
+    "https://media.discordapp.net/attachments/1493575422007447622/1493676112952426629/i-won-taurus-cup-with-tm-opera-o-v0-w2a0zxpycglf1.gif",
+    "https://cdn.discordapp.com/attachments/697810514448744448/1501846522877317130/-tamamocross.gif",
+    "https://cdn.discordapp.com/attachments/697810514448744448/1501846523393081456/-uma.gif",
+    "https://cdn.discordapp.com/attachments/697810514448744448/1501846523833487360/uma-uma-musume.gif",
+    "https://cdn.discordapp.com/attachments/697810514448744448/1501846524420821103/uma-musume-pretty-derby-jungle-pocket-roar.gif"
+]
 
 
 from utils.database import ensure_player
@@ -97,7 +105,7 @@ def build_game_end_embed(ranked_players, commentary_text: str | None = None):
         )
 
     embed.set_image(
-        url="https://media.discordapp.net/attachments/1493575422007447622/1493676112952426629/i-won-taurus-cup-with-tm-opera-o-v0-w2a0zxpycglf1.gif"
+        url=random.choice(WIN_IMAGE)
     )
     embed.set_thumbnail(
         url="https://media.discordapp.net/attachments/1493575422007447622/1493678180702355568/utx_txt_order_00.png"
