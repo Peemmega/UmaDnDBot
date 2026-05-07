@@ -138,7 +138,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
+            {"type": "modify_roll_floor","value": 15,"duration": "this_roll"},
         ],
 
         "tags": ["start", "concentration"],
@@ -666,7 +666,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_floor","value": 15,"duration": "this_roll"},
+            {"type": "modify_current_speed", "value": 1.25},
         ],
 
         "tags": ["start", "acceleration"],
