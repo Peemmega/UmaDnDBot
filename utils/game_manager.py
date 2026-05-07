@@ -481,13 +481,13 @@ def start_game(channel_id: int):
 
         att = get_aptitude_values(
             att_source,
-            game["surface"],
+            game["track"],
             game["distance"],
             player["style"]
         )
 
         att_bonus = build_aptitude_stat_bonus(att)
-        print(att_bonus["power"], att_bonus["speed"], att_bonus["wit"])
+        print(game["track"], att_bonus["power"], att_bonus["speed"], att_bonus["wit"])
 
         player["race_profile"]["power"] += att_bonus["power"]
         player["race_profile"]["speed"] += att_bonus["speed"]
@@ -573,6 +573,7 @@ def get_aptitude_values(db_player, surface, distance, style):
         "End": "end_style",
     }
 
+    print(surface_key)
     return {
         "track": db_player.get(surface_key, 1),
         "distance": db_player.get(distance.lower(), 1),
