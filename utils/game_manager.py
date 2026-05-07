@@ -344,12 +344,11 @@ def start_game(channel_id: int):
         for user_id, info in game["players"].items()
     }
 
-
+    
     for user_id, player in game["players"].items():
         is_mob = player.get("is_mob", False)
         using_mob_preset = player.get("using_mob_preset", False)
-
-
+        
         if is_mob:
             # mob ใช้ค่า preset ที่มีอยู่ใน player อยู่แล้ว
             base_player = player.get("race_profile", {}).copy()
@@ -482,7 +481,7 @@ def start_game(channel_id: int):
 
         att = get_aptitude_values(
             att_source,
-            game["track"],
+            game["surface"],
             game["distance"],
             player["style"]
         )
