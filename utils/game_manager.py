@@ -564,7 +564,7 @@ def build_mob_join_embed(game: dict, mob: dict):
     )
 
 def get_aptitude_values(db_player, surface, distance, style):
-    surface_key = "turf" if surface == "Turf" else "dirt"
+    surface_key = "turf" if surface == "turf" else "dirt"
 
     style_map = {
         "Front": "front",
