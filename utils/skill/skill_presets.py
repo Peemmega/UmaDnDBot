@@ -139,11 +139,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {
-                "type": "modify_roll_floor",
-                "value": 15,
-                "duration": "this_roll"
-            }
+            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
         ],
 
         "tags": ["start", "concentration"],
@@ -389,7 +385,7 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
         ],
 
         "tags": ["straight", "velocity"],
@@ -691,7 +687,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed", "value": 2.25},
+            {"type": "modify_current_speed", "value": 2},
             {"type": "modify_roll_cap", "value": 15, "duration": "this_roll"},
         ],
 
@@ -808,7 +804,7 @@ SKILLS = {
             },
             {
                 "type": "modify_roll_cap",
-                "value": 5,
+                "value": 7,
                 "duration": "this_roll"
             },
             {
@@ -842,7 +838,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_velocity",
-                "value": 40,
+                "value": 60,
                 "duration": "this_roll"
             },
             {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
@@ -866,7 +862,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_velocity",
-                 "value": 40,
+                 "value": 50,
                 "duration": "this_roll"
             },
             {
@@ -936,7 +932,7 @@ SKILLS = {
         "name": "Tail Nine",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 60,
+        "cost": 50,
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
@@ -991,7 +987,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed","value": 3}
+            {"type": "modify_current_speed","value": 2.25}
         ],
 
         "tags": ["corner", "late_race", "acceleration", "unique"],
@@ -1067,8 +1063,7 @@ SKILLS = {
         },
         "effects": [
             {"type": "add_dkh","value": 1,"duration": "this_roll"},
-            {"type": "modify_current_speed","value": 2}
-
+            {"type": "modify_current_speed","value": 1.75}
         ],
 
         "tags": ["mid_race", "late_race", "acceleration", "unique"],
@@ -1119,7 +1114,7 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 60,
+                "value": 50,
                 "duration": "this_roll"
             }
         ],
