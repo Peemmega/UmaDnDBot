@@ -31,7 +31,6 @@ WIN_IMAGE = [
 ]
 
 
-from utils.database import ensure_player
 from utils.race.race_presets import (
     get_current_path_type, 
     build_path_effect_text, 
@@ -43,7 +42,6 @@ from utils.race.race_dice import (get_phase_from_turn,)
 from utils.mob.mob_presets import (MOB_PRESETS)
 
 from utils.game_manager import (
-    create_game,
     get_game,
     is_owner,
     next_turn,
@@ -54,6 +52,7 @@ from utils.game_manager import (
     get_ranked_players,
     have_all_players_rolled,
     start_turn_confirmation,
+    handle_after_roll,
     is_skill_on_cooldown,
     add_mob_from_preset,
     add_player_as_mob_preset,
@@ -187,42 +186,6 @@ class GameCog(commands.GroupCog, name="game"):
         if not can_roll:
             return False, "คุณใช้สิทธิ์ทอยในเทิร์นนี้ไปแล้ว จึงใช้สกิลประเภท Active Roll ไม่ได้"
         return True, None
-
-    async def handle_after_roll(self, interaction: discord.Interaction, game: dict):
-        if have_all_players_rolled(interaction.channel_id):
-            if not game["awaiting_turn_confirm"]:
-                start_turn_confirmation(interaction.channel_id)
-
-                ranked_players = get_ranked_players(interaction.channel_id)
-                phase = get_phase_from_turn(game["turn"], game["max_turn"])
-
-                rank_lines = []
-                for index, (user_id, info) in enumerate(ranked_players, start=1):
-                    if str(user_id).startswith("mob_"):
-                        display_name = info.get("display_name") or info.get('username') or "Mob"
-                    else:
-                        display_name = info.get('username') or f"<@{user_id}>"
-
-                    rank_lines.append(
-                        f"ลำดับที่ {index}: {display_name} | Score: {info['score']} ({info['style']})"
-                    )
-
-                if not rank_lines:
-                    rank_lines.append("ยังไม่มีผู้เล่น")
-
-                confirm_embed = discord.Embed(
-                    title=f"📊ผลสรุป ช่วงที่ {phase} เทิร์นที่ {game['turn']}",
-                    color=discord.Color.blurple(),
-                    description=(
-                        f"อันดับคะแนน:🏆\n" + "\n".join(rank_lines)
-                    )
-                )
-                confirm_embed.set_footer(text="ทุกคนต้องกดยืนยันก่อนจะไปเทิร์นถัดไป")
-
-                from views.turn_confirm_view import TurnConfirmView
-                view = TurnConfirmView(self, interaction.channel_id)
-                msg = await interaction.followup.send(embed=confirm_embed, view=view)
-                view.message = msg
 
     @app_commands.command(name="create", description="สร้างเกมใหม่")
     async def create(self, interaction: discord.Interaction):
@@ -644,38 +607,6 @@ class GameCog(commands.GroupCog, name="game"):
             ephemeral=True
         )
 
-    # @app_commands.command(name="run", description="ทอยเต๋าเดินในเทิร์นนี้")
-    # async def run(self, interaction: discord.Interaction):
-    #     await interaction.response.defer()
-
-    #     can_roll, message = can_player_roll(interaction.channel_id, interaction.user.id)
-    #     if not can_roll:
-    #         await interaction.followup.send(message, ephemeral=True)
-    #         return
-
-    #     success, payload = await execute_player_roll(
-    #         interaction,
-    #         title_prefix="วิ่งในเทิร์นนี้",
-    #         mark_roll=True,
-    #         allow_reroll_view=True,
-    #     )
-
-    #     if not success:
-    #         await interaction.followup.send(payload["message"], ephemeral=True)
-    #         return
-
-    #     send_kwargs = {
-    #         "content": f"<@{interaction.user.id}>",
-    #         "embed": payload["embed"],
-    #     }
-    #     if payload["view"] is not None:
-    #         send_kwargs["view"] = payload["view"]
-
-    #     await interaction.followup.send(**send_kwargs)
-
-    #     game = payload["game"]
-    #     await self.handle_after_roll(interaction, game)
-
     @app_commands.command(name="run", description="ทอยเต๋าเดินในเทิร์นนี้")
     async def run(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -728,7 +659,7 @@ class GameCog(commands.GroupCog, name="game"):
         await interaction.followup.send(**send_kwargs)
 
         game = payload["game"]
-        await self.handle_after_roll(interaction, game)
+        await handle_after_roll(interaction, game)
 
     @discord.app_commands.command(name="skill", description="เปิดเมนูใช้สกิล")
     async def skill(self, interaction: discord.Interaction):

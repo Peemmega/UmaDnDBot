@@ -1060,6 +1060,42 @@ def next_turn(channel_id: int):
 
     return game["turn"]
 
+async def handle_after_roll(self, interaction: discord.Interaction, game: dict):
+        if have_all_players_rolled(interaction.channel_id):
+            if not game["awaiting_turn_confirm"]:
+                start_turn_confirmation(interaction.channel_id)
+
+                ranked_players = get_ranked_players(interaction.channel_id)
+                phase = get_phase_from_turn(game["turn"], game["max_turn"])
+
+                rank_lines = []
+                for index, (user_id, info) in enumerate(ranked_players, start=1):
+                    if str(user_id).startswith("mob_"):
+                        display_name = info.get("display_name") or info.get('username') or "Mob"
+                    else:
+                        display_name = info.get('username') or f"<@{user_id}>"
+
+                    rank_lines.append(
+                        f"ลำดับที่ {index}: {display_name} | Score: {info['score']} ({info['style']})"
+                    )
+
+                if not rank_lines:
+                    rank_lines.append("ยังไม่มีผู้เล่น")
+
+                confirm_embed = discord.Embed(
+                    title=f"📊ผลสรุป ช่วงที่ {phase} เทิร์นที่ {game['turn']}",
+                    color=discord.Color.blurple(),
+                    description=(
+                        f"อันดับคะแนน:🏆\n" + "\n".join(rank_lines)
+                    )
+                )
+                confirm_embed.set_footer(text="ทุกคนต้องกดยืนยันก่อนจะไปเทิร์นถัดไป")
+
+                from views.turn_confirm_view import TurnConfirmView
+                view = TurnConfirmView(self, interaction.channel_id)
+                msg = await interaction.followup.send(embed=confirm_embed, view=view)
+                view.message = msg
+
 def incrase_speed_by_acceleration_turn(channel_id: int):
     game = get_game(channel_id)
     if game is None:
