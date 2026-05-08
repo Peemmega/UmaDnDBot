@@ -465,13 +465,13 @@ MOB_PRESETS = {
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1501860043618910380/star-rail-seele.gif?ex=69fd9ba9&is=69fc4a29&hm=6340d35338211b603505e6cace56ac47a5ef6a32616f59fb232eea2de0605a43&=&width=747&height=420",
             
             "build": {
-                "flat": 0,
+                "flat": 3,
                 "add_dkh": 0,
                 "floor": 0,
                 "selected_die": 0,
                 "cap": 0,
                 "self_heal_stamina": 0,
-                "modify_current_speed": 5,
+                "modify_current_speed": 2,
             }
         },
     },
@@ -483,9 +483,9 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 4,
             "stamina": 4,
-            "power": 5,
+            "power": 6,
             "gut": 3,
-            "wit": 4,
+            "wit": 3,
 
             "turf": 7,"dirt": 1,
             "sprint": 5, "mile": 7, "medium": 7, "long": 1,
@@ -494,8 +494,8 @@ MOB_PRESETS = {
         "skills": {
             1: "s014",  # On Your Left!
             2: "s038",  # All-Seeing Eyes
-            3: "s039",  # Rising Dragon
-            4: "s042",  # Let's Pump Some Iron
+            3: "s037",  # In Body and Mind
+            4: "s015",  # Beeline Burst
         },
         "zone": {
             "name": "Scarlet Lily's Elation",
@@ -543,7 +543,7 @@ MOB_PRESETS = {
                 "add_dkh": 0,
                 "floor": 0,
                 "selected_die": 0,
-                "cap": 7,
+                "cap": 5,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             }
@@ -576,13 +576,13 @@ MOB_PRESETS = {
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1501860045019680828/umamusume-.gif?ex=69fd9ba9&is=69fc4a29&hm=95851edc8c16f46af7011011ccc5e5b2094f800284a9f0ca0c01937cb175409a&",
             
             "build": {
-                "flat": 0,
+                "flat": 2,
                 "add_dkh": 0,
                 "floor": 0,
                 "selected_die": 0,
                 "cap": 0,
                 "self_heal_stamina": 0,
-                "modify_current_speed": 5,
+                "modify_current_speed": 3,
             }
         },
     },
