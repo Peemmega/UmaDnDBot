@@ -744,8 +744,8 @@ def apply_next_roll_effects_to_player(player: dict, effects: list[dict]):
         value = effect.get("value", 0)
         duration = effect.get("duration")
 
-        if duration != "this_roll":
-            continue
+        # if duration != "this_roll":
+        #     continue
 
         if effect_type == "modify_velocity":
             player["next_roll_flat_bonus"] = player.get("next_roll_flat_bonus", 0) + value
