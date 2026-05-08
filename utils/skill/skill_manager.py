@@ -227,8 +227,6 @@ def describe_effect(effect: dict) -> str:
 
     if effect_type == "modify_velocity":
         return f"เพิ่มผลรวมการวิ่ง +{value}" + (f" ({dur})" if dur else "")
-    if effect_type == "modify_selected_die":
-        return f"เพิ่มแต้มเต๋าที่ถูกเลือกทุกลูก +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "modify_roll_floor":
         return f"เพิ่มแต้มขั้นต่ำของลูกเต๋า +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "modify_roll_cap":

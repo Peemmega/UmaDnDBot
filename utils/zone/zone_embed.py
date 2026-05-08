@@ -16,7 +16,6 @@ ZONE_LABELS = {
     "add_d": "Add Dice",
     "add_kh": "Keep High",
     "floor": "Floor",
-    "selected_die": "Selected Die",
     "cap": "Cap",
     "self_heal_stamina": "Self Heal STA",
     "modify_current_speed": "Acceleration",
@@ -50,7 +49,6 @@ def build_zone_manage_embed_from_zone(
         "flat": f"{ICONS['Aoharu']} เพิ่มคะแนนรวม",
         "add_dkh": f"{ICONS['Aoharu']} เพิ่มลูกเต๋า d/kh",
         "floor": f"{ICONS['Aoharu']} เพิ่มแต้มลูกเต๋าขั้นต่ำ",
-        "selected_die": f"{ICONS['Aoharu']} เพิ่มแต้มลูกที่เลือก",
         "cap": f"{ICONS['Aoharu']} เพิ่มแต้มลูกเต๋าสูงสุด",
         "self_heal_stamina": f"{ICONS['Aoharu']} ฟื้นฟู Stamina",
         "modify_current_speed": f"{ICONS['Aoharu']} เพิ่มความเร่ง",
@@ -69,8 +67,6 @@ def build_zone_manage_embed_from_zone(
         preview_lines.append(f"🎲 เพิ่มลูกเต๋า d/kh **+{preview['add_dkh']}**")
     if preview["floor"]:
         preview_lines.append(f"🧱 เพิ่มแต้มขั้นต่ำ **+{preview['floor']}**")
-    if preview["selected_die"]:
-        preview_lines.append(f"🎯 เพิ่มแต้มลูกที่เลือก **+{preview['selected_die']}**")
     if preview["cap"]:
         preview_lines.append(f"📈 เพิ่มแต้มสูงสุด **+{preview['cap']}**")
     if preview["self_heal_stamina"]:

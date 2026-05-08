@@ -13,7 +13,6 @@ ICON = {
 
 EFFECT_TYPES = {
     "modify_velocity",          # เพิ่มผลรวมตอนวิ่งครั้งนี้
-    "modify_selected_die",      # เพิ่มแต้มทุกลูกที่ถูกเลือก
     "modify_roll_floor",        # เพิ่มแต้มต่ำสุดลูกเต๋า
     "modify_roll_cap",          # เพิ่ม/ลดแต้มสูงสุดลูกเต๋า
     "add_dkh",                  # เพิ่ม d และ kh พร้อมกัน

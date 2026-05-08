@@ -762,10 +762,7 @@ def apply_next_roll_effects_to_player(player: dict, effects: list[dict]):
 
         elif effect_type == "modify_roll_floor":
             player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + value
-
-        elif effect_type == "modify_selected_die":
-            player["next_roll_selected_die_bonus"] = player.get("next_roll_selected_die_bonus", 0) + value
-
+            
         elif effect_type == "modify_roll_cap":
             player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + value
             
@@ -888,7 +885,6 @@ def build_pending_effects_from_player(
     add_kh = player.get("next_roll_add_kh", 0)
     floor = player.get("next_roll_floor_bonus", 0)
     cap = player.get("next_roll_cap_bonus", 0)
-    sel = player.get("next_roll_selected_die_bonus", 0)
     gold_range = player.get("gold_range_bonus_this_turn", 0)
 
     # รวม lastedBuff
@@ -898,7 +894,6 @@ def build_pending_effects_from_player(
         add_d += buff.get("add_d", 0)
         add_kh += buff.get("add_kh", 0)
         floor += buff.get("floor", 0)
-        sel += buff.get("sel", 0)
         cap += buff.get("cap", 0)
         gold_range += buff.get("gold_range", 0)
 
@@ -929,13 +924,6 @@ def build_pending_effects_from_player(
         pending_effects.append({
             "type": "modify_roll_floor",
             "value": floor,
-            "duration": "this_roll"
-        })
-
-    if sel != 0:
-        pending_effects.append({
-            "type": "modify_selected_die",
-            "value": sel,
             "duration": "this_roll"
         })
 
@@ -1903,7 +1891,6 @@ def execute_skill_core(
         if (
             effect_type in [
                 "modify_velocity",
-                "modify_selected_die",
                 "modify_roll_floor",
                 "modify_roll_cap",
                 "add_d",

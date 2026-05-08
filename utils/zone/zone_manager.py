@@ -22,7 +22,6 @@ def get_player_zone(user_id: int) -> Optional[dict]:
         "flat": int(build.get("flat", 0)),
         "add_dkh": int(build.get("add_dkh", 0)),
         "floor": int(build.get("floor", 0)),
-        "selected_die": int(build.get("selected_die", 0)),
         "cap": int(build.get("cap", 0)),
         "self_heal_stamina": int(build.get("self_heal_stamina", 0)), 
         "modify_current_speed": int(build.get("modify_current_speed", 0)), 
@@ -98,7 +97,6 @@ def get_zone_effects_from_build(zone_build: dict) -> dict:
         "flat": int(zone_build.get("flat", 0)) * ZONE_VALUE["flat"],
         "add_dkh": int(zone_build.get("add_dkh", 0)) * ZONE_VALUE["add_dkh"],
         "floor": int(zone_build.get("floor", 0)) * ZONE_VALUE["floor"],
-        "selected_die": int(zone_build.get("selected_die", 0)) * ZONE_VALUE["selected_die"],
         "cap": int(zone_build.get("cap", 0)) * ZONE_VALUE["cap"],
         "self_heal_stamina": int(zone_build.get("self_heal_stamina", 0)) * ZONE_VALUE["self_heal_stamina"],
         "modify_current_speed": int(zone_build.get("modify_current_speed", 0)) * ZONE_VALUE["modify_current_speed"],
@@ -123,8 +121,6 @@ def get_zone_effect(zone: dict) -> tuple[bool, str]:
         lines.append(f"🎲 เพิ่มลูกเต๋า d/kh +{effects['add_dkh']}")
     if effects["floor"]:
         lines.append(f"🧱 เพิ่มแต้มขั้นต่ำ +{effects['floor']}")
-    if effects["selected_die"]:
-        lines.append(f"🎯 เพิ่มแต้มลูกที่เลือก +{effects['selected_die']}")
     if effects["cap"]:
         lines.append(f"📈 เพิ่มแต้มสูงสุด +{effects['cap']}")
     if heal_value:
@@ -152,7 +148,6 @@ def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
     player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + effects["add_dkh"]
     player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + effects["add_dkh"]
     player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + effects["floor"]
-    player["next_roll_selected_die_bonus"] = player.get("next_roll_selected_die_bonus", 0) + effects["selected_die"]
     player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + effects["cap"]
 
     heal_value = effects.get("self_heal_stamina", 0)
@@ -176,7 +171,6 @@ def get_zone_effect_preview(zone: dict) -> dict:
         "flat": int(build.get("flat", 0)) * ZONE_VALUE["flat"],
         "add_dkh": int(build.get("add_dkh", 0)) * ZONE_VALUE["add_dkh"],
         "floor": int(build.get("floor", 0)) * ZONE_VALUE["floor"],
-        "selected_die": int(build.get("selected_die", 0)) * ZONE_VALUE["selected_die"],
         "cap": int(build.get("cap", 0)) * ZONE_VALUE["cap"],
         "self_heal_stamina": int(build.get("self_heal_stamina", 0)) * ZONE_VALUE["self_heal_stamina"],
         "modify_current_speed": int(build.get("modify_current_speed", 0)) * ZONE_VALUE["modify_current_speed"],

@@ -117,8 +117,6 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
             extra_floor += value
         elif effect_type == "modify_velocity":
             flat_velocity_bonus += value
-        elif effect_type == "modify_selected_die":
-            selected_die_bonus += value
         elif effect_type == "modify_roll_cap":
             roll_cap_increase += value
             

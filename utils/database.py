@@ -110,7 +110,6 @@ def reset_all_zone_data():
         "flat": 0,
         "add_dkh": 0,
         "floor": 0,
-        "selected_die": 0,
         "cap": 0,
         "self_heal_stamina": 0,
         "modify_current_speed": 0,
