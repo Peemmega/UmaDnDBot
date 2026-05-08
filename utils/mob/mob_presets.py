@@ -33,10 +33,10 @@ MOB_PRESETS = {
         "style": "Front",
         "race_profile": {
             "speed": 5,
-            "stamina": 4,
-            "power": 4,
+            "stamina": 5,
+            "power": 5,
             "gut": 1,
-            "wit": 3,
+            "wit": 1,
 
             "turf": 1,"dirt": 1,
             "sprint": 1,"mile": 1,"medium": 1,"long": 1,
@@ -44,9 +44,9 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "s033", #Runaway
-            2: "s035", #Radiant Star
-            3: "s040", #Tail Nine
-            4: "s030", #Groundwork 
+            2: "s047", #Ramp Up
+            3: "s015", #Beeline Burst
+            4: "s030", #Concentration 
         },
         "zone": {
             "name": "Default Zone",
@@ -54,12 +54,12 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 0,
-                "add_dkh": 0,
+                "add_dkh": 1,
                 "floor": 0,
                 "selected_die": 0,
                 "cap": 0,
                 "self_heal_stamina": 0,
-                "modify_current_speed": 5,
+                "modify_current_speed": 2,
             },
         },
     },
