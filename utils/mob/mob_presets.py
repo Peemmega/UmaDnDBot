@@ -372,8 +372,8 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 4,
             "stamina": 5,
-            "power": 6,
-            "gut": 3,
+            "power": 8,
+            "gut": 1,
             "wit": 2,
 
             "turf": 7,"dirt": 1,
@@ -395,9 +395,9 @@ MOB_PRESETS = {
                 "add_dkh": 0,
                 "floor": 0,
                 "selected_die": 0,
-                "cap": 0,
+                "cap": 3,
                 "self_heal_stamina": 0,
-                "modify_current_speed": 5,
+                "modify_current_speed": 2,
             }
         },
     },
@@ -458,7 +458,7 @@ MOB_PRESETS = {
             1: "s033",  # Runaway
             2: "s034",  # Unrestrained
             3: "s043",  # Red Shift/LP1211-M
-            4: "s046",  # Angling and Scheming
+            4: "s037",  # In Body and Mind
         },
         "zone": {
             "name": "Queen's Rebirth",
@@ -529,10 +529,10 @@ MOB_PRESETS = {
             "front": 1, "pace": 7, "late": 7, "end_style": 5,
         },
         "skills": {
-            1: "s033",  # Runaway
-            2: "s034",  # Unrestrained
-            3: "s043",  # Red Shift/LP1211-M
-            4: "s046",  # Angling and Scheming
+            1: "s032",  # Neck and Neck
+            2: "s035",  # Radiant Star
+            3: "s045",  # Moving Past, and Beyond
+            4: "s012",  # Speed Star
         },
         "zone": {
             "name": "Shooting Star",
@@ -556,20 +556,20 @@ MOB_PRESETS = {
         "style": "Front",
         "race_profile": {
             "speed": 7,
-            "stamina": 4,
-            "power": 3,
+            "stamina": 5,
+            "power": 6,
             "gut": 1,
-            "wit": 5,
+            "wit": 1,
 
             "turf": 7,"dirt": 1,
             "sprint": 4, "mile": 7, "medium": 7, "long": 3,
             "front": 7, "pace": 5, "late": 3, "end_style": 1,
         },
         "skills": {
-            1: "s032",  # Neck and Neck
-            2: "s035",  # Radiant Star
-            3: "s045",  # Moving Past, and Beyond
-            4: "s012",  # Speed Star
+            1: "s033",  # Runaway
+            2: "s034",  # Unrestrained
+            3: "s043",  # Red Shift/LP1211-M
+            4: "s046",  # Angling and Scheming
         },
         "zone": {
             "name": "I'm Not Giving up the Lead!",
