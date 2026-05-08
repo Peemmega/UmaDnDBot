@@ -239,7 +239,6 @@ def start_turn_confirmation(channel_id: int):
     game["awaiting_turn_confirm"] = True
     return True
 
-
 def confirm_turn(channel_id: int, user_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -1666,6 +1665,52 @@ def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
         usable.append((skill_id, skill))
 
     return usable
+
+def run_bot_race_test(channel_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False, {"message": "ยังไม่มีเกมในห้องนี้"}
+
+    if not game.get("started"):
+        success, message = start_game(channel_id)
+        if not success:
+            return False, {"message": message}
+
+    game = get_game(channel_id)
+
+    # ต้องมี mob อย่างน้อย 1 ตัว
+    mob_ids = [
+        user_id
+        for user_id, player in game["players"].items()
+        if player.get("is_mob")
+    ]
+
+    if not mob_ids:
+        return False, {"message": "ไม่มี mob สำหรับทดสอบ"}
+
+    # วิ่งจนจบ
+    while game and game["turn"] <= game["max_turn"]:
+        current_turn = game["turn"]
+
+        for user_id, player in list(game["players"].items()):
+            if not player.get("is_mob"):
+                continue
+
+            if player.get("last_roll_turn") == current_turn:
+                continue
+
+            process_mob_turn(channel_id, user_id)
+
+        next_turn(channel_id)
+        game = get_game(channel_id)
+
+    ranked_players = get_ranked_players(channel_id)
+
+    return True, {
+        "game": game,
+        "ranked_players": ranked_players,
+        "turn_score_logs": game.get("turn_score_logs", []) if game else [],
+    }
 
 def process_mob_turn(channel_id: int, user_id: str):
     game = get_game(channel_id)

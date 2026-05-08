@@ -58,7 +58,8 @@ from utils.game_manager import (
     add_player_as_mob_preset,
     build_mob_join_embed,
     process_mob_turn,
-    has_real_player
+    has_real_player,
+    run_bot_race_test
 )
 
 def build_race_log_embed(game: dict, ranked_players):
@@ -76,19 +77,36 @@ def build_race_log_embed(game: dict, ranked_players):
         )
 
     turn_logs = game.get("turn_score_logs", [])
-    turn_groups = {}
+
+    # =========================
+    # group by player
+    # =========================
+    player_logs = {}
 
     for log in turn_logs:
-        turn_groups.setdefault(log["turn"], []).append(log)
+        player_name = log["name"]
 
+        if player_name not in player_logs:
+            player_logs[player_name] = {
+                "style": log.get("style"),
+                "logs": []
+            }
+
+        player_logs[player_name]["logs"].append(log)
+
+    # =========================
+    # build compact text
+    # =========================
     log_lines = []
 
-    for turn in sorted(turn_groups.keys()):
-        log_lines.append(f"\n**Turn {turn}**")
+    for player_name, data in player_logs.items():
+        style = data["style"]
 
-        for item in turn_groups[turn]:
+        log_lines.append(f"\n**{player_name}** ({style})")
+
+        for item in data["logs"]:
             log_lines.append(
-                f"- {item['name']} ({item['style']}) +{item['gain']} → {item['score_after']}"
+                f"{item['turn']} {item['score_after']} (+{item['gain']})"
             )
 
     description = (
@@ -303,6 +321,23 @@ class GameCog(commands.GroupCog, name="game"):
             view=CreateGameView(channel_id, owner_id),
             ephemeral=True
         )
+
+    @app_commands.command(name="test_bot_race", description="ทดสอบให้บอทวิ่งจนจบแบบไม่สร้างภาพ")
+    async def test_bot_race(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        success, payload = run_bot_race_test(interaction.channel_id)
+
+        if not success:
+            await interaction.followup.send(payload["message"], ephemeral=True)
+            return
+
+        game = get_game(interaction.channel_id)
+        ranked_players = get_ranked_players(interaction.channel_id)
+
+        log_embed = build_race_log_embed(game, ranked_players)
+
+        await interaction.followup.send(embed=log_embed)
 
     @discord.app_commands.command(name="skip_turn", description="ข้ามไปเทิร์นถัดไปทันที (เฉพาะเจ้าของห้อง)")
     async def skip_turn(self, interaction: discord.Interaction):
