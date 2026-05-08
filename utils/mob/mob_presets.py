@@ -32,9 +32,9 @@ MOB_PRESETS = {
         "thumnail": thumnails["Rookie1"],
         "style": "Front",
         "race_profile": {
-            "speed": 5,
+            "speed": 6,
             "stamina": 5,
-            "power": 5,
+            "power": 4,
             "gut": 1,
             "wit": 1,
 
@@ -53,11 +53,11 @@ MOB_PRESETS = {
             "image_url": "",
             "points": 0,
             "build": {
-                "flat": 2,
+                "flat": 0,
                 "add_dkh": 0,
                 "floor": 0,
                 "selected_die": 0,
-                "cap": 0,
+                "cap": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 3,
             },
