@@ -33,20 +33,20 @@ MOB_PRESETS = {
         "style": "Front",
         "race_profile": {
             "speed": 5,
-            "stamina": 5,
-            "power": 5,
+            "stamina": 4,
+            "power": 4,
             "gut": 1,
-            "wit": 1,
+            "wit": 3,
 
             "turf": 1,"dirt": 1,
             "sprint": 1,"mile": 1,"medium": 1,"long": 1,
             "front": 1,"pace": 1,"late": 1,"end_style": 1,
         },
         "skills": {
-            1: "s033",
-            2: "s043",
-            4: "s030",
-            3: "s034",
+            1: "s033", #Runaway
+            2: "s035", #Radiant Star
+            3: "s040", #Tail Nine
+            4: "s030", #Groundwork 
         },
         "zone": {
             "name": "Default Zone",
