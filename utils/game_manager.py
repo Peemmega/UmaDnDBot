@@ -495,7 +495,7 @@ def start_game(channel_id: int):
 
         player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"] #+ math.floor(player["race_profile"]["power"]/2)
         player["aptitude_bonus"] = att_bonus
-        player["wit_mana"] = 100 + (player["race_profile"]["wit"] * 3)
+        player["wit_mana"] = 100 + (player["race_profile"]["wit"] * 6)
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
 
