@@ -250,7 +250,47 @@ RACE_PRESET = {
             "rookie_late",
             "rookie_end",
         ]
-    }
+    },
+
+    "Test Mile": {
+        "name": "Test Mile",
+        "turn": 8,
+        "track": "Turf",
+        "distance": "mile",
+        "path": [1, 3, 1, 2, 1, 4, 1, 1],
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1496520361968406598/thum_race_rt_000_9002_00.png?ex=69ed7a72&is=69ec28f2&hm=8306829b74f79dcfd3a6f7b65cef14fdd6c96dfa0f5d614b106e4ba11efa8c39&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
+        "auto_mobs": [
+            "rookie_front",
+            "rookie_pace",
+            "rookie_late",
+            "rookie_end",
+            "rookie_front",
+            "rookie_pace",
+            "rookie_late",
+            "rookie_end",
+        ]
+    },
+
+    "Test Med": {
+        "name": "Test Med",
+        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219500743163954/thum_race_rt_000_1012_00.png?ex=69e1cfda&is=69e07e5a&hm=9aaa79075889b9f8a5fad33f09a31c72c252e586b3f753d472bff3ea15422de2&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": [4, 3, 1, 2, 2, 1, 4, 2, 2, 1, 3, 1],
+        "auto_mobs": [
+            "rookie_front",
+            "rookie_pace",
+            "rookie_late",
+            "rookie_end",
+            "rookie_front",
+            "rookie_pace",
+            "rookie_late",
+            "rookie_end",
+        ]
+    },
 
     # "TennoShoSpring": {
     #     "name": "Tenno Sho Spring 3200m",
