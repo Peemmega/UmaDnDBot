@@ -747,7 +747,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_current_speed",
-                "value": 1.5,
+                "value": 2,
             },
             {
                 "type": "reduce_stamina", 

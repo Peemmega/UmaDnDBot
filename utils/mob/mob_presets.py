@@ -33,8 +33,8 @@ MOB_PRESETS = {
         "style": "Front",
         "race_profile": {
             "speed": 5,
-            "stamina": 4,
-            "power": 6,
+            "stamina": 5,
+            "power": 5,
             "gut": 1,
             "wit": 1,
 
