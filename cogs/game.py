@@ -322,22 +322,57 @@ class GameCog(commands.GroupCog, name="game"):
             ephemeral=True
         )
 
-    @app_commands.command(name="test_bot_race", description="ทดสอบให้บอทวิ่งจนจบแบบไม่สร้างภาพ")
+    @app_commands.command(
+        name="test_bot_race",
+        description="ทดสอบให้บอทวิ่งจนจบ ส่ง log ไปห้อง log และปิดเกม"
+    )
     async def test_bot_race(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
 
-        success, payload = run_bot_race_test(interaction.channel_id)
+        channel_id = interaction.channel_id
+        game = get_game(channel_id)
+
+        if game is None:
+            await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
+            return
+
+        if not is_owner(channel_id, interaction.user.id):
+            await interaction.followup.send(
+                "มีแค่เจ้าของห้องเท่านั้นที่ใช้คำสั่งนี้ได้",
+                ephemeral=True
+            )
+            return
+
+        success, payload = run_bot_race_test(channel_id)
 
         if not success:
             await interaction.followup.send(payload["message"], ephemeral=True)
             return
 
-        game = get_game(interaction.channel_id)
-        ranked_players = get_ranked_players(interaction.channel_id)
+        game = payload["game"]
+        ranked_players = payload["ranked_players"]
 
         log_embed = build_race_log_embed(game, ranked_players)
 
-        await interaction.followup.send(embed=log_embed)
+        log_channel_id = 1502217575717798050
+        log_channel = interaction.guild.get_channel(log_channel_id)
+
+        if log_channel is None:
+            await interaction.followup.send(
+                "ทดสอบจบแล้ว แต่ไม่พบห้อง log ที่กำหนด",
+                ephemeral=True
+            )
+            delete_game(channel_id)
+            return
+
+        await log_channel.send(embed=log_embed)
+
+        delete_game(channel_id)
+
+        await interaction.followup.send(
+            "✅ ทดสอบบอทจบแล้ว ส่ง log และปิดห้องแข่งเรียบร้อย",
+            ephemeral=True
+        )
 
     @discord.app_commands.command(name="skip_turn", description="ข้ามไปเทิร์นถัดไปทันที (เฉพาะเจ้าของห้อง)")
     async def skip_turn(self, interaction: discord.Interaction):

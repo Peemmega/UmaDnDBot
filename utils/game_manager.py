@@ -1678,7 +1678,6 @@ def run_bot_race_test(channel_id: int):
 
     game = get_game(channel_id)
 
-    # ต้องมี mob อย่างน้อย 1 ตัว
     mob_ids = [
         user_id
         for user_id, player in game["players"].items()
@@ -1688,7 +1687,6 @@ def run_bot_race_test(channel_id: int):
     if not mob_ids:
         return False, {"message": "ไม่มี mob สำหรับทดสอบ"}
 
-    # วิ่งจนจบ
     while game and game["turn"] <= game["max_turn"]:
         current_turn = game["turn"]
 
@@ -1701,6 +1699,9 @@ def run_bot_race_test(channel_id: int):
 
             process_mob_turn(channel_id, user_id)
 
+        if game["turn"] >= game["max_turn"]:
+            break
+
         next_turn(channel_id)
         game = get_game(channel_id)
 
@@ -1709,7 +1710,7 @@ def run_bot_race_test(channel_id: int):
     return True, {
         "game": game,
         "ranked_players": ranked_players,
-        "turn_score_logs": game.get("turn_score_logs", []) if game else [],
+        "turn_score_logs": game.get("turn_score_logs", []),
     }
 
 def process_mob_turn(channel_id: int, user_id: str):
