@@ -946,9 +946,8 @@ def build_pending_effects_from_player(
         "add_d": add_d,
         "add_kh": add_kh,
         "floor": floor,
-        "sel": sel,
         "cap": cap,
-        "gold_range": gold_range,  # 👈 เพิ่ม
+        "gold_range": gold_range,  
     }
 
     return pending_effects, merged_stats
