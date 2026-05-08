@@ -61,6 +61,55 @@ from utils.game_manager import (
     has_real_player
 )
 
+def build_race_log_embed(game: dict, ranked_players):
+    rank_lines = []
+
+    for index, (user_id, info) in enumerate(ranked_players, start=1):
+        name = (
+            info.get("display_name")
+            or info.get("username")
+            or str(user_id)
+        )
+
+        rank_lines.append(
+            f"**{index}. {name}** | {info.get('style')} | Score: **{info.get('score', 0)}**"
+        )
+
+    turn_logs = game.get("turn_score_logs", [])
+    turn_groups = {}
+
+    for log in turn_logs:
+        turn_groups.setdefault(log["turn"], []).append(log)
+
+    log_lines = []
+
+    for turn in sorted(turn_groups.keys()):
+        log_lines.append(f"\n**Turn {turn}**")
+
+        for item in turn_groups[turn]:
+            log_lines.append(
+                f"- {item['name']} ({item['style']}) +{item['gain']} → {item['score_after']}"
+            )
+
+    description = (
+        f"สนาม: **{game.get('stage_name', 'Unknown')}**\n\n"
+        f"🏆 **อันดับสุดท้าย**\n"
+        + "\n".join(rank_lines)
+        + "\n\n📜 **Turn Score Log**\n"
+        + "\n".join(log_lines)
+    )
+
+    if len(description) > 3900:
+        description = description[:3900] + "\n...log ยาวเกินไป ถูกตัดบางส่วน"
+
+    embed = discord.Embed(
+        title="📘 Race Result Log",
+        description=description,
+        color=discord.Color.blue(),
+    )
+
+    return embed
+
 def build_game_end_embed(ranked_players, commentary_text: str | None = None):
     rank_lines = []
     for index, (user_id, info) in enumerate(ranked_players, start=1):
@@ -416,8 +465,21 @@ class GameCog(commands.GroupCog, name="game"):
             except Exception as e:
                 print("Finish narrator error:", e)
 
-            embed = build_game_end_embed(ranked_players, commentary_text=commentary_text)
+            embed = build_game_end_embed(
+                ranked_players,
+                commentary_text=commentary_text
+            )
             await send_func(embed=embed)
+
+            log_channel_id = 1502217575717798050
+
+            log_channel = None
+            if guild:
+                log_channel = guild.get_channel(log_channel_id)
+
+            if log_channel:
+                log_embed = build_race_log_embed(game, ranked_players)
+                await log_channel.send(embed=log_embed)
 
             ok, msg = stop_bgm(guild)
 

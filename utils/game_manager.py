@@ -198,6 +198,7 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
         "started": False,
         "players": {},
         "turn_snapshot_scores": {},
+        "turn_score_logs": [],
 
         "turn_confirmations": set(),
         "awaiting_turn_confirm": False,
@@ -1043,6 +1044,32 @@ def next_turn(channel_id: int):
     game = get_game(channel_id)
     if game is None:
         return None
+
+    current_turn = game["turn"]
+    snapshot_scores = game.get("turn_snapshot_scores", {})
+
+    game.setdefault("turn_score_logs", [])
+
+    for user_id, info in game["players"].items():
+        before_score = snapshot_scores.get(user_id, 0)
+        current_score = info.get("score", 0)
+        gain = current_score - before_score
+
+        display_name = (
+            info.get("display_name")
+            or info.get("username")
+            or str(user_id)
+        )
+
+        game["turn_score_logs"].append({
+            "turn": current_turn,
+            "player_id": str(user_id),
+            "name": display_name,
+            "style": info.get("style"),
+            "gain": gain,
+            "score_before": before_score,
+            "score_after": current_score,
+        })
 
     game["turn"] += 1
 
