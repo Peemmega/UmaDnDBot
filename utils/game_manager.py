@@ -108,9 +108,9 @@ def execute_roll_core(
 
     if stamina_penalty_active:
         if result['bonus_display'] == "-":
-            result['bonus_display'] = "-10CAP"
+            result['bonus_display'] = "-20CAP"
         else:
-            result['bonus_display'] += " -10CAP"
+            result['bonus_display'] += " -20CAP"
             
     success, new_score = update_player_score(
         channel_id,

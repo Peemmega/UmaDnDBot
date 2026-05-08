@@ -54,11 +54,11 @@ async def execute_reroll(
 
     staminaNote = None
     if game_player.get("takeStaminaDebuff", False):
-        staminaNote = f"ไม่พอ Cap ลูกเต๋า -10"
+        staminaNote = f"ไม่พอ Cap ลูกเต๋า -20"
         if result['bonus_display'] == "-":
-            result['bonus_display'] = "-10CAP"
+            result['bonus_display'] = "20CAP"
         else:
-            result['bonus_display'] += " -10CAP" 
+            result['bonus_display'] += " -20CAP" 
    
     ## Clear Debuff -----------------------------------------------
     game_player["lastedBuff"] = merged_stats
