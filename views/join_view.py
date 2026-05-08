@@ -8,7 +8,7 @@ from utils.game_manager import (
     get_player,
     build_join_embed,
     process_mob_turn,
-    
+    has_real_player
 )
 
 from utils.dice.dice_presets import DICE_PRESET
@@ -267,6 +267,23 @@ class LobbyView(discord.ui.View):
                     "file": file,
                 }
                 await interaction.followup.send(**send_kwargs)
+        
+        if not has_real_player(game):
+            game_cog = interaction.client.get_cog("game")
+
+            if game_cog:
+                await interaction.followup.send(
+                    "🤖 ไม่มีผู้เล่นจริง กำลังให้ Mob แข่งต่ออัตโนมัติ..."
+                )
+
+                await game_cog._process_next_turn_core(
+                    channel_id=self.channel_id,
+                    send_func=interaction.followup.send,
+                    guild=interaction.guild,
+                    title_suffix="(Auto Mob)"
+                )
+        
+        
  
 
 

@@ -31,6 +31,7 @@ WIN_IMAGE = [
 ]
 
 
+from utils.database import ensure_player
 from utils.race.race_presets import (
     get_current_path_type, 
     build_path_effect_text, 
@@ -52,15 +53,13 @@ from utils.game_manager import (
     get_ranked_players,
     have_all_players_rolled,
     start_turn_confirmation,
-    handle_after_roll,
     is_skill_on_cooldown,
     add_mob_from_preset,
     add_player_as_mob_preset,
     build_mob_join_embed,
-    process_mob_turn
+    process_mob_turn,
+    has_real_player
 )
-
-
 
 def build_game_end_embed(ranked_players, commentary_text: str | None = None):
     rank_lines = []
@@ -176,6 +175,7 @@ async def mob_preset_autocomplete(
         if current.lower() in data['name'].lower()
     ][:25]
 
+
 class GameCog(commands.GroupCog, name="game"):
     def __init__(self, bot):
         self.bot = bot
@@ -186,6 +186,42 @@ class GameCog(commands.GroupCog, name="game"):
         if not can_roll:
             return False, "คุณใช้สิทธิ์ทอยในเทิร์นนี้ไปแล้ว จึงใช้สกิลประเภท Active Roll ไม่ได้"
         return True, None
+
+    async def handle_after_roll(self, interaction: discord.Interaction, game: dict):
+        if have_all_players_rolled(interaction.channel_id):
+            if not game["awaiting_turn_confirm"]:
+                start_turn_confirmation(interaction.channel_id)
+
+                ranked_players = get_ranked_players(interaction.channel_id)
+                phase = get_phase_from_turn(game["turn"], game["max_turn"])
+
+                rank_lines = []
+                for index, (user_id, info) in enumerate(ranked_players, start=1):
+                    if str(user_id).startswith("mob_"):
+                        display_name = info.get("display_name") or info.get('username') or "Mob"
+                    else:
+                        display_name = info.get('username') or f"<@{user_id}>"
+
+                    rank_lines.append(
+                        f"ลำดับที่ {index}: {display_name} | Score: {info['score']} ({info['style']})"
+                    )
+
+                if not rank_lines:
+                    rank_lines.append("ยังไม่มีผู้เล่น")
+
+                confirm_embed = discord.Embed(
+                    title=f"📊ผลสรุป ช่วงที่ {phase} เทิร์นที่ {game['turn']}",
+                    color=discord.Color.blurple(),
+                    description=(
+                        f"อันดับคะแนน:🏆\n" + "\n".join(rank_lines)
+                    )
+                )
+                confirm_embed.set_footer(text="ทุกคนต้องกดยืนยันก่อนจะไปเทิร์นถัดไป")
+
+                from views.turn_confirm_view import TurnConfirmView
+                view = TurnConfirmView(self, interaction.channel_id)
+                msg = await interaction.followup.send(embed=confirm_embed, view=view)
+                view.message = msg
 
     @app_commands.command(name="create", description="สร้างเกมใหม่")
     async def create(self, interaction: discord.Interaction):
@@ -495,6 +531,14 @@ class GameCog(commands.GroupCog, name="game"):
                 }
                 await send_func(**send_kwargs)
 
+        if game and game["started"] and not has_real_player(game):
+            await self._process_next_turn_core(
+                channel_id=channel_id,
+                send_func=send_func,
+                guild=guild,
+                title_suffix="(Auto Mob)"
+            )
+
     async def process_next_turn(self, interaction: discord.Interaction):
         game = get_game(interaction.channel_id)
         if game is None:
@@ -659,7 +703,7 @@ class GameCog(commands.GroupCog, name="game"):
         await interaction.followup.send(**send_kwargs)
 
         game = payload["game"]
-        await handle_after_roll(interaction, game)
+        await self.handle_after_roll(interaction, game)
 
     @discord.app_commands.command(name="skill", description="เปิดเมนูใช้สกิล")
     async def skill(self, interaction: discord.Interaction):
