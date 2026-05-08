@@ -49,6 +49,7 @@ def is_last_corner(game: dict) -> bool:
 
 def is_lastspurt(game: dict) -> bool:
     path_type = get_current_path_type(game)
+    print(path_type)
     return path_type == 1 and game["phase"] == 4
 
 def execute_roll_core(
