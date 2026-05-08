@@ -91,7 +91,7 @@ def build_game_end_embed(ranked_players, commentary_text: str | None = None):
         color=discord.Color.red(),
         description=(
             f"{winner_text}\n\n"
-            f"อันดับสุดท้าย:\n" + "\n".join(rank_lines)
+            f"อันดับ:\n" + "\n".join(rank_lines)
         )
     )
 
