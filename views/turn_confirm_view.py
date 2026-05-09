@@ -19,11 +19,49 @@ class TurnConfirmView(discord.ui.View):
         if game is None:
             return
 
-        reset_turn_confirmations(self.channel_id)
-
         channel = self.cog.bot.get_channel(self.channel_id)
         if channel is None:
             return
+
+        players = game.get("players", {})
+
+        not_rolled_players = []
+
+        for user_id, player in players.items():
+            if player.get("is_mob"):
+                continue
+
+            if player.get("left_game") or player.get("is_left") or player.get("inactive"):
+                continue
+
+            if not player.get("rolled_this_turn", False):
+                not_rolled_players.append(player)
+
+        if not_rolled_players:
+            names = []
+
+            for p in not_rolled_players:
+                name = (
+                    p.get("display_name")
+                    or p.get("name")
+                    or p.get("username")
+                    or "Unknown Player"
+                )
+                names.append(name)
+
+            await channel.send(
+                "⏳ หมดเวลายืนยันแล้ว แต่ยังมีผู้เล่นที่ยังไม่ได้ทอย\n"
+                "ยังไม่ข้ามเทิร์นอัตโนมัติ\n\n"
+                + "\n".join(f"• {name}" for name in names)
+            )
+
+            reset_turn_confirmations(self.channel_id)
+            return
+
+        # =========================
+        # ทุกคนทอยแล้ว → ข้ามเทิร์นได้
+        # =========================
+        reset_turn_confirmations(self.channel_id)
 
         if self.message:
             try:
@@ -31,7 +69,7 @@ class TurnConfirmView(discord.ui.View):
             except:
                 pass
 
-        await channel.send("⏳ หมดเวลา ยืนยันไม่ครบ → ข้ามเทิร์นอัตโนมัติ")
+        await channel.send("⏳ หมดเวลา ยืนยันไม่ครบ แต่ทุกคนทอยแล้ว → ข้ามเทิร์นอัตโนมัติ")
 
         await self.cog.process_next_turn_from_timeout(channel)
 
