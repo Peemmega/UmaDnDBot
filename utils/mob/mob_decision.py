@@ -20,14 +20,31 @@ BIG_FUTURE_GAIN_TO_HOLD = 80
 # FUTURE DICE EVALUATION
 # =========================================================
 def get_rule_dice(rule: dict) -> int:
-    return int(rule.get("d", get_rule_dice(rule)) or 1)
+    if not isinstance(rule, dict):
+        return 1
+
+    value = rule.get("d")
+    if value is None:
+        value = rule.get("dice", 1)
+
+    try:
+        return max(1, int(value))
+    except (TypeError, ValueError):
+        return 1
 
 
 def get_rule_kh(rule: dict) -> int | None:
-    kh = rule.get("kh", None)
-    if kh is None:
+    if not isinstance(rule, dict):
         return None
-    return int(kh)
+
+    value = rule.get("kh")
+    if value is None:
+        return None
+
+    try:
+        return max(0, int(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def estimate_rule_value(rule: dict) -> float:
@@ -578,7 +595,7 @@ def evaluate_skill_score(game, user_id, skill):
 
         elif effect_type == "modify_enemy_gold_range":
             score += 15
-            
+
         elif effect_type == "add_d":
             score += value * (18 + current_dice * 8)
 
