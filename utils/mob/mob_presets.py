@@ -189,8 +189,8 @@ MOB_PRESETS = {
             "speed": 4,
             "stamina": 4,
             "power": 6,
-            "gut": 2,
-            "wit": 2,
+            "gut": 3,
+            "wit": 1,
 
             "turf": 2,"dirt": 2,
             "sprint": 2,"mile": 2,"medium": 2,"long": 2,
@@ -200,7 +200,7 @@ MOB_PRESETS = {
             1: "s015",   # Beeline Burst
             2: "s037",   # In Body and Mind
             3: "s032",   # Neck and Neck
-            4: "s045",   # Moving Past, and Beyond
+            4: "s035",   # Radiant Star
         },
         "zone": {
             "name": "Abyssal Lament",
