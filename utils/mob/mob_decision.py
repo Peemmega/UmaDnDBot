@@ -21,7 +21,7 @@ BIG_FUTURE_GAIN_TO_HOLD = 80
 # =========================================================
 
 def estimate_rule_value(rule: dict) -> float:
-    dice = rule.get("d", 1)
+    dice = rule.get("dice", 1)
     kh = rule.get("kh", 0)
 
     # dice หลายลูก scale แรงกว่าตรง ๆ
@@ -111,7 +111,7 @@ def get_future_dice_context(game, user_id, lookahead_turns=FUTURE_LOOKAHEAD_TURN
         "current_turn": current_turn,
         "current_phase": current["phase"],
         "current_rule": current["rule"],
-        "current_dice": current["d"],
+        "current_dice": current["dice"],
         "current_kh": current["kh"],
         "current_value": current["rule_value"],
 
@@ -144,7 +144,7 @@ def estimate_roll_value(game, user_id):
     player = game["players"][user_id]
     current = get_current_dice_context(game, user_id)
 
-    dice_count = current["d"] + player.get("next_roll_add_d", 0)
+    dice_count = current["dice"] + player.get("next_roll_add_d", 0)
     kh = current["kh"] + player.get("next_roll_add_kh", 0)
 
     dkh = player.get("next_roll_add_dkh", 0)
