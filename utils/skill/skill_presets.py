@@ -798,11 +798,11 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_current_speed",
-                "value": 1.25,
+                "value": 1,
             },
             {
                 "type": "modify_roll_cap",
-                "value": 7,
+                "value": 10,
                 "duration": "this_roll"
             },
             {
@@ -985,7 +985,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed","value": 2.25}
+            {"type": "modify_current_speed","value": 2.5}
         ],
 
         "tags": ["corner", "late_race", "acceleration", "unique"],
@@ -1060,8 +1060,8 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "add_dkh","value": 1,"duration": "this_roll"},
-            {"type": "modify_current_speed","value": 1.75}
+            {"type": "add_dkh","value": 2,"duration": "this_roll"},
+            {"type": "modify_current_speed","value": 1}
         ],
 
         "tags": ["mid_race", "late_race", "acceleration", "unique"],
@@ -1086,7 +1086,7 @@ SKILLS = {
                 "value": 2,
                 "duration": "this_roll"
             },
-            {"type": "modify_roll_floor","value": 10,"duration": "this_roll"},
+            {"type": "modify_roll_floor","value": 14,"duration": "this_roll"},
 
         ],
 
