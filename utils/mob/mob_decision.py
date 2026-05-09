@@ -26,7 +26,7 @@ def estimate_rule_value(rule: dict) -> float:
 
     # dice หลายลูก scale แรงกว่าตรง ๆ
     value = (dice ** 2) * 20
-    if kh <= 0:
+    if kh > 0:
         value = (kh ** 2) * 20
 
     return value
@@ -93,19 +93,20 @@ def get_future_dice_context(game, user_id, lookahead_turns=FUTURE_LOOKAHEAD_TURN
         future_turn = min(max_turn, current_turn + offset)
         future_phase = get_phase_from_turn(future_turn, max_turn)
 
-        future_rule = get_dice_rule(
-            player.get("style", "Pace"),
-            current["distance_color"],
-            future_phase,
-        )
+        for color in ("White", "Gold"):
+            future_rule = get_dice_rule(
+                player.get("style", "Pace"),
+                color,
+                future_phase,
+            )
 
-        future_value = estimate_rule_value(future_rule)
+            future_value = estimate_rule_value(future_rule)
 
-        if future_value > best_future_value:
-            best_future_value = future_value
-            best_future_turn = future_turn
-            best_future_phase = future_phase
-            best_future_rule = future_rule
+            if future_value > best_future_value:
+                best_future_value = future_value
+                best_future_turn = future_turn
+                best_future_phase = future_phase
+                best_future_rule = future_rule
 
     context = {
         "current_turn": current_turn,
