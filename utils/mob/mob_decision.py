@@ -21,7 +21,7 @@ BIG_FUTURE_GAIN_TO_HOLD = 80
 # =========================================================
 
 def estimate_rule_value(rule: dict) -> float:
-    dice = rule.get("dice", 1)
+    dice = rule.get("d", 1)
     kh = rule.get("kh", 0)
 
     # dice หลายลูก scale แรงกว่าตรง ๆ
@@ -64,7 +64,7 @@ def get_current_dice_context(game, user_id):
         "distance_color": distance_color,
         "nearby_count": nearby_count,
         "rule": rule,
-        "dice": rule.get("dice", 1),
+        "dice": rule.get("d", 1),
         "kh": rule.get("kh", 0),
         "rule_value": estimate_rule_value(rule),
     }
@@ -111,14 +111,14 @@ def get_future_dice_context(game, user_id, lookahead_turns=FUTURE_LOOKAHEAD_TURN
         "current_turn": current_turn,
         "current_phase": current["phase"],
         "current_rule": current["rule"],
-        "current_dice": current["dice"],
+        "current_dice": current["d"],
         "current_kh": current["kh"],
         "current_value": current["rule_value"],
 
         "best_future_turn": best_future_turn,
         "best_future_phase": best_future_phase,
         "best_future_rule": best_future_rule,
-        "best_future_dice": best_future_rule.get("dice", 1),
+        "best_future_dice": best_future_rule.get("d", 1),
         "best_future_kh": best_future_rule.get("kh", 0),
         "best_future_value": best_future_value,
 
@@ -144,7 +144,7 @@ def estimate_roll_value(game, user_id):
     player = game["players"][user_id]
     current = get_current_dice_context(game, user_id)
 
-    dice_count = current["dice"] + player.get("next_roll_add_d", 0)
+    dice_count = current["d"] + player.get("next_roll_add_d", 0)
     kh = current["kh"] + player.get("next_roll_add_kh", 0)
 
     dkh = player.get("next_roll_add_dkh", 0)
@@ -274,6 +274,116 @@ def decide_mob_skill_combo(
 
     return [item["skill_id"] for item in best_combo]
 
+# =========================================================
+# EFFECT ANALYSIS
+# =========================================================
+
+ROLL_SCALING_EFFECTS = {
+    "modify_roll_cap",
+    "modify_roll_floor",
+    "modify_selected_die",
+    "add_d",
+    "add_kh",
+    "add_dkh",
+}
+
+SPEED_EFFECTS = {
+    "modify_velocity",
+    "modify_current_speed",
+}
+
+RECOVERY_EFFECTS = {
+    "recover_stamina",
+    "self_heal_stamina",
+}
+
+DEBUFF_EFFECTS = {
+    "reduce_stamina",
+    "modify_enemy_gold_range",
+    "apply_debuff_next_turn",
+    "modify_enemy_velocity",
+    "slow_enemy",
+}
+
+def get_effect_value(effect: dict) -> float:
+    value = effect.get("value", 0)
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def analyze_skill_effects(skill: dict) -> dict:
+    result = {
+        "roll_scaling": 0,
+        "speed": 0,
+        "current_speed": 0,
+        "recovery": 0,
+        "debuff": 0,
+
+        "cap": 0,
+        "floor": 0,
+        "add_d": 0,
+        "add_kh": 0,
+        "add_dkh": 0,
+        "selected_die": 0,
+    }
+
+    for effect in skill.get("effects", []):
+        effect_type = effect.get("type")
+        value = get_effect_value(effect)
+
+        # --------------------------------
+        # roll scaling
+        # --------------------------------
+        if effect_type == "modify_roll_cap":
+            result["cap"] += value
+            result["roll_scaling"] += value * 1.2
+
+        elif effect_type == "modify_roll_floor":
+            result["floor"] += value
+            result["roll_scaling"] += value * 1.0
+
+        elif effect_type == "modify_selected_die":
+            result["selected_die"] += value
+            result["roll_scaling"] += value * 1.5
+
+        elif effect_type == "add_d":
+            result["add_d"] += value
+            result["roll_scaling"] += value * 22
+
+        elif effect_type == "add_kh":
+            result["add_kh"] += value
+            result["roll_scaling"] += value * 28
+
+        elif effect_type == "add_dkh":
+            result["add_dkh"] += value
+            result["roll_scaling"] += value * 42
+
+        # --------------------------------
+        # speed
+        # --------------------------------
+        elif effect_type == "modify_velocity":
+            result["speed"] += value
+
+        elif effect_type == "modify_current_speed":
+            result["current_speed"] += value
+
+        # --------------------------------
+        # recovery
+        # --------------------------------
+        elif effect_type in RECOVERY_EFFECTS:
+            result["recovery"] += value
+
+        # --------------------------------
+        # debuff
+        # --------------------------------
+        elif effect_type in DEBUFF_EFFECTS:
+            result["debuff"] += abs(value)
+
+    return result
+
 
 # =========================================================
 # SKILL SCORE
@@ -283,288 +393,197 @@ def evaluate_skill_score(game, user_id, skill):
     player = game["players"][user_id]
 
     score = 10
-    roll_value = estimate_roll_value(game, user_id)
     future = get_future_dice_context(game, user_id)
-    current_dice = future["current_dice"]
 
     current_turn = game.get("turn", 1)
     max_turn = game.get("max_turn", 20)
+
     phase = get_phase_from_turn(current_turn, max_turn)
 
     stamina_left = player.get("stamina_left", 0)
-    style = player.get("style", "Pace")
 
     position_group = get_position_group(game, user_id)
     distance_to_front = get_distance_to_front(game, user_id)
     nearby_count = get_nearby_count(game, user_id)
     path_type = get_current_path_type(game)
 
-    is_last_spurt = phase >= 4
+    effect_info = analyze_skill_effects(skill)
 
-    tags = set(skill.get("tags", []))
-    effects = skill.get("effects", [])
+    has_roll_scaling = effect_info["roll_scaling"] > 0
+    has_speed = (
+        effect_info["speed"] > 0
+        or effect_info["current_speed"] > 0
+    )
+    has_recovery = effect_info["recovery"] > 0
+    has_debuff = effect_info["debuff"] > 0
 
-    is_burst_skill = (
-        "burst" in tags
-        or "last_spurt" in tags
-        or "late_race" in tags
+    # =====================================================
+    # dice power
+    # =====================================================
+
+    dice_power = (
+        future["current_dice"]
+        + future["current_kh"] * 0.6
     )
 
-    has_big_roll_scaling = any(
-        effect.get("type") in [
-            "modify_roll_cap",
-            "modify_roll_floor",
-            "add_dkh",
-            "add_d",
-            "add_kh",
-        ]
-        for effect in effects
+    future_dice_power = (
+        future["best_future_dice"]
+        + future["best_future_kh"] * 0.6
     )
 
-    # -----------------------------
-    # save important skill
-    # -----------------------------
-    if phase <= 2:
-        if "burst" in tags:
-            score -= 50
-
-        if "late_race" in tags:
-            score -= 40
-
-        if style in ["Late", "End"] and is_burst_skill:
-            score -= 50
-
-    # -----------------------------
-    # future dice hold
-    # -----------------------------
     future_gain = future["future_gain"]
 
-    if phase < 4:
-        if future["has_much_better_future_dice"]:
-            if is_burst_skill:
-                score -= 140
-            if has_big_roll_scaling:
-                score -= 120
+    # =====================================================
+    # roll scaling
+    # =====================================================
 
-        elif future["has_better_future_dice"]:
-            if is_burst_skill:
-                score -= 75
-            if has_big_roll_scaling:
-                score -= 60
+    if has_roll_scaling:
+        score += effect_info["roll_scaling"]
 
-    # current dice too weak
-    if phase < 4:
-        if current_dice <= 1 and has_big_roll_scaling:
-            score -= 90
-        elif current_dice == 2 and has_big_roll_scaling:
-            score -= 35
+        if dice_power <= 1.5:
+            score -= 120
 
-    # -----------------------------
-    # position logic
-    # -----------------------------
-    if position_group == "back":
-        if "acceleration" in tags:
+        elif dice_power <= 2.5:
+            score -= 60
+
+        elif dice_power >= 5:
+            score += 60
+
+        # future better dice
+        if phase < 4:
+            if future_dice_power >= dice_power + 3:
+                score -= 130
+
+            elif future_dice_power >= dice_power + 2:
+                score -= 85
+
+            elif future_dice_power >= dice_power + 1:
+                score -= 35
+
+    # =====================================================
+    # speed
+    # =====================================================
+
+    if effect_info["speed"] > 0:
+        score += effect_info["speed"] / 4
+
+        if phase >= 3:
+            score += effect_info["speed"] * 0.25
+
+        if future_gain >= BIG_FUTURE_GAIN_TO_HOLD and phase < 4:
+            score -= effect_info["speed"] * 0.45
+
+    if effect_info["current_speed"] > 0:
+        score += effect_info["current_speed"] * 18
+
+        if phase <= 2:
+            score += effect_info["current_speed"] * 8
+
+        elif phase >= 4:
+            score += effect_info["current_speed"] * 12
+
+    # =====================================================
+    # recovery
+    # =====================================================
+
+    if has_recovery:
+        if stamina_left <= 2:
+            score += effect_info["recovery"] * 38
+
+        elif stamina_left <= 4:
+            score += effect_info["recovery"] * 22
+
+        else:
+            score += effect_info["recovery"] * 6
+
+    # =====================================================
+    # debuff / red skill
+    # =====================================================
+
+    if has_debuff:
+        score += effect_info["debuff"] * 22
+
+        if nearby_count >= 1:
+            score += 35
+
+        if nearby_count >= 2:
             score += 25
-        if "velocity" in tags:
-            score += 10
-        if "debuff" in tags:
-            score += 15
+
+        if phase >= 3:
+            score += 30
+
+        if position_group == "front":
+            if nearby_count >= 1:
+                score += 25
+            else:
+                score -= 10
+
+        elif position_group in ("middle", "back"):
+            if distance_to_front <= 120:
+                score += 25
+
+        if nearby_count == 0 and distance_to_front > 160:
+            score -= 30
+
+    # =====================================================
+    # board state
+    # =====================================================
+
+    if position_group == "back":
+        if has_speed:
+            score += 20
 
     elif position_group == "front":
-        if "lead" in tags:
-            score += 20
-        if "recovery" in tags:
+        if has_speed:
             score += 10
-        if "debuff" in tags:
-            score -= 10
 
-    elif position_group == "middle":
-        if "positioning" in tags:
-            score += 20
+        if has_recovery:
+            score += 10
 
-    # -----------------------------
-    # phase logic
-    # -----------------------------
-    if phase == 1:
-        if "start" in tags:
-            score += 30
-        if "acceleration" in tags:
-            score += 15
-
-    elif phase == 2:
-        if "mid_race" in tags:
-            score += 20
-
-    elif phase == 3:
-        if "burst" in tags:
-            score += 35
-        if "acceleration" in tags:
-            score += 20
-
-    elif phase >= 4:
-        if "last_spurt" in tags:
-            score += 60
-        if "burst" in tags:
-            score += 50
-        if "velocity" in tags:
-            score += 25
-        if "acceleration" in tags:
-            score += 40
-
-    # -----------------------------
+    # =====================================================
     # path logic
-    # -----------------------------
-    if path_type == 2:
-        if "corner" in tags:
-            score += 35
+    # =====================================================
 
-    elif path_type == 1:
-        if "straight" in tags:
-            score += 30
+    tags = set(skill.get("tags", []))
 
-    elif path_type == 3:
-        if "uphill" in tags:
-            score += 35
-        if "acceleration" in tags:
-            score += 10
+    if path_type == 2 and "corner" in tags:
+        score += 12
 
-    elif path_type == 4:
-        if "downhill" in tags:
-            score += 30
-        if "velocity" in tags:
-            score += 15
+    elif path_type == 1 and "straight" in tags:
+        score += 10
 
-    # -----------------------------
-    # stamina logic
-    # -----------------------------
-    if stamina_left <= 2:
-        if "recovery" in tags:
-            score += 60
-        if "stamina" in tags:
-            score += 30
+    elif path_type == 3 and "uphill" in tags:
+        score += 14
 
-    elif stamina_left <= 4:
-        if "recovery" in tags:
-            score += 25
+    elif path_type == 4 and "downhill" in tags:
+        score += 12
 
-    # -----------------------------
-    # pack racing
-    # -----------------------------
-    if nearby_count >= 2:
-        if "positioning" in tags:
-            score += 20
-        if "velocity" in tags:
-            score += 10
-
-    # -----------------------------
-    # last spurt chase
-    # -----------------------------
-    if is_last_spurt:
-        if distance_to_front <= 50:
-            if "acceleration" in tags:
-                score += 35
-            if "burst" in tags:
-                score += 35
-        elif distance_to_front >= 120:
-            if "velocity" in tags:
-                score += 20
-
-    # -----------------------------
-    # style logic
-    # -----------------------------
-    if style == "Front":
-        if "lead" in tags:
-            score += 30
-        if "front" in tags:
-            score += 25
-
-    elif style == "Pace":
-        if "pace" in tags:
-            score += 25
-        if "positioning" in tags:
-            score += 15
-
-    elif style == "Late":
-        if "late" in tags:
-            score += 30
-        if "acceleration" in tags:
-            score += 15
-
-    elif style == "End":
-        if "end" in tags:
-            score += 35
-        if "last_spurt" in tags:
-            score += 25
-
-    # -----------------------------
-    # effect value
-    # -----------------------------
-    for effect in effects:
-        effect_type = effect.get("type")
-        value = effect.get("value", 0)
-
-        if effect_type == "modify_velocity":
-            score += value / 5
-
-            if roll_value <= 25:
-                score += value * 0.2
-
-            if future_gain >= BIG_FUTURE_GAIN_TO_HOLD and phase < 4:
-                score -= value * 0.6
-            elif future_gain >= MIN_FUTURE_GAIN_TO_HOLD and phase < 4:
-                score -= value * 0.3
-
-        elif effect_type == "modify_current_speed":
-            score += value * 18
-
-        elif effect_type == "modify_roll_cap":
-            score += value * 1.5
-
-            if roll_value <= 25:
-                score -= value * 1.8
-            elif roll_value <= 45:
-                score -= value * 0.9
-            elif roll_value >= 80:
-                score += value * 0.8
-
-        elif effect_type == "modify_roll_floor":
-            score += value
-
-            if roll_value <= 30:
-                score -= value * 0.9
-            elif roll_value >= 70:
-                score += value * 0.5
-
-        elif effect_type == "add_dkh":
-            score += value * 18
-
-        elif effect_type == "recover_stamina":
-            if stamina_left <= 4:
-                score += value * 25
-            else:
-                score += value * 8
-
-        elif effect_type == "reduce_stamina":
-            score += value * 20
-
-        elif effect_type == "modify_enemy_gold_range":
-            score += 15
+    # =====================================================
+    # unique
+    # =====================================================
 
     if "unique" in tags:
         if phase >= 3:
-            score += 25
+            score += 20
         else:
-            score -= 15
+            score -= 10
+
+    # =====================================================
+    # cooldown
+    # =====================================================
 
     cooldown = skill.get("cooldown", 0)
 
     if cooldown >= 10 and phase <= 2:
-        score -= 25
+        score -= 20
 
-    score += random.randint(-5, 5)
+    # =====================================================
+    # random
+    # =====================================================
+
+    score += random.randint(-4, 4)
 
     return max(0, int(score))
-
 
 # =========================================================
 # COMBO SCORE
