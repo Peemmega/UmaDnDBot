@@ -11,7 +11,7 @@ from utils.race.race_dice import (
 # CONFIG
 # =========================================================
 
-FUTURE_LOOKAHEAD_TURNS = 2
+FUTURE_LOOKAHEAD_TURNS = 4
 MIN_FUTURE_GAIN_TO_HOLD = 40
 BIG_FUTURE_GAIN_TO_HOLD = 80
 
@@ -21,7 +21,7 @@ BIG_FUTURE_GAIN_TO_HOLD = 80
 # =========================================================
 
 def estimate_rule_value(rule: dict) -> float:
-    dice = rule.get("dice", 1)
+    dice = rule.get("d", 1)
     kh = rule.get("kh", 0)
 
     # dice หลายลูก scale แรงกว่าตรง ๆ
