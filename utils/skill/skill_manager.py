@@ -201,7 +201,7 @@ def describe_trigger(trigger: dict) -> str:
             parts.append("ในโค้งสุดท้าย")
 
     if trigger.get("front_blocked") is True:
-        parts.append("มีคู่แข่งในระยะ 10 ช่องด้านหน้า")
+        parts.append("มีคู่แข่งในระยะ 20 ช่องด้านหน้า")
 
     if "target_distance_min" in trigger and "target_distance_max" in trigger:
         parts.append(

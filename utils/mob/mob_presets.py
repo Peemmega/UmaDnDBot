@@ -187,8 +187,8 @@ MOB_PRESETS = {
         "style": "Pace",
         "race_profile": {
             "speed": 4,
-            "stamina": 3,
-            "power": 5,
+            "stamina": 4,
+            "power": 4,
             "gut": 2,
             "wit": 2,
 
@@ -200,7 +200,7 @@ MOB_PRESETS = {
             1: "s015",   # Beeline Burst
             2: "s001",   # Professor of Curvature
             3: "s032",   # Neck and Neck
-            4: "s043",   # Red Shift/LP1211-M
+            4: "s035",   # No Stopping Me!
         },
         "zone": {
             "name": "Abyssal Lament",
