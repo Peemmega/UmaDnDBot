@@ -355,9 +355,9 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 1,
-                "floor": 5,
+                "floor": 0,
                 
-                "cap": 7,
+                "cap": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             }
@@ -370,10 +370,10 @@ MOB_PRESETS = {
         "thumnail": thumnails["Orfevre"],
         "style": "End",
         "race_profile": {
-            "speed": 4,
-            "stamina": 5,
-            "power": 8,
-            "gut": 1,
+            "speed": 5,
+            "stamina": 4,
+            "power": 6,
+            "gut": 3,
             "wit": 2,
 
             "turf": 7,"dirt": 1,
