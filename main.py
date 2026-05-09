@@ -1,14 +1,13 @@
 import os
-import asyncio
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
+import threading
 
 import discord
+import uvicorn
 from discord.ext import commands
 from dotenv import load_dotenv
 
 import bot_instance
-from api_server import app as fastapi_app
+from api_server import app
 from utils.database import init_db
 
 load_dotenv()
@@ -16,6 +15,10 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 if TOKEN is None:
     raise ValueError("ไม่พบ DISCORD_TOKEN ในไฟล์ .env")
+
+
+def run_api():
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 class Client(commands.Bot):
@@ -29,51 +32,29 @@ class Client(commands.Bot):
         await self.load_extension("cogs.general")
         await self.load_extension("cogs.music")
         await self.load_extension("cogs.admin")
-
         await self.tree.sync()
 
     async def on_ready(self):
         print(f"Logged on as {self.user}!")
+
+    async def on_message(self, message):
+        if message.author == self.user:
+            return
+
+        if message.content.startswith("โอกุริเป็นเกรับ"):
+            await message.channel.send(f"จริงค่ะ {message.author}")
+
+        await self.process_commands(message)
 
 
 intents = discord.Intents.default()
 intents.message_content = True
 
 client = Client(command_prefix="!", intents=intents)
+
+# ให้ api_server เรียกใช้ bot ตัวนี้ได้
 bot_instance.bot = client
 
-bot_task = None
+threading.Thread(target=run_api, daemon=True).start()
 
-
-async def start_discord_bot():
-    while True:
-        try:
-            print("Starting Discord bot...")
-            await client.start(TOKEN)
-
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-
-            print(f"Discord bot crashed: {e}")
-
-            await asyncio.sleep(60)
-
-
-@asynccontextmanager
-async def lifespan(app):
-    global bot_task
-
-    bot_task = asyncio.create_task(start_discord_bot())
-
-    yield
-
-    if bot_task:
-        bot_task.cancel()
-
-    if not client.is_closed():
-        await client.close()
-
-
-fastapi_app.router.lifespan_context = lifespan
-app = FastAPI(lifespan=lifespan)
+client.run(TOKEN)
