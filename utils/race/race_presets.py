@@ -86,8 +86,11 @@ def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dic
 
     elif path_type == 3:  # เนินขึ้น
         effect["stamina_cost"] = 2
-        game_player["current_max_speed"] *= 0.90
         effect["power_total_multiplier"] = 3.0
+        if (not game_player.get("debuffPower")):
+            game_player["debuffPower"] = True
+            game_player["current_max_speed"] *= 0.90
+        
 
     elif path_type == 4:  # เนินลง
         effect["stamina_cost"] = 0

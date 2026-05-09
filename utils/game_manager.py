@@ -1066,6 +1066,8 @@ def next_turn(channel_id: int):
         player["no_reroll_next_turn"] = False
         player["action_locked"] = False
         player["takeStaminaDebuff"] = False
+        if player.get("debuffPower"):
+            player["debuffPower"] = False
         player.pop("lastedBuff", None)
 
     game["turn_snapshot_scores"] = {
