@@ -26,6 +26,7 @@ thumnails = {
 }
 
 MOB_PRESETS = {
+    # Rookie
     "rookie_front": {
         "name": "Rookie Runner",
         "avatar": CHARACTER_DIR / "mob_01.png",
@@ -178,26 +179,28 @@ MOB_PRESETS = {
         },
     },
 
+    # LEVEL 2
     "fujimasa_march": {
         "name": "Fujimasa March",
         "avatar": CHARACTER_DIR / "fujimasa_march.png",
         "thumnail": thumnails["FujimasaMarch"],
         "style": "Pace",
         "race_profile": {
-            "speed": 6,
-            "stamina": 4,
+            "speed": 4,
+            "stamina": 3,
             "power": 5,
-            "gut": 4,
-            "wit": 1,
+            "gut": 2,
+            "wit": 2,
 
-            "turf": 1,"dirt": 1,
-            "sprint": 1,"mile": 1,"medium": 1,"long": 1,
-            "front": 1,"pace": 1,"late": 1,"end_style": 1,
+            "turf": 2,"dirt": 2,
+            "sprint": 2,"mile": 2,"medium": 1,"long": 1,
+            "front": 1,"pace": 2,"late": 2,"end_style": 1,
         },
         "skills": {
-            1: "s007",
-            2: "s032",
-            3: "s015",
+            1: "s015",   # Beeline Burst
+            2: "s006",   # Keen Eye
+            3: "s032",   # Neck and Neck
+            4: "s043",   # Red Shift/LP1211-M
         },
         "zone": {
             "name": "Abyssal Lament",
@@ -205,16 +208,58 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 0,
-                "add_dkh": 2,
-                "floor": 2,
+                "add_dkh": 1,
+                "floor": 1,
                 
-                "cap": 3,
+                "cap": 1,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             },
         },
     },
+    
+    # LEVEL 3
+    "beyond_the_light": {
+        "name": "Beyond The Light",
+        "avatar": CHARACTER_DIR / "beyond_the_light.jpg",
+        "thumnail": thumnails["BeyondTheLight"],
+        "style": "Pace",
+        "race_profile": {
+            "speed": 5,
+            "stamina": 4,
+            "power": 5,
+            "gut": 3,
+            "wit": 2,
+            
+            "turf": 7,"dirt": 1,
+            "sprint": 1,"mile": 7,"medium": 7,"long": 6,
+            "front": 1,"pace": 7,"late": 6,"end_style": 1,
+        },
+        "skills": {
+            1: "s015",   # Beeline Burst
+            2: "s035",   # Radiant Star
+            3: "s040",   # Tail Nine
+            4: "s032",   # Neck and Neck
+        },
+        "zone": {
+            "name": "Champion Zone",
+            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910874370543746/agnes-tachyon-watch-me-run.gif?ex=69e7f711&is=69e6a591&hm=2cf187ac55166488c0e95a9e598dc6cfda93ec3a3a6df21e393cfb3ec8631179&=&width=561&height=317",
+            
+            "build": {
+                "flat": 0,
+                "add_dkh": 1,
+                
+                "floor": 0,
+                
+                "cap": 2,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 0,
+            }
+        },
+    },
 
+
+    # LEVEL 4
     "oguri_cap": {
         "name": "Oguri Cap",
         "avatar": CHARACTER_DIR / "oguri_cap.png",
@@ -232,26 +277,28 @@ MOB_PRESETS = {
             "front": 2,"pace": 7,"late": 7,"end_style": 4,
         },
         "skills": {
-            1: "s014",   # On Your Left!
-            2: "s039",   # Rising Dragon
-            3: None,
+            1: "s014",  # On Your Left!
+            2: "s044",  # Triumphant Pulse
+            3: "s037",  # In Body and Mind
+            4: "s015",  # Beeline Burst
         },
         "zone": {
             "name": "Grey Phantom",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910813691809813/umamusume-cinderella-gray.gif?ex=69e7f702&is=69e6a582&hm=79435ae723a1e2952da81083223166a29644bfccc6e26dc43f7d952fbe424707&=&width=561&height=317",
-            "points": 4,
+            
             "build": {
                 "flat": 0,
-                "add_dkh": 3,
-                "floor": 3,
+                "add_dkh": 1,
+                "floor": 0,
                 
-                "cap": 7,
+                "cap": 0,
                 "self_heal_stamina": 0,
-                "modify_current_speed": 0,
+                "modify_current_speed": 2,
             }
         },
     },
 
+    # LEVEL 4
     "obey_your_master": {
         "name": "Obey Your Master",
         "avatar": CHARACTER_DIR / "obey_your_master.jpg",
@@ -261,26 +308,27 @@ MOB_PRESETS = {
             "speed": 4,
             "stamina": 4,
             "power": 7,
-            "gut": 0,
-            "wit": 1,
+            "gut": 1,
+            "wit": 3,
 
             "turf": 7,"dirt": 1,
             "sprint": 2,"mile": 6,"medium": 7,"long": 1,
             "front": 1,"pace": 1,"late": 6,"end_style": 7,
         },
         "skills": {
-            1: "s002",   # Encroaching Shadow
-            2: "s016",   # Turbo Sprint
-            3: None,
+            1: "s002",  # Encroaching Shadow
+            2: "s031",  # No Stopping Me!
+            3: "s037",  # In Body and Mind
+            4: "s010",  # The Coast Is Clear!
         },
         "zone": {
             "name": "Wild Joker",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910826534637709/obey-your-master-umamusume.gif?ex=69e7f705&is=69e6a585&hm=dbb241a5960cf39bc83a4fffba9b24dcbf2888d7fc6b46257c1e0a9e004462a0&=&width=561&height=317",
-            "points": 4,
+            
             "build": {
                 "flat": 0,
-                "add_dkh": 2,
-                "floor": 3,
+                "add_dkh": 1,
+                "floor": 0,
                    
                 "cap": 2,            
                 "self_heal_stamina": 0,
@@ -289,81 +337,7 @@ MOB_PRESETS = {
         },
     },
 
-    "beyond_the_light": {
-        "name": "Beyond The Light",
-        "avatar": CHARACTER_DIR / "beyond_the_light.jpg",
-        "thumnail": thumnails["BeyondTheLight"],
-        "style": "Pace",
-        "race_profile": {
-            "speed": 8,
-            "stamina": 4,
-            "power": 5,
-            "gut": 1,
-            "wit": 1,
-            
-            "turf": 7,"dirt": 1,
-            "sprint": 1,"mile": 7,"medium": 7,"long": 6,
-            "front": 1,"pace": 7,"late": 6,"end_style": 1,
-        },
-        "skills": {
-            1: "s012",   # Speed Star
-            2: "s035",   # Radiant Star
-            3: "s040",   # Tail Nine
-        },
-        "zone": {
-            "name": "Champion Zone",
-            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910874370543746/agnes-tachyon-watch-me-run.gif?ex=69e7f711&is=69e6a591&hm=2cf187ac55166488c0e95a9e598dc6cfda93ec3a3a6df21e393cfb3ec8631179&=&width=561&height=317",
-            
-            "build": {
-                "flat": 0,
-                "add_dkh": 3,
-                
-                "floor": 3,
-                
-                "cap": 3,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
-            }
-        },
-    },
-
-    "almond_eye": {
-        "name": "Almond Eye",
-        "avatar": CHARACTER_DIR / "almond_eye.png",
-        "thumnail": thumnails["AlmondEye"],
-        "style": "Pace",
-        "race_profile": {
-            "speed": 8,
-            "stamina": 8,
-            "power": 8,
-            "gut": 8,
-            "wit": 8,
-
-            "turf": 7,"dirt": 1,
-            "sprint": 2, "mile": 7, "medium": 7, "long": 3,
-            "front": 1, "pace": 7, "late": 5, "end_style": 2,
-        },
-        "skills": {
-            1: "s014",   # On Your Left!
-            2: "s039",   # Rising Dragon
-            3: "s042",   # Tail Nine
-        },
-        "zone": {
-            "name": "Peerless Heroine",
-            "image_url": "https://media.discordapp.net/attachments/1494733536656097340/1496040180648378428/-almond-eye.gif?ex=69e86f7e&is=69e71dfe&hm=3201c1caf77c93aebaa9050246a12b44920d492936be5df9ba20d7426a00f1a0&=&width=561&height=317",
-            
-            "build": {
-                "flat": 0,
-                "add_dkh": 1,
-                "floor": 0,
-                
-                "cap": 2,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
-            }
-        },
-    },
-
+    # LEVEL 7
     "orfevre": {
         "name": "Orfevre",
         "avatar": CHARACTER_DIR / "orfevre.png",
@@ -587,18 +561,57 @@ MOB_PRESETS = {
         },
     },
 
+    # LEVEL 7.5
+    "almond_eye": {
+        "name": "Almond Eye",
+        "avatar": CHARACTER_DIR / "almond_eye.png",
+        "thumnail": thumnails["AlmondEye"],
+        "style": "Pace",
+        "race_profile": {
+            "speed": 5,
+            "stamina": 5,
+            "power": 6,
+            "gut": 3,
+            "wit": 3,
 
+            "turf": 7,"dirt": 1,
+            "sprint": 2, "mile": 7, "medium": 7, "long": 3,
+            "front": 1, "pace": 7, "late": 5, "end_style": 2,
+        },
+        "skills": {
+            1: "s015",   # Beeline Burst
+            2: "s044",   # Triumphant Pulse
+            3: "s032",   # Neck and Neck
+            4: "s043",   # Red Shift/LP1211-M
+        },
+        "zone": {
+            "name": "Peerless Heroine",
+            "image_url": "https://media.discordapp.net/attachments/1494733536656097340/1496040180648378428/-almond-eye.gif?ex=69e86f7e&is=69e71dfe&hm=3201c1caf77c93aebaa9050246a12b44920d492936be5df9ba20d7426a00f1a0&=&width=561&height=317",
+            
+            "build": {
+                "flat": 0,
+                "add_dkh": 1,
+                "floor": 0,
+                
+                "cap": 2,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 0,
+            }
+        },
+    },
+
+    # LEVEL 8
     "equinox": {
         "name": "Equinox",
         "avatar": CHARACTER_DIR / "equinox.png",
         "thumnail": thumnails["Equinox"],
         "style": "Pace",
         "race_profile": {
-            "speed": 8,
+            "speed": 6,
             "stamina": 8,
-            "power": 8,
-            "gut": 8,
-            "wit": 8,
+            "power": 6,
+            "gut": 3,
+            "wit": 5,
 
             "turf": 8, "dirt": 8,
             "sprint": 8, "mile": 8, "medium": 8, "long": 8,
@@ -607,19 +620,20 @@ MOB_PRESETS = {
         "skills": {
             1: "s012",   # Speed Star
             2: "s035",   # Radiant Star
-            3: "s041",   # Rising Dragon / หรือสกิลท้ายแรงตัวอื่น
+            3: "s032",   # Neck and Neck
+            4: "s043",   # Red Shift/LP1211-M
         },
         "zone": {
             "name": "I SHOW SPEED",
             "image_url": "https://media.discordapp.net/attachments/1494733536656097340/1496040976911831142/ishowspeed-speed.gif?ex=69e8703b&is=69e71ebb&hm=2b52dfe8463eb477dc7709da57887a7e790f51f4d57f59cd84d04368f0ec2765&=&width=561&height=374",
             
             "build": {
-                "flat": 3,
-                "add_dkh": 3,
-                "floor": 3,
-                "cap": 7,
-                "self_heal_stamina": 3,
-                "modify_current_speed": 3,
+                "flat": 0,
+                "add_dkh": 1,
+                "floor": 0,
+                "cap": 2,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 0,
             }
         },
     },
