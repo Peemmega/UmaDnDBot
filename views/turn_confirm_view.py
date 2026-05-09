@@ -34,9 +34,9 @@ class TurnConfirmView(discord.ui.View):
             if player.get("left_game") or player.get("is_left") or player.get("inactive"):
                 continue
 
-            if not player.get("rolled_this_turn", False):
+            if player.get("last_roll_turn") != game.get("turn"):
                 not_rolled_players.append(player)
-
+                
         if not_rolled_players:
             names = []
 
