@@ -19,18 +19,31 @@ BIG_FUTURE_GAIN_TO_HOLD = 80
 # =========================================================
 # FUTURE DICE EVALUATION
 # =========================================================
+def get_rule_dice(rule: dict) -> int:
+    return int(rule.get("d", get_rule_dice(rule)) or 1)
+
+
+def get_rule_kh(rule: dict) -> int | None:
+    kh = rule.get("kh", None)
+    if kh is None:
+        return None
+    return int(kh)
+
 
 def estimate_rule_value(rule: dict) -> float:
-    dice = rule.get("dice", 1)
-    kh = rule.get("kh", 0)
+    d = get_rule_dice(rule)
+    kh = get_rule_kh(rule)
 
-    # dice หลายลูก scale แรงกว่าตรง ๆ
-    value = (dice ** 2) * 20
-    if kh <= 0:
-        value = (kh ** 2) * 20
+    selected = d if kh is None else min(d, kh)
+
+    # d เยอะ + kh เยอะ = สกิล roll scaling คุ้มขึ้นมาก
+    value = (d ** 2) * 16
+    value += selected * 28
+
+    if kh is not None:
+        value += (kh ** 2) * 12
 
     return value
-
 
 def get_current_dice_context(game, user_id):
     player = game["players"][user_id]
@@ -64,8 +77,8 @@ def get_current_dice_context(game, user_id):
         "distance_color": distance_color,
         "nearby_count": nearby_count,
         "rule": rule,
-        "dice": rule.get("dice", 1),
-        "kh": rule.get("kh", 0),
+        "dice": get_rule_dice(rule),
+        "kh": get_rule_kh(rule) or 0,
         "rule_value": estimate_rule_value(rule),
     }
 
@@ -118,8 +131,8 @@ def get_future_dice_context(game, user_id, lookahead_turns=FUTURE_LOOKAHEAD_TURN
         "best_future_turn": best_future_turn,
         "best_future_phase": best_future_phase,
         "best_future_rule": best_future_rule,
-        "best_future_dice": best_future_rule.get("dice", 1),
-        "best_future_kh": best_future_rule.get("kh", 0),
+        "best_future_dice": get_rule_dice(best_future_rule),
+        "best_future_kh": get_rule_kh(best_future_rule) or 0,
         "best_future_value": best_future_value,
 
         "future_gain": best_future_value - current["rule_value"],
@@ -352,6 +365,22 @@ def evaluate_skill_score(game, user_id, skill):
             if has_big_roll_scaling:
                 score -= 60
 
+    # ถ้าสกิลเป็นพวกเพิ่มเต๋า/cap/floor ให้ผูกกับจำนวนเต๋าปัจจุบัน
+    dice_power = future["current_dice"] + (future["current_kh"] * 0.6)
+    future_dice_power = future["best_future_dice"] + (future["best_future_kh"] * 0.6)
+
+    if has_big_roll_scaling:
+        if dice_power <= 1.5:
+            score -= 120
+        elif dice_power <= 2.5:
+            score -= 60
+        elif dice_power >= 5:
+            score += 55
+
+        # ถ้าอีกไม่กี่เทิร์นมีเต๋าดีกว่าเยอะ ให้เก็บไว้
+        if phase < 4 and future_dice_power >= dice_power + 2:
+            score -= 90
+
     # current dice too weak
     if phase < 4:
         if current_dice <= 1 and has_big_roll_scaling:
@@ -549,6 +578,19 @@ def evaluate_skill_score(game, user_id, skill):
 
         elif effect_type == "modify_enemy_gold_range":
             score += 15
+            
+        elif effect_type == "add_d":
+            score += value * (18 + current_dice * 8)
+
+        elif effect_type == "add_kh":
+            score += value * 32
+
+        elif effect_type == "add_dkh":
+            score += value * (38 + current_dice * 8)
+
+        elif effect_type == "modify_selected_die":
+            score += value * max(1, current_dice)
+
 
     if "unique" in tags:
         if phase >= 3:
