@@ -51,14 +51,14 @@ def estimate_rule_value(rule: dict) -> float:
     d = get_rule_dice(rule)
     kh = get_rule_kh(rule)
 
-    selected = d if kh is None else min(d, kh)
+    # selected = d if kh is None else min(d, kh)
 
     # d เยอะ + kh เยอะ = สกิล roll scaling คุ้มขึ้นมาก
     value = (d ** 2) * 16
-    value += selected * 28
+    # value += selected * 28
 
     if kh is not None:
-        value += (kh ** 2) * 12
+        value = (kh ** 2) * 16
 
     return value
 

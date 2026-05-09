@@ -198,7 +198,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "s015",   # Beeline Burst
-            2: "s006",   # Keen Eye
+            2: "s001",   # Professor of Curvature
             3: "s032",   # Neck and Neck
             4: "s043",   # Red Shift/LP1211-M
         },
