@@ -188,19 +188,19 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 4,
             "stamina": 4,
-            "power": 5,
+            "power": 6,
             "gut": 2,
-            "wit": 3,
+            "wit": 2,
 
             "turf": 2,"dirt": 2,
-            "sprint": 2,"mile": 2,"medium": 1,"long": 1,
+            "sprint": 2,"mile": 2,"medium": 2,"long": 2,
             "front": 1,"pace": 2,"late": 2,"end_style": 1,
         },
         "skills": {
             1: "s015",   # Beeline Burst
-            2: "s001",   # Professor of Curvature
+            2: "s037",   # In Body and Mind
             3: "s032",   # Neck and Neck
-            4: "s035",   # No Stopping Me!
+            4: "s045",   # Moving Past, and Beyond
         },
         "zone": {
             "name": "Abyssal Lament",

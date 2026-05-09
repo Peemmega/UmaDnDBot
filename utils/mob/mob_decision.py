@@ -59,7 +59,6 @@ def estimate_rule_value(rule: dict) -> float:
 
     if kh is not None:
         value = (kh ** 2) * 16
-        value += (d) * 16
     else:
         value = (d ** 2) * 16
 
