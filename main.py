@@ -1,6 +1,7 @@
 import os
 import asyncio
 from contextlib import asynccontextmanager
+from fastapi import FastAPI
 
 import discord
 from discord.ext import commands
@@ -47,9 +48,15 @@ bot_task = None
 async def start_discord_bot():
     while True:
         try:
+            print("Starting Discord bot...")
             await client.start(TOKEN)
+
         except Exception as e:
+            import traceback
+            traceback.print_exc()
+
             print(f"Discord bot crashed: {e}")
+
             await asyncio.sleep(60)
 
 
@@ -69,4 +76,4 @@ async def lifespan(app):
 
 
 fastapi_app.router.lifespan_context = lifespan
-app = fastapi_app
+app = FastAPI(lifespan=lifespan)
