@@ -1567,7 +1567,7 @@ def check_skill_trigger(
     required_position_group = trigger.get("position_group")
     if required_position_group is not None:
         position_group = get_position_groups(channel_id, user_id)
-        if position_group not in required_position_group:
+        if required_position_group not in position_group:
             return False, f"ตำแหน่งกลุ่มไม่ตรงเงื่อนไข {required_position_group}"
 
     # distance type

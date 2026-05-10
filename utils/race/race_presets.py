@@ -229,16 +229,17 @@ RACE_PRESET = {
         "path": [1, 3, 3, 4, 2, 2, 1, 1]
     },
 
-
-    "SteelBallRun": {
-        "name": "Steel Ball Run 4000000m",
-        "thumnail": "https://media.discordapp.net/attachments/697810514448744448/1496124802065371156/2026-04-21_192453.png?ex=69e8be4d&is=69e76ccd&hm=5b70ed31363207dd1453202f3657a698a98f8842aaf382b3360c0fa4ec3f4517&=&format=webp&quality=lossless&width=884&height=479",
-        "image": "https://media.discordapp.net/attachments/697810514448744448/1496124786143924304/Steel-Ball-Run-1-580x326.png?ex=69e8be49&is=69e76cc9&hm=c2aa1c996100f886b9eed318fad5b9ff35222dbecb78706b5c075aa382544bf4&=&format=webp&quality=lossless&width=870&height=489",
-        "track": "dirt",
-        "distance": "long",
-        "turn": 40,
-        "path": [1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1]
+    "MileChampionship": {
+        "name": "Hakodate Junior Stakes 1200m",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502922265438982276/3041.png?ex=6a0178ef&is=6a00276f&hm=0aa4939ffb5743a57eb7ccbaf22e6b56b22176378f776ff8e68da546dda0dd8f&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1502922265770070056/10202.png?ex=6a0178ef&is=6a00276f&hm=939624812ce640e97d8fc466c9bec8d96c99aea83d9680d4d4e86cdc534d519a&=&format=webp&quality=lossless&width=1370&height=755",
+        "track": "turf",
+        "distance": "sprint ",
+        "turn": 8,
+        "path": [3, 1, 1, 2, 2, 2, 1, 1]
     },
+    
+    
 
     #  debut race
     "Debut": {
@@ -256,7 +257,8 @@ RACE_PRESET = {
             "rookie_end",
         ]
     },
-
+    
+    # Test
     "Test Mile": {
         "name": "Test Mile",
         "turn": 8,
@@ -295,6 +297,17 @@ RACE_PRESET = {
             "rookie_alt_late",
             "rookie_alt_end",
         ]
+    },
+
+
+    "SteelBallRun": {
+        "name": "Steel Ball Run 4000000m",
+        "thumnail": "https://media.discordapp.net/attachments/697810514448744448/1496124802065371156/2026-04-21_192453.png?ex=69e8be4d&is=69e76ccd&hm=5b70ed31363207dd1453202f3657a698a98f8842aaf382b3360c0fa4ec3f4517&=&format=webp&quality=lossless&width=884&height=479",
+        "image": "https://media.discordapp.net/attachments/697810514448744448/1496124786143924304/Steel-Ball-Run-1-580x326.png?ex=69e8be49&is=69e76cc9&hm=c2aa1c996100f886b9eed318fad5b9ff35222dbecb78706b5c075aa382544bf4&=&format=webp&quality=lossless&width=870&height=489",
+        "track": "dirt",
+        "distance": "long",
+        "turn": 40,
+        "path": [1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1]
     },
 
     # "TennoShoSpring": {
