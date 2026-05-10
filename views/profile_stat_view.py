@@ -3,16 +3,8 @@ import discord
 from utils.database import (
     update_player_stats,
 )
-from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
+from utils.display_helpers import get_stat_emoji, get_stat_icon
 STATS_CAP = 8
-
-def get_stat_emoji(value: int) -> str:
-    value = max(1, min(value, 8))
-    return STAT_EMOJIS[value]
-
-
-def get_stat_icon(value: str) -> str:
-    return Status_Icon_Type[value]
 
 
 def build_stat_embed(user: discord.User | discord.Member, player: dict, title_text: str = "จัดการค่าสเตตัส") -> discord.Embed:

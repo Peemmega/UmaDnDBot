@@ -1,0 +1,74 @@
+import discord
+
+
+def build_race_log_embed(game: dict, ranked_players):
+    rank_lines = []
+
+    for index, (user_id, info) in enumerate(ranked_players, start=1):
+        name = (
+            info.get("display_name")
+            or info.get("username")
+            or str(user_id)
+        )
+
+        rank_lines.append(
+            f"**{index}. {name}** | {info.get('style')} | Score: **{info.get('score', 0)}**"
+        )
+
+    turn_logs = game.get("turn_score_logs", [])
+    player_logs = {}
+
+    for log in turn_logs:
+        player_name = log["name"]
+
+        if player_name not in player_logs:
+            player_logs[player_name] = {
+                "style": log.get("style"),
+                "logs": []
+            }
+
+        player_logs[player_name]["logs"].append(log)
+
+    log_lines = []
+
+    for player_name, data in player_logs.items():
+        style = data["style"]
+
+        log_lines.append(f"\n**{player_name}** ({style})")
+
+        for item in data["logs"]:
+            detail_parts = []
+            roll = item.get("roll") or {}
+
+            if roll:
+                phase = roll.get("phase")
+                color = roll.get("distance_color")
+                rule = roll.get("rule")
+                detail_parts.append(f"P{phase} {color} {rule}")
+
+            skills = item.get("skills") or []
+            if skills:
+                skill_ids = ", ".join(skill.get("id", "?") for skill in skills)
+                detail_parts.append(f"skills: {skill_ids}")
+
+            detail = f" | {' | '.join(detail_parts)}" if detail_parts else ""
+            log_lines.append(
+                f"{item['turn']} {item['score_after']} (+{item['gain']}){detail}"
+            )
+
+    description = (
+        f"สนาม: **{game.get('stage_name', 'Unknown')}**\n\n"
+        f"🏆 **อันดับสุดท้าย**\n"
+        + "\n".join(rank_lines)
+        + "\n\n📜 **Turn Score Log**\n"
+        + "\n".join(log_lines)
+    )
+
+    if len(description) > 3900:
+        description = description[:3900] + "\n...log ยาวเกินไป ถูกตัดบางส่วน"
+
+    return discord.Embed(
+        title="📘 Race Result Log",
+        description=description,
+        color=discord.Color.blue(),
+    )

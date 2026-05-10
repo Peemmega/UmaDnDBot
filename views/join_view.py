@@ -12,7 +12,6 @@ from utils.game_manager import (
 )
 
 from utils.dice.dice_presets import DICE_PRESET
-from utils.dice.dice_table import format_rule
 from utils.race_dice_preview import create_race_dice_preview
 
 from utils.race.race_dice import (
@@ -21,9 +20,6 @@ from utils.race.race_dice import (
 
 import math
 from io import BytesIO
-
-STYLES = ["Front", "Pace", "Late", "End"]
-PHASES = [1, 2, 3, 4]
 
 def build_phase_text(max_turn: int) -> str:
     phase_size = max_turn / 4
@@ -41,22 +37,6 @@ def build_phase_text(max_turn: int) -> str:
         start_turn = end_turn + 1
 
     return "\n".join(lines)
-
-
-def build_style_table(color_type: str) -> str:
-    lines = []
-    for style in STYLES:
-        p1 = format_rule(DICE_PRESET[style][color_type][1])
-        p2 = format_rule(DICE_PRESET[style][color_type][2])
-        p3 = format_rule(DICE_PRESET[style][color_type][3])
-        p4 = format_rule(DICE_PRESET[style][color_type][4])
-
-        lines.append(
-            f"**{style}** | {p1} | {p2} | {p3} | {p4}"
-        )
-
-    return "\n".join(lines)
-
 
 def build_join_style_embed(max_turn: int) -> discord.Embed:
     white_text = build_dice_table_grid(DICE_PRESET, "White")
@@ -282,9 +262,3 @@ class LobbyView(discord.ui.View):
                     guild=interaction.guild,
                     title_suffix="(Auto Mob)"
                 )
-        
-        
- 
-
-
-        

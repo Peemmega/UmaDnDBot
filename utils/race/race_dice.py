@@ -1,16 +1,9 @@
 import random
 import math
 from utils.dice.dice_presets import DICE_PRESET
-from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type
 from utils.skill.skill_presets import ICON
 from utils.dice.dice_table import format_rule
-
-def get_stat_emoji(value: int) -> str:
-    value = max(1, min(value, 8))
-    return STAT_EMOJIS[value]
-
-def get_stat_icon(value: str) -> str:
-    return Status_Icon_Type[value]
+from utils.display_helpers import get_stat_icon
 
 def count_nearby_players(player_id: int, score_map: dict[int, int], radius: int = 20) -> int:
     if player_id not in score_map:

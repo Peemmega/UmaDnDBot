@@ -156,34 +156,6 @@ def add_player_aptitude(user_id, aptitude_field, amount):
     conn.close()
     return True, f"เพิ่ม {aptitude_field} +{amount} สำเร็จ"
 
-def set_all_aptitude(user_id: int, value: int):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE players
-    SET
-        turf = ?,
-        dirt = ?,
-        sprint = ?,
-        mile = ?,
-        medium = ?,
-        long = ?,
-        front = ?,
-        pace = ?,
-        late = ?,
-        end_style = ?
-    WHERE user_id = ?
-    """, (
-        value, value,
-        value, value, value, value,
-        value, value, value, value,
-        user_id
-    ))
-
-    conn.commit()
-    conn.close()
-
 def add_player_stats_point(user_id: int, amount: int):
     conn = get_connection()
     cursor = conn.cursor()

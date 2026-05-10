@@ -5,16 +5,9 @@ import io
 from utils.database import ensure_player, update_player_username,set_player_zone_name,set_player_zone_image_url,set_all_aptitude
 from views.profile_stat_view import ProfileStatView, build_stat_embed
 from utils.player_card import create_stats_card
-from utils.icon_presets import STAT_EMOJIS, Status_Icon_Type, GRADE_TEXT
+from utils.icon_presets import GRADE_TEXT
 from views.zone_manage_view import ZoneManageView
 from utils.zone.zone_embed import build_zone_manage_embed, build_zone_used_preview_embed
-
-def get_stat_emoji(value: int) -> str:
-    value = max(1, min(value, 8))
-    return STAT_EMOJIS[value]
-
-def get_stat_icon(value: str) -> str:
-    return Status_Icon_Type[value]
 
 class OpenStatMenuView(discord.ui.View):
     def __init__(self, user_id: int):

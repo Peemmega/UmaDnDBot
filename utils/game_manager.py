@@ -222,18 +222,6 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
 
     return True
 
-def have_all_players_rolled(channel_id: int):
-    game = get_game(channel_id)
-    if game is None:
-        return False
-
-    players = game["players"]
-    if not players:
-        return False
-
-    current_turn = game["turn"]
-    return all(player["last_roll_turn"] == current_turn for player in players.values())
-
 def reset_turn_confirmations(channel_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -1796,7 +1784,7 @@ def process_mob_turn(channel_id: int, user_id: str):
         usable_skills=usable_skills,
         max_skill_per_turn=3,
         min_combo_score=45,
-        debug=True,
+        debug=False,
     )
 
     for skill_id in skill_ids_to_use:
