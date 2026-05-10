@@ -223,10 +223,10 @@ MOB_PRESETS = {
         "style": "Pace",
         "race_profile": {
             "speed": 4,
-            "stamina": 5,
+            "stamina": 4,
             "power": 4,
             "gut": 2,
-            "wit": 2,
+            "wit": 3,
 
             "turf": 1,"dirt": 1,
             "sprint": 1,"mile": 1,"medium": 1,"long": 1,
@@ -243,9 +243,9 @@ MOB_PRESETS = {
             "image_url": "",
             "points": 0,
             "build": {
-                "flat": 1,
+                "flat": 2,
                 "add_dkh": 1,
-                "floor": 1,
+                "floor": 0,
                 "cap": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
@@ -280,9 +280,9 @@ MOB_PRESETS = {
             "image_url": "",
             "points": 0,
             "build": {
-                "flat": 1,
+                "flat": 2,
                 "add_dkh": 0,
-                "floor": 1,
+                "floor": 0,
                 "cap": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 3,
@@ -297,10 +297,10 @@ MOB_PRESETS = {
         "style": "End",
         "race_profile": {
             "speed": 3,
-            "stamina": 5,
+            "stamina": 4,
             "power": 6,
             "gut": 2,
-            "wit": 1,
+            "wit": 2,
 
             "turf": 1,"dirt": 1,
             "sprint": 1,"mile": 1,"medium": 1,"long": 1,
@@ -310,7 +310,7 @@ MOB_PRESETS = {
             1: "s010",
             2: "s036",
             3: "s002",
-            4: "s049",
+            4: "s037", # In Body and Mind
         },
         "zone": {
             "name": "Default Zone",
