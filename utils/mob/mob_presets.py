@@ -82,10 +82,10 @@ MOB_PRESETS = {
             "front": 1,"pace": 1,"late": 1,"end_style": 1,
         },
         "skills": {
-            1: "s012",
-            2: "s015",
-            3: "s032",
-            4: "s047",
+            1: "s012", # Speed Star
+            2: "s015", # Beeline Burst
+            3: "s032", # Neck and Neck
+            4: "s047", # Ramp Up
         },
         "zone": {
             "name": "Default Zone",
