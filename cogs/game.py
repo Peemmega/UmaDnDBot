@@ -449,6 +449,10 @@ class GameCog(commands.GroupCog, name="game"):
             "rookie_pace",
             "rookie_late",
             "rookie_end",
+            "rookie_alt_front",
+            "rookie_alt_pace",
+            "rookie_alt_late",
+            "rookie_alt_end",
         ]
 
         added = []

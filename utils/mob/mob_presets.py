@@ -179,6 +179,154 @@ MOB_PRESETS = {
         },
     },
 
+    "rookie_alt_front": {
+        "name": "Rookie Sprinter",
+        "avatar": CHARACTER_DIR / "mob_01.png",
+        "thumnail": thumnails["Rookie1"],
+        "style": "Front",
+        "race_profile": {
+            "speed": 5,
+            "stamina": 5,
+            "power": 5,
+            "gut": 1,
+            "wit": 1,
+
+            "turf": 1,"dirt": 1,
+            "sprint": 1,"mile": 1,"medium": 1,"long": 1,
+            "front": 1,"pace": 1,"late": 1,"end_style": 1,
+        },
+        "skills": {
+            1: "s033",
+            2: "s043",
+            3: "s034",
+            4: "s030",
+        },
+        "zone": {
+            "name": "Default Zone",
+            "image_url": "",
+            "points": 0,
+            "build": {
+                "flat": 2,
+                "add_dkh": 0,
+                "floor": 0,
+                "cap": 1,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 2,
+            },
+        },
+    },
+
+    "rookie_alt_pace": {
+        "name": "Rookie Cruiser",
+        "avatar": CHARACTER_DIR / "mob_02.png",
+        "thumnail": thumnails["Rookie2"],
+        "style": "Pace",
+        "race_profile": {
+            "speed": 4,
+            "stamina": 5,
+            "power": 4,
+            "gut": 2,
+            "wit": 2,
+
+            "turf": 1,"dirt": 1,
+            "sprint": 1,"mile": 1,"medium": 1,"long": 1,
+            "front": 1,"pace": 1,"late": 1,"end_style": 1,
+        },
+        "skills": {
+            1: "s012",
+            2: "s032",
+            3: "s047",
+            4: "s031",
+        },
+        "zone": {
+            "name": "Default Zone",
+            "image_url": "",
+            "points": 0,
+            "build": {
+                "flat": 1,
+                "add_dkh": 1,
+                "floor": 1,
+                "cap": 0,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 0,
+            },
+        },
+    },
+
+    "rookie_alt_late": {
+        "name": "Rookie Chaser",
+        "avatar": CHARACTER_DIR / "mob_03.png",
+        "thumnail": thumnails["Rookie3"],
+        "style": "Late",
+        "race_profile": {
+            "speed": 3,
+            "stamina": 4,
+            "power": 6,
+            "gut": 2,
+            "wit": 2,
+
+            "turf": 1,"dirt": 1,
+            "sprint": 1,"mile": 1,"medium": 1,"long": 1,
+            "front": 1,"pace": 1,"late": 1,"end_style": 1,
+        },
+        "skills": {
+            1: "s014",
+            2: "s037",
+            3: "s049",
+            4: "s032",
+        },
+        "zone": {
+            "name": "Default Zone",
+            "image_url": "",
+            "points": 0,
+            "build": {
+                "flat": 1,
+                "add_dkh": 0,
+                "floor": 1,
+                "cap": 0,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 3,
+            },
+        },
+    },
+
+    "rookie_alt_end": {
+        "name": "Rookie Closer",
+        "avatar": CHARACTER_DIR / "mob_04.png",
+        "thumnail": thumnails["Rookie4"],
+        "style": "End",
+        "race_profile": {
+            "speed": 3,
+            "stamina": 5,
+            "power": 6,
+            "gut": 2,
+            "wit": 1,
+
+            "turf": 1,"dirt": 1,
+            "sprint": 1,"mile": 1,"medium": 1,"long": 1,
+            "front": 1,"pace": 1,"late": 1,"end_style": 1,
+        },
+        "skills": {
+            1: "s010",
+            2: "s036",
+            3: "s002",
+            4: "s049",
+        },
+        "zone": {
+            "name": "Default Zone",
+            "image_url": "",
+            "points": 0,
+            "build": {
+                "flat": 0,
+                "add_dkh": 1,
+                "floor": 1,
+                "cap": 1,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 0,
+            },
+        },
+    },
+
     # LEVEL 2
     "fujimasa_march": {
         "name": "Fujimasa March",
