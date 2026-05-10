@@ -20,6 +20,7 @@ from utils.narrater import (
 from utils.music_manager import play_bgm, stop_bgm
 
 from utils.race.race_presets import RACE_PRESET, render_path, build_track_progress_text, build_current_track_text
+from utils.race.race_log_embed import build_race_log_embed
 from utils.dice.roll_service import (execute_player_roll)
 
 WIN_IMAGE = [

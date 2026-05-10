@@ -16,7 +16,7 @@ from utils.game_manager import create_game, delete_game, games, run_bot_race_tes
 from utils.race.race_presets import RACE_PRESET
 
 
-DEFAULT_STAGES = ("Test Mile", "Test Med")
+DEFAULT_STAGES = ("Test Mile", "Test Med", "Test Long")
 
 
 def format_float(value: float) -> str:

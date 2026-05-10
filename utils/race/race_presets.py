@@ -319,6 +319,26 @@ RACE_PRESET = {
     },
 
 
+    "Test Long": {
+        "name": "Test Long",
+        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219500743163954/thum_race_rt_000_1012_00.png?ex=69e1cfda&is=69e07e5a&hm=9aaa79075889b9f8a5fad33f09a31c72c252e586b3f753d472bff3ea15422de2&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
+        "track": "turf",
+        "distance": "long",
+        "turn": 12,
+        "path": [1, 2, 2, 1, 3, 1, 3, 2, 4, 2, 1, 1, 2, 2, 3, 1],
+        "auto_mobs": [
+            "rookie_front",
+            "rookie_pace",
+            "rookie_late",
+            "rookie_end",
+            "rookie_alt_front",
+            "rookie_alt_pace",
+            "rookie_alt_late",
+            "rookie_alt_end",
+        ]
+    },
+
     "SteelBallRun": {
         "name": "Steel Ball Run 4000000m",
         "thumnail": "https://media.discordapp.net/attachments/697810514448744448/1496124802065371156/2026-04-21_192453.png?ex=69e8be4d&is=69e76ccd&hm=5b70ed31363207dd1453202f3657a698a98f8842aaf382b3360c0fa4ec3f4517&=&format=webp&quality=lossless&width=884&height=479",
