@@ -17,6 +17,7 @@ from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
+from cogs.game import build_race_log_embed
 from views.create_game_view import LobbyView, build_lobby_embed
 import bot_instance
 
@@ -363,6 +364,10 @@ async def run_api_test_bot_race(bot, channel_id: int):
         }
 
     game = payload["game"]
+    ranked_players = payload["ranked_players"]
+
+    log_embed = build_race_log_embed(game, ranked_players)
+
     log_channel_id = 1502217575717798050
     log_channel = bot.get_channel(log_channel_id)
 
@@ -372,6 +377,8 @@ async def run_api_test_bot_race(bot, channel_id: int):
             "success": False,
             "message": "ทดสอบจบแล้ว แต่ไม่พบห้อง log ที่กำหนด",
         }
+
+    await log_channel.send(embed=log_embed)
 
     delete_game(channel_id)
 

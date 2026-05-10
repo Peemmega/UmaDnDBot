@@ -229,7 +229,8 @@ RACE_PRESET = {
         "path": [1, 3, 3, 4, 2, 2, 1, 1]
     },
 
-    "MileChampionship": {
+    # GIII
+    "HakodateJuniorStakes": {
         "name": "Hakodate Junior Stakes 1200m",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502922265438982276/3041.png?ex=6a0178ef&is=6a00276f&hm=0aa4939ffb5743a57eb7ccbaf22e6b56b22176378f776ff8e68da546dda0dd8f&=&format=webp&quality=lossless&width=192&height=96",
         "image": "https://media.discordapp.net/attachments/1494730857259471030/1502922265770070056/10202.png?ex=6a0178ef&is=6a00276f&hm=939624812ce640e97d8fc466c9bec8d96c99aea83d9680d4d4e86cdc534d519a&=&format=webp&quality=lossless&width=1370&height=755",
@@ -238,8 +239,26 @@ RACE_PRESET = {
         "turn": 8,
         "path": [3, 1, 1, 2, 2, 2, 1, 1]
     },
-    
-    
+
+    "NiigataJuniorStakes": {
+        "name": "Niigata Junior Stakes 1600m",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921936135786667/3049.png?ex=6a0178a0&is=6a002720&hm=4e510374253a640fd0bb7ac4163a1d1dae6c1c9585d374f12f25a528f6beeb45&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1502921936437645352/10304.png?ex=6a0178a0&is=6a002720&hm=a3e87de431da172dde53be441bde97c234caa3814e7f5bd4223380c05366f3a3&=&format=webp&quality=lossless&width=1482&height=735",
+        "track": "turf",
+        "distance": "mile ",
+        "turn": 8,
+        "path": [1, 3, 4, 2, 2, 1, 1, 1]
+    },
+
+    "DiamondStakes": {
+        "name": "Diamond Stakes 3400m",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921936135786667/3049.png?ex=6a0178a0&is=6a002720&hm=4e510374253a640fd0bb7ac4163a1d1dae6c1c9585d374f12f25a528f6beeb45&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1502921936437645352/10304.png?ex=6a0178a0&is=6a002720&hm=a3e87de431da172dde53be441bde97c234caa3814e7f5bd4223380c05366f3a3&=&format=webp&quality=lossless&width=1482&height=735",
+        "track": "turf",
+        "distance": "long ",
+        "turn": 16,
+        "path": [1, 3, 4, 2, 2, 1, 1, 1, 1, 3, 4, 2, 2, 1, 1, 1]
+    },
 
     #  debut race
     "Debut": {
