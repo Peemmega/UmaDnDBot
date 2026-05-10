@@ -28,7 +28,7 @@ thumnails = {
 MOB_PRESETS = {
     # Rookie
     "rookie_front": {
-        "name": "Rookie Runner",
+        "name": "Faster than Ray",
         "avatar": CHARACTER_DIR / "mob_01.png",
         "thumnail": thumnails["Rookie1"],
         "style": "Front",
@@ -66,7 +66,7 @@ MOB_PRESETS = {
     },
 
     "rookie_pace": {
-        "name": "Rookie Pace",
+        "name": "Sarasate Opera",
         "avatar": CHARACTER_DIR / "mob_02.png",
         "thumnail": thumnails["Rookie2"],
         "style": "Pace",
@@ -104,7 +104,7 @@ MOB_PRESETS = {
     },
 
     "rookie_late": {
-        "name": "Rookie Late",
+        "name": "Hexa Canyon",
         "avatar": CHARACTER_DIR / "mob_03.png",
         "thumnail": thumnails["Rookie3"],
         "style": "Late",
@@ -142,7 +142,7 @@ MOB_PRESETS = {
     },
 
     "rookie_end": {
-        "name": "Rookie End",
+        "name": "Sunfish Ray",
         "avatar": CHARACTER_DIR / "mob_04.png",
         "thumnail": thumnails["Rookie4"],
         "style": "End",
@@ -180,7 +180,7 @@ MOB_PRESETS = {
     },
 
     "rookie_alt_front": {
-        "name": "Rookie Sprinter",
+        "name": "Apple Cider",
         "avatar": CHARACTER_DIR / "mob_01.png",
         "thumnail": thumnails["Rookie1"],
         "style": "Front",
@@ -217,7 +217,7 @@ MOB_PRESETS = {
     },
 
     "rookie_alt_pace": {
-        "name": "Rookie Cruiser",
+        "name": "Shindo Runrun",
         "avatar": CHARACTER_DIR / "mob_02.png",
         "thumnail": thumnails["Rookie2"],
         "style": "Pace",
@@ -254,16 +254,16 @@ MOB_PRESETS = {
     },
 
     "rookie_alt_late": {
-        "name": "Rookie Chaser",
+        "name": "Dominant Power",
         "avatar": CHARACTER_DIR / "mob_03.png",
         "thumnail": thumnails["Rookie3"],
         "style": "Late",
         "race_profile": {
-            "speed": 3,
+            "speed": 5,
             "stamina": 4,
-            "power": 6,
+            "power": 5,
             "gut": 2,
-            "wit": 2,
+            "wit": 1,
 
             "turf": 1,"dirt": 1,
             "sprint": 1,"mile": 1,"medium": 1,"long": 1,
@@ -291,16 +291,16 @@ MOB_PRESETS = {
     },
 
     "rookie_alt_end": {
-        "name": "Rookie Closer",
+        "name": "Waltz of Shadow",
         "avatar": CHARACTER_DIR / "mob_04.png",
         "thumnail": thumnails["Rookie4"],
         "style": "End",
         "race_profile": {
-            "speed": 3,
+            "speed": 4,
             "stamina": 4,
-            "power": 6,
-            "gut": 2,
-            "wit": 2,
+            "power": 7,
+            "gut": 1,
+            "wit": 1,
 
             "turf": 1,"dirt": 1,
             "sprint": 1,"mile": 1,"medium": 1,"long": 1,
@@ -319,8 +319,8 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 1,
-                "floor": 1,
-                "cap": 1,
+                "floor": 0,
+                "cap": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             },
