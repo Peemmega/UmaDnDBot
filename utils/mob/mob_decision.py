@@ -236,7 +236,7 @@ def decide_mob_skill_combo(
     best_combo_score = 0
 
     # TEST NO SKILL
-    return [item["skill_id"] for item in best_combo]
+    # return [item["skill_id"] for item in best_combo]
 
     max_size = min(max_skill_per_turn, len(scored))
 
