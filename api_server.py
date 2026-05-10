@@ -348,6 +348,15 @@ async def send_lobby_message(channel_id: int):
 
     return True, "ส่ง lobby embed แล้ว"
 
+async def send_test_log_to_discord(bot, log_channel_id, log_embed):
+    log_channel = bot.get_channel(log_channel_id)
+
+    if log_channel is None:
+        return False, "ไม่พบห้อง log ที่กำหนด"
+
+    await log_channel.send(embed=log_embed)
+    return True, "ส่ง log สำเร็จ"
+
 async def run_api_test_bot_race(bot, channel_id: int):
     game = get_game(channel_id)
 
@@ -369,16 +378,20 @@ async def run_api_test_bot_race(bot, channel_id: int):
     log_embed = build_race_log_embed(game, ranked_players)
 
     log_channel_id = 1502217575717798050
-    log_channel = bot.get_channel(log_channel_id)
 
-    if log_channel is None:
+    future = asyncio.run_coroutine_threadsafe(
+        send_test_log_to_discord(bot, log_channel_id, log_embed),
+        bot.loop
+    )
+
+    ok, msg = future.result(timeout=10)
+
+    if not ok:
         delete_game(channel_id)
         return {
             "success": False,
-            "message": "ทดสอบจบแล้ว แต่ไม่พบห้อง log ที่กำหนด",
+            "message": msg,
         }
-
-    await log_channel.send(embed=log_embed)
 
     delete_game(channel_id)
 
