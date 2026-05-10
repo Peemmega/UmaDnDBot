@@ -73,9 +73,9 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 4,
             "stamina": 4,
-            "power": 5,
+            "power": 6,
             "gut": 2,
-            "wit": 2,
+            "wit": 1,
 
             "turf": 1,"dirt": 1,
             "sprint": 1,"mile": 1,"medium": 1,"long": 1,
