@@ -1386,14 +1386,17 @@ def mark_player_rolled(channel_id: int, user_id: int):
 #----------------------------------------------------------------------
 # SKILL SYSTEM
 #----------------------------------------------------------------------
+def has_position(position_groups, *targets):
+    return any(t in position_groups for t in targets)
 
-def get_position_group(channel_id: int, user_id: int) -> str:
+def get_position_groups(channel_id: int, user_id: int) -> set[str]:
     game = get_game(channel_id)
     if game is None:
-        return "middle"
+        return {"middle"}
 
     scores = game.get("turn_snapshot_scores") or {
-        uid: p["score"] for uid, p in game["players"].items()
+        uid: p["score"]
+        for uid, p in game["players"].items()
     }
 
     ranked = sorted(
@@ -1403,25 +1406,45 @@ def get_position_group(channel_id: int, user_id: int) -> str:
     )
 
     total = len(ranked)
+
     if total <= 1:
-        return "front"
-
-    base = total // 3
-    remainder = total % 3
-
-    front_size = base + (1 if remainder > 0 else 0)
-    mid_size = base + (1 if remainder > 1 else 0)
+        return {"front"}
 
     for index, (uid, _) in enumerate(ranked):
-        if uid == user_id:
-            if index < front_size:
-                return "front"
-            elif index < front_size + mid_size:
-                return "middle"
-            else:
-                return "back"
+        if uid != user_id:
+            continue
 
-    return "middle"
+        # rank เริ่มที่ 1
+        rank = index + 1
+
+        groups = set()
+
+        ratio = rank / total
+
+        # =====================
+        # FRONT
+        # top ~55%
+        # =====================
+        if ratio <= 0.55:
+            groups.add("front")
+
+        # =====================
+        # MIDDLE
+        # overlap หนัก
+        # =====================
+        if 0.25 <= ratio <= 0.80:
+            groups.add("middle")
+
+        # =====================
+        # BACK
+        # bottom ~55%
+        # =====================
+        if ratio >= 0.45:
+            groups.add("back")
+
+        return groups
+
+    return {"middle"}
 
 def get_nearest_target_distance(game, user_id):
     player = game["players"].get(user_id)
@@ -1543,9 +1566,9 @@ def check_skill_trigger(
     # position group
     required_position_group = trigger.get("position_group")
     if required_position_group is not None:
-        position_group = get_position_group(channel_id, user_id)
-        if position_group != required_position_group:
-            return False, "ตำแหน่งกลุ่มไม่ตรงเงื่อนไข"
+        position_group = get_position_groups(channel_id, user_id)
+        if position_group not in required_position_group:
+            return False, f"ตำแหน่งกลุ่มไม่ตรงเงื่อนไข {required_position_group}"
 
     # distance type
     required_distance_type = trigger.get("distance_type")
@@ -1584,6 +1607,7 @@ def check_skill_trigger(
         if is_blocked != required_front_blocked:
             return False, "เงื่อนไขถูกบล็อกด้านหน้าไม่ตรง"
 
+    # nearby uma count
     required_nearby_count = trigger.get("nearby_uma_count")
     if required_nearby_count is not None:
         score_map = {

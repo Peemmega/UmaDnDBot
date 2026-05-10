@@ -169,7 +169,7 @@ SKILLS = {
         "name": "Go-Home Specialist",
         "icon": "Recovery",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 40,
         "trigger": {
             "path_type": 4,
             "style": "End",
@@ -198,7 +198,7 @@ SKILLS = {
             "phase_min": 2,
             "phase_max": 3,
             "target_distance_min": 1,
-            "target_distance_max": 120,
+            "target_distance_max": 150,
         },
         "target": {
             "scope": "nearest_front",
@@ -224,13 +224,8 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {
-                "type": "modify_roll_floor",
-                "value": 7,
-                "duration": "this_roll"
-            },
-            {
                 "type": "modify_roll_cap",
-                "value": 15,
+                "value": 21,
                 "duration": "this_roll"
             }
         ],
@@ -339,7 +334,7 @@ SKILLS = {
         "name": "Determined Descent",
         "icon": "Acceleration",
         "cooldown": 8,
-        "cost": 70,
+        "cost": 80,
         "trigger": {
             "style": "Pace",
             "path_type": 4,
@@ -347,7 +342,7 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_current_speed", "value": 1.5},
-            {"type": "add_dkh", "value": 1},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
         ],
 
         "tags": ["pace", "downhill", "acceleration"],
@@ -453,11 +448,11 @@ SKILLS = {
             "distance_type": "Mile",
             "position_group": "back",
             "target_distance_min": 1,
-            "target_distance_max": 100,
+            "target_distance_max": 200,
         },
-        "target": {"scope": "all_front", "limit": 3},
+        "target": {"scope": "all_front", "limit": 8},
         "effects": [
-            {"type": "modify_roll_cap", "value": -12, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": -10, "duration": "this_roll"},
         ],
 
         "tags": ["debuff", "mile", "early_race"],
@@ -474,7 +469,7 @@ SKILLS = {
             "position_group": "back",
             "distance_type": "Long",
             "target_distance_min": 1,
-            "target_distance_max": 120,
+            "target_distance_max": 150,
         },
         "target": {"scope": "nearest_front", "limit": 4},
         "effects": [
@@ -490,7 +485,7 @@ SKILLS = {
         "name": "Calm and Collected",
         "icon": "Recovery",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 40,
         "trigger": {
             "style": "Pace",
             "phase_min": 2,
@@ -524,7 +519,7 @@ SKILLS = {
         "name": "Cooldown",
         "icon": "Recovery",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 40,
         "trigger": {
             "path_type": 1,
             "distance_type": "Long",
@@ -541,7 +536,7 @@ SKILLS = {
         "name": "Trackblazer",
         "icon": "Recovery",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 40,
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
@@ -560,7 +555,7 @@ SKILLS = {
         "name": "Restless",
         "icon": "Recovery",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 40,
         "trigger": {
             "style": "Front",
             "path_type": 3,
@@ -596,14 +591,14 @@ SKILLS = {
         "name": "Dominator",
         "icon": "DecreaseVelocity",
         "cooldown": 10,
-        "cost": 100,
+        "cost": 80,
         "trigger": {
             "phase_min": 4,
             "phase_max": 4,
             "position_group": "back",
             "distance_type": "Medium",
             "target_distance_min": 1,
-            "target_distance_max": 120,
+            "target_distance_max": 200,
         },
         "target": {"scope": "all_front", "limit": 4},
         "effects": [
@@ -623,10 +618,10 @@ SKILLS = {
             "phase_min": 4,
             "phase_max": 4,
             "position_group": "front",
-            "target_distance_min": -100,
-            "target_distance_max": 100,
+            "target_distance_min": -150,
+            "target_distance_max": 150,
         },
-        "target": {"scope": "all_back", "limit": 5},
+        "target": {"scope": "all_back", "limit": 3},
         "effects": [
             {"type": "modify_enemy_gold_range", "value": -15, "duration": "next_turn"}
         ],
@@ -644,9 +639,9 @@ SKILLS = {
             "phase_max": 4,
             "distance_type": "Long",
             "target_distance_min": 1,
-            "target_distance_max": 200,
+            "target_distance_max": 300,
         },
-        "target": {"scope": "all_front", "limit": 4},
+        "target": {"scope": "all_front", "limit": 5},
         "effects": [
             {"type": "modify_enemy_gold_range", "value": -12, "duration": "next_turn"}
         ],
@@ -985,7 +980,12 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed","value": 2.5}
+            {"type": "modify_current_speed","value": 2},
+            {
+                "type": "modify_roll_cap",
+                "value": 14,
+                "duration": "this_roll"
+            },
         ],
 
         "tags": ["corner", "late_race", "acceleration", "unique"],
@@ -1083,11 +1083,10 @@ SKILLS = {
         "effects": [
             {
                 "type": "add_dkh",
-                "value": 2,
+                "value": 3,
                 "duration": "this_roll"
             },
-            {"type": "modify_roll_floor","value": 14,"duration": "this_roll"},
-
+            {"type": "modify_roll_floor","value": 7,"duration": "this_roll"},
         ],
 
         "tags": ["corner", "late_race", "lead", "acceleration", "unique"],
@@ -1112,7 +1111,7 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 50,
                 "duration": "this_roll"
             }
         ],
@@ -1134,8 +1133,8 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_floor","value": 7,"duration": "this_roll"},
-            {"type": "modify_roll_cap","value": 7,"duration": "this_roll"},
+            {"type": "modify_roll_floor","value": 4,"duration": "this_roll"},
+            {"type": "modify_roll_cap","value": 10,"duration": "this_roll"},
         ],
 
         "tags": ["velocity"],
@@ -1154,7 +1153,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_velocity", "mode": "flat_total", "value": 40, "duration": "this_roll"}
+            {"type": "modify_roll_cap","value": 12,"duration": "this_roll"},
         ],
 
         "tags": ["velocity"],
@@ -1192,6 +1191,87 @@ SKILLS = {
         ],
 
         "tags": ["velocity", "mid_race", "back"],
+    },
+
+    "s051": {
+        "name": "Escape Artist",
+        "icon": "Acceleration",
+        "cooldown": 10,
+        "cost": 50,
+
+        "trigger": {
+            "style": "Front",
+            "phase_min": 2,
+            "phase_max": 3,
+        },
+
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 50,
+                "duration": "this_roll"
+            },
+
+            {
+                "type": "modify_roll_cap",
+                "value": 12,
+                "duration": "this_roll"
+            },
+
+            {
+                "type": "reduce_stamina",
+                "value": 1
+            }
+        ],
+
+        "tags": [
+            "front",
+            "mid_race",
+            "velocity",
+        ],
+    },
+
+    "s052": {
+        "name": "15,000,000 CC",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 80,
+
+        "trigger": {
+            "style": "Late",
+            "path_type": 4,
+        },
+
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+
+        "effects": [
+            {
+                "type": "modify_roll_cap",
+                "value": 21,
+                "duration": "this_roll",
+            },
+            {
+                "type": "modify_roll_floor",
+                "value": 7,
+                "duration": "this_roll",
+            },
+        ],
+
+        "tags": [
+            "late",
+            "downhill",
+            "velocity",
+            "stability",
+        ],
     },
 
     # "s099": {

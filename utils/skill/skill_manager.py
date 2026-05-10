@@ -203,6 +203,9 @@ def describe_trigger(trigger: dict) -> str:
     if trigger.get("front_blocked") is True:
         parts.append("มีคู่แข่งในระยะ 20 ช่องด้านหน้า")
 
+    if trigger.get("nearby_uma_count") is True:
+        parts.append(f"มีคู่แข่ง {trigger['nearby_uma_count']} คนหรือมากกว่าในกลุ่ม")
+
     if "target_distance_min" in trigger and "target_distance_max" in trigger:
         parts.append(
             f"เมื่อมีเป้าหมายอยู่ในระยะ {trigger['target_distance_min']} ถึง {trigger['target_distance_max']}"

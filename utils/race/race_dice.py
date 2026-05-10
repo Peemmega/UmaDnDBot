@@ -161,14 +161,14 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     speed_Bonus = spd_bonus * 3
 
     power_bonus = player_stats.get("power", 1) * 2
-    stamina_bonus = player_stats.get("stamina", 1) * 4
+    stamina_bonus = player_stats.get("stamina", 1) * 3
 
     nearby_count = min(context.get("nearby_count", 0), 2)
-    gut_scale = player_stats.get("gut", 1) * 3
+    gut_scale = player_stats.get("gut", 1) * 2
     gut_bonus = (gut_scale * nearby_count ) if context.get("distance_color") == "Gold" else 0
 
     if (context.get("phase", 1) >= 3):
-        gut_bonus = math.floor(gut_bonus * 1.5)
+        gut_bonus = math.floor(gut_bonus * 2)
 
     total_selected_die_bonus = 0
 

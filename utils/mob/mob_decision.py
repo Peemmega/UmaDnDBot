@@ -15,6 +15,8 @@ FUTURE_LOOKAHEAD_TURNS = 4
 MIN_FUTURE_GAIN_TO_HOLD = 40
 BIG_FUTURE_GAIN_TO_HOLD = 80
 
+def has_position(position_groups, *targets):
+    return any(t in position_groups for t in targets)
 
 # =========================================================
 # FUTURE DICE EVALUATION
@@ -403,7 +405,7 @@ def evaluate_skill_score(game, user_id, skill):
 
     stamina_left = player.get("stamina_left", 0)
 
-    position_group = get_position_group(game, user_id)
+    position_group = get_position_groups(game, user_id)
     distance_to_front = get_distance_to_front(game, user_id)
     nearby_count = get_nearby_count(game, user_id)
     path_type = get_current_path_type(game)
@@ -513,13 +515,16 @@ def evaluate_skill_score(game, user_id, skill):
         if phase >= 3:
             score += 30
 
-        if position_group == "front":
+        if "front" in position_group:
             if nearby_count >= 1:
                 score += 25
             else:
                 score -= 10
 
-        elif position_group in ("middle", "back"):
+        elif (
+            "middle" in position_group
+            or "back" in position_group
+        ):
             if distance_to_front <= 120:
                 score += 25
 
@@ -530,11 +535,11 @@ def evaluate_skill_score(game, user_id, skill):
     # board state
     # =====================================================
 
-    if position_group == "back":
+    if "back" in position_group:
         if has_speed:
             score += 20
 
-    elif position_group == "front":
+    elif "front" in position_group:
         if has_speed:
             score += 10
 
@@ -599,7 +604,7 @@ def evaluate_skill_combo_score(game, user_id, combo):
 
     future = get_future_dice_context(game, user_id)
 
-    position_group = get_position_group(game, user_id)
+    position_group = get_position_groups(game, user_id)
     stamina_left = player.get("stamina_left", 0)
     roll_value = estimate_roll_value(game, user_id)
 
@@ -690,7 +695,7 @@ def evaluate_skill_combo_score(game, user_id, combo):
         elif roll_value <= 25:
             score -= 45
 
-    if position_group == "back":
+    if "back" in position_group:
         if total_accel > 0:
             score += 25
         if total_velocity > 0:
@@ -699,7 +704,7 @@ def evaluate_skill_combo_score(game, user_id, combo):
     if stamina_left <= 2 and total_recovery > 0:
         score += 35
 
-    if position_group == "front" and total_debuff > 0:
+    if "front" in position_group and total_debuff > 0:
         score -= 20
 
     if total_cap > 35:
@@ -752,28 +757,62 @@ def evaluate_skill_combo_score(game, user_id, combo):
 # HELPERS
 # =========================================================
 
-def get_position_group(game, user_id):
-    players = list(game["players"].items())
 
-    players.sort(key=lambda x: x[1].get("score", 0), reverse=True)
+def get_position_groups(game, user_id):
+    if game is None:
+        return {"middle"}
 
-    index = next(
-        (i for i, (pid, _) in enumerate(players) if pid == user_id),
-        0
+    scores = game.get("turn_snapshot_scores") or {
+        uid: p["score"]
+        for uid, p in game["players"].items()
+    }
+
+    ranked = sorted(
+        scores.items(),
+        key=lambda item: item[1],
+        reverse=True
     )
 
-    total = len(players)
+    total = len(ranked)
 
     if total <= 1:
-        return "front"
+        return {"front"}
 
-    if index <= total * 0.3:
-        return "front"
+    for index, (uid, _) in enumerate(ranked):
+        if uid != user_id:
+            continue
 
-    if index <= total * 0.7:
-        return "middle"
+        # rank เริ่มที่ 1
+        rank = index + 1
 
-    return "back"
+        groups = set()
+
+        ratio = rank / total
+
+        # =====================
+        # FRONT
+        # top ~55%
+        # =====================
+        if ratio <= 0.55:
+            groups.add("front")
+
+        # =====================
+        # MIDDLE
+        # overlap หนัก
+        # =====================
+        if 0.25 <= ratio <= 0.80:
+            groups.add("middle")
+
+        # =====================
+        # BACK
+        # bottom ~55%
+        # =====================
+        if ratio >= 0.45:
+            groups.add("back")
+
+        return groups
+
+    return {"middle"}
 
 
 def get_distance_to_front(game, user_id):
