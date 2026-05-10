@@ -16,30 +16,30 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
     phase = get_phase_from_turn(game["turn"], game["max_turn"])
 
     style_rule = MAX_SPEED_PHASE[style]
-    scale_up = 0.2
+    scale_up = 0.1
 
     if phase == 4:
         speed_cap_base = style_rule["last_spurt"]
         if style == "End":
-            scale_up = 0.25
+            scale_up = 0.12
     elif phase == 3:
         speed_cap_base = style_rule["late"]
         if style == "Late":
-            scale_up = 0.25
+            scale_up = 0.12
     else:
         speed_cap_base = style_rule["mid"]
         if phase == 1 and style == "Front":
-            scale_up = 0.25
+            scale_up = 0.12
 
     if style == "Pace":
-        scale_up = 0.2125
+        scale_up = 0.105
 
     max_speed_cap = (
         speed_cap_base
         + race_profile.get("speed", 0)
     )
 
-    increase_speed = 0.5 + (scale_up * power_stat * multiple) 
+    increase_speed = 0.3 + (scale_up * power_stat * multiple) 
 
     new_speed = min(max_speed_cap, current_max_speed + increase_speed)
     player["current_max_speed"] = new_speed
