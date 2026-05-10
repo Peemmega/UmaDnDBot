@@ -95,6 +95,19 @@ def execute_roll_core(
         skill_effects=pending_effects,
     )
 
+    rule = result.get("rule", {})
+    rule_text = f"{rule.get('d', 0)}d"
+    if rule.get("kh") is not None:
+        rule_text += f" kh{rule['kh']}"
+
+    game_player["last_roll_log"] = {
+        "phase": result.get("phase"),
+        "distance_color": result.get("distance_color"),
+        "rule": rule_text,
+        "total": result.get("total"),
+        "bonus_display": result.get("bonus_display"),
+    }
+
     game_player["lastedBuff"] = merged_stats
 
     game_player["next_roll_flat_bonus"] = 0
@@ -1055,6 +1068,8 @@ def next_turn(channel_id: int):
             "gain": gain,
             "score_before": before_score,
             "score_after": current_score,
+            "roll": info.get("last_roll_log"),
+            "skills": info.get("used_skills_this_turn", []),
         })
 
     game["turn"] += 1
@@ -1069,6 +1084,8 @@ def next_turn(channel_id: int):
         if player.get("debuffPower"):
             player["debuffPower"] = False
         player.pop("lastedBuff", None)
+        player.pop("last_roll_log", None)
+        player["used_skills_this_turn"] = []
 
     game["turn_snapshot_scores"] = {
         user_id: info["score"]
@@ -1574,7 +1591,7 @@ def check_skill_trigger(
     required_distance_type = trigger.get("distance_type")
     if required_distance_type is not None:
         distance_type = game.get("distance_type") or game.get("distance")
-        if distance_type != required_distance_type:
+        if str(distance_type).lower() != str(required_distance_type).lower():
             return False, "ประเภทระยะไม่ตรงเงื่อนไข"
 
     # surface
@@ -1976,6 +1993,12 @@ def execute_skill_core(
 
     if consume_cost:
         player["wit_mana"] -= cost
+
+    player.setdefault("used_skills_this_turn", [])
+    player["used_skills_this_turn"].append({
+        "id": skill_id,
+        "name": skill.get("name", skill_id),
+    })
 
     # =====================================
     # Cooldown

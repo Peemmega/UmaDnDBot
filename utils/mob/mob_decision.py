@@ -851,4 +851,13 @@ def get_nearby_count(game, user_id):
 
 
 def get_current_path_type(game):
-    return game.get("current_path_type", 1)
+    if game.get("current_path_type") is not None:
+        return game["current_path_type"]
+
+    path = game.get("path") or []
+    if not path:
+        return 1
+
+    turn = game.get("turn", 1)
+    index = max(0, min(turn - 1, len(path) - 1))
+    return path[index]

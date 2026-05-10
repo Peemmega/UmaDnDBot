@@ -285,7 +285,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_gold_range", "value": 100, "duration": "this_turn"},
+            {"type": "modify_gold_range", "value": 70, "duration": "this_turn"},
             {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
         ],
 

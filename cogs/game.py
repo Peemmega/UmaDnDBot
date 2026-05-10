@@ -105,8 +105,23 @@ def build_race_log_embed(game: dict, ranked_players):
         log_lines.append(f"\n**{player_name}** ({style})")
 
         for item in data["logs"]:
+            detail_parts = []
+            roll = item.get("roll") or {}
+
+            if roll:
+                phase = roll.get("phase")
+                color = roll.get("distance_color")
+                rule = roll.get("rule")
+                detail_parts.append(f"P{phase} {color} {rule}")
+
+            skills = item.get("skills") or []
+            if skills:
+                skill_ids = ", ".join(skill.get("id", "?") for skill in skills)
+                detail_parts.append(f"skills: {skill_ids}")
+
+            detail = f" | {' | '.join(detail_parts)}" if detail_parts else ""
             log_lines.append(
-                f"{item['turn']} {item['score_after']} (+{item['gain']})"
+                f"{item['turn']} {item['score_after']} (+{item['gain']}){detail}"
             )
 
     description = (
