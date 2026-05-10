@@ -266,7 +266,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
         ],
 
@@ -305,7 +305,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
         ],
 
@@ -323,7 +323,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
         ],
 
@@ -377,7 +377,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
         ],
 
@@ -412,7 +412,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
         ],
 
@@ -430,7 +430,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
         ],
 
@@ -834,7 +834,7 @@ SKILLS = {
                 "value": 60,
                 "duration": "this_roll"
             },
-            {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
         ],
 
         "tags": ["late_race", "back", "velocity"],
@@ -860,7 +860,7 @@ SKILLS = {
             },
             {
             "type": "modify_roll_cap",
-            "value": 12,
+            "value": 7,
             "duration": "this_roll"
         }
     ],
@@ -937,7 +937,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_roll_cap",
-                "value": 12,
+                "value": 7,
                 "duration": "this_roll"
             }
         ],
@@ -1153,7 +1153,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_cap","value": 12,"duration": "this_roll"},
+            {"type": "modify_roll_cap","value": 7,"duration": "this_roll"},
         ],
 
         "tags": ["velocity"],
@@ -1179,7 +1179,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_roll_cap",
-                "value": 12,
+                "value": 7,
                 "duration": "this_roll"
             },
             {
@@ -1220,7 +1220,7 @@ SKILLS = {
 
             {
                 "type": "modify_roll_cap",
-                "value": 12,
+                "value": 7,
                 "duration": "this_roll"
             },
 
