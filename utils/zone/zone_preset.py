@@ -29,7 +29,7 @@ ZONE_POINT_COST = {
 }
 
 ZONE_VALUE = {
-    "flat": 35,
+    "flat": 25,
     "add_dkh": 2,
     "floor": 7,
     "cap": 7,
