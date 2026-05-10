@@ -247,6 +247,52 @@ class GameCog(commands.GroupCog, name="game"):
     def __init__(self, bot):
         self.bot = bot
 
+    async def run_test_bot_race_command_logic(self, interaction: discord.Interaction):
+        channel_id = interaction.channel_id
+        game = get_game(channel_id)
+
+        if game is None:
+            await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
+            return
+
+        if not is_owner(channel_id, interaction.user.id):
+            await interaction.followup.send(
+                "มีแค่เจ้าของห้องเท่านั้นที่ใช้คำสั่งนี้ได้",
+                ephemeral=True
+            )
+            return
+
+        success, payload = run_bot_race_test(channel_id)
+
+        if not success:
+            await interaction.followup.send(payload["message"], ephemeral=True)
+            return
+
+        game = payload["game"]
+        ranked_players = payload["ranked_players"]
+
+        log_embed = build_race_log_embed(game, ranked_players)
+
+        log_channel_id = 1502217575717798050
+        log_channel = interaction.guild.get_channel(log_channel_id)
+
+        if log_channel is None:
+            await interaction.followup.send(
+                "ทดสอบจบแล้ว แต่ไม่พบห้อง log ที่กำหนด",
+                ephemeral=True
+            )
+            delete_game(channel_id)
+            return
+
+        await log_channel.send(embed=log_embed)
+
+        delete_game(channel_id)
+
+        await interaction.followup.send(
+            "✅ ทดสอบบอทจบแล้ว ส่ง log และปิดห้องแข่งเรียบร้อย",
+            ephemeral=True
+        )
+        
     def can_use_roll_skill(self, channel_id: int, user_id: int):
         from utils.game_manager import can_player_roll
         can_roll, message = can_player_roll(channel_id, user_id)
@@ -328,51 +374,7 @@ class GameCog(commands.GroupCog, name="game"):
     )
     async def test_bot_race(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-
-        channel_id = interaction.channel_id
-        game = get_game(channel_id)
-
-        if game is None:
-            await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
-            return
-
-        if not is_owner(channel_id, interaction.user.id):
-            await interaction.followup.send(
-                "มีแค่เจ้าของห้องเท่านั้นที่ใช้คำสั่งนี้ได้",
-                ephemeral=True
-            )
-            return
-
-        success, payload = run_bot_race_test(channel_id)
-
-        if not success:
-            await interaction.followup.send(payload["message"], ephemeral=True)
-            return
-
-        game = payload["game"]
-        ranked_players = payload["ranked_players"]
-
-        log_embed = build_race_log_embed(game, ranked_players)
-
-        log_channel_id = 1502217575717798050
-        log_channel = interaction.guild.get_channel(log_channel_id)
-
-        if log_channel is None:
-            await interaction.followup.send(
-                "ทดสอบจบแล้ว แต่ไม่พบห้อง log ที่กำหนด",
-                ephemeral=True
-            )
-            delete_game(channel_id)
-            return
-
-        await log_channel.send(embed=log_embed)
-
-        delete_game(channel_id)
-
-        await interaction.followup.send(
-            "✅ ทดสอบบอทจบแล้ว ส่ง log และปิดห้องแข่งเรียบร้อย",
-            ephemeral=True
-        )
+        await self.run_test_bot_race_command_logic(interaction)
 
     @discord.app_commands.command(name="skip_turn", description="ข้ามไปเทิร์นถัดไปทันที (เฉพาะเจ้าของห้อง)")
     async def skip_turn(self, interaction: discord.Interaction):

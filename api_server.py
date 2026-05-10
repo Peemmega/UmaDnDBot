@@ -16,7 +16,7 @@ from utils.zone.zone_preset import ZONE_POINT_COST
 from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
-from utils.game_manager import get_game, create_game
+from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
 from views.create_game_view import LobbyView, build_lobby_embed
 import bot_instance
 
@@ -347,6 +347,40 @@ async def send_lobby_message(channel_id: int):
 
     return True, "ส่ง lobby embed แล้ว"
 
+async def run_api_test_bot_race(bot, channel_id: int):
+    game = get_game(channel_id)
+
+    if game is None:
+        return {"success": False, "message": "ยังไม่มีเกมในห้องนี้"}
+
+    success, payload = run_bot_race_test(channel_id)
+
+    if not success:
+        delete_game(channel_id)
+        return {
+            "success": False,
+            "message": payload.get("message", "ทดสอบบอทไม่สำเร็จ"),
+        }
+
+    game = payload["game"]
+    log_channel_id = 1502217575717798050
+    log_channel = bot.get_channel(log_channel_id)
+
+    if log_channel is None:
+        delete_game(channel_id)
+        return {
+            "success": False,
+            "message": "ทดสอบจบแล้ว แต่ไม่พบห้อง log ที่กำหนด",
+        }
+
+    delete_game(channel_id)
+
+    return {
+        "success": True,
+        "message": "✅ Test Bot Race จบแล้ว ส่ง log และปิดห้องแข่งเรียบร้อย",
+        "channel_id": str(channel_id),
+    }
+
 @app.post("/race/room/create")
 async def api_create_race_room(payload: CreateRaceRoomPayload):
     bot = bot_instance.bot
@@ -364,6 +398,16 @@ async def api_create_race_room(payload: CreateRaceRoomPayload):
 
             if not success:
                 return {"success": False, "message": "สร้างห้องไม่สำเร็จ"}
+
+            race_name = str(payload.race_id).lower()
+
+            if race_name.startswith("test"):
+                result = await run_api_test_bot_race(
+                    bot=bot,
+                    channel_id=channel_id,
+                )
+
+                return result
 
             future = asyncio.run_coroutine_threadsafe(
                 send_lobby_message(channel_id),
