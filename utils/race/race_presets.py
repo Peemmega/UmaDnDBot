@@ -91,7 +91,7 @@ def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dic
         effect["power_total_multiplier"] = 3.0
         if (not game_player.get("debuffPower")):
             game_player["debuffPower"] = True
-            game_player["current_max_speed"] *= 0.90
+            game_player["current_max_speed"] *= 0.95
         
 
     elif path_type == 4:  # เนินลง
