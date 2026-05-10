@@ -1195,7 +1195,7 @@ SKILLS = {
 
     "s051": {
         "name": "Escape Artist",
-        "icon": "Acceleration",
+        "icon": "Velocity",
         "cooldown": 10,
         "cost": 50,
 
