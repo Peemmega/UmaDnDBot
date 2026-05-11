@@ -193,7 +193,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         bonus_parts.append(f"+{total_selected_die_bonus}{ICON['Velocity']}")
 
 
-    bonus_display = " ".join(bonus_parts) if bonus_parts else "-"
+    bonus_display = "".join(bonus_parts) if bonus_parts else "-"
     total_display = str(total)
 
     display_parts = []
