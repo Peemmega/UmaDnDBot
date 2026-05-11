@@ -544,7 +544,10 @@ class GameCog(commands.GroupCog, name="game"):
             return
 
         previous_ranked_players = get_ranked_players(channel_id)
-        previous_players = build_narrator_players_from_ranked(previous_ranked_players)
+        previous_players = build_narrator_players_from_ranked(
+            previous_ranked_players,
+            score_overrides=game.get("turn_snapshot_scores", {}),
+        )
 
         new_turn = next_turn(channel_id)
 
@@ -612,7 +615,7 @@ class GameCog(commands.GroupCog, name="game"):
         path_label = PATH_TYPE_TEXT.get(path_type, "➡️ ทางตรง")
 
         track_preview = build_track_progress_text(game["path"], new_turn)
-        current_track_text = build_current_track_text(game["path"], new_turn)
+        # current_track_text = build_current_track_text(game["path"], new_turn)
 
         commentary_text = None
         try:
@@ -630,15 +633,24 @@ class GameCog(commands.GroupCog, name="game"):
         if title_suffix:
             title += f" {title_suffix}"
 
+        if commentary_text:
+            embed.add_field(
+                name="📢 Narrator",
+                value=commentary_text[:1000],
+                inline=False
+            )
+
         embed = discord.Embed(
             title=title,
             color=discord.Color.green(),
             description=(
                 f"Phase: {phase}\n"
-                f"เส้นทางเทิร์นนี้:\n{track_preview}\n{current_track_text}\n\n"
+                f"เส้นทางเทิร์นนี้:\n{track_preview}\n\n"
                 f"อันดับคะแนน:🏆\n" + "\n".join(rank_lines)
             )
         )
+
+        
 
         embed.add_field(
             name="Effect",
@@ -649,13 +661,6 @@ class GameCog(commands.GroupCog, name="game"):
         embed.set_thumbnail(
             url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200"
         )
-
-        if commentary_text:
-            embed.add_field(
-                name="📢 Narrator",
-                value=commentary_text[:1000],
-                inline=False
-            )
 
         await send_func(embed=embed)
 
