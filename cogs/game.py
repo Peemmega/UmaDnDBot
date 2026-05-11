@@ -716,64 +716,64 @@ class GameCog(commands.GroupCog, name="game"):
             title_suffix="(Auto)"
     )
 
-    @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
-    async def myinfo(self, interaction: discord.Interaction):
-        player = get_player_in_game(interaction.channel_id, interaction.user.id)
-        if player is None:
-            await interaction.response.send_message(
-                "คุณยังไม่ได้เข้าร่วมเกมนี้",
-                ephemeral=True
-            )
-            return
+    # @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
+    # async def myinfo(self, interaction: discord.Interaction):
+    #     player = get_player_in_game(interaction.channel_id, interaction.user.id)
+    #     if player is None:
+    #         await interaction.response.send_message(
+    #             "คุณยังไม่ได้เข้าร่วมเกมนี้",
+    #             ephemeral=True
+    #         )
+    #         return
 
-        embed = discord.Embed(
-            title=f"ข้อมูลของ {interaction.user.display_name}",
-            color=discord.Color.blurple()
-        )
-        embed.add_field(name="Style", value=player["style"], inline=True)
-        embed.add_field(name="Score", value=player["score"], inline=True)
-        embed.add_field(name="Reroll คงเหลือ", value=player["reroll_left"], inline=True)
+    #     embed = discord.Embed(
+    #         title=f"ข้อมูลของ {interaction.user.display_name}",
+    #         color=discord.Color.blurple()
+    #     )
+    #     embed.add_field(name="Style", value=player["style"], inline=True)
+    #     embed.add_field(name="Score", value=player["score"], inline=True)
+    #     embed.add_field(name="Reroll คงเหลือ", value=player["reroll_left"], inline=True)
 
-        await interaction.response.send_message(embed=embed)
+    #     await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="info", description="ดูข้อมูลเกมในห้องนี้")
-    async def info(self, interaction: discord.Interaction):
-        game = get_game(interaction.channel_id)
-        if game is None:
-            await interaction.response.send_message(
-                "ยังไม่มีเกมในห้องนี้",
-                ephemeral=True
-            )
-            return
+    # @app_commands.command(name="info", description="ดูข้อมูลเกมในห้องนี้")
+    # async def info(self, interaction: discord.Interaction):
+    #     game = get_game(interaction.channel_id)
+    #     if game is None:
+    #         await interaction.response.send_message(
+    #             "ยังไม่มีเกมในห้องนี้",
+    #             ephemeral=True
+    #         )
+    #         return
         
-        status_text = "Started" if game["started"] else "Waiting"
-        players = get_players(interaction.channel_id)
-        player_lines = []
+    #     status_text = "Started" if game["started"] else "Waiting"
+    #     players = get_players(interaction.channel_id)
+    #     player_lines = []
 
-        if players:
-            for user_id, info in players.items():
-                player_lines.append(
-                    f"<@{user_id}> | Style: {info['style']} | Score: {info['score']}"
-                )
-        else:
-            player_lines.append("ยังไม่มีผู้เล่น")
+    #     if players:
+    #         for user_id, info in players.items():
+    #             player_lines.append(
+    #                 f"<@{user_id}> | Style: {info['style']} | Score: {info['score']}"
+    #             )
+    #     else:
+    #         player_lines.append("ยังไม่มีผู้เล่น")
 
-        embed = discord.Embed(
-            title=f"Race: {game['stage_name']}",
-            color=discord.Color.green(),
-            description=(
-                f"เจ้าของเกม: <@{game['owner_id']}>\n"
-                f"สถานะ: {status_text}\n"
-                f"เทิร์น: {game['turn']}\n\n"
-                f"ผู้เล่น:\n" + "\n".join(player_lines)
-            )
-        )
+    #     embed = discord.Embed(
+    #         title=f"Race: {game['stage_name']}",
+    #         color=discord.Color.green(),
+    #         description=(
+    #             f"เจ้าของเกม: <@{game['owner_id']}>\n"
+    #             f"สถานะ: {status_text}\n"
+    #             f"เทิร์น: {game['turn']}\n\n"
+    #             f"ผู้เล่น:\n" + "\n".join(player_lines)
+    #         )
+    #     )
 
-        embed.set_thumbnail(
-            url="https://media.discordapp.net/attachments/697810514448744448/1493624841989914714/utx_ico_itemlist_dailyrace_00.png"
-        )
+    #     embed.set_thumbnail(
+    #         url="https://media.discordapp.net/attachments/697810514448744448/1493624841989914714/utx_ico_itemlist_dailyrace_00.png"
+    #     )
 
-        await interaction.response.send_message(embed=embed)
+    #     await interaction.response.send_message(embed=embed)
 
 
     @app_commands.command(name="close", description="ลบหรือจบเกมในห้องนี้")

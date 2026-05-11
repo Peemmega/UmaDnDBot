@@ -77,91 +77,91 @@ class SkillCog(commands.Cog):
         await interaction.followup.send(embed=embed, ephemeral=True)
         
 
-    @skill_group.command(name="check", description="ตรวจสอบข้อมูลสกิล")
-    @app_commands.describe(
-        # mode="โหมดที่ต้องการดู",
-        # type="ประเภทสกิล",
-        # tag="แท็กของสกิล",
-        info="รหัสหรือชื่อสกิล"
-    )
-    @app_commands.choices(mode=[
-        app_commands.Choice(name="list", value="list"),
-        app_commands.Choice(name="info", value="info"),
-    ])
-    async def skill_check(
-        self,
-        interaction: discord.Interaction,
-        mode: app_commands.Choice[str],
-        info: str | None = None,
-    ):
-        mode_value = mode.value
+    # @skill_group.command(name="check", description="ตรวจสอบข้อมูลสกิล")
+    # @app_commands.describe(
+    #     # mode="โหมดที่ต้องการดู",
+    #     # type="ประเภทสกิล",
+    #     # tag="แท็กของสกิล",
+    #     info="รหัสหรือชื่อสกิล"
+    # )
+    # @app_commands.choices(mode=[
+    #     app_commands.Choice(name="list", value="list"),
+    #     app_commands.Choice(name="info", value="info"),
+    # ])
+    # async def skill_check(
+    #     self,
+    #     interaction: discord.Interaction,
+    #     mode: app_commands.Choice[str],
+    #     info: str | None = None,
+    # ):
+    #     mode_value = mode.value
 
-        if mode_value == "list":
-            skills = get_all_skills()
-            embed = build_skill_list_embed(skills, "📘 รายชื่อสกิลทั้งหมด")
-            view = SkillListView()
+    #     if mode_value == "list":
+    #         skills = get_all_skills()
+    #         embed = build_skill_list_embed(skills, "📘 รายชื่อสกิลทั้งหมด")
+    #         view = SkillListView()
 
-            await interaction.response.send_message(
-                embed=embed,
-                view=view,
-                ephemeral=True
-            )
-            return
+    #         await interaction.response.send_message(
+    #             embed=embed,
+    #             view=view,
+    #             ephemeral=True
+    #         )
+    #         return
         
-        if mode_value == "info":
-            if not info:
-                await interaction.response.send_message(
-                    "กรุณาใส่รหัสหรือชื่อสกิล เช่น s001",
-                    ephemeral=True
-                )
-                return
+    #     if mode_value == "info":
+    #         if not info:
+    #             await interaction.response.send_message(
+    #                 "กรุณาใส่รหัสหรือชื่อสกิล เช่น s001",
+    #                 ephemeral=True
+    #             )
+    #             return
 
-            result = find_skill_by_name(info)
-            if result is None:
-                await interaction.response.send_message(
-                    "ไม่พบสกิลนี้",
-                    ephemeral=True
-                )
-                return
+    #         result = find_skill_by_name(info)
+    #         if result is None:
+    #             await interaction.response.send_message(
+    #                 "ไม่พบสกิลนี้",
+    #                 ephemeral=True
+    #             )
+    #             return
 
-            skill_key, skill = result
-            description = build_skill_description(skill_key)
+    #         skill_key, skill = result
+    #         description = build_skill_description(skill_key)
 
-            embed = discord.Embed(
-                title=f"🔎 Skill Info: {skill['name']}",
-                description=description,
-                color=discord.Color.gold()
-            )
+    #         embed = discord.Embed(
+    #             title=f"🔎 Skill Info: {skill['name']}",
+    #             description=description,
+    #             color=discord.Color.gold()
+    #         )
 
-            view = SkillEquipView(
-                skill_id=skill_key,
-                equip_callback=self.handle_skill_equip
-            )
+    #         view = SkillEquipView(
+    #             skill_id=skill_key,
+    #             equip_callback=self.handle_skill_equip
+    #         )
 
-            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-            return
+    #         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+    #         return
 
-    @skill_group.command(name="equip", description="ติดตั้งสกิลลงช่อง")
-    @app_commands.describe(slot="ช่องสกิล", skill_id="รหัสสกิล เช่น s001")
-    @app_commands.choices(slot=[
-        app_commands.Choice(name="Slot 1", value=1),
-        app_commands.Choice(name="Slot 2", value=2),
-        app_commands.Choice(name="Slot 3", value=3),
-        app_commands.Choice(name="Slot 4", value=4),
-    ])
-    async def skill_equip(
-        self,
-        interaction: discord.Interaction,
-        slot: app_commands.Choice[int],
-        skill_id: str
-    ):
-        await self.handle_skill_equip(
-            interaction,
-            slot=slot.value,
-            skill_id=skill_id
-        )
+    # @skill_group.command(name="equip", description="ติดตั้งสกิลลงช่อง")
+    # @app_commands.describe(slot="ช่องสกิล", skill_id="รหัสสกิล เช่น s001")
+    # @app_commands.choices(slot=[
+    #     app_commands.Choice(name="Slot 1", value=1),
+    #     app_commands.Choice(name="Slot 2", value=2),
+    #     app_commands.Choice(name="Slot 3", value=3),
+    #     app_commands.Choice(name="Slot 4", value=4),
+    # ])
+    # async def skill_equip(
+    #     self,
+    #     interaction: discord.Interaction,
+    #     slot: app_commands.Choice[int],
+    #     skill_id: str
+    # ):
+    #     await self.handle_skill_equip(
+    #         interaction,
+    #         slot=slot.value,
+    #         skill_id=skill_id
+    #     )
 
-    @skill_group.command(name="my", description="ดูสกิลที่ติดตั้ง")
+    @skill_group.command(name="my_skill", description="ดูสกิลที่ติดตั้ง")
     async def my_skills(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         ensure_player(interaction.user.id, interaction.user.name)
@@ -177,27 +177,27 @@ class SkillCog(commands.Cog):
         )
 
         embed.add_field(
-            name="🎯 Skill Slot 1",
+            name="Skill 1",
             value=build_skill_card_text(slots["slot_1"]),
             inline=False
         )
         embed.add_field(
-            name="🎯 Skill Slot 2",
+            name="Skill 2",
             value=build_skill_card_text(slots["slot_2"]),
             inline=False
         )
         embed.add_field(
-            name="🎯 Skill Slot 3",
+            name="Skill 3",
             value=build_skill_card_text(slots["slot_3"]),
             inline=False
         )
         embed.add_field(
-            name="🎯 Skill Slot 4",
+            name="Skill 4",
             value=build_skill_card_text(slots["slot_4"]),
             inline=False
         )
         
-        embed.set_footer(text="ใช้ /skill info <id> เพื่อดูรายละเอียดเพิ่มเติม")
+        embed.set_footer(text="ดูสกิลเพิ่มเติมได้บน website")
         await interaction.followup.send(embed=embed, ephemeral=True)
         
 async def setup(bot):

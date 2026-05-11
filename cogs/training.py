@@ -6,9 +6,9 @@ class ActionCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @discord.app_commands.command(name="action", description="เลือกแอคชั่น")
-    async def action(self, interaction: discord.Interaction):
-        await interaction.response.send_message("เลือกแอคชั่น", view=ActionView())
+    # @discord.app_commands.command(name="action", description="เลือกแอคชั่น")
+    # async def action(self, interaction: discord.Interaction):
+    #     await interaction.response.send_message("เลือกแอคชั่น", view=ActionView())
 
 async def setup(bot):
     cog = ActionCog(bot)

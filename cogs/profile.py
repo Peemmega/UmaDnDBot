@@ -76,21 +76,21 @@ class ProfileCog(commands.Cog):
             ephemeral=True
         )      
 
-    @discord.app_commands.command(name="zone_manage", description="เปิดหน้าอัป Zone")
-    async def zone_manage(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-        ensure_player(interaction.user.id, interaction.user.name)
+    # @discord.app_commands.command(name="zone_manage", description="เปิดหน้าอัป Zone")
+    # async def zone_manage(self, interaction: discord.Interaction):
+    #     await interaction.response.defer(ephemeral=True)
+    #     ensure_player(interaction.user.id, interaction.user.name)
 
-        embed = build_zone_manage_embed(
-            interaction.user.id,
-            interaction.user.display_name
-        )
+    #     embed = build_zone_manage_embed(
+    #         interaction.user.id,
+    #         interaction.user.display_name
+    #     )
 
-        await interaction.followup.send(
-            embed=embed,
-            view=ZoneManageView(interaction.user.id),
-            ephemeral=True
-        )
+    #     await interaction.followup.send(
+    #         embed=embed,
+    #         view=ZoneManageView(interaction.user.id),
+    #         ephemeral=True
+    #     )
 
         
 
@@ -105,85 +105,85 @@ class ProfileCog(commands.Cog):
         )
         await interaction.followup.send(embed=embed, ephemeral=False)
 
-    @discord.app_commands.command(name="zone_set", description="ตั้งค่า Zone (ชื่อ / รูป)")
-    @discord.app_commands.describe(
-        mode="เลือกว่าจะตั้งชื่อหรือรูป",
-        value="ชื่อ Zone หรือ URL ของรูป"
-    )
-    @discord.app_commands.choices(mode=[
-        discord.app_commands.Choice(name="ตั้งชื่อ", value="name"),
-        discord.app_commands.Choice(name="ตั้งรูป", value="image"),
-    ])
-    async def zone_set(
-        self,
-        interaction: discord.Interaction,
-        mode: discord.app_commands.Choice[str],
-        value: str
-    ):
-        await interaction.response.defer(ephemeral=True)
-        user_id = interaction.user.id
-        ensure_player(user_id, interaction.user.name)
+    # @discord.app_commands.command(name="zone_set", description="ตั้งค่า Zone (ชื่อ / รูป)")
+    # @discord.app_commands.describe(
+    #     mode="เลือกว่าจะตั้งชื่อหรือรูป",
+    #     value="ชื่อ Zone หรือ URL ของรูป"
+    # )
+    # @discord.app_commands.choices(mode=[
+    #     discord.app_commands.Choice(name="ตั้งชื่อ", value="name"),
+    #     discord.app_commands.Choice(name="ตั้งรูป", value="image"),
+    # ])
+    # async def zone_set(
+    #     self,
+    #     interaction: discord.Interaction,
+    #     mode: discord.app_commands.Choice[str],
+    #     value: str
+    # ):
+    #     await interaction.response.defer(ephemeral=True)
+    #     user_id = interaction.user.id
+    #     ensure_player(user_id, interaction.user.name)
 
-        if mode.value == "name":
-            if len(value) > 50:
-                await interaction.followup.send(
-                    "ชื่อ Zone ยาวเกินไป (ไม่เกิน 50 ตัวอักษร)",
-                    ephemeral=True
-                )
-                return
+    #     if mode.value == "name":
+    #         if len(value) > 50:
+    #             await interaction.followup.send(
+    #                 "ชื่อ Zone ยาวเกินไป (ไม่เกิน 50 ตัวอักษร)",
+    #                 ephemeral=True
+    #             )
+    #             return
 
-            set_player_zone_name(user_id, value)
+    #         set_player_zone_name(user_id, value)
 
-            await interaction.followup.send(
-                f"✅ ตั้งชื่อ Zone เป็น **{value}** สำเร็จ",
-                ephemeral=True
-            )
-            return
+    #         await interaction.followup.send(
+    #             f"✅ ตั้งชื่อ Zone เป็น **{value}** สำเร็จ",
+    #             ephemeral=True
+    #         )
+    #         return
 
-        if mode.value == "image":
-            # เช็คง่าย ๆ ว่าเป็น URL ไหม
-            if not (value.startswith("http://") or value.startswith("https://")):
-                await interaction.followup.send(
-                    "กรุณาใส่ URL ที่ถูกต้อง",
-                    ephemeral=True
-                )
-                return
+    #     if mode.value == "image":
+    #         # เช็คง่าย ๆ ว่าเป็น URL ไหม
+    #         if not (value.startswith("http://") or value.startswith("https://")):
+    #             await interaction.followup.send(
+    #                 "กรุณาใส่ URL ที่ถูกต้อง",
+    #                 ephemeral=True
+    #             )
+    #             return
 
-            set_player_zone_image_url(user_id, value)
+    #         set_player_zone_image_url(user_id, value)
 
-            embed = discord.Embed(
-                title="🌌 ตั้งค่า Zone Image สำเร็จ",
-                description="ภาพ Zone ถูกเปลี่ยนแล้ว",
-                color=discord.Color.purple()
-            )
-            embed.set_image(url=value)
+    #         embed = discord.Embed(
+    #             title="🌌 ตั้งค่า Zone Image สำเร็จ",
+    #             description="ภาพ Zone ถูกเปลี่ยนแล้ว",
+    #             color=discord.Color.purple()
+    #         )
+    #         embed.set_image(url=value)
 
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            return
+    #         await interaction.followup.send(embed=embed, ephemeral=True)
+    #         return
 
-    @discord.app_commands.command(name="set_name", description="เปลี่ยนชื่อโปรไฟล์")
-    async def setname(self, interaction: discord.Interaction, new_name: str):
-        await interaction.response.defer(ephemeral=True)
-        if len(new_name.strip()) == 0:
-            await interaction.response.send_message(
-                "ชื่อห้ามว่าง",
-                ephemeral=True
-            )
-            return
+    # @discord.app_commands.command(name="set_name", description="เปลี่ยนชื่อโปรไฟล์")
+    # async def setname(self, interaction: discord.Interaction, new_name: str):
+    #     await interaction.response.defer(ephemeral=True)
+    #     if len(new_name.strip()) == 0:
+    #         await interaction.response.send_message(
+    #             "ชื่อห้ามว่าง",
+    #             ephemeral=True
+    #         )
+    #         return
 
-        if len(new_name) > 30:
-            await interaction.response.send_message(
-                "ชื่อต้องไม่เกิน 30 ตัวอักษร",
-                ephemeral=True
-            )
-            return
+    #     if len(new_name) > 30:
+    #         await interaction.response.send_message(
+    #             "ชื่อต้องไม่เกิน 30 ตัวอักษร",
+    #             ephemeral=True
+    #         )
+    #         return
 
-        update_player_username(str(interaction.user.id), new_name.strip())
+    #     update_player_username(str(interaction.user.id), new_name.strip())
 
-        await interaction.followup.send(
-            f"เปลี่ยนชื่อโปรไฟล์เป็น **{new_name.strip()}** เรียบร้อยแล้ว",
-            ephemeral=True
-        )
+    #     await interaction.followup.send(
+    #         f"เปลี่ยนชื่อโปรไฟล์เป็น **{new_name.strip()}** เรียบร้อยแล้ว",
+    #         ephemeral=True
+    #     )
 
 
     @discord.app_commands.command(name="set_all_att", description="ตั้งค่า aptitude ทั้งหมด (สำหรับทดสอบ)")
