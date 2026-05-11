@@ -116,8 +116,8 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed", "value": 1.0},
-            {"type": "add_dkh", "value": 1},
+            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "modify_roll_cap", "value": 8, "duration": "this_roll"},
         ],
 
         "tags": ["straight", "lastspurt", "end", "acceleration"],
@@ -169,7 +169,7 @@ SKILLS = {
         "name": "Go-Home Specialist",
         "icon": "Recovery",
         "cooldown": 8,
-        "cost": 40,
+        "cost": 60,
         "trigger": {
             "path_type": 4,
             "style": "End",
@@ -181,7 +181,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "recover_stamina",
-                "value": 2
+                "value": 3
             }
         ],
 
@@ -305,8 +305,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
+            {"type": "modify_roll_cap", "value": 8, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 65, "duration": "this_roll"}
         ],
 
         "tags": ["medium", "lead", "velocity"],
@@ -323,8 +323,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
+            {"type": "modify_roll_cap", "value": 8, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 65, "duration": "this_roll"}
         ],
 
         "tags": ["pace", "final_corner", "velocity"],
@@ -341,8 +341,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 1.75},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 45, "duration": "this_roll"}
+            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 55, "duration": "this_roll"}
         ],
 
         "tags": ["pace", "downhill", "acceleration"],
@@ -360,7 +360,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 1.0},
+            {"type": "modify_current_speed", "value": 1.75},
             {"type": "add_dkh", "value": 1},
         ],
 
@@ -602,7 +602,7 @@ SKILLS = {
         },
         "target": {"scope": "all_front", "limit": 4},
         "effects": [
-            {"type": "modify_roll_cap", "value": -12, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": -16, "duration": "this_roll"},
         ],
 
         "tags": ["debuff", "medium", "late_race"],
@@ -623,7 +623,7 @@ SKILLS = {
         },
         "target": {"scope": "all_back", "limit": 3},
         "effects": [
-            {"type": "modify_enemy_gold_range", "value": -15, "duration": "next_turn"}
+            {"type": "modify_enemy_gold_range", "value": -25, "duration": "next_turn"}
         ],
 
         "tags": ["blind", "pace", "debuff", "lead"],
@@ -643,7 +643,7 @@ SKILLS = {
         },
         "target": {"scope": "all_front", "limit": 5},
         "effects": [
-            {"type": "modify_enemy_gold_range", "value": -12, "duration": "next_turn"}
+            {"type": "modify_enemy_gold_range", "value": -22, "duration": "next_turn"}
         ],
 
         "tags": ["blind", "long", "debuff"],
@@ -680,8 +680,8 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed", "value": 1.25},
-            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
+            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "modify_roll_cap", "value": 12, "duration": "this_roll"},
         ],
 
         "tags": ["lastspurt", "blocked", "acceleration"],
@@ -741,7 +741,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_current_speed",
-                "value": 1.0,
+                "value": 1.5,
             },
             {
                 "type": "reduce_stamina", 
@@ -772,7 +772,8 @@ SKILLS = {
                 "type": "add_dkh",
                 "value": 2,
                 "duration": "this_roll"
-            }
+            },
+            {"type": "modify_roll_cap", "value": 6, "duration": "this_roll"},
         ],
 
         "tags": ["front", "final_corner", "acceleration", "burst"],
@@ -831,10 +832,10 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_velocity",
-                "value": 30,
+                "value": 40,
                 "duration": "this_roll"
             },
-            {"type": "modify_roll_cap", "value": 3, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
         ],
 
         "tags": ["late_race", "back", "velocity"],
@@ -855,12 +856,12 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_velocity",
-                 "value": 40,
+                 "value": 50,
                 "duration": "this_roll"
             },
             {
             "type": "modify_roll_cap",
-            "value": 4,
+            "value": 6,
             "duration": "this_roll"
         }
     ],
@@ -873,7 +874,7 @@ SKILLS = {
         "name": "All-Seeing Eyes",
         "icon": "ReduceSTA",
         "cooldown": 10,
-        "cost": 80,
+        "cost": 70,
         "trigger": {
             "style": "Late",
             "phase_min": 3,
@@ -913,9 +914,10 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_roll_cap",
-                "value": 15,
+                "value": 20,
                 "duration": "this_roll"
-            }
+            },
+            {"type": "modify_velocity", "mode": "flat_total", "value": 25, "duration": "this_roll"}
         ],
 
         "tags": ["late", "corner", "burst", "stability"],
@@ -983,7 +985,7 @@ SKILLS = {
             {"type": "modify_current_speed","value": 2},
             {
                 "type": "modify_roll_cap",
-                "value": 14,
+                "value": 18,
                 "duration": "this_roll"
             },
         ],
@@ -1008,12 +1010,12 @@ SKILLS = {
         "effects": [
             {
                 "type": "add_dkh",
-                "value": 1,
+                "value": 2,
                 "duration": "this_roll"
             },
             {
                 "type": "modify_roll_cap",
-                "value": 10,
+                "value": 12,
                 "duration": "this_roll"
             },
         ],
@@ -1087,6 +1089,7 @@ SKILLS = {
                 "duration": "this_roll"
             },
             {"type": "modify_roll_floor","value": 5,"duration": "this_roll"},
+            {"type": "modify_roll_cap","value": 7,"duration": "this_roll"},
         ],
 
         "tags": ["corner", "late_race", "lead", "acceleration", "unique"],
@@ -1111,9 +1114,10 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 55,
                 "duration": "this_roll"
-            }
+            },
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"}
         ],
 
         "tags": ["mid_race", "velocity", "positioning"],
@@ -1214,13 +1218,13 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 50,
+                "value": 55,
                 "duration": "this_roll"
             },
 
             {
                 "type": "modify_roll_cap",
-                "value": 7,
+                "value": 8,
                 "duration": "this_roll"
             },
 
