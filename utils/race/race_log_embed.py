@@ -1,5 +1,7 @@
 import discord
 
+from utils.race.rank_display import gold_range_marker
+
 
 def build_race_log_embed(game: dict, ranked_players):
     rank_lines = []
@@ -11,8 +13,9 @@ def build_race_log_embed(game: dict, ranked_players):
             or str(user_id)
         )
 
+        marker = gold_range_marker(user_id, info, ranked_players)
         rank_lines.append(
-            f"**{index}. {name}** | {info.get('style')} | Score: **{info.get('score', 0)}**"
+            f"**{index}. {name}{marker}** | {info.get('style')} | Score: **{info.get('score', 0)}**"
         )
 
     turn_logs = game.get("turn_score_logs", [])

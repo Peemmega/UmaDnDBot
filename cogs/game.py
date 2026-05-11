@@ -21,6 +21,7 @@ from utils.music_manager import play_bgm, stop_bgm
 
 from utils.race.race_presets import RACE_PRESET, render_path, build_track_progress_text, build_current_track_text
 from utils.race.race_log_embed import build_race_log_embed
+from utils.race.rank_display import gold_range_marker
 from utils.dice.roll_service import (execute_player_roll)
 
 WIN_IMAGE = [
@@ -73,8 +74,9 @@ def build_race_log_embed(game: dict, ranked_players):
             or str(user_id)
         )
 
+        marker = gold_range_marker(user_id, info, ranked_players)
         rank_lines.append(
-            f"**{index}. {name}** | {info.get('style')} | Score: **{info.get('score', 0)}**"
+            f"**{index}. {name}{marker}** | {info.get('style')} | Score: **{info.get('score', 0)}**"
         )
 
     turn_logs = game.get("turn_score_logs", [])
@@ -152,8 +154,9 @@ def build_game_end_embed(ranked_players, commentary_text: str | None = None):
         else:
             display_name = f"<@{user_id}>"
 
+        marker = gold_range_marker(user_id, info, ranked_players)
         rank_lines.append(
-            f"{index}. {display_name} | {info['style']} | Score: {info['score']}"
+            f"{index}. {display_name}{marker} | {info['style']} | Score: {info['score']}"
         )
         
 
@@ -331,8 +334,9 @@ class GameCog(commands.GroupCog, name="game"):
                     else:
                         display_name = info.get('username') or f"<@{user_id}>"
 
+                    marker = gold_range_marker(user_id, info, ranked_players)
                     rank_lines.append(
-                        f"ลำดับที่ {index}: {display_name} | Score: {info['score']} ({info['style']})"
+                        f"ลำดับที่ {index}: {display_name}{marker} | Score: {info['score']} ({info['style']})"
                     )
 
                 if not rank_lines:
@@ -596,8 +600,9 @@ class GameCog(commands.GroupCog, name="game"):
             else:
                 display_name = info.get('username') or f"<@{user_id}>"
 
+            marker = gold_range_marker(user_id, info, ranked_players)
             rank_lines.append(
-                f"ลำดับที่ {index}: {display_name} | Score: {info['score']} ({info['style']})"
+                f"ลำดับที่ {index}: {display_name}{marker} | Score: {info['score']} ({info['style']})"
             )
 
         if not rank_lines:

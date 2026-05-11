@@ -1197,6 +1197,9 @@ def add_player_as_mob_preset(
     if preset is None:
         return False, "ไม่พบ preset"
 
+    race_profile = copy.deepcopy(preset["race_profile"])
+    race_profile = apply_rookie_distance_stats(preset_key, race_profile, game.get("distance"))
+
     game["players"][user_id] = {
         "username": preset['name'],
         "display_name": preset['name'],
@@ -1217,7 +1220,7 @@ def add_player_as_mob_preset(
         "is_mob": False,
         "using_mob_preset": True,
         "mob_preset_key": preset_key,
-        "race_profile": copy.deepcopy(preset["race_profile"]),
+        "race_profile": race_profile,
         "skill_cooldowns": {},
         "used_rush": False,
         "used_block": False,
@@ -1250,6 +1253,56 @@ def apply_mob_level(race_profile: dict, level: int):
 
     return race_profile
 
+
+ROOKIE_DISTANCE_STAT_SHIFTS = {
+    "sprint": {
+        "stamina": -2,
+        "speed": 1,
+        "power": 1,
+    },
+    "mile": {
+        "stamina": -2,
+        "power": 1,
+        "wit": 1,
+    },
+    "long": {
+        "speed": -1,
+        "power": -1,
+        "stamina": 2,
+    },
+}
+
+
+def apply_rookie_distance_stats(preset_key: str, race_profile: dict, distance: str | None):
+    if not preset_key.startswith("rookie_"):
+        return race_profile
+
+    shifts = ROOKIE_DISTANCE_STAT_SHIFTS.get((distance or "").lower())
+    if not shifts:
+        return race_profile
+
+    points_to_move = 0
+    for stat, delta in shifts.items():
+        if delta >= 0:
+            continue
+
+        current = race_profile.get(stat, 1)
+        reduction = min(-delta, max(0, current - 1))
+        race_profile[stat] = current - reduction
+        points_to_move += reduction
+
+    for stat, delta in shifts.items():
+        if delta <= 0 or points_to_move <= 0:
+            continue
+
+        current = race_profile.get(stat, 1)
+        increase = min(delta, points_to_move, max(0, 8 - current))
+        race_profile[stat] = current + increase
+        points_to_move -= increase
+
+    return race_profile
+
+
 def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
     game = get_game(channel_id)
     if game is None:
@@ -1268,6 +1321,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
 
     race_profile = copy.deepcopy(preset["race_profile"])
     race_profile = apply_mob_level(race_profile, level)
+    race_profile = apply_rookie_distance_stats(preset_key, race_profile, game.get("distance"))
 
     zone = copy.deepcopy(preset["zone"])
     skills = copy.deepcopy(preset["skills"])
