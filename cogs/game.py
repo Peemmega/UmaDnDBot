@@ -177,16 +177,10 @@ def build_game_end_embed(ranked_players, commentary_text: str | None = None):
         color=discord.Color.red(),
         description=(
             f"{winner_text}\n\n"
+            f"📢 Narrator\n{commentary_text[:1000]}\n\n"
             f"อันดับ:\n" + "\n".join(rank_lines)
         )
     )
-
-    if commentary_text:
-        embed.add_field(
-            name="📢 Narrator",
-            value=commentary_text[:1000],
-            inline=False
-        )
 
     embed.set_image(
         url=random.choice(WIN_IMAGE)
@@ -633,12 +627,7 @@ class GameCog(commands.GroupCog, name="game"):
         if title_suffix:
             title += f" {title_suffix}"
 
-        if commentary_text:
-            embed.add_field(
-                name="📢 Narrator",
-                value=commentary_text[:1000],
-                inline=False
-            )
+     
 
         embed = discord.Embed(
             title=title,
@@ -646,12 +635,11 @@ class GameCog(commands.GroupCog, name="game"):
             description=(
                 f"Phase: {phase}\n"
                 f"เส้นทางเทิร์นนี้:\n{track_preview}\n\n"
+                f"📢 Narrator:\n{commentary_text[:1000]}\n\n"
                 f"อันดับคะแนน:🏆\n" + "\n".join(rank_lines)
             )
         )
-
         
-
         embed.add_field(
             name="Effect",
             value=build_path_effect_text(path_type),
