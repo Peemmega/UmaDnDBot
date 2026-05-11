@@ -116,7 +116,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "modify_current_speed", "value": 2.0},
             {"type": "modify_roll_cap", "value": 8, "duration": "this_roll"},
         ],
 
@@ -169,7 +169,7 @@ SKILLS = {
         "name": "Go-Home Specialist",
         "icon": "Recovery",
         "cooldown": 8,
-        "cost": 60,
+        "cost": 40,
         "trigger": {
             "path_type": 4,
             "style": "End",
@@ -341,7 +341,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "modify_current_speed", "value": 1.75},
             {"type": "modify_velocity", "mode": "flat_total", "value": 55, "duration": "this_roll"}
         ],
 
@@ -717,7 +717,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "modify_current_speed", "value": 2.0},
             {"type": "add_dkh", "value": 1},
         ],
 
@@ -874,7 +874,7 @@ SKILLS = {
         "name": "All-Seeing Eyes",
         "icon": "ReduceSTA",
         "cooldown": 10,
-        "cost": 70,
+        "cost": 80,
         "trigger": {
             "style": "Late",
             "phase_min": 3,
@@ -889,7 +889,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "reduce_stamina",
-                "value": 1
+                "value": 2
             }
         ],
 
