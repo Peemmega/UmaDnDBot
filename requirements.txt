@@ -4,5 +4,6 @@ Pillow
 PyNaCl
 discord.py[voice]
 psycopg[binary]
-uvicorn
+uvicorn[standard]
 fastapi
+websockets
