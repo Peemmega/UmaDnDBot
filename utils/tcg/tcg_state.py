@@ -59,13 +59,28 @@ def find_card(player: dict, card_id: str, zone: str) -> dict | None:
     return next((card for card in player["zones"][zone] if card["instanceId"] == card_id), None)
 
 
+def find_card_location(game_state: dict, card_id: str) -> tuple[str, str, dict] | None:
+    for player_slot, player in game_state["players"].items():
+        for zone in ZONES:
+            card = find_card(player, card_id, zone)
+            if card:
+                return player_slot, zone, card
+    return None
+
+
 def move_card(game_state: dict, player_slot: str, card_id: str, from_zone: str, to_zone: str, field_x=None, field_y=None) -> None:
     if from_zone not in ZONES or to_zone not in ZONES:
         raise ValueError("Invalid zone")
-    player = game_state["players"][player_slot]
-    card = find_card(player, card_id, from_zone)
-    if not card:
+    location = find_card_location(game_state, card_id)
+    if not location:
         raise ValueError("Card not found")
+    owner_slot, actual_zone, card = location
+    if owner_slot != player_slot:
+        raise ValueError("Cannot move opponent cards")
+    if actual_zone != from_zone:
+        raise ValueError("Card is not in the requested source zone")
+
+    player = game_state["players"][player_slot]
     player["zones"][from_zone] = [item for item in player["zones"][from_zone] if item["instanceId"] != card_id]
     moved = dict(card)
     if to_zone == "field":
@@ -81,13 +96,13 @@ def move_card(game_state: dict, player_slot: str, card_id: str, from_zone: str, 
 
 
 def tap_card(game_state: dict, player_slot: str, card_id: str) -> None:
-    player = game_state["players"][player_slot]
-    for zone in ZONES:
-        for card in player["zones"][zone]:
-            if card["instanceId"] == card_id:
-                card["status"] = "active" if card.get("status") == "rest" else "rest"
-                return
-    raise ValueError("Card not found")
+    location = find_card_location(game_state, card_id)
+    if not location:
+        raise ValueError("Card not found")
+    owner_slot, _zone, card = location
+    if owner_slot != player_slot:
+        raise ValueError("Cannot tap opponent cards")
+    card["status"] = "active" if card.get("status") == "rest" else "rest"
 
 
 def untap_all(game_state: dict, player_slot: str) -> None:
