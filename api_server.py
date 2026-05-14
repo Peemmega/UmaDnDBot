@@ -7,6 +7,7 @@ import asyncio
 from utils.database import (
     get_player, 
     get_connection, 
+    init_db,
     ensure_player, 
     update_player_username,
     set_player_skill_slot,
@@ -49,6 +50,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def api_startup():
+    print("FastAPI app startup complete")
+    print("Registered FastAPI routes:")
+    for route in app.routes:
+        methods = ",".join(sorted(getattr(route, "methods", []) or []))
+        print(f"{methods:12} {route.path}")
+    try:
+        init_db()
+    except Exception as exc:
+        print(f"Database init failed during API startup: {exc!r}")
 
 
 class TcgPlayerPayload(BaseModel):
