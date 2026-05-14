@@ -69,6 +69,11 @@ def api_tcg_rooms():
     return {"rooms": tcg_room_manager.list_rooms()}
 
 
+@app.post("/tcg/rooms/clear")
+def api_tcg_clear_rooms():
+    return {"success": True, "cleared": tcg_room_manager.clear_rooms()}
+
+
 @app.get("/tcg/rooms/{room_id}")
 def api_tcg_room(room_id: str, user_id: str = ""):
     try:
@@ -107,7 +112,8 @@ async def api_tcg_join_room(room_id: str, payload: TcgPlayerPayload):
 async def api_tcg_leave_room(room_id: str, payload: TcgPlayerPayload):
     try:
         room = tcg_room_manager.leave_room(room_id, payload.user_id)
-        await tcg_room_manager.broadcast(room_id)
+        if room_id in tcg_room_manager.rooms:
+            await tcg_room_manager.broadcast(room_id)
         return sanitize_room(room, payload.user_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -135,8 +141,11 @@ async def api_tcg_confirm_deck(room_id: str, payload: TcgDeckConfirmPayload):
 
 @app.websocket("/ws/tcg/{room_id}")
 async def websocket_tcg_room(websocket: WebSocket, room_id: str, user_id: str):
-    await tcg_room_manager.connect(room_id, user_id, websocket)
-    await tcg_room_manager.broadcast(room_id)
+    try:
+        await tcg_room_manager.connect(room_id, user_id, websocket)
+        await tcg_room_manager.broadcast(room_id)
+    except ValueError:
+        return
     try:
         while True:
             message = await websocket.receive_json()
@@ -150,4 +159,4 @@ async def websocket_tcg_room(websocket: WebSocket, room_id: str, user_id: str):
             except ValueError as exc:
                 await websocket.send_json({"type": "ERROR", "message": str(exc)})
     except WebSocketDisconnect:
-        tcg_room_manager.disconnect(room_id, user_id)
+        tcg_room_manager.disconnect(room_id, user_id, websocket)
