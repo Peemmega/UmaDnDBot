@@ -19,7 +19,7 @@ def setup_player_state(player_slot: str, deck_id: str) -> dict:
         "zones": {
             "deck": remaining_deck,
             "hand": hand,
-            "field": [create_trainer_card(player_slot)],
+            "field": [create_trainer_card(player_slot, deck_id)],
             "life": life,
             "discard": [],
             "carrot": [],
