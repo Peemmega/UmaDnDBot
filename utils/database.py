@@ -4,11 +4,9 @@ from typing import Optional
 from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST
 import json
 
-DEFAULT_DB_PATH = "/app/data/player.db" if os.name != "nt" else "data/player.db"
-DB_PATH = os.getenv("DB_PATH", DEFAULT_DB_PATH)
+DB_PATH = "/app/data/player.db"
 
 def get_connection():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH, timeout=10)  # ⬅️ เพิ่ม timeout
     conn.row_factory = sqlite3.Row
 

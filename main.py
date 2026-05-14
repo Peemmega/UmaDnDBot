@@ -13,26 +13,22 @@ from utils.database import init_db
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
-
-def print_registered_routes():
-    print("Registered FastAPI routes:")
-    for route in app.routes:
-        methods = ",".join(sorted(getattr(route, "methods", []) or []))
-        print(f"{methods:12} {route.path}")
+if TOKEN is None:
+    raise ValueError("ไม่พบ DISCORD_TOKEN ในไฟล์ .env")
 
 
 def run_api():
     port = int(os.getenv("PORT", "8000"))
-    print_registered_routes()
+    print("Registered FastAPI routes:")
+    for route in app.routes:
+        methods = ",".join(sorted(getattr(route, "methods", []) or []))
+        print(f"{methods:12} {route.path}")
     uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 class Client(commands.Bot):
     async def setup_hook(self):
-        try:
-            init_db()
-        except Exception as exc:
-            print(f"Database init failed during bot setup: {exc!r}")
+        init_db()
 
         await self.load_extension("cogs.profile")
         await self.load_extension("cogs.training")
@@ -50,7 +46,7 @@ class Client(commands.Bot):
         if message.author == self.user:
             return
 
-        if message.content.startswith("โอกุริเป็นแกรับ"):
+        if message.content.startswith("โอกุริเป็นเกรับ"):
             await message.channel.send(f"จริงค่ะ {message.author}")
 
         await self.process_commands(message)
@@ -61,21 +57,9 @@ intents.message_content = True
 
 client = Client(command_prefix="!", intents=intents)
 
-# Allow api_server routes to access the bot when the bot thread is healthy.
+# ให้ api_server เรียกใช้ bot ตัวนี้ได้
 bot_instance.bot = client
 
+threading.Thread(target=run_api, daemon=True).start()
 
-def run_bot():
-    if not TOKEN:
-        print("DISCORD_TOKEN is not set; starting API without Discord bot")
-        return
-
-    try:
-        client.run(TOKEN)
-    except Exception as exc:
-        print(f"Discord bot failed to start: {exc!r}")
-
-
-if __name__ == "__main__":
-    threading.Thread(target=run_bot, daemon=True).start()
-    run_api()
+client.run(TOKEN)
