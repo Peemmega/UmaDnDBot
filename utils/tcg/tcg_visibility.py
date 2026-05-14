@@ -1,16 +1,16 @@
 from .tcg_state import PRIVATE_ZONES, ZONES
 
 
-def sanitize_card_back(card: dict) -> dict:
+def sanitize_card_back(zone: str, index: int) -> dict:
     return {
-        "instanceId": card["instanceId"],
+        "instanceId": f"hidden-{zone}-{index}",
         "id": "hidden-card",
         "name": "Hidden Card",
         "type": "Hidden",
         "style": "Speed",
         "cost": 0,
         "power": 0,
-        "status": card.get("status", "active"),
+        "status": "active",
         "hidden": True,
     }
 
@@ -30,7 +30,7 @@ def sanitize_game_state(room: dict, viewer_user_id: str | None) -> dict:
             if is_self or zone not in PRIVATE_ZONES:
                 visible_zones[zone] = cards
             else:
-                visible_zones[zone] = [sanitize_card_back(card) for card in cards]
+                visible_zones[zone] = [sanitize_card_back(zone, index) for index, _card in enumerate(cards)]
         players[slot] = {
             **state,
             "zones": visible_zones,
