@@ -23,6 +23,14 @@ ICON_MAP = {
     "Wit": ASSETS_DIR / "stats_icon" / "utx_ico_obtain_04.png",
 }
 
+PATH_ICON_DIR = ASSETS_DIR / "path_icon"
+PATH_ICON_MAP = {
+    1: PATH_ICON_DIR / "path_1.png",
+    2: PATH_ICON_DIR / "path_2.png",
+    3: PATH_ICON_DIR / "path_3.png",
+    4: PATH_ICON_DIR / "path_4.png",
+}
+
 PATH_TYPE_LABELS = {
     1: "straight",
     2: "curve",
@@ -187,7 +195,22 @@ def _draw_path_symbol(draw: ImageDraw.ImageDraw, path_type: int, box: tuple[int,
     _draw_arrow_head(draw, end, angle, size=8, fill=color)
 
 
-def _draw_path_icons(draw: ImageDraw.ImageDraw, icons: list[Any], start: tuple[int, int]):
+def _paste_path_icon(canvas: Image.Image, path_type: int, box: tuple[int, int, int, int]):
+    icon_path = PATH_ICON_MAP.get(path_type)
+    if not icon_path or not icon_path.exists():
+        return False
+
+    left, top, right, bottom = box
+    icon = Image.open(icon_path).convert("RGBA")
+    icon.thumbnail((right - left, bottom - top), Image.LANCZOS)
+
+    x = left + ((right - left) - icon.width) // 2
+    y = top + ((bottom - top) - icon.height) // 2
+    canvas.alpha_composite(icon, (x, y))
+    return True
+
+
+def _draw_path_icons(canvas: Image.Image, draw: ImageDraw.ImageDraw, icons: list[Any], start: tuple[int, int]):
     x, y = start
     start_x = x
     max_x = 1110
@@ -201,7 +224,9 @@ def _draw_path_icons(draw: ImageDraw.ImageDraw, icons: list[Any], start: tuple[i
 
         box = (x, y, x + size, y + size)
         draw.rounded_rectangle(box, radius=5, fill=(79, 155, 190, 235))
-        _draw_path_symbol(draw, _normalize_path_type(icon), box)
+        path_type = _normalize_path_type(icon)
+        if not _paste_path_icon(canvas, path_type, box):
+            _draw_path_symbol(draw, path_type, box)
         x += 42
 
 
@@ -277,7 +302,7 @@ def create_racing_room_image(stage: dict[str, Any], *, debug: bool = False) -> I
 
     draw.text((395, 266), str(stage.get("turns", "-")), font=_font(28), fill=(40, 40, 40), anchor="ra")
 
-    _draw_path_icons(draw, path_icons, (150, 330))
+    _draw_path_icons(canvas, draw, path_icons, (150, 330))
     _draw_bonus_rows(canvas, draw, _build_aptitude_bonus(stage), 450)
 
     track_path = _resolve_path(stage.get("track_image"))
