@@ -127,7 +127,7 @@ SKILLS = {
         "name": "Concentration",
         "icon": "Concentration",
         "cooldown": 20,
-        "cost": 50,
+        "cost": 40,
         "trigger": {
             "turn_min": 1,
             "turn_max": 1,
@@ -137,7 +137,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_floor","value": 15,"duration": "this_roll"},
+            {"type": "modify_roll_floor","value": 12,"duration": "this_roll"},
         ],
 
         "tags": ["start", "concentration"],
@@ -216,7 +216,7 @@ SKILLS = {
         "name": "Technician",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 80,
+        "cost": 70,
         "trigger": {
             "style": "Pace",
             "path_type": 2,
@@ -257,7 +257,7 @@ SKILLS = {
         "name": "Vanguard Spirit",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 90,
+        "cost": 80,
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
@@ -285,8 +285,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_gold_range", "value": 70, "duration": "this_turn"},
-            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "modify_gold_range", "value": 50, "duration": "this_turn"},
+            {"type": "modify_roll_floor", "value": 5, "duration": "this_roll"},
         ],
 
         "tags": ["vision", "end", "positioning"],
@@ -305,8 +305,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
         ],
 
         "tags": ["medium", "lead", "velocity"],
@@ -324,7 +324,7 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
+            {"type": "modify_velocity", "mode": "flat_total", "value": 35, "duration": "this_roll"}
         ],
 
         "tags": ["pace", "final_corner", "velocity"],
@@ -341,8 +341,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 1.75},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 45, "duration": "this_roll"}
+            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
         ],
 
         "tags": ["pace", "downhill", "acceleration"],
@@ -360,7 +360,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 1.2},
+            {"type": "modify_current_speed", "value": 1.25},
             {"type": "add_dkh", "value": 1},
         ],
 
@@ -653,7 +653,7 @@ SKILLS = {
         "name": "Groundwork",
         "icon": "Acceleration",
         "cooldown": 10,
-        "cost": 50,
+        "cost": 40,
         "trigger": {
             "phase_min": 1,
             "phase_max": 1,
@@ -680,28 +680,13 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed", "value": 1.25},
+            {"type": "modify_current_speed", "value": 1.5},
             {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
 
         "tags": ["lastspurt", "blocked", "acceleration"],
     },
 
-    # "s032": {
-    #     "name": "March Licker",
-    #     "icon": "Blind",
-    #     "cooldown": 5,
-    #     "cost": 0,
-    #     "trigger": {
-    #         "phase_min": 1,
-    #         "phase_max": 4,
-    #     },
-    #     "target": {"scope": "all_front", "limit": 6},
-    #     "effects": [
-    #         {"type": "apply_debuff_next_turn", "stat": "flat_total", "value": -50}
-    #     ],
-    #     "tags": ["blind", "long", "debuff"],
-    # },
     "s032": {
         "name": "Neck and Neck",
         "icon": "Acceleration",
@@ -717,7 +702,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "modify_current_speed", "value": 1.25},
             {"type": "add_dkh", "value": 1},
         ],
 
@@ -743,6 +728,7 @@ SKILLS = {
                 "type": "modify_current_speed",
                 "value": 1.5,
             },
+         
             {
                 "type": "reduce_stamina", 
                 "value": 1
@@ -831,10 +817,9 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_velocity",
-                "value": 30,
+                "value": 50,
                 "duration": "this_roll"
             },
-            {"type": "modify_roll_cap", "value": 3, "duration": "this_roll"},
         ],
 
         "tags": ["late_race", "back", "velocity"],
@@ -862,8 +847,8 @@ SKILLS = {
             "type": "modify_roll_cap",
             "value": 5,
             "duration": "this_roll"
-        }
-    ],
+            }
+        ],
 
         "tags": ["last_spurt", "velocity", "stability"],
     },
@@ -899,7 +884,7 @@ SKILLS = {
         "name": "Rising Dragon",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 80,
+        "cost": 70,
         "trigger": {
             "style": "Late",
             "phase_min": 3,
@@ -1039,6 +1024,7 @@ SKILLS = {
         },
         "effects": [
             {"type": "modify_roll_cap","value": 21,"duration": "this_roll"},
+            {"type": "modify_roll_floor","value": 7,"duration": "this_roll"},
             {"type": "add_dkh","value": 1,"duration": "this_roll"},
         ],
 
@@ -1111,7 +1097,7 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 50,
+                "value": 40,
                 "duration": "this_roll"
             }
         ],
@@ -1163,7 +1149,7 @@ SKILLS = {
         "name": "Daring Strike",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 80,
+        "cost": 60,
 
         "trigger": {
             "phase_min": 2,
@@ -1179,13 +1165,13 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_roll_cap",
-                "value": 7,
+                "value": 5,
                 "duration": "this_roll"
             },
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 60,
+                "value": 35,
                 "duration": "this_roll"
             }
         ],
@@ -1220,7 +1206,7 @@ SKILLS = {
 
             {
                 "type": "modify_roll_cap",
-                "value": 7,
+                "value": 5,
                 "duration": "this_roll"
             },
 

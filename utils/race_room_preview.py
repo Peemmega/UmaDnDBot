@@ -219,7 +219,7 @@ def _paste_path_icon(canvas: Image.Image, path_type: int, box: tuple[int, int, i
 def _draw_path_icons(canvas: Image.Image, draw: ImageDraw.ImageDraw, icons: list[Any], start: tuple[int, int]):
     x, y = start
     start_x = x
-    max_x = 1110
+    max_x = 1000
     row_gap = 42
 
     for icon in icons:
@@ -235,29 +235,13 @@ def _draw_path_icons(canvas: Image.Image, draw: ImageDraw.ImageDraw, icons: list
             _draw_path_symbol(draw, path_type, box)
         x += 42
 
-
-def _get_phase_ranges(max_turn: int) -> list[tuple[int, int, int]]:
-    if max_turn <= 0:
-        return []
-
-    ranges = []
-    phase_size = max_turn / 4
-    for phase in range(1, 5):
-        start = math.floor((phase - 1) * phase_size) + 1
-        end = math.floor(phase * phase_size)
-        if phase == 4:
-            end = max_turn
-        ranges.append((phase, start, max(start, end)))
-    return ranges
-
-
 def _draw_info_panel(
     canvas: Image.Image,
     draw: ImageDraw.ImageDraw,
     path: list[Any],
     max_turn: int,
 ):
-    left, top, right, bottom = 675, 615, 1110, 735
+    left, top, right, bottom = 675, 615, 1115, 735
     draw.rounded_rectangle(
         (left, top, right, bottom),
         radius=16,
@@ -321,7 +305,7 @@ def _draw_ranking_panel(
     draw: ImageDraw.ImageDraw,
     rankings: list[dict[str, Any]],
 ):
-    left, top, right, bottom = 675, 390, 1110, 600
+    left, top, right, bottom = 675, 390, 1115, 600
     draw.rounded_rectangle(
         (left, top, right, bottom),
         radius=16,
@@ -330,7 +314,7 @@ def _draw_ranking_panel(
         width=2,
     )
 
-    draw.text((left + 20, top + 12), "Top Ranking", font=_font(26), fill=(70, 70, 70))
+    draw.text((left + 20, top + 12), "Top Score Ranking", font=_font(26), fill=(70, 70, 70))
 
     if not rankings:
         draw.text(
@@ -428,8 +412,8 @@ def create_racing_room_image(stage: dict[str, Any], *, debug: bool = False) -> I
         fill=(150, 55, 5),
     )
 
-    thumb = _load_image(_resolve_race_thumbnail(stage), fallback=stage.get("background") or BG_PATH, size=(170, 86))
-    canvas.alpha_composite(thumb, (938, 143))
+    thumb = _load_image(_resolve_race_thumbnail(stage), fallback=stage.get("background") or BG_PATH, size=(238, 120))
+    canvas.alpha_composite(thumb, (880, 143))
 
     draw.text((395, 266), str(stage.get("turns", "-")), font=_font(28), fill=(40, 40, 40), anchor="ra")
 
