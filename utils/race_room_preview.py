@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Any
 import math
@@ -13,15 +12,6 @@ BG_PATH = ASSETS_DIR / "raceroom_temp.png"
 RACE_THUMBNAIL_DIR = ASSETS_DIR / "race_thumnail"
 FONT_BOLD_PATH = ASSETS_DIR / "fonts" / "Prompt-Bold.ttf"
 FONT_REGULAR_PATH = ASSETS_DIR / "fonts" / "Prompt-Regular.ttf"
-EMOJI_FONT_PATHS = [
-    Path(os.environ["RACE_ROOM_EMOJI_FONT"]) if os.environ.get("RACE_ROOM_EMOJI_FONT") else None,
-    Path("C:/Windows/Fonts/seguiemj.ttf"),
-    Path("C:/Windows/Fonts/seguisym.ttf"),
-    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
-    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
-    Path("/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf"),
-    Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
-]
 
 W, H = 1240, 827
 
@@ -40,30 +30,12 @@ PATH_TYPE_LABELS = {
     4: "downhill",
 }
 
-PATH_TYPE_EMOJI = {
-    1: "\u27a1",
-    2: "\u2935",
-    3: "\u2197",
-    4: "\u2198",
-}
-
-
 def _font(size: int, *, bold: bool = True) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     path = FONT_BOLD_PATH if bold else FONT_REGULAR_PATH
     try:
         return ImageFont.truetype(str(path), size)
     except OSError:
         return ImageFont.load_default()
-
-
-def _emoji_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    for path in EMOJI_FONT_PATHS:
-        if path and path.exists():
-            try:
-                return ImageFont.truetype(str(path), size)
-            except OSError:
-                pass
-    return _font(size)
 
 
 def _resolve_path(value: str | Path | None, fallback: Path | None = None) -> Path | None:
