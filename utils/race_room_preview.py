@@ -40,10 +40,10 @@ PATH_TYPE_LABELS = {
 }
 
 PATH_TYPE_EMOJI = {
-    1: "➡",
-    2: "⤵",
-    3: "↗",
-    4: "↘",
+    1: "\u27a1",
+    2: "\u2935",
+    3: "\u2197",
+    4: "\u2198",
 }
 
 
@@ -166,13 +166,50 @@ def _normalize_path_type(value: Any) -> int:
 def _draw_path_icons(draw: ImageDraw.ImageDraw, icons: list[Any], start: tuple[int, int]):
     x, y = start
     font = _emoji_font(32)
+    start_x = x
+    max_x = 1110
+    row_gap = 42
+
     for icon in icons:
         size = 36
+        if x + size > max_x:
+            x = start_x
+            y += row_gap
+
         box = (x, y, x + size, y + size)
         draw.rounded_rectangle(box, radius=5, fill=(79, 155, 190, 235))
         emoji = PATH_TYPE_EMOJI[_normalize_path_type(icon)]
-        draw.text((x + size/2, y + size/2), emoji, font=font, fill="white", anchor="mm")
+        draw.text((x + size / 2, y + size / 2), emoji, font=font, fill="white", anchor="mm")
         x += 42
+
+
+def _title_value(value: Any, fallback: str) -> str:
+    text = str(value or "").strip()
+    return text[:1].upper() + text[1:] if text else fallback
+
+
+def _build_aptitude_bonus(stage: dict[str, Any]) -> list[dict[str, str]]:
+    bonuses = stage.get("aptitude_bonus")
+    if bonuses:
+        return list(bonuses)
+
+    return [
+        {
+            "label": _title_value(stage.get("track"), "Track"),
+            "value": "+1",
+            "icon": "Power",
+        },
+        {
+            "label": _title_value(stage.get("distance"), "Distance"),
+            "value": "+1",
+            "icon": "Speed",
+        },
+        {
+            "label": "Your Style",
+            "value": "+1",
+            "icon": "Wit",
+        },
+    ]
 
 
 def _draw_bonus_rows(
@@ -219,7 +256,7 @@ def create_racing_room_image(stage: dict[str, Any], *, debug: bool = False) -> I
     draw.text((395, 266), str(stage.get("turns", "-")), font=_font(28), fill=(40, 40, 40), anchor="ra")
 
     _draw_path_icons(draw, path_icons, (150, 330))
-    _draw_bonus_rows(canvas, draw, list(stage.get("aptitude_bonus", [])), 450)
+    _draw_bonus_rows(canvas, draw, _build_aptitude_bonus(stage), 450)
 
     track_path = _resolve_path(stage.get("track_image"))
     if track_path:

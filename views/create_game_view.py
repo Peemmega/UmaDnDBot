@@ -14,10 +14,12 @@ def build_lobby_preview_file(stage_key: str, stage_data: dict) -> discord.File:
     preview_stage = {
         "name": stage_data.get("name", stage_key),
         "turns": stage_data.get("turn", "-"),
+        "track": stage_data.get("track", ""),
+        "distance": stage_data.get("distance", ""),
         "path": stage_data.get("path", []),
         "race_key": stage_key,
         "thumbnail_key": stage_key,
-        "aptitude_bonus": stage_data.get("aptitude_bonus", []),
+        "aptitude_bonus": stage_data.get("aptitude_bonus"),
     }
 
     image = create_racing_room_image(preview_stage)
