@@ -18,7 +18,7 @@ from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
 from utils.race.race_log_embed import build_race_log_embed
-from views.create_game_view import LobbyView, build_lobby_embed
+from views.create_game_view import LobbyView, build_lobby_message_payload
 import bot_instance
 
 app = FastAPI()
@@ -339,12 +339,19 @@ async def send_lobby_message(channel_id: int):
     if channel is None:
         channel = await bot.fetch_channel(channel_id)
 
-    embed = build_lobby_embed(channel_id)
+    embed, file = build_lobby_message_payload(channel_id)
 
-    await channel.send(
-        embed=embed,
-        view=LobbyView(channel_id)
-    )
+    if file:
+        await channel.send(
+            embed=embed,
+            file=file,
+            view=LobbyView(channel_id)
+        )
+    else:
+        await channel.send(
+            embed=embed,
+            view=LobbyView(channel_id)
+        )
 
     return True, "ส่ง lobby embed แล้ว"
 

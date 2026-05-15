@@ -1,11 +1,51 @@
 import discord
+from io import BytesIO
 
 from utils.race.race_presets import RACE_PRESET, render_path
+from utils.race_room_preview import create_racing_room_image
 from views.join_view import LobbyView
 
 from utils.game_manager import (
     create_game,get_game
 )
+
+
+def build_lobby_preview_file(stage_key: str, stage_data: dict) -> discord.File:
+    preview_stage = {
+        "name": stage_data.get("name", stage_key),
+        "turns": stage_data.get("turn", "-"),
+        "path": stage_data.get("path", []),
+        "race_key": stage_key,
+        "thumbnail_key": stage_key,
+        "aptitude_bonus": stage_data.get("aptitude_bonus", []),
+    }
+
+    image = create_racing_room_image(preview_stage)
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return discord.File(buffer, filename="race_room_preview.png")
+
+
+def build_lobby_message_payload(channel_id: int):
+    embed = build_lobby_embed(channel_id)
+    game = get_game(channel_id)
+
+    if game is None:
+        return embed, None
+
+    stage_key = game["stage_key"]
+    stage_data = RACE_PRESET[stage_key]
+
+    try:
+        file = build_lobby_preview_file(stage_key, stage_data)
+    except Exception as e:
+        print(f"failed creating race room preview: {e}")
+        return embed, None
+
+    embed.set_image(url=f"attachment://{file.filename}")
+    return embed, file
 
 def build_lobby_embed(channel_id: int) -> discord.Embed:
     game = get_game(channel_id)
@@ -131,7 +171,7 @@ class ConfirmCreateView(discord.ui.View):
             )
             return
 
-        embed = build_lobby_embed(channel_id)
+        embed, file = build_lobby_message_payload(channel_id)
 
         # ✅ ตอบก่อน (กัน error interaction timeout)
         await interaction.response.defer()
@@ -140,10 +180,17 @@ class ConfirmCreateView(discord.ui.View):
         except discord.NotFound:
             pass
 
-        await interaction.channel.send(
-            embed=embed,
-            view=LobbyView(channel_id)
-        )
+        if file:
+            await interaction.channel.send(
+                embed=embed,
+                file=file,
+                view=LobbyView(channel_id)
+            )
+        else:
+            await interaction.channel.send(
+                embed=embed,
+                view=LobbyView(channel_id)
+            )
 
     @discord.ui.button(label="ย้อนกลับ", style=discord.ButtonStyle.secondary)
     async def back(self, interaction: discord.Interaction, button):

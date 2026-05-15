@@ -5,6 +5,7 @@ import math
 from PIL import Image, ImageDraw, ImageFont
 from utils.race.wit import build_single_wit_regen_text
 import aiohttp
+import re
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = BASE_DIR / "assets"
@@ -20,7 +21,6 @@ ICON_MAP = {
     "Velocity": ASSETS_DIR / "skill_icons/Velocity.png",
 }
 
-BASE_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_IMAGE = BASE_DIR / "assets" / "mob_01.png"
 
 async def load_image_url(path_or_url):
@@ -112,7 +112,7 @@ def draw_debug_grid(draw):
         draw.line((0, y, 1500, y), fill=(0, 0, 255, 90), width=1)
         draw.text((2, y + 2), str(y), fill=(0, 0, 255))
 
-import re
+
 
 def parse_display_text(text: str):
     tokens = []
