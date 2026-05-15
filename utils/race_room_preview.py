@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Any
 
@@ -12,8 +13,13 @@ RACE_THUMBNAIL_DIR = ASSETS_DIR / "race_thumnail"
 FONT_BOLD_PATH = ASSETS_DIR / "fonts" / "Prompt-Bold.ttf"
 FONT_REGULAR_PATH = ASSETS_DIR / "fonts" / "Prompt-Regular.ttf"
 EMOJI_FONT_PATHS = [
+    Path(os.environ["RACE_ROOM_EMOJI_FONT"]) if os.environ.get("RACE_ROOM_EMOJI_FONT") else None,
     Path("C:/Windows/Fonts/seguiemj.ttf"),
     Path("C:/Windows/Fonts/seguisym.ttf"),
+    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+    Path("/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf"),
+    Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
 ]
 
 W, H = 1240, 827
@@ -51,7 +57,7 @@ def _font(size: int, *, bold: bool = True) -> ImageFont.FreeTypeFont | ImageFont
 
 def _emoji_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     for path in EMOJI_FONT_PATHS:
-        if path.exists():
+        if path and path.exists():
             try:
                 return ImageFont.truetype(str(path), size)
             except OSError:

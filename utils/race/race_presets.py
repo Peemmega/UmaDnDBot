@@ -260,6 +260,47 @@ RACE_PRESET = {
         "path": [1, 3, 4, 2, 2, 1, 1, 1, 1, 3, 4, 2, 2, 1, 1, 1]
     },
 
+    "ChunichiShimbunHai": {
+        "name": "Chunichi Shimbun Hai 2000m",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921349977342082/3068.png?ex=6a0766d4&is=6a061554&hm=326878f63ddf32726b4642f20ef0d9f2d0af20e0664605bc4cc746b69dc7fd82&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1502921350313148486/10704.png?ex=6a0766d4&is=6a061554&hm=041ec3c8ad0302885c147b70d00f9dfe0106e2a05564da81f7fb9709ea475ef9&=&format=webp&quality=lossless&width=1446&height=819",
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": [3, 1, 2, 2, 2, 2, 1, 1, 4, 4, 2, 2]
+    },
+
+
+    "KyotoJuniorStakes": {
+        "name": "Kyoto Junior Stakes 2000m",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921212677062717/3065.png?ex=6a0766b4&is=6a061534&hm=34cf86e94076cd66c9f4ec94bc8f1bf01d115a490ccc216ba7326b27ca158dee&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1502921213033451520/10807.png?ex=6a0766b4&is=6a061534&hm=50268c29a32b616fc0c480a8b2841ac631b5f32a210c9f77a5a3b5305bb0bef0&=&format=webp&quality=lossless&width=1481&height=875",
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": [1, 1, 1, 2, 2, 1, 3, 1, 4, 2, 2, 2]
+    },
+
+    "SaudiArabiaRoyalCup": {
+        "name": "Saudi Arabia Royal Cup 1600",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921212677062717/3065.png?ex=6a0766b4&is=6a061534&hm=34cf86e94076cd66c9f4ec94bc8f1bf01d115a490ccc216ba7326b27ca158dee&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1502921213033451520/10807.png?ex=6a0766b4&is=6a061534&hm=50268c29a32b616fc0c480a8b2841ac631b5f32a210c9f77a5a3b5305bb0bef0&=&format=webp&quality=lossless&width=1481&height=875",
+        "track": "turf",
+        "distance": "mile",
+        "turn": 8,
+        "path": [1, 3, 4, 2, 2, 3, 1, 1]
+    },
+
+    "Aoi Stakes": {
+        "name": "Aoi Stakes 1200m",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1504720667415941170/4050.png?ex=6a0803d3&is=6a06b253&hm=61aeef1b4de5725735bda0bb8cb1e8bdc264018b80fd409a321531bda9598f00&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1504720667973779526/10801.png?ex=6a0803d3&is=6a06b253&hm=808b90a858437aa3092828076af6fc9f31194dec39ecf5e6767889482995bd7d&=&format=webp&quality=lossless&width=1194&height=875",
+        "track": "turf",
+        "distance": "sprint",
+        "turn": 8,
+        "path": [3, 1, 4, 2, 2, 2, 1, 1]
+    },
+
     #  debut race
     "Debut": {
         "name": "Debut",

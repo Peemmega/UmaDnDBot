@@ -343,7 +343,6 @@ async def send_lobby_message(channel_id: int):
 
     if file:
         await channel.send(
-            embed=embed,
             file=file,
             view=LobbyView(channel_id)
         )

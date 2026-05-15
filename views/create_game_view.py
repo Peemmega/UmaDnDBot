@@ -29,11 +29,10 @@ def build_lobby_preview_file(stage_key: str, stage_data: dict) -> discord.File:
 
 
 def build_lobby_message_payload(channel_id: int):
-    embed = build_lobby_embed(channel_id)
     game = get_game(channel_id)
 
     if game is None:
-        return embed, None
+        return build_lobby_embed(channel_id), None
 
     stage_key = game["stage_key"]
     stage_data = RACE_PRESET[stage_key]
@@ -42,10 +41,9 @@ def build_lobby_message_payload(channel_id: int):
         file = build_lobby_preview_file(stage_key, stage_data)
     except Exception as e:
         print(f"failed creating race room preview: {e}")
-        return embed, None
+        return build_lobby_embed(channel_id), None
 
-    embed.set_image(url=f"attachment://{file.filename}")
-    return embed, file
+    return None, file
 
 def build_lobby_embed(channel_id: int) -> discord.Embed:
     game = get_game(channel_id)
@@ -182,7 +180,6 @@ class ConfirmCreateView(discord.ui.View):
 
         if file:
             await interaction.channel.send(
-                embed=embed,
                 file=file,
                 view=LobbyView(channel_id)
             )
