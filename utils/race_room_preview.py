@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from typing import Any
+import math
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -163,9 +164,59 @@ def _normalize_path_type(value: Any) -> int:
     return 1
 
 
+def _draw_arrow_head(
+    draw: ImageDraw.ImageDraw,
+    tip: tuple[int, int],
+    angle_degrees: float,
+    *,
+    size: int = 9,
+    fill: tuple[int, int, int] = (255, 255, 255),
+):
+    angle = math.radians(angle_degrees)
+    left = angle + math.radians(150)
+    right = angle - math.radians(150)
+    points = [
+        tip,
+        (int(tip[0] + math.cos(left) * size), int(tip[1] + math.sin(left) * size)),
+        (int(tip[0] + math.cos(right) * size), int(tip[1] + math.sin(right) * size)),
+    ]
+    draw.polygon(points, fill=fill)
+
+
+def _draw_path_symbol(draw: ImageDraw.ImageDraw, path_type: int, box: tuple[int, int, int, int]):
+    left, top, right, bottom = box
+    cx = (left + right) // 2
+    cy = (top + bottom) // 2
+    color = (255, 255, 255)
+    width = 5
+
+    if path_type == 2:
+        mid_y = top + 12
+        end = (right - 10, bottom - 9)
+        draw.line((left + 10, mid_y, right - 14, mid_y), fill=color, width=width)
+        draw.line((right - 14, mid_y, right - 14, bottom - 14), fill=color, width=width)
+        _draw_arrow_head(draw, end, 90, size=8, fill=color)
+        return
+
+    if path_type == 3:
+        start = (left + 9, bottom - 9)
+        end = (right - 9, top + 9)
+        angle = -45
+    elif path_type == 4:
+        start = (left + 9, top + 9)
+        end = (right - 9, bottom - 9)
+        angle = 45
+    else:
+        start = (left + 8, cy)
+        end = (right - 8, cy)
+        angle = 0
+
+    draw.line((start, end), fill=color, width=width)
+    _draw_arrow_head(draw, end, angle, size=8, fill=color)
+
+
 def _draw_path_icons(draw: ImageDraw.ImageDraw, icons: list[Any], start: tuple[int, int]):
     x, y = start
-    font = _emoji_font(32)
     start_x = x
     max_x = 1110
     row_gap = 42
@@ -178,8 +229,7 @@ def _draw_path_icons(draw: ImageDraw.ImageDraw, icons: list[Any], start: tuple[i
 
         box = (x, y, x + size, y + size)
         draw.rounded_rectangle(box, radius=5, fill=(79, 155, 190, 235))
-        emoji = PATH_TYPE_EMOJI[_normalize_path_type(icon)]
-        draw.text((x + size / 2, y + size / 2), emoji, font=font, fill="white", anchor="mm")
+        _draw_path_symbol(draw, _normalize_path_type(icon), box)
         x += 42
 
 
