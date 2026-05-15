@@ -37,6 +37,12 @@ PATH_TYPE_LABELS = {
     3: "uphill",
     4: "downhill",
 }
+PATH_TYPE_DISPLAY = {
+    1: "ทางตรง",
+    2: "ทางโค้ง",
+    3: "เนินขึ้น",
+    4: "เนินลง",
+}
 
 def _font(size: int, *, bold: bool = True) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     path = FONT_BOLD_PATH if bold else FONT_REGULAR_PATH
@@ -230,6 +236,77 @@ def _draw_path_icons(canvas: Image.Image, draw: ImageDraw.ImageDraw, icons: list
         x += 42
 
 
+def _get_phase_ranges(max_turn: int) -> list[tuple[int, int, int]]:
+    if max_turn <= 0:
+        return []
+
+    ranges = []
+    phase_size = max_turn / 4
+    for phase in range(1, 5):
+        start = math.floor((phase - 1) * phase_size) + 1
+        end = math.floor(phase * phase_size)
+        if phase == 4:
+            end = max_turn
+        ranges.append((phase, start, max(start, end)))
+    return ranges
+
+
+def _draw_info_panel(
+    canvas: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    path: list[Any],
+    max_turn: int,
+):
+    left, top, right, bottom = 675, 615, 1110, 735
+    draw.rounded_rectangle(
+        (left, top, right, bottom),
+        radius=16,
+        fill=(255, 255, 255, 232),
+        outline=(126, 205, 75, 180),
+        width=2,
+    )
+
+    draw.text((left + 20, top + 6), "ข้อมูลเส้นทาง", font=_font(26), fill=(70, 70, 70))
+
+    counts = {path_type: 0 for path_type in PATH_TYPE_DISPLAY}
+    for item in path:
+        counts[_normalize_path_type(item)] += 1
+
+    legend_y = top + 42
+    for index, path_type in enumerate((1, 2, 3, 4)):
+        col = index % 2
+        row = index // 2
+        x = left + 20 + col * 215
+        y = legend_y + row * 34
+        box = (x, y, x + 28, y + 28)
+        if not _paste_path_icon(canvas, path_type, box):
+            draw.rounded_rectangle(box, radius=4, fill=(79, 155, 190, 235))
+            _draw_path_symbol(draw, path_type, box)
+        label = f"{PATH_TYPE_DISPLAY[path_type]} x{counts[path_type]}"
+        draw.text((x + 36, y + 3), label, font=_font(19), fill=(50, 50, 50))
+
+    # phase_y = top + 126
+    # draw.text((left + 20, phase_y), "Phase", font=_font(23), fill=(70, 70, 70))
+
+    # ranges = _get_phase_ranges(max_turn)
+    # for index, (phase, start, end) in enumerate(ranges):
+    #     col = index % 2
+    #     row = index // 2
+    #     x = left + 20 + col * 230
+    #     y = phase_y + 34 + row * 28
+    #     draw.text((x, y + 1), f"P{phase}", font=_font(18), fill=(45, 45, 45))
+
+    #     icon_x = x + 42
+    #     phase_path = path[start - 1:end]
+    #     for item in phase_path:
+    #         path_type = _normalize_path_type(item)
+    #         box = (icon_x, y, icon_x + 20, y + 20)
+    #         if not _paste_path_icon(canvas, path_type, box):
+    #             draw.rounded_rectangle(box, radius=3, fill=(79, 155, 190, 235))
+    #             _draw_path_symbol(draw, path_type, box)
+    #         icon_x += 18
+
+
 def _title_value(value: Any, fallback: str) -> str:
     text = str(value or "").strip()
     return text[:1].upper() + text[1:] if text else fallback
@@ -304,6 +381,7 @@ def create_racing_room_image(stage: dict[str, Any], *, debug: bool = False) -> I
 
     _draw_path_icons(canvas, draw, path_icons, (150, 330))
     _draw_bonus_rows(canvas, draw, _build_aptitude_bonus(stage), 450)
+    _draw_info_panel(canvas, draw, path_icons, int(stage.get("turns") or len(path_icons) or 0))
 
     track_path = _resolve_path(stage.get("track_image"))
     if track_path:
@@ -311,7 +389,7 @@ def create_racing_room_image(stage: dict[str, Any], *, debug: bool = False) -> I
         track.thumbnail((540, 360), Image.LANCZOS)
         canvas.alpha_composite(track, (620, 350))
    
-    if debug:
-        draw_debug_grid(draw)
+    # if debug:
+    #     draw_debug_grid(draw)
 
     return canvas.convert("RGB")
