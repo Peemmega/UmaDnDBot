@@ -217,13 +217,13 @@ def _draw_path_icons(canvas: Image.Image, draw: ImageDraw.ImageDraw, icons: list
     row_gap = 42
 
     for icon in icons:
-        size = 36
+        size = 40
         if x + size > max_x:
             x = start_x
             y += row_gap
 
         box = (x, y, x + size, y + size)
-        draw.rounded_rectangle(box, radius=5, fill=(79, 155, 190, 235))
+        # draw.rounded_rectangle(box, radius=5, fill=(79, 155, 190, 235))
         path_type = _normalize_path_type(icon)
         if not _paste_path_icon(canvas, path_type, box):
             _draw_path_symbol(draw, path_type, box)
