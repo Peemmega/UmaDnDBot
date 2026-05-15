@@ -660,7 +660,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 1.25},
+            {"type": "modify_current_speed", "value": 1},
         ],
 
         "tags": ["start", "acceleration"],
@@ -741,7 +741,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_current_speed",
-                "value": 1.0,
+                "value": 1.5,
             },
             {
                 "type": "reduce_stamina", 
