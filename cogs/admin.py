@@ -8,7 +8,9 @@ from utils.database import (
     set_all_aptitude,
     add_player_stats_point,
     add_player_skill_point,
+    clear_race_rankings,
 )
+from utils.race.race_presets import RACE_PRESET
 
 ADMIN_IDS = {
     464058883556769793,
@@ -118,6 +120,60 @@ class Admin(commands.Cog):
             action_name="resetzoneall",
             result_text="รีเซ็ต Zone Build และ Zone Points ของทุกคนแล้ว",
             color=discord.Color.red(),
+        )
+
+    @commands.command(name="clear_race_ranking", aliases=["clearranking", "clear_rank"])
+    async def clear_race_ranking(self, ctx: commands.Context, stage_key: str = "all"):
+        if not self.is_admin_user(ctx.author.id):
+            await self.silent_delete(ctx.message)
+            await self.send_log_embed(
+                ctx,
+                action_name="clear_race_ranking",
+                result_text="Permission denied",
+                color=discord.Color.red(),
+            )
+            return
+
+        await self.silent_delete(ctx.message)
+
+        normalized_key = stage_key.strip()
+        delete_all = normalized_key.lower() in {"all", "*"}
+
+        if not delete_all and normalized_key not in RACE_PRESET:
+            examples = ", ".join(list(RACE_PRESET.keys())[:10])
+            error_text = (
+                f"Unknown stage_key: `{normalized_key}`\n"
+                f"Use `all` to clear every ranking, or use a stage key such as: {examples}"
+            )
+            await self.send_result_embed(
+                ctx,
+                title="Clear Race Ranking Failed",
+                description=error_text,
+                color=discord.Color.red(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="clear_race_ranking",
+                result_text=error_text,
+                color=discord.Color.red(),
+            )
+            return
+
+        deleted_count = clear_race_rankings(None if delete_all else normalized_key)
+        target_text = "all stages" if delete_all else normalized_key
+        result_text = f"Deleted {deleted_count} ranking row(s) from {target_text}."
+
+        await self.send_result_embed(
+            ctx,
+            title="Race Ranking Cleared",
+            description=result_text,
+            color=discord.Color.green(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="clear_race_ranking",
+            result_text=result_text,
+            color=discord.Color.green(),
         )
 
     @commands.command(name="add_att")

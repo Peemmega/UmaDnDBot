@@ -92,8 +92,118 @@ def init_db():
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_rankings (
+        stage_key TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        best_score INTEGER NOT NULL,
+        style TEXT NOT NULL,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (stage_key, user_id)
+    )
+    """)
+
     conn.commit()
     conn.close()
+
+
+def upsert_race_ranking(stage_key: str, user_id, score: int, style: str) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT best_score
+    FROM race_rankings
+    WHERE stage_key = ? AND user_id = ?
+    """, (stage_key, str(user_id)))
+    row = cursor.fetchone()
+
+    if row is not None and int(row["best_score"]) >= int(score):
+        conn.close()
+        return False
+
+    cursor.execute("""
+    INSERT INTO race_rankings (stage_key, user_id, best_score, style, updated_at)
+    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(stage_key, user_id) DO UPDATE SET
+        best_score = excluded.best_score,
+        style = excluded.style,
+        updated_at = CURRENT_TIMESTAMP
+    """, (stage_key, str(user_id), int(score), str(style)))
+
+    conn.commit()
+    conn.close()
+    return True
+
+
+def record_race_rankings(stage_key: str, ranked_players) -> int:
+    updated_count = 0
+
+    for user_id, info in ranked_players:
+        if str(user_id).startswith("mob_") or info.get("is_mob"):
+            continue
+
+        updated = upsert_race_ranking(
+            stage_key=stage_key,
+            user_id=user_id,
+            score=info.get("score", 0),
+            style=info.get("style", "-"),
+        )
+        if updated:
+            updated_count += 1
+
+    return updated_count
+
+
+def clear_race_rankings(stage_key: str | None = None) -> int:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if stage_key:
+        cursor.execute("DELETE FROM race_rankings WHERE stage_key = ?", (stage_key,))
+    else:
+        cursor.execute("DELETE FROM race_rankings")
+
+    deleted_count = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return deleted_count
+
+
+def get_race_rankings(stage_key: str, limit: int = 10) -> list[dict]:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT
+        r.stage_key,
+        r.user_id,
+        COALESCE(p.username, r.user_id) AS username,
+        r.best_score,
+        r.style,
+        r.updated_at
+    FROM race_rankings r
+    LEFT JOIN players p
+        ON CAST(p.user_id AS TEXT) = r.user_id
+    WHERE r.stage_key = ?
+    ORDER BY r.best_score DESC, r.updated_at ASC
+    LIMIT ?
+    """, (stage_key, limit))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "stage_key": row["stage_key"],
+            "user_id": row["user_id"],
+            "username": row["username"],
+            "best_score": row["best_score"],
+            "style": row["style"],
+            "updated_at": row["updated_at"],
+        }
+        for row in rows
+    ]
 
 def add_mail(conn, user_id, title, message, reward_type, reward_amount):
     cur = conn.cursor()

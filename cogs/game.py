@@ -33,7 +33,7 @@ WIN_IMAGE = [
 ]
 
 
-from utils.database import ensure_player
+from utils.database import ensure_player, record_race_rankings
 from utils.race.race_presets import (
     get_current_path_type, 
     build_path_effect_text, 
@@ -547,6 +547,12 @@ class GameCog(commands.GroupCog, name="game"):
 
         if new_turn > game["max_turn"]:
             ranked_players = get_ranked_players(channel_id)
+            saved_rankings = 0
+            if game.get("stage_key"):
+                saved_rankings = record_race_rankings(
+                    game["stage_key"],
+                    ranked_players,
+                )
 
             commentary_text = None
             try:
@@ -562,6 +568,12 @@ class GameCog(commands.GroupCog, name="game"):
                 ranked_players,
                 commentary_text=commentary_text
             )
+            if saved_rankings:
+                embed.add_field(
+                    name="Race Ranking",
+                    value=f"Saved {saved_rankings} real player result(s).",
+                    inline=False,
+                )
             await send_func(embed=embed)
 
             log_channel_id = 1502217575717798050

@@ -304,7 +304,61 @@ def _draw_info_panel(
     #         if not _paste_path_icon(canvas, path_type, box):
     #             draw.rounded_rectangle(box, radius=3, fill=(79, 155, 190, 235))
     #             _draw_path_symbol(draw, path_type, box)
-    #         icon_x += 18
+#         icon_x += 18
+
+
+def _fit_text(draw: ImageDraw.ImageDraw, text: str, font, max_width: int) -> str:
+    if draw.textlength(text, font=font) <= max_width:
+        return text
+
+    ellipsis = "..."
+    while text and draw.textlength(text + ellipsis, font=font) > max_width:
+        text = text[:-1]
+    return text + ellipsis if text else ellipsis
+
+
+def _draw_ranking_panel(
+    draw: ImageDraw.ImageDraw,
+    rankings: list[dict[str, Any]],
+):
+    left, top, right, bottom = 675, 390, 1110, 600
+    draw.rounded_rectangle(
+        (left, top, right, bottom),
+        radius=16,
+        fill=(255, 255, 255, 232),
+        outline=(255, 185, 64, 190),
+        width=2,
+    )
+
+    draw.text((left + 20, top + 12), "Top Ranking", font=_font(26), fill=(70, 70, 70))
+
+    if not rankings:
+        draw.text(
+            (left + 20, top + 50),
+            "ยังไม่มีบันทึกอันดับสนาม",
+            font=_font(22),
+            fill=(90, 90, 90),
+        )
+        return
+
+    row_y = top + 50
+    font_rank = _font(22)
+    font_small = _font(18)
+    for index, ranking in enumerate(rankings[:3], start=1):
+        y = row_y + (index - 1) * 47
+        username = _fit_text(
+            draw,
+            str(ranking.get("username") or ranking.get("user_id") or "-"),
+            font_rank,
+            195,
+        )
+        score = ranking.get("best_score", 0)
+        style = _fit_text(draw, str(ranking.get("style") or "-"), font_small, 96)
+
+        draw.text((left + 20, y), f"{index}.", font=font_rank, fill=(150, 95, 25))
+        draw.text((left + 62, y), username, font=font_rank, fill=(45, 45, 45))
+        draw.text((right - 20, y), str(score), font=font_rank, fill=(45, 45, 45), anchor="ra")
+        draw.text((left + 64, y + 25), style, font=font_small, fill=(95, 95, 95))
 
 
 def _title_value(value: Any, fallback: str) -> str:
@@ -381,6 +435,7 @@ def create_racing_room_image(stage: dict[str, Any], *, debug: bool = False) -> I
 
     _draw_path_icons(canvas, draw, path_icons, (150, 330))
     _draw_bonus_rows(canvas, draw, _build_aptitude_bonus(stage), 450)
+    _draw_ranking_panel(draw, list(stage.get("top_rankings") or []))
     _draw_info_panel(canvas, draw, path_icons, int(stage.get("turns") or len(path_icons) or 0))
 
     track_path = _resolve_path(stage.get("track_image"))

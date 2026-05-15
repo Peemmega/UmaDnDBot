@@ -3,11 +3,20 @@ from io import BytesIO
 
 from utils.race.race_presets import RACE_PRESET, render_path
 from utils.race_room_preview import create_racing_room_image
+from utils.database import get_race_rankings
 from views.join_view import LobbyView
 
 from utils.game_manager import (
     create_game,get_game
 )
+
+
+def get_preview_rankings(stage_key: str) -> list[dict]:
+    try:
+        return get_race_rankings(stage_key, limit=3)
+    except Exception as e:
+        print(f"failed loading race rankings for {stage_key}: {e}")
+        return []
 
 
 def build_lobby_preview_file(stage_key: str, stage_data: dict) -> discord.File:
@@ -20,6 +29,7 @@ def build_lobby_preview_file(stage_key: str, stage_data: dict) -> discord.File:
         "race_key": stage_key,
         "thumbnail_key": stage_key,
         "aptitude_bonus": stage_data.get("aptitude_bonus"),
+        "top_rankings": get_preview_rankings(stage_key),
     }
 
     image = create_racing_room_image(preview_stage)
