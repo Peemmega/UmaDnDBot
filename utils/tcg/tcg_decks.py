@@ -701,7 +701,32 @@ STARTER_DECKS = [
       "UMTD05-09": 4,
       "UMTD05-10": 4
     }
-  }
+  },
+  {
+    "id": "sakura-deck",
+    "name": "Sakura Laurel",
+    "description": "Basic 40-card starter deck built for draw and control tests.",
+    "style": "Wit",
+    "highlight": "Tricks, draw flow, and future keyword hooks.",
+    "tags": [
+      "Starter",
+      "Draw",
+      "Control"
+    ],
+    "trainer": "UMT-006",
+    "mainDeck": {
+      "UMTD05-01": 4,
+      "UMTD05-02": 4,
+      "UMTD05-03": 4,
+      "UMTD05-04": 4,
+      "UMTD05-05": 4,
+      "UMTD05-06": 4,
+      "UMTD05-07": 4,
+      "UMTD05-08": 4,
+      "UMTD05-09": 4,
+      "UMTD05-10": 4
+    }
+  },
 ]
 PREDEFINED_DECKS = [build_deck(deck) for deck in STARTER_DECKS]
 DECKS_BY_ID = {deck['id']: deck for deck in PREDEFINED_DECKS}
