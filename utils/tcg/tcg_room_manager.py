@@ -10,6 +10,9 @@ from .tcg_trainers import get_trainer
 from .tcg_visibility import sanitize_room
 
 
+DEFAULT_TRAINER_ID = "UMT-001"
+
+
 class TcgRoomManager:
     def __init__(self):
         self.rooms: dict[str, dict[str, Any]] = {}
@@ -172,7 +175,7 @@ class TcgRoomManager:
         deck = DECKS_BY_ID.get(deck_id)
         if not deck:
             raise ValueError("Invalid deck")
-        return self.confirm_loadout(room_id, user_id, deck_id, deck.get("trainer"))
+        return self.confirm_loadout(room_id, user_id, deck_id, DEFAULT_TRAINER_ID)
 
     def confirm_loadout(self, room_id: str, user_id: str, deck_id: str, trainer_id: str) -> dict:
         room = self.get_room(room_id)

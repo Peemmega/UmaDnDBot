@@ -41,21 +41,13 @@ def validate_deck(deck: dict) -> dict:
         if card.get('type') == 'Trainer':
             errors.append(f'Trainer card cannot be in Main Deck: {card_id}')
 
-    trainer_id = deck.get('trainer')
-    trainer = CARD_DATABASE.get(trainer_id)
-    if not trainer:
-        errors.append(f'Unknown trainer id: {trainer_id}')
-    elif trainer.get('type') != 'Trainer':
-        errors.append(f'Trainer slot must be a Trainer card: {trainer_id}')
-
     return {'valid': not errors, 'errors': errors}
 
 
 def build_deck(deck: dict) -> dict:
     cards = expand_deck_list(deck.get('mainDeck') or {})
-    trainer_card = get_card(deck.get('trainer'))
     main_deck_keys = list((deck.get('mainDeck') or {}).keys())
-    cover_card = get_card(main_deck_keys[0]) if main_deck_keys else trainer_card
+    cover_card = get_card(main_deck_keys[0]) if main_deck_keys else None
     key_cards = []
     for card_id in main_deck_keys[:3]:
         card = get_card(card_id)
@@ -65,7 +57,6 @@ def build_deck(deck: dict) -> dict:
         **deck,
         'cards': cards,
         'mainDeckCount': len(cards),
-        'trainerCard': trainer_card,
         'coverCard': cover_card,
         'coverImage': cover_card.get('image') if cover_card else '',
         'keyCards': key_cards,
