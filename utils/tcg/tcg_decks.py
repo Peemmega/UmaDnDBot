@@ -85,7 +85,6 @@ STARTER_DECKS = [
       "Tempo",
       "Low cost"
     ],
-    "trainer": "UMT-002",
     "mainDeck": {
       "UMTD01-01": 4,
       "UMTD01-02": 4,
@@ -110,7 +109,6 @@ STARTER_DECKS = [
       "Steady",
       "Board tests"
     ],
-    "trainer": "UMT-003",
     "mainDeck": {
       "UMTD02-01": 4,
       "UMTD02-02": 4,
@@ -135,7 +133,6 @@ STARTER_DECKS = [
       "Power",
       "Board push"
     ],
-    "trainer": "UMT-004",
     "mainDeck": {
       "UMTD03-01": 4,
       "UMTD03-02": 4,
@@ -160,7 +157,6 @@ STARTER_DECKS = [
       "Rest synergy",
       "Pressure"
     ],
-    "trainer": "UMT-005",
     "mainDeck": {
       "UMTD04-01": 4,
       "UMTD04-02": 4,
@@ -185,7 +181,6 @@ STARTER_DECKS = [
       "Draw",
       "Control"
     ],
-    "trainer": "UMT-001",
     "mainDeck": {
       "UMTD05-01": 4,
       "UMTD05-02": 4,
@@ -210,7 +205,6 @@ STARTER_DECKS = [
       "Draw",
       "Control"
     ],
-    "trainer": "UMT-006",
     "mainDeck": {
       "UMTD05-01": 4,
       "UMTD05-02": 4,
@@ -234,7 +228,6 @@ CUSTOM_DECKS = [
     "style": "Speed",
     "highlight": "Sakura Laurel leads the tempo package.",
     "tags": ["Custom", "Sakura", "Tempo"],
-    "trainer": "UMT-006",
     "mainDeck": {
       "UMBT01-01": 4,
       "UMBT01-03": 4,
@@ -256,7 +249,6 @@ CUSTOM_DECKS = [
     "style": "Stamina",
     "highlight": "Vixena, Cheval Grand, and Vivlos anchor the deck.",
     "tags": ["Custom", "V Family", "Stamina"],
-    "trainer": "UMT-003",
     "mainDeck": {
       "UMBT01-14": 4,
       "UMBT01-15": 4,
@@ -278,7 +270,6 @@ CUSTOM_DECKS = [
     "style": "Speed",
     "highlight": "Almond Eye and Oguri Cap share the top end.",
     "tags": ["Custom", "Tiara", "Hybrid"],
-    "trainer": "UMT-002",
     "mainDeck": {
       "UMBT01-09": 4,
       "UMTD01-02": 2,
@@ -302,7 +293,6 @@ CUSTOM_DECKS = [
     "style": "Power",
     "highlight": "Admire Vega drives a compact 40-card pressure plan.",
     "tags": ["Custom", "Admire Vega", "Power"],
-    "trainer": "UMT-004",
     "mainDeck": {
       "UMBT01-19": 4,
       "UMTD03-02": 4,
@@ -323,7 +313,6 @@ CUSTOM_DECKS = [
     "style": "Guts",
     "highlight": "Still in love leads a lean event-heavy shell.",
     "tags": ["Custom", "Still in love", "Events"],
-    "trainer": "UMT-002",
     "mainDeck": {
       "UMBT01-10": 4,
       "UMTD01-02": 2,
