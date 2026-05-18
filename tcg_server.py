@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 from utils.tcg.tcg_cards import CARD_DATABASE
 from utils.tcg.tcg_decks import PREDEFINED_DECKS
-from utils.tcg.tcg_trainers import list_trainers
 from utils.tcg.tcg_room_manager import tcg_room_manager
 from utils.tcg.tcg_visibility import sanitize_room
 
@@ -50,7 +49,6 @@ class TcgDeckConfirmPayload(BaseModel):
 class TcgLoadoutPayload(BaseModel):
     user_id: str
     deck_id: str
-    trainer_id: str
 
 
 @app.on_event("startup")
@@ -75,11 +73,6 @@ def api_tcg_cards():
 @app.get("/tcg/decks")
 def api_tcg_decks():
     return {"version": "2", "decks": PREDEFINED_DECKS}
-
-
-@app.get("/tcg/trainers")
-def api_tcg_trainers():
-    return {"version": "2", "trainers": list_trainers()}
 
 
 @app.get("/tcg/rooms")
@@ -161,7 +154,7 @@ async def api_tcg_confirm_deck(room_id: str, payload: TcgDeckConfirmPayload):
 async def api_tcg_loadout(room_id: str, payload: TcgLoadoutPayload):
     try:
         room = tcg_room_manager.confirm_loadout(
-            room_id, payload.user_id, payload.deck_id, payload.trainer_id
+            room_id, payload.user_id, payload.deck_id
         )
         await tcg_room_manager.broadcast(room_id)
         return sanitize_room(room, payload.user_id)

@@ -6,7 +6,6 @@ from fastapi import WebSocket
 
 from .tcg_decks import DECKS_BY_ID
 from .tcg_state import add_carrot, draw_cards, move_card, setup_game_state, shuffle_deck, tap_card, untap_all
-from .tcg_trainers import get_trainer
 from .tcg_visibility import sanitize_room
 
 
@@ -109,7 +108,6 @@ class TcgRoomManager:
             },
             "player_slots": {user_id: "player1"},
             "deck_confirmed": {"player1": None, "player2": None},
-            "trainer_confirmed": {"player1": None, "player2": None},
             "loadouts": {"player1": None, "player2": None},
             "game_state": None,
             "created_at": self._now(),
@@ -172,24 +170,21 @@ class TcgRoomManager:
         deck = DECKS_BY_ID.get(deck_id)
         if not deck:
             raise ValueError("Invalid deck")
-        return self.confirm_loadout(room_id, user_id, deck_id, deck.get("trainer"))
+        return self.confirm_loadout(room_id, user_id, deck_id)
 
-    def confirm_loadout(self, room_id: str, user_id: str, deck_id: str, trainer_id: str) -> dict:
+    def confirm_loadout(self, room_id: str, user_id: str, deck_id: str) -> dict:
         room = self.get_room(room_id)
         if room["phase"] != "deck_select":
             raise ValueError("Room is not in deck select")
         if deck_id not in DECKS_BY_ID:
             raise ValueError("Invalid deck")
-        if not get_trainer(trainer_id):
-            raise ValueError("Invalid trainer")
         slot = room["player_slots"].get(str(user_id))
         if not slot:
             raise ValueError("Player not in room")
 
-        loadout = {"deck_id": deck_id, "trainer_id": trainer_id, "ready": True}
+        loadout = {"deck_id": deck_id, "ready": True}
         room["loadouts"][slot] = loadout
         room["deck_confirmed"][slot] = deck_id
-        room["trainer_confirmed"][slot] = trainer_id
 
         player1 = room["loadouts"].get("player1")
         player2 = room["loadouts"].get("player2")
