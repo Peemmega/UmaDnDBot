@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from utils.tcg.tcg_cards import CARD_DATABASE
+from utils.tcg.tcg_cards import CARD_DATABASE, hydrate_card_tags
 from utils.tcg.tcg_decks import PREDEFINED_DECKS
 from utils.tcg.tcg_trainers import list_trainers
 from utils.tcg.tcg_room_manager import tcg_room_manager
@@ -69,7 +69,13 @@ def health():
 
 @app.get("/tcg/cards")
 def api_tcg_cards():
-    return {"version": "2", "cards": CARD_DATABASE}
+    return {
+        "version": "2",
+        "cards": {
+            card_id: hydrate_card_tags(card)
+            for card_id, card in CARD_DATABASE.items()
+        },
+    }
 
 
 @app.get("/tcg/decks")

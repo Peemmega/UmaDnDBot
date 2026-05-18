@@ -1,5 +1,19 @@
 TODO_TEXT = "TODO: ใส่ความสามารถจากการ์ดจริงภายหลัง"
 
+KEYWORD_TAGS = {
+    "Rush": "ลงมาแล้วสามารถโจมตีได้ทันที",
+    "Quick Step": "สามารถลงการ์ดใบนี้แบบ Flash ได้",
+    "Counter": "ถ้าไม่ถูกทำลายหลังโจมตี ทำลายการ์ดที่โจมตี",
+    "Guard": "ป้องกันการถูกทำลาย {value} ครั้ง",
+    "Duel": "สามารถโจมตีใส่การ์ดที่ตั้งอยู่ได้",
+    "Impact": "ทำดาเมจใส่ Life Zone 2 หน่วยเมื่อโจมตี Trainer สำเร็จ",
+    "Burning Soul": "พลังเพิ่ม 2 เท่าเมื่อโจมตี และทำลายการ์ดใบนี้หลังต่อสู้",
+    "Fury": "ชนะแล้วฟื้นสภาพอีกครั้ง {value} ครั้ง",
+    "Trick": "ทำงานเมื่อใช้ Event Card {value} ครั้ง",
+    "Fan": "ทำงานเมื่อการ์ดใบนี้ได้รับ {value} Carrot",
+    "Last Stand": "เมื่อการ์ดนี้กำลังถูกทำลาย สามารถสั่งโจมตีได้ 1 ครั้งก่อนถูกทำลาย และไม่สามารถใช้งาน Carrot ในการโจมตีนี้ได้",
+}
+
 CARD_DATABASE = {
   "UMBT01-01": {"id": "UMBT01-01", "name": "Sakura Laurel", "type": "Trainee", "cost": 6, "power": 4000, "image": "/tcg/cards/trainees/UMBT01_01.webp", "text": "TODO"},
   "UMBT01-02": {"id": "UMBT01-02", "name": "Sakura Bakushin O", "type": "Trainee", "cost": 6, "power": 4000, "image": "/tcg/cards/trainees/UMBT01_02.webp", "text": "TODO"},
@@ -80,6 +94,42 @@ _add_card_if_missing(
     "/tcg/cards/carrots/UMC_01.webp",
 )
 
+
+def hydrate_card_tags(card: dict) -> dict:
+    hydrated_card = dict(card)
+    raw_tags = card.get("tags") or []
+    hydrated_tags = []
+
+    for tag in raw_tags:
+        if isinstance(tag, str):
+            name = tag
+            value = None
+        elif isinstance(tag, dict):
+            name = tag.get("name")
+            value = tag.get("value")
+        else:
+            continue
+
+        if not name:
+            continue
+
+        label = f"{name} {value}" if value is not None else name
+        description = KEYWORD_TAGS.get(name, "")
+        if value is not None:
+            description = description.replace("{value}", str(value))
+
+        hydrated_tags.append(
+            {
+                "name": name,
+                "value": value,
+                "label": label,
+                "description": description,
+            }
+        )
+
+    hydrated_card["tags"] = hydrated_tags
+    return hydrated_card
+
 CARD_DATABASE_BY_TYPE = {
     card_type: {
         card_id: card
@@ -98,4 +148,7 @@ def get_card(card_id: str) -> dict:
 
 
 def get_cards_by_type(card_type: str) -> dict:
-    return CARD_DATABASE_BY_TYPE.get(card_type, {})
+    return {
+        card_id: hydrate_card_tags(card)
+        for card_id, card in CARD_DATABASE_BY_TYPE.get(card_type, {}).items()
+    }

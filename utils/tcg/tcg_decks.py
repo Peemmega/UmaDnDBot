@@ -1,10 +1,11 @@
 import random
 from copy import deepcopy
 
-from .tcg_cards import CARD_DATABASE
+from .tcg_cards import CARD_DATABASE, hydrate_card_tags
 
 def get_card(card_id: str) -> dict | None:
-    return CARD_DATABASE.get(card_id)
+    card = CARD_DATABASE.get(card_id)
+    return hydrate_card_tags(card) if card else None
 
 
 MAX_COPIES_PER_CARD = 4
