@@ -3,12 +3,13 @@ import random
 from .tcg_decks import DECKS_BY_ID, create_carrot_card, create_deck_instance, create_trainer_card
 
 
-ZONES = ['deck', 'hand', 'field', 'life', 'discard', 'carrot', 'expel']
+ZONES = ['deck', 'hand', 'field', 'trainer', 'life', 'discard', 'carrot', 'expel']
 PRIVATE_ZONES = {'hand', 'deck', 'life'}
 
 
-def setup_player_state(player_slot: str, deck_id: str) -> dict:
-    deck = DECKS_BY_ID[deck_id]
+def setup_player_state(player_slot: str, loadout: dict | str) -> dict:
+    deck_id = loadout if isinstance(loadout, str) else loadout["deck_id"]
+    trainer_id = DECKS_BY_ID[deck_id].get("trainer") if isinstance(loadout, str) else loadout["trainer_id"]
     deck_cards = create_deck_instance(deck_id, player_slot)
     hand = deck_cards[:5]
     life = deck_cards[5:10]
@@ -20,7 +21,8 @@ def setup_player_state(player_slot: str, deck_id: str) -> dict:
         'zones': {
             'deck': remaining_deck,
             'hand': hand,
-            'field': [create_trainer_card(player_slot, deck['trainer'])],
+            'field': [],
+            'trainer': [create_trainer_card(player_slot, trainer_id)],
             'life': life,
             'discard': [],
             'carrot': [],
@@ -29,12 +31,12 @@ def setup_player_state(player_slot: str, deck_id: str) -> dict:
     }
 
 
-def setup_game_state(player1_deck_id: str, player2_deck_id: str) -> dict:
+def setup_game_state(player1_loadout: dict | str, player2_loadout: dict | str) -> dict:
     return {
         'turnPlayer': 'player1',
         'players': {
-            'player1': setup_player_state('player1', player1_deck_id),
-            'player2': setup_player_state('player2', player2_deck_id),
+            'player1': setup_player_state('player1', player1_loadout),
+            'player2': setup_player_state('player2', player2_loadout),
         },
     }
 
@@ -108,6 +110,6 @@ def tap_card(game_state: dict, player_slot: str, card_id: str) -> None:
 
 def untap_all(game_state: dict, player_slot: str) -> None:
     player = game_state['players'][player_slot]
-    for zone in ['field', 'carrot']:
+    for zone in ['field', 'trainer', 'carrot']:
         for card in player['zones'][zone]:
             card['status'] = 'active'

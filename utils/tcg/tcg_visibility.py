@@ -52,6 +52,8 @@ def sanitize_room(room: dict, viewer_user_id: str | None = None) -> dict:
         "players": room["players"],
         "player_slots": room["player_slots"],
         "deck_confirmed": room["deck_confirmed"],
+        "trainer_confirmed": room.get("trainer_confirmed", {"player1": None, "player2": None}),
+        "loadouts": room.get("loadouts", {"player1": None, "player2": None}),
         "created_at": room["created_at"],
         "updated_at": room["updated_at"],
         "game_state": sanitize_game_state(room, viewer_user_id),

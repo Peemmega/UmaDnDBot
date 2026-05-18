@@ -4,7 +4,9 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from utils.tcg.tcg_cards import CARD_DATABASE
 from utils.tcg.tcg_decks import PREDEFINED_DECKS
+from utils.tcg.tcg_trainers import list_trainers
 from utils.tcg.tcg_room_manager import tcg_room_manager
 from utils.tcg.tcg_visibility import sanitize_room
 
@@ -45,6 +47,12 @@ class TcgDeckConfirmPayload(BaseModel):
     deck_id: str
 
 
+class TcgLoadoutPayload(BaseModel):
+    user_id: str
+    deck_id: str
+    trainer_id: str
+
+
 @app.on_event("startup")
 def log_routes() -> None:
     print("TCG server started")
@@ -59,9 +67,19 @@ def health():
     return {"ok": True, "service": "tcg-online"}
 
 
+@app.get("/tcg/cards")
+def api_tcg_cards():
+    return {"version": "1", "cards": CARD_DATABASE}
+
+
 @app.get("/tcg/decks")
 def api_tcg_decks():
-    return PREDEFINED_DECKS
+    return {"version": "1", "decks": PREDEFINED_DECKS}
+
+
+@app.get("/tcg/trainers")
+def api_tcg_trainers():
+    return {"version": "1", "trainers": list_trainers()}
 
 
 @app.get("/tcg/rooms")
@@ -133,6 +151,18 @@ async def api_tcg_start_room(room_id: str, payload: TcgPlayerPayload):
 async def api_tcg_confirm_deck(room_id: str, payload: TcgDeckConfirmPayload):
     try:
         room = tcg_room_manager.confirm_deck(room_id, payload.user_id, payload.deck_id)
+        await tcg_room_manager.broadcast(room_id)
+        return sanitize_room(room, payload.user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/tcg/rooms/{room_id}/loadout")
+async def api_tcg_loadout(room_id: str, payload: TcgLoadoutPayload):
+    try:
+        room = tcg_room_manager.confirm_loadout(
+            room_id, payload.user_id, payload.deck_id, payload.trainer_id
+        )
         await tcg_room_manager.broadcast(room_id)
         return sanitize_room(room, payload.user_id)
     except ValueError as exc:
