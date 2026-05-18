@@ -1,4 +1,4 @@
-from .tcg_state import PRIVATE_ZONES, ZONES
+from .tcg_state import PRIVATE_ZONES, ZONES, migrate_trainer_zone_into_field
 
 
 def sanitize_card_back(zone: str, index: int) -> dict:
@@ -18,6 +18,7 @@ def sanitize_card_back(zone: str, index: int) -> dict:
 def sanitize_game_state(room: dict, viewer_user_id: str | None) -> dict:
     viewer_slot = room["player_slots"].get(str(viewer_user_id)) if viewer_user_id else None
     game_state = room.get("game_state")
+    migrate_trainer_zone_into_field(game_state)
     if not game_state:
         return None
 

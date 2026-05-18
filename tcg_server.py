@@ -69,17 +69,17 @@ def health():
 
 @app.get("/tcg/cards")
 def api_tcg_cards():
-    return {"version": "1", "cards": CARD_DATABASE}
+    return {"version": "2", "cards": CARD_DATABASE}
 
 
 @app.get("/tcg/decks")
 def api_tcg_decks():
-    return {"version": "1", "decks": PREDEFINED_DECKS}
+    return {"version": "2", "decks": PREDEFINED_DECKS}
 
 
 @app.get("/tcg/trainers")
 def api_tcg_trainers():
-    return {"version": "1", "trainers": list_trainers()}
+    return {"version": "2", "trainers": list_trainers()}
 
 
 @app.get("/tcg/rooms")
