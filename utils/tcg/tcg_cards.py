@@ -31,6 +31,55 @@ CARD_DATABASE = {
   "UMT-006": {"id": "UMT-006", "name": "Trainer Tsubaki", "type": "Trainer", "cost": 5, "power": 5000, "image": "/tcg/cards/trainers/UMT_006.webp", "text": "TODO"},
 }
 
+
+def _add_card_if_missing(card_id: str, name: str, card_type: str, cost: int, power: int, image: str) -> None:
+    CARD_DATABASE.setdefault(
+        card_id,
+        {
+            "id": card_id,
+            "name": name,
+            "type": card_type,
+            "cost": cost,
+            "power": power,
+            "image": image,
+            "text": TODO_TEXT,
+        },
+    )
+
+
+for deck_number in range(1, 6):
+    for card_number in range(1, 11):
+        card_id = f"UMTD{deck_number:02d}-{card_number:02d}"
+        is_trainee = card_number <= 5
+        _add_card_if_missing(
+            card_id,
+            card_id,
+            "Trainee" if is_trainee else "Event",
+            min(card_number, 8),
+            3000 if is_trainee else 0,
+            f"/tcg/cards/trainees/UMTD{deck_number:02d}_{card_number:02d}.webp",
+        )
+
+for trainer_number in range(1, 7):
+    trainer_id = f"UMT-{trainer_number:03d}"
+    _add_card_if_missing(
+        trainer_id,
+        f"Trainer {trainer_number:03d}",
+        "Trainer",
+        5,
+        5000,
+        f"/tcg/cards/trainers/UMT_{trainer_number:03d}.webp",
+    )
+
+_add_card_if_missing(
+    "UMC-01",
+    "Carrot",
+    "Carrot",
+    0,
+    0,
+    "/tcg/cards/carrots/UMC_01.webp",
+)
+
 CARD_DATABASE_BY_TYPE = {
     card_type: {
         card_id: card
