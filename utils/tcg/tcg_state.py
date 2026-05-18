@@ -1,6 +1,6 @@
 import random
 
-from .tcg_decks import create_carrot_card, create_deck_instance
+from .tcg_decks import DECKS_BY_ID, create_carrot_card, create_deck_instance, create_trainer_card
 
 
 ZONES = ['deck', 'hand', 'field', 'life', 'discard', 'carrot', 'expel']
@@ -9,6 +9,7 @@ PRIVATE_ZONES = {'hand', 'deck', 'life'}
 
 def setup_player_state(player_slot: str, loadout: dict | str) -> dict:
     deck_id = loadout if isinstance(loadout, str) else loadout["deck_id"]
+    trainer_id = DECKS_BY_ID[deck_id].get("trainer") if isinstance(loadout, str) else loadout["trainer_id"]
     deck_cards = create_deck_instance(deck_id, player_slot)
     hand = deck_cards[:5]
     life = deck_cards[5:10]
@@ -20,7 +21,7 @@ def setup_player_state(player_slot: str, loadout: dict | str) -> dict:
         'zones': {
             'deck': remaining_deck,
             'hand': hand,
-            'field': [],
+            'field': [create_trainer_card(player_slot, trainer_id)],
             'life': life,
             'discard': [],
             'carrot': [],
@@ -38,6 +39,20 @@ def setup_game_state(player1_loadout: dict | str, player2_loadout: dict | str) -
         },
     }
 
+
+
+def migrate_trainer_zone_into_field(game_state: dict | None) -> None:
+    if not game_state:
+        return
+    for player in game_state.get('players', {}).values():
+        zones = player.get('zones', {})
+        trainer_cards = zones.pop('trainer', []) or []
+        if trainer_cards:
+            zones.setdefault('field', [])
+            existing_ids = {card.get('instanceId') for card in zones['field']}
+            zones['field'].extend(
+                card for card in trainer_cards if card.get('instanceId') not in existing_ids
+            )
 def draw_cards(game_state: dict, player_slot: str, count: int) -> None:
     player = game_state['players'][player_slot]
     drawn = player['zones']['deck'][:count]
@@ -69,6 +84,11 @@ def find_card_location(game_state: dict, card_id: str) -> tuple[str, str, dict] 
 
 
 def move_card(game_state: dict, player_slot: str, card_id: str, from_zone: str, to_zone: str, field_x=None, field_y=None) -> None:
+    migrate_trainer_zone_into_field(game_state)
+    if from_zone == 'trainer':
+        from_zone = 'field'
+    if to_zone == 'trainer':
+        to_zone = 'field'
     if from_zone not in ZONES or to_zone not in ZONES:
         raise ValueError('Invalid zone')
     location = find_card_location(game_state, card_id)

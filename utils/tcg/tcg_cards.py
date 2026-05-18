@@ -79,6 +79,12 @@ CARD_DATABASE = {
     "UMTD05-08": {"id": "UMTD05-08", "name": "UMTD05 08", "type": "Trainee", "cost": 0, "power": 0, "image": "/tcg/cards/trainees/UMTD05_08.webp", "text": TODO_TEXT},
     "UMTD05-09": {"id": "UMTD05-09", "name": "UMTD05 09", "type": "Trainee", "cost": 0, "power": 0, "image": "/tcg/cards/trainees/UMTD05_09.webp", "text": TODO_TEXT},
     "UMTD05-10": {"id": "UMTD05-10", "name": "UMTD05 10", "type": "Trainee", "cost": 0, "power": 0, "image": "/tcg/cards/trainees/UMTD05_10.webp", "text": TODO_TEXT},
+    "UMT-001": {"id": "UMT-001", "name": "UMT 001", "type": "Trainer", "cost": 0, "power": 0, "image": "/tcg/cards/trainers/UMT_001.webp", "text": TODO_TEXT},
+    "UMT-002": {"id": "UMT-002", "name": "UMT 002", "type": "Trainer", "cost": 0, "power": 0, "image": "/tcg/cards/trainers/UMT_002.webp", "text": TODO_TEXT},
+    "UMT-003": {"id": "UMT-003", "name": "UMT 003", "type": "Trainer", "cost": 0, "power": 0, "image": "/tcg/cards/trainers/UMT_003.webp", "text": TODO_TEXT},
+    "UMT-004": {"id": "UMT-004", "name": "UMT 004", "type": "Trainer", "cost": 0, "power": 0, "image": "/tcg/cards/trainers/UMT_004.webp", "text": TODO_TEXT},
+    "UMT-005": {"id": "UMT-005", "name": "UMT 005", "type": "Trainer", "cost": 0, "power": 0, "image": "/tcg/cards/trainers/UMT_005.webp", "text": TODO_TEXT},
+    "UMT-006": {"id": "UMT-006", "name": "UMT 006", "type": "Trainer", "cost": 0, "power": 0, "image": "/tcg/cards/trainers/UMT_006.webp", "text": TODO_TEXT},
 }
 
 CARD_DATABASE_BY_TYPE = {
@@ -87,7 +93,7 @@ CARD_DATABASE_BY_TYPE = {
         for card_id, card in CARD_DATABASE.items()
         if card["type"] == card_type
     }
-    for card_type in {"Trainee", "Event", "Carrot"}
+    for card_type in {"Trainee", "Event", "Carrot", "Trainer"}
 }
 
 

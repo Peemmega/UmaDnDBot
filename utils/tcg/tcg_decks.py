@@ -38,13 +38,24 @@ def validate_deck(deck: dict) -> dict:
             errors.append(f'{card_id} quantity must be at least 1')
         if quantity > MAX_COPIES_PER_CARD:
             errors.append(f'{card_id} exceeds {MAX_COPIES_PER_CARD} copies')
+        if card.get('type') == 'Trainer':
+            errors.append(f'Trainer card cannot be in Main Deck: {card_id}')
+
+    trainer_id = deck.get('trainer')
+    trainer = CARD_DATABASE.get(trainer_id)
+    if not trainer:
+        errors.append(f'Unknown trainer id: {trainer_id}')
+    elif trainer.get('type') != 'Trainer':
+        errors.append(f'Trainer slot must be a Trainer card: {trainer_id}')
+
     return {'valid': not errors, 'errors': errors}
 
 
 def build_deck(deck: dict) -> dict:
     cards = expand_deck_list(deck.get('mainDeck') or {})
+    trainer_card = get_card(deck.get('trainer'))
     main_deck_keys = list((deck.get('mainDeck') or {}).keys())
-    cover_card = get_card(main_deck_keys[0]) if main_deck_keys else None
+    cover_card = get_card(main_deck_keys[0]) if main_deck_keys else trainer_card
     key_cards = []
     for card_id in main_deck_keys[:3]:
         card = get_card(card_id)
@@ -54,6 +65,7 @@ def build_deck(deck: dict) -> dict:
         **deck,
         'cards': cards,
         'mainDeckCount': len(cards),
+        'trainerCard': trainer_card,
         'coverCard': cover_card,
         'coverImage': cover_card.get('image') if cover_card else '',
         'keyCards': key_cards,
@@ -331,6 +343,15 @@ def create_deck_instance(deck_id: str, player_slot: str) -> list[dict]:
         cards.append(instance)
     random.shuffle(cards)
     return cards
+
+
+def create_trainer_card(player_slot: str, trainer_id: str = 'UMT-001') -> dict:
+    trainer = deepcopy(get_card(trainer_id) or get_card('UMT-001'))
+    trainer['instanceId'] = f'{player_slot}-trainer-card'
+    trainer['status'] = 'active'
+    trainer['fieldX'] = 18
+    trainer['fieldY'] = 18
+    return trainer
 
 
 def create_carrot_card(player_slot: str, index: int) -> dict:
