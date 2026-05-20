@@ -158,7 +158,7 @@ def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
     if modify_current_speed > 0:
         incrase_speed_by_acceleration(game, player, modify_current_speed)
 
-    zone_left -= 1
+    player["zone_left"] = zone_left - 1
 
     zone_effect = get_zone_effect(zone)
 

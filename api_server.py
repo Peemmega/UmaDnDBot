@@ -584,6 +584,36 @@ async def api_web_race_skill(room_id: str, payload: WebRaceSkillPayload):
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+@app.post("/race/rooms/{room_id}/zone")
+async def api_web_race_zone(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.zone(room_id, payload.user_id)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/block")
+async def api_web_race_block(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.block(room_id, payload.user_id)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/rush")
+async def api_web_race_rush(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.rush(room_id, payload.user_id)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @app.websocket("/ws/race/{room_id}")
 async def websocket_race_room(websocket: WebSocket, room_id: str, user_id: str = ""):
     try:
@@ -608,6 +638,12 @@ async def websocket_race_room(websocket: WebSocket, room_id: str, user_id: str =
                         skill_id=message.get("skill_id"),
                         slot=message.get("slot"),
                     )
+                elif message_type == "ZONE":
+                    race_web_manager.zone(room_id, action_user_id)
+                elif message_type == "BLOCK":
+                    race_web_manager.block(room_id, action_user_id)
+                elif message_type == "RUSH":
+                    race_web_manager.rush(room_id, action_user_id)
                 elif message_type == "LEAVE_ROOM":
                     race_web_manager.leave_room(room_id, action_user_id)
                 await race_web_manager.broadcast(room_id)
