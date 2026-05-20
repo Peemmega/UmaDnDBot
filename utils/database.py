@@ -4,7 +4,7 @@ from typing import Optional
 from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST
 import json
 
-DB_PATH = "/app/data/player.db"
+DB_PATH = os.getenv("PLAYER_DB_PATH", "/app/data/player.db")
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH, timeout=10)  # ⬅️ เพิ่ม timeout

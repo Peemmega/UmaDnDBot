@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 import json
 import asyncio
 
@@ -9,6 +9,7 @@ from utils.database import (
     update_player_username,
     set_player_skill_slot,
     get_player_skill_slots,
+    init_db,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +19,7 @@ from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
 from utils.race.race_log_embed import build_race_log_embed
+from utils.race.race_web import race_web_manager
 from views.create_game_view import LobbyView, build_lobby_message_payload
 import bot_instance
 
@@ -25,12 +27,19 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://umabotapp-production-c99a.up.railway.app"
+        "https://umabotapp-production-c99a.up.railway.app",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def api_startup():
+    init_db()
 
 @app.get("/player/{user_id}")
 def api_get_player(user_id: str, username: str = "Unknown"):
@@ -329,6 +338,22 @@ class CreateRaceRoomPayload(BaseModel):
     user_id: str
     race_id: str
 
+
+class WebRacePlayerPayload(BaseModel):
+    user_id: str
+    username: str = "Unknown"
+    avatar_url: str = ""
+    style: str = "Pace"
+    stage_key: str = "Debut"
+    mob_preset: str | None = None
+    level: int = 1
+
+
+class WebRaceSkillPayload(BaseModel):
+    user_id: str
+    skill_id: str | None = None
+    slot: int | None = None
+
 async def send_lobby_message(channel_id: int):
     bot = bot_instance.bot
 
@@ -452,6 +477,145 @@ async def api_create_race_room(payload: CreateRaceRoomPayload):
             }
 
     return {"success": False, "message": "ไม่มีห้องว่าง"}
+
+@app.get("/race/rooms")
+def api_web_race_rooms():
+    return {"rooms": race_web_manager.list_rooms()}
+
+
+@app.post("/race/rooms/create")
+async def api_web_race_create_room(payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.create_room(
+            owner_id=payload.user_id,
+            username=payload.username,
+            avatar_url=payload.avatar_url,
+            stage_key=payload.stage_key,
+            style=payload.style,
+        )
+        await race_web_manager.broadcast(room["room_id"])
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.get("/race/rooms/{room_id}")
+def api_web_race_room(room_id: str, user_id: str = ""):
+    try:
+        return race_web_manager.get_room(room_id, user_id or None)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/join")
+async def api_web_race_join_room(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.join_room(
+            room_id=room_id,
+            user_id=payload.user_id,
+            username=payload.username,
+            avatar_url=payload.avatar_url,
+            style=payload.style,
+            mob_preset=payload.mob_preset,
+        )
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/leave")
+async def api_web_race_leave_room(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.leave_room(room_id, payload.user_id)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/bot")
+async def api_web_race_add_bot(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.add_bot(
+            room_id=room_id,
+            user_id=payload.user_id,
+            preset_key=payload.mob_preset or "rookie_pace",
+            level=payload.level,
+        )
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/start")
+async def api_web_race_start_room(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.start_room(room_id, payload.user_id)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/run")
+async def api_web_race_run(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.run(room_id, payload.user_id)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/skill")
+async def api_web_race_skill(room_id: str, payload: WebRaceSkillPayload):
+    try:
+        room = race_web_manager.skill(
+            room_id=room_id,
+            user_id=payload.user_id,
+            skill_id=payload.skill_id,
+            slot=payload.slot,
+        )
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.websocket("/ws/race/{room_id}")
+async def websocket_race_room(websocket: WebSocket, room_id: str, user_id: str = ""):
+    try:
+        await race_web_manager.connect(room_id, websocket)
+        await race_web_manager.broadcast(room_id)
+    except ValueError:
+        await websocket.close(code=1008)
+        return
+
+    try:
+        while True:
+            message = await websocket.receive_json()
+            try:
+                message_type = message.get("type")
+                action_user_id = user_id or message.get("user_id")
+                if message_type == "RUN":
+                    race_web_manager.run(room_id, action_user_id)
+                elif message_type == "SKILL":
+                    race_web_manager.skill(
+                        room_id,
+                        action_user_id,
+                        skill_id=message.get("skill_id"),
+                        slot=message.get("slot"),
+                    )
+                elif message_type == "LEAVE_ROOM":
+                    race_web_manager.leave_room(room_id, action_user_id)
+                await race_web_manager.broadcast(room_id)
+            except ValueError as exc:
+                await websocket.send_json({"type": "ERROR", "message": str(exc)})
+    except WebSocketDisconnect:
+        race_web_manager.disconnect(room_id, websocket)
+
 
 @app.get("/race/calendar")
 def get_race_calendar():
