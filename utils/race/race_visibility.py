@@ -51,6 +51,9 @@ def serialize_player(user_id, player: dict, rank: int | None = None) -> dict:
         "wit_mana": player.get("wit_mana", 0),
         "current_max_speed": player.get("current_max_speed", 0),
         "zone_left": player.get("zone_left", 0),
+        "reroll_left": player.get("reroll_left", 0),
+        "wit_reroll_left": player.get("wit_reroll_left", 0),
+        "no_reroll_this_turn": bool(player.get("no_reroll_this_turn")),
         "used_block": bool(player.get("used_block")),
         "used_rush": bool(player.get("used_rush")),
         "action_locked": bool(player.get("action_locked")),
@@ -112,6 +115,8 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
         "race_phase": get_phase_from_turn(turn, max_turn) if turn else 0,
         "phase": phase,
         "status": "ended" if game.get("ended") else ("running" if game.get("started") else "waiting"),
+        "awaiting_turn_confirm": bool(game.get("awaiting_turn_confirm")),
+        "turn_confirmations": [str(user_id) for user_id in game.get("turn_confirmations", set())],
         "path": [
             {
                 "turn": index,

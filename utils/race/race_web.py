@@ -9,7 +9,10 @@ from utils.database import ensure_player
 from utils.game_manager import (
     add_mob_from_preset,
     add_player,
+    build_pending_effects_from_player,
+    can_use_wit_reroll,
     can_player_roll,
+    confirm_turn,
     create_game,
     execute_roll_core,
     execute_skill_core,
@@ -19,12 +22,18 @@ from utils.game_manager import (
     have_all_players_rolled,
     next_turn,
     process_mob_turn,
+    reset_turn_confirmations,
     start_game,
+    start_turn_confirmation,
+    update_player_score,
     use_block,
+    use_reroll,
     use_rush,
 )
 from utils.mob.mob_presets import MOB_PRESETS
+from utils.race.race_dice import roll_race_dice
 from utils.race.race_presets import RACE_PRESET
+from utils.race.race_presets import get_current_path_type, get_path_effect
 from utils.race.race_visibility import serialize_room, serialize_room_summary
 from utils.zone.zone_manager import apply_zone_in_game
 
@@ -203,7 +212,75 @@ class RaceWebManager:
                 "roll_summary": _roll_summary_payload(payload),
             },
         )
+        player["web_last_roll_result"] = result
         self._advance_if_ready(room_id)
+        return serialize_room(self._get_room(room_id), room_id, str(user_id))
+
+    def reroll(self, room_id: str, user_id: str, use_wit: bool = False) -> dict:
+        game = self._get_room(room_id)
+        player = game.get("players", {}).get(str(user_id))
+        if player is None:
+            raise ValueError("Player is not in this race room")
+        if not game.get("awaiting_turn_confirm"):
+            raise ValueError("Reroll is only available during turn confirmation")
+        if player.get("last_roll_turn") != game.get("turn"):
+            raise ValueError("You need to run before rerolling")
+        if player.get("no_reroll_this_turn"):
+            raise ValueError("Reroll is blocked this turn")
+
+        old_result = player.get("web_last_roll_result") or {}
+        old_total = int(old_result.get("total") or player.get("last_roll_log", {}).get("total") or 0)
+        if old_total <= 0:
+            raise ValueError("No roll result available to reroll")
+
+        spent_normal_reroll = False
+        if use_wit:
+            base_total = int(old_result.get("base_total") or player.get("last_roll_log", {}).get("base_total") or 0)
+            if not can_use_wit_reroll(player, base_total):
+                raise ValueError("WIT reroll is not available for this roll")
+            player["wit_reroll_left"] = max(0, int(player.get("wit_reroll_left", 0)) - 1)
+        else:
+            success, result = use_reroll(room_id, str(user_id))
+            if not success:
+                raise ValueError(result)
+            spent_normal_reroll = True
+
+        success, payload = self._execute_reroll_core(room_id, str(user_id), old_total)
+        if not success:
+            if use_wit:
+                player["wit_reroll_left"] = int(player.get("wit_reroll_left", 0)) + 1
+            elif spent_normal_reroll:
+                player["reroll_left"] = int(player.get("reroll_left", 0)) + 1
+            raise ValueError(payload.get("message", "Reroll failed"))
+
+        result = payload["result"]
+        self._log(
+            game,
+            f"{self._player_label(user_id, player)} {'WIT ' if use_wit else ''}rerolled +{result.get('total', 0)}",
+            {
+                "result": result,
+                "roll_summary": _roll_summary_payload(payload),
+                "reroll_type": "wit" if use_wit else "normal",
+            },
+        )
+        return serialize_room(game, room_id, str(user_id))
+
+    def confirm(self, room_id: str, user_id: str) -> dict:
+        game = self._get_room(room_id)
+        success, result = confirm_turn(room_id, str(user_id))
+        if not success:
+            raise ValueError(result)
+
+        self._log(
+            game,
+            f"{self._player_label(user_id, game.get('players', {}).get(str(user_id)))} confirmed turn",
+            result,
+        )
+
+        if result.get("all_confirmed"):
+            reset_turn_confirmations(room_id)
+            self._advance_if_ready(room_id, require_confirmation=False)
+
         return serialize_room(self._get_room(room_id), room_id, str(user_id))
 
     def skill(self, room_id: str, user_id: str, skill_id: str | None = None, slot: int | None = None) -> dict:
@@ -312,13 +389,20 @@ class RaceWebManager:
             else:
                 self._log(game, f"Bot turn failed: {payload.get('message', 'unknown error')}")
 
-    def _advance_if_ready(self, room_id: str) -> None:
+    def _advance_if_ready(self, room_id: str, require_confirmation: bool = True) -> None:
         game = self._get_room(room_id)
         guard = 0
         while game.get("started") and not game.get("ended") and have_all_players_rolled(room_id):
             guard += 1
             if guard > 80:
                 raise ValueError("Race auto-advance guard tripped")
+
+            has_human = any(not player.get("is_mob") for player in game.get("players", {}).values())
+            if require_confirmation and has_human:
+                if not game.get("awaiting_turn_confirm"):
+                    start_turn_confirmation(room_id)
+                    self._log(game, "Awaiting turn confirmation")
+                break
 
             if game.get("turn", 0) >= game.get("max_turn", 0):
                 final_turn = game.get("turn", 0)
@@ -342,6 +426,79 @@ class RaceWebManager:
             self._log(game, f"Turn {game.get('turn')} started")
             self._process_mobs(room_id)
             game = self._get_room(room_id)
+
+    def _execute_reroll_core(self, room_id: str, user_id: str, old_total: int) -> tuple[bool, dict]:
+        game = self._get_room(room_id)
+        player = game.get("players", {}).get(str(user_id))
+        if player is None:
+            return False, {"message": "Player is not in this race room"}
+
+        race_player = player.get("race_profile")
+        if race_player is None:
+            return False, {"message": "Race profile is missing"}
+
+        success, _ = update_player_score(room_id, str(user_id), -old_total)
+        if not success:
+            return False, {"message": "Could not remove old score"}
+
+        pending_effects, merged_stats = build_pending_effects_from_player(player)
+        path_type = get_current_path_type(game)
+        path_effect = get_path_effect(path_type, player, race_player)
+        result = roll_race_dice(
+            game_player=player,
+            player_stats=race_player,
+            player_id=str(user_id),
+            score_map=game.get("turn_snapshot_scores", {}),
+            turn=game["turn"],
+            max_turn=game["max_turn"],
+            path_effect=path_effect,
+            skill_effects=pending_effects,
+        )
+
+        if player.get("takeStaminaDebuff", False):
+            if result["bonus_display"] == "-":
+                result["bonus_display"] = "-20CAP"
+            else:
+                result["bonus_display"] += " -20CAP"
+
+        player["lastedBuff"] = merged_stats
+        player["next_roll_flat_bonus"] = 0
+        player["next_roll_add_d"] = 0
+        player["next_roll_add_kh"] = 0
+        player["next_roll_floor_bonus"] = 0
+        player["next_roll_selected_die_bonus"] = 0
+        player["next_roll_cap_bonus"] = 0
+        player["gold_range_bonus_this_turn"] = 0
+        player["enemy_gold_range_penalty_next_turn"] = 0
+
+        success, new_score = update_player_score(room_id, str(user_id), result["total"])
+        if not success:
+            update_player_score(room_id, str(user_id), old_total)
+            return False, {"message": "Could not apply new score"}
+
+        rule = result.get("rule", {})
+        rule_text = f"{rule.get('d', 0)}d"
+        if rule.get("kh") is not None:
+            rule_text += f" kh{rule['kh']}"
+
+        player["last_roll_log"] = {
+            "phase": result.get("phase"),
+            "distance_color": result.get("distance_color"),
+            "rule": rule_text,
+            "total": result.get("total"),
+            "base_total": result.get("base_total"),
+            "bonus_display": result.get("bonus_display"),
+        }
+        player["web_last_roll_result"] = result
+
+        return True, {
+            "game": game,
+            "game_player": player,
+            "result": result,
+            "new_score": new_score,
+            "path_effect": path_effect,
+            "stamina_note": player.get("stamina_left", 0),
+        }
 
     async def connect(self, room_id: str, websocket: WebSocket) -> None:
         self._get_room(room_id)

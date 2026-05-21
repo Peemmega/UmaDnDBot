@@ -569,6 +569,36 @@ async def api_web_race_run(room_id: str, payload: WebRacePlayerPayload):
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+@app.post("/race/rooms/{room_id}/confirm")
+async def api_web_race_confirm(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.confirm(room_id, payload.user_id)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/reroll")
+async def api_web_race_reroll(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.reroll(room_id, payload.user_id, use_wit=False)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/wit-reroll")
+async def api_web_race_wit_reroll(room_id: str, payload: WebRacePlayerPayload):
+    try:
+        room = race_web_manager.reroll(room_id, payload.user_id, use_wit=True)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @app.post("/race/rooms/{room_id}/skill")
 async def api_web_race_skill(room_id: str, payload: WebRaceSkillPayload):
     try:
@@ -631,6 +661,12 @@ async def websocket_race_room(websocket: WebSocket, room_id: str, user_id: str =
                 action_user_id = user_id or message.get("user_id")
                 if message_type == "RUN":
                     race_web_manager.run(room_id, action_user_id)
+                elif message_type == "CONFIRM":
+                    race_web_manager.confirm(room_id, action_user_id)
+                elif message_type == "REROLL":
+                    race_web_manager.reroll(room_id, action_user_id, use_wit=False)
+                elif message_type == "WIT_REROLL":
+                    race_web_manager.reroll(room_id, action_user_id, use_wit=True)
                 elif message_type == "SKILL":
                     race_web_manager.skill(
                         room_id,
