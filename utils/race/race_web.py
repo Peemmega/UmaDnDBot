@@ -79,6 +79,12 @@ class RaceWebManager:
             or str(player_id)
         )
 
+    def _find_player_entry(self, game: dict, user_id: str) -> tuple[Any, dict] | tuple[None, None]:
+        for player_id, player in game.get("players", {}).items():
+            if str(player_id) == str(user_id):
+                return player_id, player
+        return None, None
+
     def list_rooms(self) -> list[dict]:
         summaries = []
         for room_id, game in games.items():
@@ -128,6 +134,14 @@ class RaceWebManager:
         mob_preset: str | None = None,
     ) -> dict:
         game = self._get_room(room_id)
+        existing_player_id, existing_player = self._find_player_entry(game, user_id)
+        if existing_player and not mob_preset:
+            existing_player["display_name"] = username or existing_player.get("display_name")
+            existing_player["username"] = username or existing_player.get("username")
+            if avatar_url:
+                existing_player["avatar"] = avatar_url
+            self._log(game, f"{self._player_label(existing_player_id, existing_player)} rejoined")
+            return serialize_room(game, room_id, str(existing_player_id))
 
         if mob_preset:
             success, message = add_player_as_web_mob(room_id, str(user_id), username, mob_preset)

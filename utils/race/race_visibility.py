@@ -35,11 +35,15 @@ def serialize_player(user_id, player: dict, rank: int | None = None) -> dict:
             "cooldown": cooldowns.get(skill_id, 0) if skill_id else 0,
         })
 
+    player_avatar = player.get("thumnail") if player.get("is_mob") else player.get("avatar")
+    player_avatar = player_avatar or player.get("avatar") or player.get("thumnail")
+
     return {
         "id": str(user_id),
         "name": _player_name(user_id, player),
         "username": player.get("username"),
-        "avatar": player.get("avatar") or player.get("thumnail"),
+        "avatar": str(player_avatar) if player_avatar else "",
+        "thumbnail": str(player.get("thumnail") or ""),
         "style": player.get("style"),
         "score": player.get("score", 0),
         "rank": rank,
