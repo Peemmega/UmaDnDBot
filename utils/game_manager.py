@@ -1333,6 +1333,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         "thumnail": preset.get("thumnail", preset.get("avatar")),
         "is_mob": True,
         "mob_level": level,
+        "mob_preset_key": preset_key,
         "style": preset["style"],
 
         "score": 0,
