@@ -21,7 +21,7 @@ ZONE_IMAGE_PRESET = {
 
 ZONE_POINT_COST = {
     "flat": 1,
-    "add_dkh": 3,
+    "add_dkh": 1,
     "floor": 1,
     "cap": 1,
     "self_heal_stamina": 1,
@@ -30,7 +30,7 @@ ZONE_POINT_COST = {
 
 ZONE_VALUE = {
     "flat": 25,
-    "add_dkh": 2,
+    "add_dkh": 1,
     "floor": 7,
     "cap": 7,
     "self_heal_stamina": 1,
