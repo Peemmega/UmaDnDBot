@@ -14,7 +14,7 @@ def is_in_gold_range(user_id, info: dict, ranked_players, base_range: int = BASE
         return False
 
     bonus = info.get("gold_range_bonus_this_turn", 0)
-    penalty = info.get("enemy_gold_range_penalty_next_turn", 0)
+    penalty = abs(info.get("enemy_gold_range_penalty_next_turn", 0))
     gold_range = max(1, base_range + bonus - penalty)
 
     return min(abs(score - other_score) for other_score in other_scores) <= gold_range

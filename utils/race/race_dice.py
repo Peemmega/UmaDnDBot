@@ -72,11 +72,11 @@ def get_distance_color(
         if eff.get("type") == "modify_gold_range":
             bonus += eff.get("value", 0)
         elif eff.get("type") == "modify_enemy_gold_range":
-            penalty += eff.get("value", 0)
+            penalty += abs(eff.get("value", 0))
 
     max_range = 20 + bonus - penalty
     gold_range = max(1, max_range)
-    umaInRange = count_nearby_players(player_id, score_map, radius=max_range)
+    umaInRange = count_nearby_players(player_id, score_map, radius=gold_range)
 
     if nearest_gap <= gold_range:
         return "Gold", umaInRange

@@ -887,6 +887,7 @@ def build_pending_effects_from_player(
     floor = player.get("next_roll_floor_bonus", 0)
     cap = player.get("next_roll_cap_bonus", 0)
     gold_range = player.get("gold_range_bonus_this_turn", 0)
+    enemy_gold_range_penalty = abs(player.get("enemy_gold_range_penalty_next_turn", 0))
 
     # รวม lastedBuff
     buff = player.get("lastedBuff", {})
@@ -942,6 +943,13 @@ def build_pending_effects_from_player(
             "duration": "this_roll"
         })
 
+    if enemy_gold_range_penalty != 0:
+        pending_effects.append({
+            "type": "modify_enemy_gold_range",
+            "value": enemy_gold_range_penalty,
+            "duration": "this_roll"
+        })
+
     merged_stats = {
         "flat": flat,
         "add_d": add_d,
@@ -949,6 +957,7 @@ def build_pending_effects_from_player(
         "floor": floor,
         "cap": cap,
         "gold_range": gold_range,  
+        "enemy_gold_range_penalty": enemy_gold_range_penalty,
     }
 
     return pending_effects, merged_stats
@@ -1506,26 +1515,59 @@ def get_position_groups(channel_id: int, user_id: int) -> set[str]:
 
     return {"middle"}
 
-def get_nearest_target_distance(game, user_id):
-    player = game["players"].get(user_id)
-    if not player:
-        return None
+def _get_score_map(game: dict) -> dict:
+    return game.get("turn_snapshot_scores") or {
+        uid: p["score"]
+        for uid, p in game["players"].items()
+    }
 
-    player_score = player.get("score", 0)
 
+def _distance_bounds(min_distance, max_distance):
+    lower = float("-inf") if min_distance is None else min_distance
+    upper = float("inf") if max_distance is None else max_distance
+    if lower > upper:
+        lower, upper = upper, lower
+    return lower, upper
+
+
+def _distance_in_bounds(distance: int, min_distance, max_distance) -> bool:
+    lower, upper = _distance_bounds(min_distance, max_distance)
+    return lower <= distance <= upper
+
+
+def _iter_target_distances(game: dict, user_id):
+    scores = _get_score_map(game)
+    if user_id not in scores:
+        return []
+
+    player_score = scores[user_id]
     distances = []
 
-    for other_id, other in game["players"].items():
-        if other_id == user_id:
+    for other_id in game["players"]:
+        if other_id == user_id or other_id not in scores:
             continue
+        distances.append((other_id, scores[other_id] - player_score))
 
-        distance = other.get("score", 0) - player_score
-        distances.append(distance)
+    return distances
+
+
+def get_nearest_target_distance(game, user_id):
+    if game["players"].get(user_id) is None:
+        return None
+
+    distances = [distance for _, distance in _iter_target_distances(game, user_id)]
 
     if not distances:
         return None
 
     return min(distances, key=lambda d: abs(d))
+
+
+def has_target_in_distance(game, user_id, min_distance, max_distance) -> bool:
+    return any(
+        _distance_in_bounds(distance, min_distance, max_distance)
+        for _, distance in _iter_target_distances(game, user_id)
+    )
 
 
 def is_front_blocked(game, user_id):
@@ -1619,7 +1661,13 @@ def check_skill_trigger(
     # distance color
     required_distance_color = trigger.get("distance_color")
     if required_distance_color is not None:
-        distance_color = player.get("distance_color")
+        score_map = _get_score_map(game)
+        skill_effects, _ = build_pending_effects_from_player(player)
+        distance_color, _ = get_distance_color(
+            user_id,
+            score_map,
+            skill_effects or [],
+        )
         if distance_color != required_distance_color:
             return False, "สีระยะไม่ตรงเงื่อนไข"
 
@@ -1649,16 +1697,13 @@ def check_skill_trigger(
     target_distance_max = trigger.get("target_distance_max")
 
     if target_distance_min is not None or target_distance_max is not None:
-        target_distance = get_nearest_target_distance(game, user_id)
-
-        if target_distance is None:
-            return False, "ไม่มีเป้าหมายในระยะ"
-
-        if target_distance_min is not None and target_distance < target_distance_min:
-            return False, "เป้าหมายอยู่ใกล้/หลังเกินเงื่อนไข"
-
-        if target_distance_max is not None and target_distance > target_distance_max:
-            return False, "เป้าหมายอยู่ไกลเกินเงื่อนไข"
+        if not has_target_in_distance(
+            game,
+            user_id,
+            target_distance_min,
+            target_distance_max,
+        ):
+            return False, "No target in range"
 
     # front blocked
     required_front_blocked = trigger.get("front_blocked")
@@ -1670,12 +1715,8 @@ def check_skill_trigger(
     # nearby uma count
     required_nearby_count = trigger.get("nearby_uma_count")
     if required_nearby_count is not None:
-        score_map = {
-            pid: p.get("score", 0)
-            for pid, p in game["players"].items()
-        }
-
-        skill_effects = player.get("active_effects", [])
+        score_map = _get_score_map(game)
+        skill_effects, _ = build_pending_effects_from_player(player)
 
         _, nearby_count = get_distance_color(
             user_id,
@@ -2178,6 +2219,7 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
             if not targets:
                 continue
 
+            value = abs(value)
             for target_id, target_info in targets:
                 target_info.setdefault("enemy_gold_range_penalty_next_turn", 0)
                 target_info["enemy_gold_range_penalty_next_turn"] += value
@@ -2203,6 +2245,9 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
     target_cfg = skill.get("target", {})
     scope = target_cfg.get("scope", "self")
     limit = target_cfg.get("limit", 1)
+    trigger = skill.get("trigger", {})
+    target_distance_min = trigger.get("target_distance_min")
+    target_distance_max = trigger.get("target_distance_max")
 
     if scope == "self":
         return [(user_id, player)]
@@ -2219,9 +2264,17 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
         gap_front = target_score - my_score
         gap_back = my_score - target_score
 
-        if gap_front > 0:
+        if gap_front > 0 and _distance_in_bounds(
+            gap_front,
+            target_distance_min,
+            target_distance_max,
+        ):
             front.append((gap_front, target_id, info))
-        elif gap_back > 0:
+        elif gap_back > 0 and _distance_in_bounds(
+            -gap_back,
+            target_distance_min,
+            target_distance_max,
+        ):
             back.append((gap_back, target_id, info))
 
     front.sort(key=lambda x: x[0])

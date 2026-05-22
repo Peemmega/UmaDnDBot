@@ -840,12 +840,12 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_velocity",
-                 "value": 40,
+                 "value": 55,
                 "duration": "this_roll"
             },
             {
             "type": "modify_roll_cap",
-            "value": 5,
+            "value": 7,
             "duration": "this_roll"
             }
         ],
