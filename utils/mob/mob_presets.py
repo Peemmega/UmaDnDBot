@@ -93,7 +93,7 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 2,
-                "add_dkh": 1,
+                "add_dkh": 3,
                 "floor": 0,
                 
                 "cap": 0,
@@ -169,7 +169,7 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 0,
-                "add_dkh": 1,
+                "add_dkh": 3,
                 "floor": 0,
                 
                 "cap": 2,
@@ -244,7 +244,7 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 2,
-                "add_dkh": 1,
+                "add_dkh": 3,
                 "floor": 0,
                 "cap": 0,
                 "self_heal_stamina": 0,
@@ -356,7 +356,7 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 0,
-                "add_dkh": 1,
+                "add_dkh": 3,
                 "floor": 1,
                 
                 "cap": 1,
@@ -395,7 +395,7 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 1,
+                "add_dkh": 3,
                 
                 "floor": 0,
                 
@@ -436,7 +436,7 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 1,
+                "add_dkh": 3,
                 "floor": 0,
                 
                 "cap": 0,
@@ -475,7 +475,7 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 1,
+                "add_dkh": 3,
                 "floor": 0,
                    
                 "cap": 2,            
@@ -551,7 +551,7 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 1,
+                "add_dkh": 3,
                 "floor": 0,
                 
                 "cap": 2,
@@ -738,7 +738,7 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 1,
+                "add_dkh": 3,
                 "floor": 0,
                 
                 "cap": 2,
@@ -777,7 +777,7 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 1,
+                "add_dkh": 3,
                 "floor": 0,
                 "cap": 2,
                 "self_heal_stamina": 0,
