@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from utils.dice.dice_presets import DICE_PRESET
 from utils.race.race_dice import get_phase_from_turn
 from utils.race.race_presets import (
     PATH_TYPE_ICON,
@@ -137,6 +138,7 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
             "label": PATH_TYPE_TEXT.get(current_path_type, "Waiting") if current_path_type else "Waiting",
             "icon": PATH_TYPE_ICON.get(current_path_type, "-") if current_path_type else "-",
         },
+        "dice_presets": DICE_PRESET,
         "players": players,
         "scoreboard": sorted(players, key=lambda item: item["score"], reverse=True),
         "action_logs": game.get("web_action_logs", [])[-80:],
