@@ -120,7 +120,7 @@ def get_web_timing_snapshot(player: dict, finish_distance: int, now: float | Non
 
 def roll_web_timing_distance_gain(player: dict, timing_score: float) -> tuple[float, float, str]:
     current_speed = max(0.0, float(player.get("current_speed", 0.0)))
-    base_gain = random.uniform(current_speed / 4.0, current_speed)
+    base_gain = base_gain = random.uniform(current_speed * 0.8, current_speed)
     tier = get_timing_tier(timing_score)
     return base_gain, base_gain * TIMING_RESULT_MULTIPLIERS[tier], tier
 
