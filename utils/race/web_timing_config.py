@@ -32,21 +32,21 @@ WEB_TIMING_TEMPO_CONFIG = {
     },
     "M": {
         "label": "Medium",
-        "speed_multiplier": 1.00,
-        "acceleration_multiplier": 1.15,
+        "speed_multiplier": 1.05,
+        "acceleration_multiplier": 1.1,
         "gauge_speed_multiplier": 1.10,
     },
     "H": {
         "label": "High",
-        "speed_multiplier": 1.00,
-        "acceleration_multiplier": 1.45,
+        "speed_multiplier": 1.15,
+        "acceleration_multiplier": 1.3,
         "gauge_speed_multiplier": 1.20,
     },
 }
 
 WEB_TIMING_ZONE_EFFECT = {
     "duration_seconds": 8.0,
-    "speed_bonus": 1.20,
+    "speed_bonus": 1.10,
     "acceleration_multiplier": 1.20,
     "gauge_speed_bonus": 1.15,
 }
