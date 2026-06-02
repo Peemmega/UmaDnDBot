@@ -44,6 +44,12 @@ from utils.zone.zone_manager import apply_zone_in_game
 WEB_ROOM_PREFIX = "web_race_"
 DEFAULT_STAGE_KEY = "Debut"
 TIMING_MIN_INTERVAL_SECONDS = 0.2
+TIMING_BASE_MULTIPLIER = 1.4
+TIMING_SCORE_MULTIPLIER = 0.6
+TIMING_DISTANCE_GAIN_SCALE = 0.49
+TIMING_REFERENCE_DISTANCE = 2000.0
+TIMING_REFERENCE_SPEED = 16.0
+TIMING_SPEED_SCALING = 0.6
 
 
 class RaceWebManager:
@@ -562,9 +568,11 @@ class RaceWebManager:
             raise ValueError("Player is not in this race room")
 
         speed = max(1.0, float(player.get("current_max_speed", 1.0)))
-        multiplier = 1.2 + (2.8 * timing_score)
-        distance_gain = max(1, round(speed * multiplier))
         finish_distance = int(game.get("finish_distance") or 2000)
+        effective_speed = TIMING_REFERENCE_SPEED + ((speed - TIMING_REFERENCE_SPEED) * TIMING_SPEED_SCALING)
+        multiplier = TIMING_BASE_MULTIPLIER + (TIMING_SCORE_MULTIPLIER * timing_score)
+        distance_scale = TIMING_DISTANCE_GAIN_SCALE * (finish_distance / TIMING_REFERENCE_DISTANCE)
+        distance_gain = max(1, round(effective_speed * multiplier * distance_scale))
         distance = min(finish_distance, int(player.get("web_distance", 0)) + distance_gain)
         player["web_distance"] = distance
         player["score"] = distance
