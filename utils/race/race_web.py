@@ -545,7 +545,7 @@ class RaceWebManager:
             submitted_cycles = player.setdefault("web_timing_submitted_cycles", set())
             if cycle_id in submitted_cycles:
                 continue
-            timing_score = _random_bot_timing_score(player)
+            _timing_tier, timing_score = roll_bot_timing_result()
             self._execute_web_timing_gain(
                 room_id,
                 str(player_id),
@@ -600,6 +600,7 @@ class RaceWebManager:
         player["web_latest_timing_result"] = {
             "cycle_id": cycle_id,
             "score": result["timing_score"],
+            "timing_score": result["timing_score"],
             "offset": result["timing_offset"],
             "tier": result["timing_tier"],
             "distance_gain": distance_gain,
@@ -835,15 +836,18 @@ def _increase_web_timing_speed(player: dict, finish_distance: int) -> None:
     player["current_max_speed"] = min(speed_cap, float(player.get("current_max_speed", 0)) + acceleration)
 
 
-def _random_bot_timing_score(player: dict) -> float:
-    level = int(player.get("mob_level") or 1)
-    if level <= 2:
-        minimum, maximum = 0.30, 0.70
-    elif level <= 5:
-        minimum, maximum = 0.45, 0.85
-    else:
-        minimum, maximum = 0.65, 0.95
-    return round(random.uniform(minimum, maximum), 3)
+def roll_bot_timing_result() -> tuple[str, float]:
+    tier = random.choices(
+        ["Good", "Great", "Perfect"],
+        weights=[10, 60, 30],
+        k=1,
+    )[0]
+    minimum, maximum = {
+        "Good": (0.55, 0.77),
+        "Great": (0.78, 0.91),
+        "Perfect": (0.92, 1.00),
+    }[tier]
+    return tier, round(random.uniform(minimum, maximum), 3)
 
 
 def _roll_summary_payload(payload: dict) -> dict:
