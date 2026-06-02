@@ -22,20 +22,20 @@ WEB_TIMING_TEMPO_CONFIG = {
     },
     "M": {
         "label": "Medium",
-        "speed_multiplier": 1.12,
-        "acceleration_multiplier": 1.10,
-        "gauge_speed_multiplier": 1.12,
+        "speed_multiplier": 1,
+        "acceleration_multiplier": 1.05,
+        "gauge_speed_multiplier": 1.125,
     },
     "H": {
         "label": "High",
-        "speed_multiplier": 1.28,
-        "acceleration_multiplier": 1.25,
-        "gauge_speed_multiplier": 1.28,
+        "speed_multiplier": 1,
+        "acceleration_multiplier": 1.10,
+        "gauge_speed_multiplier": 1.25,
     },
 }
 
 WEB_TIMING_ZONE_EFFECT = {
-    "duration_seconds": 10.0,
+    "duration_seconds": 6.0,
     "speed_bonus": 1.20,
     "acceleration_bonus": 1.25,
     "gauge_speed_bonus": 1.10,
@@ -43,8 +43,8 @@ WEB_TIMING_ZONE_EFFECT = {
 
 TIMING_RESULT_MULTIPLIERS = {
     "Perfect": 1.20,
-    "Great": 1.05,
-    "Good": 0.90,
+    "Great": 1.00,
+    "Good": 0.80,
     "Bad": 0.65,
     "Miss": 0.35,
 }

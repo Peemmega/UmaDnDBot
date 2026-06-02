@@ -14,7 +14,7 @@ from utils.race.web_timing_balance import get_web_timing_phase, get_web_timing_s
 
 
 DEFAULT_GAUGE_HALF_CYCLE_MS = 1450
-WEB_TIMING_GAUGE_HALF_CYCLE_MS = DEFAULT_GAUGE_HALF_CYCLE_MS / 2
+WEB_TIMING_GAUGE_HALF_CYCLE_MS = DEFAULT_GAUGE_HALF_CYCLE_MS / 1.5
 
 
 def _player_name(user_id, player: dict) -> str:
