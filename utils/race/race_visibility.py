@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from utils.dice.dice_presets import DICE_PRESET
+from utils.dice.dice_presets import DICE_PRESET, MAX_SPEED_PHASE
 from utils.race.race_dice import get_phase_from_turn
 from utils.race.race_presets import (
     PATH_TYPE_ICON,
@@ -66,6 +66,7 @@ def serialize_player(user_id, player: dict, rank: int | None = None) -> dict:
         "zone": player.get("zone"),
         "skills": skills,
         "last_roll": player.get("last_roll_log"),
+        "latest_timing_result": player.get("web_latest_timing_result"),
         "buffs": {
             "flat": player.get("next_roll_flat_bonus", 0),
             "dice": player.get("next_roll_add_d", 0),
@@ -97,6 +98,7 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
     max_turn = game.get("max_turn", 0)
     current_path_type = get_current_path_type(game) if turn else None
     owner_id = str(game.get("owner_id"))
+    current_player = game.get("players", {}).get(str(user_id)) if user_id else None
     phase = game.get("phase")
     if game.get("ended"):
         phase = "ended"
@@ -104,6 +106,7 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
         phase = "running"
     else:
         phase = "waiting"
+    timing_phase = _timing_phase(turn, max_turn, current_path_type)
 
     return {
         "room_id": room_id or str(game.get("room_id") or ""),
@@ -119,6 +122,14 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
         "turn": turn,
         "max_turn": max_turn,
         "race_phase": get_phase_from_turn(turn, max_turn) if turn else 0,
+        "timing_phase": timing_phase,
+        "gameplay_mode": game.get("web_gameplay_mode", "manual"),
+        "cycle_id": turn if game.get("started") else 0,
+        "timing_gauge": build_timing_gauge_config(game, current_player),
+        "timing_gauges": {
+            str(player_id): build_timing_gauge_config(game, player)
+            for player_id, player in game.get("players", {}).items()
+        },
         "phase": phase,
         "status": "ended" if game.get("ended") else ("running" if game.get("started") else "waiting"),
         "awaiting_turn_confirm": bool(game.get("awaiting_turn_confirm")),
@@ -167,4 +178,60 @@ def serialize_room_summary(game: dict, room_id: str) -> dict:
             if player.get("is_mob")
         ]),
         "max_players": 18,
+        "gameplay_mode": game.get("web_gameplay_mode", "manual"),
+    }
+
+
+def _timing_phase(turn: int, max_turn: int, path_type) -> str:
+    if not turn or not max_turn:
+        return "Waiting"
+    progress = turn / max_turn
+    path_label = str(PATH_TYPE_TEXT.get(path_type, "")).lower()
+    if progress <= 0.1:
+        return "Start"
+    if progress <= 0.4:
+        return "Early"
+    if progress <= 0.7:
+        return "Middle"
+    if "corner" in path_label:
+        return "Final Corner"
+    return "Final Straight"
+
+
+def build_timing_gauge_config(game: dict, player: dict | None) -> dict:
+    player = player or {}
+    style = player.get("style") or "Pace"
+    style_rule = MAX_SPEED_PHASE.get(style, MAX_SPEED_PHASE["Pace"])
+    turn = int(game.get("turn", 0))
+    max_turn = max(1, int(game.get("max_turn", 1)))
+    path_type = get_current_path_type(game) if turn else None
+    phase = _timing_phase(turn, max_turn, path_type)
+    current_speed = float(player.get("current_max_speed") or style_rule["start"])
+    acceleration = max(0.0, current_speed - float(style_rule["start"]))
+
+    phase_factor = {
+        "Start": 0.92,
+        "Early": 1.0,
+        "Middle": 1.08,
+        "Final Corner": 1.16,
+        "Final Straight": 1.24,
+    }.get(phase, 1.0)
+    style_factor = {
+        "Front": {"Start": 0.94, "Early": 0.98, "Final Straight": 1.12},
+        "Pace": {},
+        "Late": {"Start": 0.92, "Early": 0.96, "Final Corner": 1.1, "Final Straight": 1.14},
+        "End": {"Start": 0.88, "Early": 0.92, "Final Corner": 1.14, "Final Straight": 1.22},
+    }.get(style, {}).get(phase, 1.0)
+    segment_factor = {1: 1.0, 2: 1.06, 3: 1.1, 4: 0.96}.get(path_type, 1.0)
+    speed_factor = min(1.35, max(0.85, current_speed / max(1.0, float(style_rule["start"]))))
+    marker_speed = phase_factor * style_factor * segment_factor * speed_factor
+
+    return {
+        "phase": phase,
+        "style": style,
+        "track_segment": PATH_TYPE_TEXT.get(path_type, "Waiting") if path_type else "Waiting",
+        "current_speed": round(current_speed, 2),
+        "acceleration": round(acceleration, 2),
+        "marker_speed": round(marker_speed, 3),
+        "half_cycle_ms": round(1450 / marker_speed),
     }

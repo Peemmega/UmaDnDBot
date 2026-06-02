@@ -347,12 +347,22 @@ class WebRacePlayerPayload(BaseModel):
     stage_key: str = "Debut"
     mob_preset: str | None = None
     level: int = 1
+    gameplay_mode: str = "timing"
 
 
 class WebRaceSkillPayload(BaseModel):
     user_id: str
     skill_id: str | None = None
     slot: int | None = None
+
+
+class WebRaceTimingPayload(BaseModel):
+    user_id: str
+    cycle_id: int
+    timing_score: float
+    timing_offset: float = 0.0
+    phase: str | None = None
+    running_style: str | None = None
 
 async def send_lobby_message(channel_id: int):
     bot = bot_instance.bot
@@ -492,6 +502,7 @@ async def api_web_race_create_room(payload: WebRacePlayerPayload):
             avatar_url=payload.avatar_url,
             stage_key=payload.stage_key,
             style=payload.style,
+            gameplay_mode=payload.gameplay_mode,
         )
         await race_web_manager.broadcast(room["room_id"])
         return room
@@ -563,6 +574,23 @@ async def api_web_race_start_room(room_id: str, payload: WebRacePlayerPayload):
 async def api_web_race_run(room_id: str, payload: WebRacePlayerPayload):
     try:
         room = race_web_manager.run(room_id, payload.user_id)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/race/rooms/{room_id}/timing")
+async def api_web_race_timing(room_id: str, payload: WebRaceTimingPayload):
+    try:
+        room = race_web_manager.timing(
+            room_id=room_id,
+            user_id=payload.user_id,
+            cycle_id=payload.cycle_id,
+            timing_score=payload.timing_score,
+            timing_offset=payload.timing_offset,
+            phase=payload.phase,
+        )
         await race_web_manager.broadcast(room_id)
         return room
     except ValueError as exc:
@@ -661,6 +689,15 @@ async def websocket_race_room(websocket: WebSocket, room_id: str, user_id: str =
                 action_user_id = user_id or message.get("user_id")
                 if message_type == "RUN":
                     race_web_manager.run(room_id, action_user_id)
+                elif message_type == "TIMING":
+                    race_web_manager.timing(
+                        room_id,
+                        action_user_id,
+                        cycle_id=message.get("cycle_id"),
+                        timing_score=message.get("timing_score"),
+                        timing_offset=message.get("timing_offset", 0.0),
+                        phase=message.get("phase"),
+                    )
                 elif message_type == "CONFIRM":
                     race_web_manager.confirm(room_id, action_user_id)
                 elif message_type == "REROLL":

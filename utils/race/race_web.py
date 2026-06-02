@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import random
+import time
 import uuid
 from typing import Any
 
@@ -32,7 +34,7 @@ from utils.game_manager import (
 )
 from utils.mob.mob_presets import MOB_PRESETS
 from utils.race.race_dice import roll_race_dice
-from utils.race.race_presets import RACE_PRESET
+from utils.race.race_presets import PATH_TYPE_TEXT, RACE_PRESET
 from utils.race.race_presets import get_current_path_type, get_path_effect
 from utils.race.race_visibility import serialize_room, serialize_room_summary
 from utils.zone.zone_manager import apply_zone_in_game
@@ -40,6 +42,7 @@ from utils.zone.zone_manager import apply_zone_in_game
 
 WEB_ROOM_PREFIX = "web_race_"
 DEFAULT_STAGE_KEY = "Debut"
+TIMING_MIN_INTERVAL_SECONDS = 0.2
 
 
 class RaceWebManager:
@@ -102,9 +105,12 @@ class RaceWebManager:
         avatar_url: str = "",
         stage_key: str = DEFAULT_STAGE_KEY,
         style: str = "Pace",
+        gameplay_mode: str = "timing",
     ) -> dict:
         if stage_key not in RACE_PRESET:
             raise ValueError("Race stage not found")
+        if gameplay_mode not in {"timing", "manual"}:
+            raise ValueError("Race gameplay mode must be timing or manual")
 
         room_id = self._new_room_id()
         ensure_player(owner_id, username)
@@ -115,6 +121,7 @@ class RaceWebManager:
         game = self._get_room(room_id)
         game["room_id"] = room_id
         game["phase"] = "waiting"
+        game["web_gameplay_mode"] = gameplay_mode
         game["web_action_logs"] = []
         self._log(game, f"{username} created {game.get('stage_name')}")
         success, message = add_player(room_id, str(owner_id), username, avatar_url, style)
@@ -196,13 +203,16 @@ class RaceWebManager:
             raise ValueError(message)
 
         game = self._get_room(room_id)
+        game.setdefault("web_gameplay_mode", "timing")
         self._log(game, "Race started")
         self._process_mobs(room_id)
-        self._advance_if_ready(room_id)
+        self._advance_if_ready(room_id, require_confirmation=game["web_gameplay_mode"] != "timing")
         return serialize_room(self._get_room(room_id), room_id, str(user_id))
 
     def run(self, room_id: str, user_id: str) -> dict:
         game = self._get_room(room_id)
+        if game.get("web_gameplay_mode") == "timing":
+            raise ValueError("This web race uses the timing gauge")
         ok, message = can_player_roll(room_id, str(user_id))
         if not ok:
             raise ValueError(message)
@@ -228,6 +238,55 @@ class RaceWebManager:
         )
         player["web_last_roll_result"] = result
         self._advance_if_ready(room_id)
+        return serialize_room(self._get_room(room_id), room_id, str(user_id))
+
+    def timing(
+        self,
+        room_id: str,
+        user_id: str,
+        cycle_id: int,
+        timing_score: float,
+        timing_offset: float = 0.0,
+        phase: str | None = None,
+    ) -> dict:
+        game = self._get_room(room_id)
+        if game.get("web_gameplay_mode") != "timing":
+            raise ValueError("This web race uses manual Run")
+        if not game.get("started") or game.get("ended"):
+            raise ValueError("Race is not running")
+
+        player_id, player = self._find_player_entry(game, str(user_id))
+        if player is None:
+            raise ValueError("Player is not in this race room")
+        if player.get("is_mob"):
+            raise ValueError("Bot timing is controlled by the server")
+
+        current_cycle = int(game.get("turn", 0))
+        if int(cycle_id) != current_cycle:
+            raise ValueError(f"Timing cycle must be {current_cycle}")
+
+        submitted_cycles = player.setdefault("web_timing_submitted_cycles", set())
+        if current_cycle in submitted_cycles:
+            raise ValueError("Timing already submitted for this cycle")
+
+        now = time.monotonic()
+        last_submit_at = float(player.get("web_timing_last_submit_at", 0.0))
+        if last_submit_at and now - last_submit_at < TIMING_MIN_INTERVAL_SECONDS:
+            raise ValueError("Timing submission is too fast")
+
+        score = _clamp(float(timing_score), 0.0, 1.0)
+        offset = _clamp(float(timing_offset), -1.0, 1.0)
+        self._execute_timing_roll(
+            room_id,
+            str(player_id),
+            cycle_id=current_cycle,
+            timing_score=score,
+            timing_offset=offset,
+            client_phase=phase,
+        )
+        player["web_timing_last_submit_at"] = now
+        submitted_cycles.add(current_cycle)
+        self._advance_if_ready(room_id, require_confirmation=False)
         return serialize_room(self._get_room(room_id), room_id, str(user_id))
 
     def reroll(self, room_id: str, user_id: str, use_wit: bool = False) -> dict:
@@ -388,6 +447,22 @@ class RaceWebManager:
             if player.get("last_roll_turn") == game.get("turn"):
                 continue
 
+            if game.get("web_gameplay_mode") == "timing":
+                timing_score = _random_bot_timing_score(player)
+                try:
+                    self._execute_timing_roll(
+                        room_id,
+                        str(player_id),
+                        cycle_id=int(game.get("turn", 0)),
+                        timing_score=timing_score,
+                        timing_offset=round(random.uniform(-1.0, 1.0) * (1.0 - timing_score), 3),
+                        client_phase=None,
+                        is_bot=True,
+                    )
+                except ValueError as exc:
+                    self._log(game, f"Bot timing failed: {exc}")
+                continue
+
             success, payload = process_mob_turn(room_id, player_id)
             if success:
                 result = payload.get("result", {})
@@ -440,6 +515,77 @@ class RaceWebManager:
             self._log(game, f"Turn {game.get('turn')} started")
             self._process_mobs(room_id)
             game = self._get_room(room_id)
+
+    def _execute_timing_roll(
+        self,
+        room_id: str,
+        user_id: str,
+        *,
+        cycle_id: int,
+        timing_score: float,
+        timing_offset: float,
+        client_phase: str | None,
+        is_bot: bool = False,
+    ) -> None:
+        ok, message = can_player_roll(room_id, str(user_id))
+        if not ok:
+            raise ValueError(message)
+
+        success, payload = execute_roll_core(
+            channel_id=room_id,
+            user_id=str(user_id),
+            title_prefix="web timing",
+            mark_roll=True,
+        )
+        if not success:
+            raise ValueError(payload.get("message", "Timing run failed"))
+
+        game = payload["game"]
+        player = payload["game_player"]
+        result = payload["result"]
+        raw_total = int(result.get("total", 0))
+        multiplier = 0.25 + (0.75 * timing_score)
+        timing_total = max(0, round(raw_total * multiplier))
+        adjustment = timing_total - raw_total
+        if adjustment:
+            updated, _ = update_player_score(room_id, str(user_id), adjustment)
+            if not updated:
+                raise ValueError("Could not apply timing score")
+
+        result["raw_total"] = raw_total
+        result["timing_multiplier"] = round(multiplier, 3)
+        result["timing_score"] = round(timing_score, 3)
+        result["timing_offset"] = round(timing_offset, 3)
+        result["timing_tier"] = _timing_tier(timing_score)
+        result["total"] = timing_total
+        if player.get("last_roll_log"):
+            player["last_roll_log"].update({
+                "total": timing_total,
+                "raw_total": raw_total,
+                "timing_score": result["timing_score"],
+                "timing_offset": result["timing_offset"],
+                "timing_tier": result["timing_tier"],
+            })
+        player["web_last_roll_result"] = result
+        player["web_latest_timing_result"] = {
+            "cycle_id": cycle_id,
+            "score": result["timing_score"],
+            "offset": result["timing_offset"],
+            "tier": result["timing_tier"],
+            "raw_total": raw_total,
+            "total": timing_total,
+            "phase": _timing_phase(game),
+        }
+        self._log(
+            game,
+            f"{self._player_label(user_id, player)} timed {result['timing_tier']} +{timing_total}",
+            {
+                "timing": player["web_latest_timing_result"],
+                "client_phase": client_phase,
+                "is_bot": is_bot,
+                "roll_summary": _roll_summary_payload(payload),
+            },
+        )
 
     def _execute_reroll_core(self, room_id: str, user_id: str, old_total: int) -> tuple[bool, dict]:
         game = self._get_room(room_id)
@@ -574,6 +720,49 @@ def _current_buff_payload(player: dict) -> dict:
     }
 
 
+def _clamp(value: float, minimum: float, maximum: float) -> float:
+    return max(minimum, min(maximum, value))
+
+
+def _timing_tier(score: float) -> str:
+    if score >= 0.92:
+        return "Perfect"
+    if score >= 0.78:
+        return "Great"
+    if score >= 0.55:
+        return "Good"
+    if score >= 0.30:
+        return "Bad"
+    return "Miss"
+
+
+def _timing_phase(game: dict) -> str:
+    turn = max(1, int(game.get("turn", 1)))
+    max_turn = max(1, int(game.get("max_turn", 1)))
+    progress = turn / max_turn
+    path_label = str(PATH_TYPE_TEXT.get(get_current_path_type(game), "")).lower()
+    if progress <= 0.1:
+        return "Start"
+    if progress <= 0.4:
+        return "Early"
+    if progress <= 0.7:
+        return "Middle"
+    if "corner" in path_label:
+        return "Final Corner"
+    return "Final Straight"
+
+
+def _random_bot_timing_score(player: dict) -> float:
+    level = int(player.get("mob_level") or 1)
+    if level <= 2:
+        minimum, maximum = 0.30, 0.70
+    elif level <= 5:
+        minimum, maximum = 0.45, 0.85
+    else:
+        minimum, maximum = 0.65, 0.95
+    return round(random.uniform(minimum, maximum), 3)
+
+
 def _roll_summary_payload(payload: dict) -> dict:
     player = payload.get("game_player") or {}
     result = payload.get("result") or {}
@@ -583,6 +772,9 @@ def _roll_summary_payload(payload: dict) -> dict:
     lasted_buff = player.get("lastedBuff") or {}
     return {
         "total": result.get("total", 0),
+        "raw_total": result.get("raw_total"),
+        "timing_score": result.get("timing_score"),
+        "timing_tier": result.get("timing_tier"),
         "dice": result.get("display"),
         "selected": result.get("selected", []),
         "modified_selected": result.get("modified_selected", []),
