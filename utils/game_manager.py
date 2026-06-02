@@ -33,6 +33,24 @@ VALID_STYLES = {"Front", "Pace", "Late", "End"}
 games = {}
 
 
+def apply_web_timing_player_defaults(player: dict) -> dict:
+    defaults = {
+        "current_speed": 0,
+        "acceleration": 0,
+        "zone_active": False,
+        "zone_used": False,
+        "zone_started_at": None,
+        "zone_ends_at": None,
+        "tempo_level": "N",
+        "tempo_label": "Normal",
+        "gauge_speed_multiplier": 1.0,
+        "last_distance_gain": 0,
+    }
+    for field, default in defaults.items():
+        player.setdefault(field, default)
+    return player
+
+
 def get_last_corner_index(path: list[int]) -> int:
     for i in range(len(path) - 1, -1, -1):
         if path[i] == 2:
@@ -1183,6 +1201,7 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
             "build": db_player["zone"]["build"],
         }
     }
+    apply_web_timing_player_defaults(game["players"][user_id])
 
     return True, "เข้าร่วมเกมสำเร็จ"
 
@@ -1243,6 +1262,7 @@ def add_player_as_mob_preset(
         "no_reroll_this_turn": False,
         "no_reroll_next_turn": False,
     }
+    apply_web_timing_player_defaults(game["players"][user_id])
 
     return True, "เข้าร่วมสำเร็จ"
 
@@ -1373,6 +1393,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
 
         "zone": zone,
     }
+    apply_web_timing_player_defaults(game["players"][mob_id])
 
     return True, f"เพิ่ม mob `{preset['name']}` Lv.{level} เรียบร้อย"
 

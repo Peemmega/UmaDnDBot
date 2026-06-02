@@ -531,6 +531,7 @@ class RaceWebManager:
             player["web_timing_submitted_cycles"] = set()
             player["web_latest_timing_result"] = None
             player["web_last_distance_gain"] = 0
+            player["last_distance_gain"] = 0
             if initialize_web_timing_player(player, game["finish_distance"], now):
                 self._log(game, f"{self._player_label(player_id, player)} entered Zone!")
 
@@ -583,6 +584,7 @@ class RaceWebManager:
         player["web_distance"] = distance
         player["score"] = distance
         player["web_last_distance_gain"] = distance_gain
+        player["last_distance_gain"] = distance_gain
         if refresh_web_timing_player(player, finish_distance, increase_speed=False):
             self._log(game, f"{self._player_label(user_id, player)} entered Zone!")
         snapshot = get_web_timing_snapshot(player, finish_distance)
