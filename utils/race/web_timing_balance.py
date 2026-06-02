@@ -4,54 +4,15 @@ import random
 import time
 
 from utils.dice.dice_presets import MAX_SPEED_PHASE
-
-
-WEB_TIMING_TEMPO_TABLE = {
-    "Front": {1: "H", 2: "N", 3: "N", 4: "M"},
-    "Pace": {1: "M", 2: "M", 3: "M", 4: "M"},
-    "Late": {1: "N", 2: "N", 3: "H", 4: "M"},
-    "End": {1: "N", 2: "N", 3: "M", 4: "H"},
-}
-
-WEB_TIMING_TEMPO_CONFIG = {
-    "N": {
-        "label": "Normal",
-        "speed_multiplier": 1.00,
-        "acceleration_multiplier": 1.00,
-        "gauge_speed_multiplier": 1.00,
-    },
-    "M": {
-        "label": "Medium",
-        "speed_multiplier": 1,
-        "acceleration_multiplier": 1.05,
-        "gauge_speed_multiplier": 1.125,
-    },
-    "H": {
-        "label": "High",
-        "speed_multiplier": 1,
-        "acceleration_multiplier": 1.10,
-        "gauge_speed_multiplier": 1.25,
-    },
-}
-
-WEB_TIMING_ZONE_EFFECT = {
-    "duration_seconds": 6.0,
-    "speed_bonus": 1.20,
-    "acceleration_bonus": 1.25,
-    "gauge_speed_bonus": 1.10,
-}
-
-TIMING_RESULT_MULTIPLIERS = {
-    "Perfect": 1.20,
-    "Great": 1.00,
-    "Good": 0.80,
-    "Bad": 0.65,
-    "Miss": 0.35,
-}
-
-MAX_WEB_TIMING_SPEED = 40.0
-MAX_WEB_TIMING_ACCELERATION = 4.0
-MAX_ACCELERATION_ELAPSED_SECONDS = 3.0
+from utils.race.web_timing_config import (
+    MAX_ACCELERATION_ELAPSED_SECONDS,
+    MAX_WEB_TIMING_ACCELERATION,
+    MAX_WEB_TIMING_SPEED,
+    TIMING_RESULT_MULTIPLIERS,
+    WEB_TIMING_TEMPO_CONFIG,
+    WEB_TIMING_TEMPO_TABLE,
+    WEB_TIMING_ZONE_EFFECT,
+)
 
 
 def get_web_timing_phase(distance: float, finish_distance: int) -> int:

@@ -11,10 +11,11 @@ from utils.race.race_presets import (
 )
 from utils.skill.skill_presets import SKILLS
 from utils.race.web_timing_balance import get_web_timing_phase, get_web_timing_snapshot
-
-
-DEFAULT_GAUGE_HALF_CYCLE_MS = 1450
-WEB_TIMING_GAUGE_HALF_CYCLE_MS = DEFAULT_GAUGE_HALF_CYCLE_MS / 1.5
+from utils.race.web_timing_config import (
+    DEFAULT_GAUGE_HALF_CYCLE_MS,
+    WEB_TIMING_GAUGE_HALF_CYCLE_MS,
+    get_web_timing_ui_config,
+)
 
 
 def _player_name(user_id, player: dict) -> str:
@@ -172,6 +173,7 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
         "max_turn": max_turn,
         "race_phase": get_phase_from_turn(turn, max_turn) if turn else 0,
         "timing_phase": timing_phase,
+        "timing_config": get_web_timing_ui_config() if is_web_timing else None,
         "gameplay_mode": game.get("web_gameplay_mode", "manual"),
         "race_mode": race_mode,
         "cycle_id": 0,

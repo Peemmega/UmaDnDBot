@@ -39,6 +39,13 @@ from utils.race.race_dice import roll_race_dice
 from utils.race.race_presets import PATH_TYPE_TEXT, RACE_PRESET
 from utils.race.race_presets import get_current_path_type, get_path_effect, get_web_race_finish_distance
 from utils.race.race_visibility import build_timing_gauge_config, serialize_room, serialize_room_summary
+from utils.race.web_timing_config import (
+    BOT_TIMING_POLL_INTERVAL_SECONDS,
+    DEFAULT_GAUGE_HALF_CYCLE_MS,
+    TIMING_MIN_INTERVAL_SECONDS,
+    WEB_TIMING_MIN_HALF_CYCLE_MS,
+    get_web_timing_start_delay_seconds,
+)
 from utils.zone.zone_manager import apply_zone_in_game
 from utils.race.web_timing_balance import (
     get_web_timing_snapshot,
@@ -50,9 +57,6 @@ from utils.race.web_timing_balance import (
 
 WEB_ROOM_PREFIX = "web_race_"
 DEFAULT_STAGE_KEY = "Debut"
-TIMING_MIN_INTERVAL_SECONDS = 0.2
-BOT_TIMING_POLL_INTERVAL_SECONDS = 0.05
-WEB_TIMING_START_DELAY_SECONDS = 3.36
 
 
 class RaceWebManager:
@@ -541,7 +545,7 @@ class RaceWebManager:
             if player.get("is_mob"):
                 player["web_timing_next_auto_submit_at"] = (
                     schedule_now
-                    + WEB_TIMING_START_DELAY_SECONDS
+                    + get_web_timing_start_delay_seconds()
                     + self._get_bot_timing_half_cycle_seconds(game, player)
                 )
 
@@ -578,7 +582,10 @@ class RaceWebManager:
 
     def _get_bot_timing_half_cycle_seconds(self, game: dict, player: dict) -> float:
         gauge = build_timing_gauge_config(game, player)
-        return max(0.52, float(gauge.get("half_cycle_ms") or 1450) / 1000.0)
+        return max(
+            WEB_TIMING_MIN_HALF_CYCLE_MS,
+            float(gauge.get("half_cycle_ms") or DEFAULT_GAUGE_HALF_CYCLE_MS),
+        ) / 1000.0
 
     def _process_due_web_timing_mobs(self, room_id: str) -> bool:
         game = self._get_room(room_id)
