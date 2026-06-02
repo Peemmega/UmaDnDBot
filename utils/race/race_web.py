@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import random
 import time
 import uuid
@@ -37,7 +38,7 @@ from utils.mob.mob_presets import MOB_PRESETS
 from utils.race.race_dice import roll_race_dice
 from utils.race.race_presets import PATH_TYPE_TEXT, RACE_PRESET
 from utils.race.race_presets import get_current_path_type, get_path_effect, get_web_race_finish_distance
-from utils.race.race_visibility import serialize_room, serialize_room_summary
+from utils.race.race_visibility import build_timing_gauge_config, serialize_room, serialize_room_summary
 from utils.zone.zone_manager import apply_zone_in_game
 from utils.race.web_timing_balance import (
     get_web_timing_snapshot,
@@ -50,11 +51,13 @@ from utils.race.web_timing_balance import (
 WEB_ROOM_PREFIX = "web_race_"
 DEFAULT_STAGE_KEY = "Debut"
 TIMING_MIN_INTERVAL_SECONDS = 0.2
+BOT_TIMING_POLL_INTERVAL_SECONDS = 0.05
 
 
 class RaceWebManager:
     def __init__(self) -> None:
         self.connections: dict[str, set[WebSocket]] = {}
+        self.web_timing_bot_tasks: dict[str, asyncio.Task] = {}
 
     def _room_key(self, room_id: str) -> str:
         return room_id
@@ -215,6 +218,7 @@ class RaceWebManager:
         game.setdefault("race_mode", "web_timing" if game["web_gameplay_mode"] == "timing" else "discord_classic")
         if game["race_mode"] == "web_timing":
             self._initialize_web_timing_race(game)
+            self._start_web_timing_bot_loop(room_id)
         self._log(game, "Race started")
         if game["race_mode"] != "web_timing":
             self._process_mobs(room_id)
@@ -302,8 +306,6 @@ class RaceWebManager:
         player["web_timing_last_submit_at"] = now
         player["web_timing_last_cycle"] = current_cycle
         submitted_cycles.add(current_cycle)
-        if not game.get("ended"):
-            self._process_web_timing_mobs(room_id, current_cycle)
         return serialize_room(self._get_room(room_id), room_id, str(user_id))
 
     def reroll(self, room_id: str, user_id: str, use_wit: bool = False) -> dict:
@@ -523,7 +525,8 @@ class RaceWebManager:
         stage = RACE_PRESET.get(game.get("stage_key"), {})
         game["finish_distance"] = get_web_race_finish_distance(stage)
         game["winner_id"] = None
-        now = time.monotonic()
+        timing_now = time.time()
+        schedule_now = time.monotonic()
         for player_id, player in game.get("players", {}).items():
             player["web_distance"] = 0
             player["score"] = 0
@@ -532,19 +535,63 @@ class RaceWebManager:
             player["web_latest_timing_result"] = None
             player["web_last_distance_gain"] = 0
             player["last_distance_gain"] = 0
-            if initialize_web_timing_player(player, game["finish_distance"], now):
+            if initialize_web_timing_player(player, game["finish_distance"], timing_now):
                 self._log(game, f"{self._player_label(player_id, player)} entered Zone!")
+            if player.get("is_mob"):
+                player["web_timing_next_auto_submit_at"] = schedule_now + self._get_bot_timing_half_cycle_seconds(game, player)
 
-    def _process_web_timing_mobs(self, room_id: str, cycle_id: int) -> None:
+    def _start_web_timing_bot_loop(self, room_id: str) -> None:
         game = self._get_room(room_id)
+        if not any(player.get("is_mob") for player in game.get("players", {}).values()):
+            return
+        existing_task = self.web_timing_bot_tasks.get(room_id)
+        if existing_task and not existing_task.done():
+            return
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        task = loop.create_task(self._run_web_timing_bot_loop(room_id))
+        self.web_timing_bot_tasks[room_id] = task
+        task.add_done_callback(lambda finished_task: self._clear_web_timing_bot_task(room_id, finished_task))
+
+    def _clear_web_timing_bot_task(self, room_id: str, finished_task: asyncio.Task) -> None:
+        if self.web_timing_bot_tasks.get(room_id) is finished_task:
+            self.web_timing_bot_tasks.pop(room_id, None)
+
+    async def _run_web_timing_bot_loop(self, room_id: str) -> None:
+        while True:
+            try:
+                game = self._get_room(room_id)
+            except ValueError:
+                return
+            if game.get("race_mode") != "web_timing" or not game.get("started") or game.get("ended"):
+                return
+            if self._process_due_web_timing_mobs(room_id):
+                await self.broadcast(room_id)
+            await asyncio.sleep(BOT_TIMING_POLL_INTERVAL_SECONDS)
+
+    def _get_bot_timing_half_cycle_seconds(self, game: dict, player: dict) -> float:
+        gauge = build_timing_gauge_config(game, player)
+        return max(0.52, float(gauge.get("half_cycle_ms") or 1450) / 1000.0)
+
+    def _process_due_web_timing_mobs(self, room_id: str) -> bool:
+        game = self._get_room(room_id)
+        now = time.monotonic()
+        changed = False
         for player_id, player in list(game.get("players", {}).items()):
             if game.get("ended"):
-                return
+                return changed
             if not player.get("is_mob"):
                 continue
-            submitted_cycles = player.setdefault("web_timing_submitted_cycles", set())
-            if cycle_id in submitted_cycles:
+            next_submit_at = float(player.get("web_timing_next_auto_submit_at") or 0.0)
+            if not next_submit_at:
+                player["web_timing_next_auto_submit_at"] = now + self._get_bot_timing_half_cycle_seconds(game, player)
                 continue
+            if now < next_submit_at:
+                continue
+            cycle_id = int(player.get("web_timing_last_cycle", 0)) + 1
+            submitted_cycles = player.setdefault("web_timing_submitted_cycles", set())
             _timing_tier, timing_score = roll_bot_timing_result()
             self._execute_web_timing_gain(
                 room_id,
@@ -557,6 +604,9 @@ class RaceWebManager:
             )
             player["web_timing_last_cycle"] = cycle_id
             submitted_cycles.add(cycle_id)
+            player["web_timing_next_auto_submit_at"] = now + self._get_bot_timing_half_cycle_seconds(game, player)
+            changed = True
+        return changed
 
     def _execute_web_timing_gain(
         self,
