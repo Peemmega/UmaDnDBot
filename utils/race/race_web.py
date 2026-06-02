@@ -342,7 +342,12 @@ class RaceWebManager:
                 raise ValueError(result)
             spent_normal_reroll = True
 
-        success, payload = self._execute_reroll_core(room_id, str(user_id), old_total)
+        success, payload = self._execute_reroll_core(
+            room_id,
+            str(user_id),
+            old_total,
+            minimum_total=old_total if use_wit else None,
+        )
         if not success:
             if use_wit:
                 player["wit_reroll_left"] = int(player.get("wit_reroll_left", 0)) + 1
@@ -699,7 +704,13 @@ class RaceWebManager:
         game["phase"] = "ended"
         self._log(game, "Race finished", game["result"])
 
-    def _execute_reroll_core(self, room_id: str, user_id: str, old_total: int) -> tuple[bool, dict]:
+    def _execute_reroll_core(
+        self,
+        room_id: str,
+        user_id: str,
+        old_total: int,
+        minimum_total: int | None = None,
+    ) -> tuple[bool, dict]:
         game = self._get_room(room_id)
         player = game.get("players", {}).get(str(user_id))
         if player is None:
@@ -725,6 +736,7 @@ class RaceWebManager:
             max_turn=game["max_turn"],
             path_effect=path_effect,
             skill_effects=pending_effects,
+            minimum_total=minimum_total,
         )
 
         if player.get("takeStaminaDebuff", False):

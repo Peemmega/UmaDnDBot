@@ -96,6 +96,7 @@ class RunRerollView(discord.ui.View):
         success, payload = await execute_reroll(
             interaction,
             old_total=self.old_total,
+            minimum_total=self.old_total,
             title_prefix="WIT Reroll สำเร็จ",
         )
         if not success:

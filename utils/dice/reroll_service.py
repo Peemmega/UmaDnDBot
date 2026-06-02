@@ -8,6 +8,7 @@ async def execute_reroll(
     interaction: discord.Interaction,
     *,
     old_total: int,
+    minimum_total: int | None = None,
     title_prefix: str = "สุ่มใหม่สำเร็จ",
 ) -> tuple[bool, dict]:
     game = get_game(interaction.channel_id)
@@ -50,6 +51,7 @@ async def execute_reroll(
         max_turn=game["max_turn"],
         path_effect=path_effect,
         skill_effects=skill_effects,
+        minimum_total=minimum_total,
     )
 
     staminaNote = None

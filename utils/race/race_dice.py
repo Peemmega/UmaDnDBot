@@ -226,19 +226,40 @@ def roll_race_dice(
     max_turn: int,
     path_effect: dict | None = None,
     skill_effects: list | None = None,
+    minimum_total: int | None = None,
 ) -> dict:
     phase = get_phase_from_turn(turn, max_turn)
     distance_color,nearby_count = get_distance_color(player_id, score_map, skill_effects or [])
     rule = get_dice_rule(game_player["style"], distance_color, phase)
-
-    dice_result = roll_by_rule(rule, player_stats, game_player, {
+    roll_context = {
         "distance_color": distance_color,
         "nearby_count": nearby_count,
         "path_effect": path_effect or {},
         "skill_effects": skill_effects or [],
         "turn": turn,
         "phase": phase,
-    })
+    }
+
+    attempts = 100 if minimum_total is not None else 1
+    dice_result = None
+    for _ in range(attempts):
+        candidate = roll_by_rule(rule, player_stats, game_player, roll_context)
+        if dice_result is None or candidate["total"] > dice_result["total"]:
+            dice_result = candidate
+        if minimum_total is None or candidate["total"] > minimum_total:
+            dice_result = candidate
+            break
+
+    wit_guarantee_bonus = 0
+    if minimum_total is not None and dice_result["total"] <= minimum_total:
+        wit_guarantee_bonus = minimum_total + 1 - dice_result["total"]
+        dice_result["total"] += wit_guarantee_bonus
+        dice_result["total_display"] = str(dice_result["total"])
+        wit_bonus_display = f"+{wit_guarantee_bonus}WIT"
+        if dice_result["bonus_display"] == "-":
+            dice_result["bonus_display"] = wit_bonus_display
+        else:
+            dice_result["bonus_display"] += wit_bonus_display
 
     return {
         "phase": phase,
@@ -253,6 +274,7 @@ def roll_race_dice(
         "total": dice_result["total"],
         "total_display": dice_result["total_display"],
         "bonus_display": dice_result['bonus_display'],
+        "wit_guarantee_bonus": wit_guarantee_bonus,
     }
 
 def build_dice_table_grid(dice_preset: dict, color: str) -> str:
