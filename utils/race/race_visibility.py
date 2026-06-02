@@ -10,6 +10,7 @@ from utils.race.race_presets import (
     get_web_race_finish_distance,
 )
 from utils.skill.skill_presets import SKILLS
+from utils.race.web_timing_balance import get_web_timing_phase, get_web_timing_snapshot
 
 
 def _player_name(user_id, player: dict) -> str:
@@ -48,6 +49,7 @@ def serialize_player(
     distance = int(player.get("web_distance", player.get("score", 0)))
     distance_limit = max(1, int(finish_distance or 1))
     progress_ratio = min(1.0, max(0.0, distance / distance_limit)) if finish_distance else 0.0
+    timing_state = get_web_timing_snapshot(player, distance_limit) if finish_distance else {}
 
     return {
         "id": str(user_id),
@@ -62,7 +64,24 @@ def serialize_player(
         "distance_left": max(0, distance_limit - distance) if finish_distance else None,
         "progress_ratio": round(progress_ratio, 4),
         "progress_percent": round(progress_ratio * 100, 1),
-        "phase": _web_player_phase(progress_ratio) if finish_distance else None,
+        "phase": timing_state.get("phase") if finish_distance else None,
+        "tempo_level": timing_state.get("tempo_level"),
+        "tempo_label": timing_state.get("tempo_label"),
+        "speed_multiplier": timing_state.get("speed_multiplier"),
+        "acceleration_multiplier": timing_state.get("acceleration_multiplier"),
+        "gauge_speed_multiplier": timing_state.get("gauge_speed_multiplier"),
+        "current_speed": timing_state.get("current_speed"),
+        "acceleration": timing_state.get("acceleration"),
+        "zone_active": timing_state.get("zone_active", False),
+        "zone_started_at": timing_state.get("zone_started_at"),
+        "zone_ends_at": timing_state.get("zone_ends_at"),
+        "active_zone_until": timing_state.get("active_zone_until"),
+        "zone_remaining_seconds": timing_state.get("zone_remaining_seconds", 0),
+        "zone_used": timing_state.get("zone_used", False),
+        "zone_name": timing_state.get("zone_name"),
+        "zone_source": timing_state.get("zone_source"),
+        "last_distance_gain": player.get("web_last_distance_gain", 0),
+        "last_timing_result": player.get("web_latest_timing_result"),
         "rank": rank,
         "is_mob": bool(player.get("is_mob")),
         "mob_level": player.get("mob_level"),
@@ -128,7 +147,7 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
     leader_player = ranked[0][1] if ranked else {}
     leader_distance = int(leader_player.get("web_distance", 0)) if is_web_timing else None
     leader_ratio = leader_distance / max(1, finish_distance or 1) if is_web_timing else 0
-    leader_phase = _web_player_phase(leader_ratio) if is_web_timing else None
+    leader_phase = get_web_timing_phase(leader_distance, finish_distance) if is_web_timing else None
     path = game.get("path", [])
     leader_path_index = min(len(path) - 1, max(0, int(leader_ratio * len(path)))) if path and is_web_timing else None
     display_path_type = path[leader_path_index] if leader_path_index is not None else current_path_type
@@ -260,9 +279,10 @@ def build_timing_gauge_config(game: dict, player: dict | None) -> dict:
     path = game.get("path") or [1]
     path_index = min(len(path) - 1, max(0, int(progress_ratio * len(path))))
     path_type = path[path_index] if is_web_timing else (get_current_path_type(game) if turn else None)
-    phase = _web_player_phase(progress_ratio) if is_web_timing else _timing_phase(turn, max_turn, path_type)
-    current_speed = float(player.get("current_max_speed") or style_rule["start"])
-    acceleration = max(0.0, current_speed - float(style_rule["start"]))
+    timing_state = get_web_timing_snapshot(player, finish_distance) if is_web_timing else {}
+    phase = timing_state.get("phase") if is_web_timing else _timing_phase(turn, max_turn, path_type)
+    current_speed = float(timing_state.get("current_speed") or player.get("current_max_speed") or style_rule["start"])
+    acceleration = float(timing_state.get("acceleration") or max(0.0, current_speed - float(style_rule["start"])))
 
     phase_factor = {
         "Start": 0.92,
@@ -279,7 +299,11 @@ def build_timing_gauge_config(game: dict, player: dict | None) -> dict:
     }.get(style, {}).get(phase, 1.0)
     segment_factor = {1: 1.0, 2: 1.06, 3: 1.1, 4: 0.96}.get(path_type, 1.0)
     speed_factor = min(1.35, max(0.85, current_speed / max(1.0, float(style_rule["start"]))))
-    marker_speed = phase_factor * style_factor * segment_factor * speed_factor
+    marker_speed = (
+        float(timing_state.get("gauge_speed_multiplier", 1.0))
+        if is_web_timing
+        else phase_factor * style_factor * segment_factor * speed_factor
+    )
 
     return {
         "phase": phase,
@@ -287,6 +311,17 @@ def build_timing_gauge_config(game: dict, player: dict | None) -> dict:
         "track_segment": PATH_TYPE_TEXT.get(path_type, "Waiting") if path_type else "Waiting",
         "current_speed": round(current_speed, 2),
         "acceleration": round(acceleration, 2),
+        "tempo_level": timing_state.get("tempo_level"),
+        "tempo_label": timing_state.get("tempo_label"),
+        "speed_multiplier": timing_state.get("speed_multiplier"),
+        "acceleration_multiplier": timing_state.get("acceleration_multiplier"),
+        "gauge_speed_multiplier": timing_state.get("gauge_speed_multiplier", 1.0),
+        "zone_active": timing_state.get("zone_active", False),
+        "zone_remaining_seconds": timing_state.get("zone_remaining_seconds", 0),
+        "zone_used": timing_state.get("zone_used", False),
+        "zone_name": timing_state.get("zone_name"),
+        "last_distance_gain": player.get("web_last_distance_gain", 0),
+        "last_timing_result": player.get("web_latest_timing_result"),
         "marker_speed": round(marker_speed, 3),
         "half_cycle_ms": round(1450 / marker_speed),
     }

@@ -39,17 +39,17 @@ from utils.race.race_presets import PATH_TYPE_TEXT, RACE_PRESET
 from utils.race.race_presets import get_current_path_type, get_path_effect, get_web_race_finish_distance
 from utils.race.race_visibility import serialize_room, serialize_room_summary
 from utils.zone.zone_manager import apply_zone_in_game
+from utils.race.web_timing_balance import (
+    get_web_timing_snapshot,
+    initialize_web_timing_player,
+    refresh_web_timing_player,
+    roll_web_timing_distance_gain,
+)
 
 
 WEB_ROOM_PREFIX = "web_race_"
 DEFAULT_STAGE_KEY = "Debut"
 TIMING_MIN_INTERVAL_SECONDS = 0.2
-TIMING_BASE_MULTIPLIER = 1.4
-TIMING_SCORE_MULTIPLIER = 0.6
-TIMING_DISTANCE_GAIN_SCALE = 0.49
-TIMING_REFERENCE_DISTANCE = 2000.0
-TIMING_REFERENCE_SPEED = 16.0
-TIMING_SPEED_SCALING = 0.6
 
 
 class RaceWebManager:
@@ -284,7 +284,7 @@ class RaceWebManager:
         if current_cycle <= last_cycle:
             raise ValueError("Timing cycle is older than the latest submission")
 
-        now = time.monotonic()
+        now = time.time()
         last_submit_at = float(player.get("web_timing_last_submit_at", 0.0))
         if last_submit_at and now - last_submit_at < TIMING_MIN_INTERVAL_SECONDS:
             raise ValueError("Timing submission is too fast")
@@ -399,6 +399,8 @@ class RaceWebManager:
 
     def zone(self, room_id: str, user_id: str) -> dict:
         game = self._get_room(room_id)
+        if game.get("race_mode") == "web_timing":
+            raise ValueError("Zone activates automatically in web timing races")
         player = game.get("players", {}).get(str(user_id))
         if player is None:
             raise ValueError("Player is not in this race room")
@@ -521,12 +523,16 @@ class RaceWebManager:
         stage = RACE_PRESET.get(game.get("stage_key"), {})
         game["finish_distance"] = get_web_race_finish_distance(stage)
         game["winner_id"] = None
-        for player in game.get("players", {}).values():
+        now = time.monotonic()
+        for player_id, player in game.get("players", {}).items():
             player["web_distance"] = 0
             player["score"] = 0
             player["web_timing_last_cycle"] = 0
             player["web_timing_submitted_cycles"] = set()
             player["web_latest_timing_result"] = None
+            player["web_last_distance_gain"] = 0
+            if initialize_web_timing_player(player, game["finish_distance"], now):
+                self._log(game, f"{self._player_label(player_id, player)} entered Zone!")
 
     def _process_web_timing_mobs(self, room_id: str, cycle_id: int) -> None:
         game = self._get_room(room_id)
@@ -567,22 +573,26 @@ class RaceWebManager:
         if player is None:
             raise ValueError("Player is not in this race room")
 
-        speed = max(1.0, float(player.get("current_max_speed", 1.0)))
         finish_distance = int(game.get("finish_distance") or 2000)
-        effective_speed = TIMING_REFERENCE_SPEED + ((speed - TIMING_REFERENCE_SPEED) * TIMING_SPEED_SCALING)
-        multiplier = TIMING_BASE_MULTIPLIER + (TIMING_SCORE_MULTIPLIER * timing_score)
-        distance_scale = TIMING_DISTANCE_GAIN_SCALE * (finish_distance / TIMING_REFERENCE_DISTANCE)
-        distance_gain = max(1, round(effective_speed * multiplier * distance_scale))
+        if refresh_web_timing_player(player, finish_distance):
+            self._log(game, f"{self._player_label(user_id, player)} entered Zone!")
+        base_gain, raw_distance_gain, timing_tier = roll_web_timing_distance_gain(player, timing_score)
+        multiplier = raw_distance_gain / base_gain if base_gain else 0.0
+        distance_gain = max(1, round(raw_distance_gain))
         distance = min(finish_distance, int(player.get("web_distance", 0)) + distance_gain)
         player["web_distance"] = distance
         player["score"] = distance
-        _increase_web_timing_speed(player, finish_distance)
+        player["web_last_distance_gain"] = distance_gain
+        if refresh_web_timing_player(player, finish_distance, increase_speed=False):
+            self._log(game, f"{self._player_label(user_id, player)} entered Zone!")
+        snapshot = get_web_timing_snapshot(player, finish_distance)
 
         result = {
+            "base_gain": round(base_gain, 2),
             "timing_multiplier": round(multiplier, 3),
             "timing_score": round(timing_score, 3),
             "timing_offset": round(timing_offset, 3),
-            "timing_tier": _timing_tier(timing_score),
+            "timing_tier": timing_tier,
             "total": distance_gain,
         }
         player["web_latest_timing_result"] = {
@@ -592,7 +602,8 @@ class RaceWebManager:
             "tier": result["timing_tier"],
             "distance_gain": distance_gain,
             "total": distance_gain,
-            "phase": _web_player_phase(player, finish_distance),
+            "phase": snapshot["phase"],
+            "tempo_level": snapshot["tempo_level"],
         }
         self._log(
             game,
