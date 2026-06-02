@@ -33,14 +33,14 @@ WEB_TIMING_TEMPO_CONFIG = {
     "M": {
         "label": "Medium",
         "speed_multiplier": 1.00,
-        "acceleration_multiplier": 1.10,
+        "acceleration_multiplier": 1.15,
         "gauge_speed_multiplier": 1.10,
     },
     "H": {
         "label": "High",
         "speed_multiplier": 1.00,
-        "acceleration_multiplier": 1.30,
-        "gauge_speed_multiplier": 1.30,
+        "acceleration_multiplier": 1.45,
+        "gauge_speed_multiplier": 1.20,
     },
 }
 
@@ -63,7 +63,7 @@ MAX_WEB_TIMING_SPEED = 40.0
 MAX_WEB_TIMING_ACCELERATION = 4.0
 MIN_WEB_TIMING_ACCELERATION = 0.30
 MAX_ACCELERATION_ELAPSED_SECONDS = 3.0
-WEB_TIMING_BASE_ACCELERATION = 0.30
+WEB_TIMING_BASE_ACCELERATION = 0.25
 WEB_TIMING_POWER_ACCELERATION_MULTIPLIER_PER_POINT = 0.10
 
 
