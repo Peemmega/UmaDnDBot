@@ -52,6 +52,7 @@ WEB_ROOM_PREFIX = "web_race_"
 DEFAULT_STAGE_KEY = "Debut"
 TIMING_MIN_INTERVAL_SECONDS = 0.2
 BOT_TIMING_POLL_INTERVAL_SECONDS = 0.05
+WEB_TIMING_START_DELAY_SECONDS = 3.36
 
 
 class RaceWebManager:
@@ -538,7 +539,11 @@ class RaceWebManager:
             if initialize_web_timing_player(player, game["finish_distance"], timing_now):
                 self._log(game, f"{self._player_label(player_id, player)} entered Zone!")
             if player.get("is_mob"):
-                player["web_timing_next_auto_submit_at"] = schedule_now + self._get_bot_timing_half_cycle_seconds(game, player)
+                player["web_timing_next_auto_submit_at"] = (
+                    schedule_now
+                    + WEB_TIMING_START_DELAY_SECONDS
+                    + self._get_bot_timing_half_cycle_seconds(game, player)
+                )
 
     def _start_web_timing_bot_loop(self, room_id: str) -> None:
         game = self._get_room(room_id)
