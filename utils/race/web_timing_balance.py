@@ -9,6 +9,8 @@ from utils.race.web_timing_config import (
     MAX_WEB_TIMING_ACCELERATION,
     MAX_WEB_TIMING_SPEED,
     TIMING_RESULT_MULTIPLIERS,
+    WEB_TIMING_BASE_ACCELERATION,
+    WEB_TIMING_POWER_ACCELERATION_PER_POINT,
     WEB_TIMING_TEMPO_CONFIG,
     WEB_TIMING_TEMPO_TABLE,
     WEB_TIMING_ZONE_EFFECT,
@@ -49,7 +51,11 @@ def initialize_web_timing_player(player: dict, finish_distance: int, now: float 
     player["web_timing_current_speed"] = max(0.0, float(style_rule["start"]))
     player["web_timing_base_acceleration"] = min(
         MAX_WEB_TIMING_ACCELERATION,
-        max(0.1, 0.3 + (0.1 * float(race_profile.get("power", 1)))),
+        max(
+            0.1,
+            WEB_TIMING_BASE_ACCELERATION
+            + (WEB_TIMING_POWER_ACCELERATION_PER_POINT * float(race_profile.get("power", 1))),
+        ),
     )
     player["web_timing_speed_updated_at"] = now
     player["web_timing_phase"] = get_web_timing_phase(player.get("web_distance", 0), finish_distance)
@@ -99,7 +105,7 @@ def get_web_timing_snapshot(player: dict, finish_distance: int, now: float | Non
         "tempo_level": player.get("tempo_level", "N"),
         "tempo_label": player.get("tempo_label", "Normal"),
         "speed_multiplier": player.get("speed_multiplier", 1.0),
-        "acceleration_multiplier": player.get("acceleration_multiplier", 1.0),
+        "acceleration_bonus": player.get("acceleration_bonus", 0.0),
         "gauge_speed_multiplier": player.get("gauge_speed_multiplier", 1.0),
         "current_speed": player.get("current_speed", 0),
         "acceleration": player.get("acceleration", 0),
@@ -116,7 +122,7 @@ def get_web_timing_snapshot(player: dict, finish_distance: int, now: float | Non
 
 def roll_web_timing_distance_gain(player: dict, timing_score: float) -> tuple[float, float, str]:
     current_speed = max(0.0, float(player.get("current_speed", 0.0)))
-    base_gain = random.uniform(current_speed / 2.0, current_speed)
+    base_gain = random.uniform(current_speed / 4.0, current_speed)
     tier = get_timing_tier(timing_score)
     return base_gain, base_gain * TIMING_RESULT_MULTIPLIERS[tier], tier
 
@@ -144,10 +150,13 @@ def _expire_zone(player: dict, now: float) -> None:
 def _effective_acceleration(player: dict) -> float:
     phase = int(player.get("web_timing_phase", 1))
     tempo = get_tempo(player.get("style") or "Pace", phase)
-    zone_bonus = WEB_TIMING_ZONE_EFFECT["acceleration_bonus"] if player.get("zone_active") else 1.0
-    return min(
-        MAX_WEB_TIMING_ACCELERATION,
-        max(0.0, float(player.get("web_timing_base_acceleration", 0.1)) * tempo["acceleration_multiplier"] * zone_bonus),
+    zone_bonus = WEB_TIMING_ZONE_EFFECT["acceleration_bonus"] if player.get("zone_active") else 0.0
+    return round(
+        min(
+            MAX_WEB_TIMING_ACCELERATION,
+            max(0.0, float(player.get("web_timing_base_acceleration", 0.1)) + tempo["acceleration_bonus"] + zone_bonus),
+        ),
+        3,
     )
 
 
@@ -159,7 +168,11 @@ def _sync_public_state(player: dict, now: float) -> None:
     player["tempo_level"] = tempo["tempo_level"]
     player["tempo_label"] = tempo["label"]
     player["speed_multiplier"] = tempo["speed_multiplier"]
-    player["acceleration_multiplier"] = tempo["acceleration_multiplier"]
+    player["acceleration_bonus"] = round(
+        tempo["acceleration_bonus"]
+        + (WEB_TIMING_ZONE_EFFECT["acceleration_bonus"] if zone_active else 0.0),
+        3,
+    )
     player["gauge_speed_multiplier"] = round(tempo["gauge_speed_multiplier"] * gauge_bonus, 3)
     player["current_speed"] = round(
         min(MAX_WEB_TIMING_SPEED, max(0.0, float(player.get("web_timing_current_speed", 0.0)) * tempo["speed_multiplier"] * speed_bonus)),

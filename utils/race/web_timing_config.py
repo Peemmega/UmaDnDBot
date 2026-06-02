@@ -27,27 +27,27 @@ WEB_TIMING_TEMPO_CONFIG = {
     "N": {
         "label": "Normal",
         "speed_multiplier": 1.00,
-        "acceleration_multiplier": 1.00,
+        "acceleration_bonus": 0.00,
         "gauge_speed_multiplier": 1.00,
     },
     "M": {
         "label": "Medium",
         "speed_multiplier": 1.00,
-        "acceleration_multiplier": 1.05,
+        "acceleration_bonus": 0.05,
         "gauge_speed_multiplier": 1.125,
     },
     "H": {
         "label": "High",
         "speed_multiplier": 1.00,
-        "acceleration_multiplier": 1.10,
+        "acceleration_bonus": 0.15,
         "gauge_speed_multiplier": 1.25,
     },
 }
 
 WEB_TIMING_ZONE_EFFECT = {
-    "duration_seconds": 6.0,
+    "duration_seconds": 8.0,
     "speed_bonus": 1.20,
-    "acceleration_bonus": 1.25,
+    "acceleration_bonus": 0.25,
     "gauge_speed_bonus": 1.10,
 }
 
@@ -62,6 +62,8 @@ TIMING_RESULT_MULTIPLIERS = {
 MAX_WEB_TIMING_SPEED = 40.0
 MAX_WEB_TIMING_ACCELERATION = 4.0
 MAX_ACCELERATION_ELAPSED_SECONDS = 3.0
+WEB_TIMING_BASE_ACCELERATION = 0.30
+WEB_TIMING_POWER_ACCELERATION_PER_POINT = 0.10
 
 
 def get_web_timing_start_delay_seconds() -> float:

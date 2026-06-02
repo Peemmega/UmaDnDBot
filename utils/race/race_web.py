@@ -532,6 +532,7 @@ class RaceWebManager:
         game["winner_id"] = None
         timing_now = time.time()
         schedule_now = time.monotonic()
+        start_delay_seconds = get_web_timing_start_delay_seconds()
         for player_id, player in game.get("players", {}).items():
             player["web_distance"] = 0
             player["score"] = 0
@@ -540,12 +541,12 @@ class RaceWebManager:
             player["web_latest_timing_result"] = None
             player["web_last_distance_gain"] = 0
             player["last_distance_gain"] = 0
-            if initialize_web_timing_player(player, game["finish_distance"], timing_now):
+            if initialize_web_timing_player(player, game["finish_distance"], timing_now + start_delay_seconds):
                 self._log(game, f"{self._player_label(player_id, player)} entered Zone!")
             if player.get("is_mob"):
                 player["web_timing_next_auto_submit_at"] = (
                     schedule_now
-                    + get_web_timing_start_delay_seconds()
+                    + start_delay_seconds
                     + self._get_bot_timing_half_cycle_seconds(game, player)
                 )
 
