@@ -14,7 +14,7 @@ from utils.database import (
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from utils.zone.zone_preset import ZONE_POINT_COST
-from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET
+from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
@@ -320,6 +320,7 @@ def api_get_all_races(distance: str = "all"):
             "distance": race_distance,
             "turn": race.get("turn"),
             "path": race.get("path", []),
+            "finish_distance": get_web_race_finish_distance(race),
         })
 
     return result

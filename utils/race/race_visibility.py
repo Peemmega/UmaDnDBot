@@ -7,6 +7,7 @@ from utils.race.race_presets import (
     PATH_TYPE_TEXT,
     RACE_PRESET,
     get_current_path_type,
+    get_web_race_finish_distance,
 )
 from utils.skill.skill_presets import SKILLS
 
@@ -20,7 +21,12 @@ def _player_name(user_id, player: dict) -> str:
     )
 
 
-def serialize_player(user_id, player: dict, rank: int | None = None) -> dict:
+def serialize_player(
+    user_id,
+    player: dict,
+    rank: int | None = None,
+    finish_distance: int | None = None,
+) -> dict:
     skill_slots = player.get("skills") or {}
     skills = []
     for slot in (1, 2, 3, 4):
@@ -39,14 +45,24 @@ def serialize_player(user_id, player: dict, rank: int | None = None) -> dict:
     player_avatar = player.get("thumnail") if player.get("is_mob") else player.get("avatar")
     player_avatar = player_avatar or player.get("avatar") or player.get("thumnail")
 
+    distance = int(player.get("web_distance", player.get("score", 0)))
+    distance_limit = max(1, int(finish_distance or 1))
+    progress_ratio = min(1.0, max(0.0, distance / distance_limit)) if finish_distance else 0.0
+
     return {
         "id": str(user_id),
+        "user_id": str(user_id),
         "name": _player_name(user_id, player),
         "username": player.get("username"),
         "avatar": str(player_avatar) if player_avatar else "",
         "thumbnail": str(player.get("thumnail") or ""),
         "style": player.get("style"),
         "score": player.get("score", 0),
+        "distance": distance,
+        "distance_left": max(0, distance_limit - distance) if finish_distance else None,
+        "progress_ratio": round(progress_ratio, 4),
+        "progress_percent": round(progress_ratio * 100, 1),
+        "phase": _web_player_phase(progress_ratio) if finish_distance else None,
         "rank": rank,
         "is_mob": bool(player.get("is_mob")),
         "mob_level": player.get("mob_level"),
@@ -79,9 +95,14 @@ def serialize_player(user_id, player: dict, rank: int | None = None) -> dict:
 
 
 def serialize_room(game: dict, room_id: str | None = None, user_id: str | None = None) -> dict:
+    race_mode = game.get("race_mode", "discord_classic")
+    is_web_timing = race_mode == "web_timing"
+    stage_key = game.get("stage_key")
+    preset = RACE_PRESET.get(stage_key, {})
+    finish_distance = int(game.get("finish_distance") or get_web_race_finish_distance(preset)) if is_web_timing else None
     ranked = sorted(
         game.get("players", {}).items(),
-        key=lambda item: item[1].get("score", 0),
+        key=lambda item: item[1].get("web_distance", 0) if is_web_timing else item[1].get("score", 0),
         reverse=True,
     )
     rank_by_id = {player_id: index for index, (player_id, _) in enumerate(ranked, start=1)}
@@ -89,11 +110,9 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
     players = []
     for player_id, player in game.get("players", {}).items():
         player["_current_turn"] = game.get("turn", 0)
-        players.append(serialize_player(player_id, player, rank_by_id.get(player_id)))
+        players.append(serialize_player(player_id, player, rank_by_id.get(player_id), finish_distance))
         player.pop("_current_turn", None)
 
-    stage_key = game.get("stage_key")
-    preset = RACE_PRESET.get(stage_key, {})
     turn = game.get("turn", 0)
     max_turn = game.get("max_turn", 0)
     current_path_type = get_current_path_type(game) if turn else None
@@ -106,7 +125,14 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
         phase = "running"
     else:
         phase = "waiting"
-    timing_phase = _timing_phase(turn, max_turn, current_path_type)
+    leader_player = ranked[0][1] if ranked else {}
+    leader_distance = int(leader_player.get("web_distance", 0)) if is_web_timing else None
+    leader_ratio = leader_distance / max(1, finish_distance or 1) if is_web_timing else 0
+    leader_phase = _web_player_phase(leader_ratio) if is_web_timing else None
+    path = game.get("path", [])
+    leader_path_index = min(len(path) - 1, max(0, int(leader_ratio * len(path)))) if path and is_web_timing else None
+    display_path_type = path[leader_path_index] if leader_path_index is not None else current_path_type
+    timing_phase = leader_phase if is_web_timing else _timing_phase(turn, max_turn, current_path_type)
 
     return {
         "room_id": room_id or str(game.get("room_id") or ""),
@@ -124,7 +150,12 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
         "race_phase": get_phase_from_turn(turn, max_turn) if turn else 0,
         "timing_phase": timing_phase,
         "gameplay_mode": game.get("web_gameplay_mode", "manual"),
-        "cycle_id": turn if game.get("started") else 0,
+        "race_mode": race_mode,
+        "cycle_id": 0,
+        "finish_distance": finish_distance,
+        "leader_distance": leader_distance,
+        "leader_phase": leader_phase,
+        "winner_id": game.get("winner_id"),
         "timing_gauge": build_timing_gauge_config(game, current_player),
         "timing_gauges": {
             str(player_id): build_timing_gauge_config(game, player)
@@ -140,18 +171,19 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
                 "type": path_type,
                 "label": PATH_TYPE_TEXT.get(path_type, "Straight"),
                 "icon": PATH_TYPE_ICON.get(path_type, "->"),
-                "active": index == turn,
+                "active": index == ((leader_path_index + 1) if leader_path_index is not None else turn),
             }
-            for index, path_type in enumerate(game.get("path", []), start=1)
+            for index, path_type in enumerate(path, start=1)
         ],
         "current_path": {
-            "type": current_path_type,
-            "label": PATH_TYPE_TEXT.get(current_path_type, "Waiting") if current_path_type else "Waiting",
-            "icon": PATH_TYPE_ICON.get(current_path_type, "-") if current_path_type else "-",
+            "type": display_path_type,
+            "label": PATH_TYPE_TEXT.get(display_path_type, "Waiting") if display_path_type else "Waiting",
+            "icon": PATH_TYPE_ICON.get(display_path_type, "-") if display_path_type else "-",
         },
         "dice_presets": DICE_PRESET,
         "players": players,
-        "scoreboard": sorted(players, key=lambda item: item["score"], reverse=True),
+        "scoreboard": sorted(players, key=lambda item: item["distance"] if is_web_timing else item["score"], reverse=True),
+        "logs": game.get("web_action_logs", [])[-80:],
         "action_logs": game.get("web_action_logs", [])[-80:],
         "turn_score_logs": game.get("turn_score_logs", [])[-80:],
         "result": game.get("result"),
@@ -159,13 +191,15 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
 
 
 def serialize_room_summary(game: dict, room_id: str) -> dict:
+    race_mode = game.get("race_mode", "discord_classic")
+    stage = RACE_PRESET.get(game.get("stage_key"), {})
     return {
         "room_id": room_id,
         "room_code": room_id[-6:].upper(),
         "phase": "ended" if game.get("ended") else ("running" if game.get("started") else "waiting"),
         "race_name": game.get("stage_name"),
         "stage_key": game.get("stage_key"),
-        "thumbnail": RACE_PRESET.get(game.get("stage_key"), {}).get("thumnail"),
+        "thumbnail": stage.get("thumnail"),
         "turn": game.get("turn", 0),
         "max_turn": game.get("max_turn", 0),
         "player_count": len(game.get("players", {})),
@@ -179,6 +213,8 @@ def serialize_room_summary(game: dict, room_id: str) -> dict:
         ]),
         "max_players": 18,
         "gameplay_mode": game.get("web_gameplay_mode", "manual"),
+        "race_mode": race_mode,
+        "finish_distance": game.get("finish_distance") or (get_web_race_finish_distance(stage) if race_mode == "web_timing" else None),
     }
 
 
@@ -198,14 +234,33 @@ def _timing_phase(turn: int, max_turn: int, path_type) -> str:
     return "Final Straight"
 
 
+def _web_player_phase(progress_ratio: float) -> str:
+    if progress_ratio >= 1.0:
+        return "Finished"
+    if progress_ratio < 0.15:
+        return "Start"
+    if progress_ratio < 0.40:
+        return "Early"
+    if progress_ratio < 0.70:
+        return "Middle"
+    if progress_ratio < 0.90:
+        return "Final Corner"
+    return "Final Straight"
+
+
 def build_timing_gauge_config(game: dict, player: dict | None) -> dict:
     player = player or {}
     style = player.get("style") or "Pace"
     style_rule = MAX_SPEED_PHASE.get(style, MAX_SPEED_PHASE["Pace"])
     turn = int(game.get("turn", 0))
     max_turn = max(1, int(game.get("max_turn", 1)))
-    path_type = get_current_path_type(game) if turn else None
-    phase = _timing_phase(turn, max_turn, path_type)
+    is_web_timing = game.get("race_mode") == "web_timing"
+    finish_distance = max(1, int(game.get("finish_distance") or 2000))
+    progress_ratio = float(player.get("web_distance", 0)) / finish_distance
+    path = game.get("path") or [1]
+    path_index = min(len(path) - 1, max(0, int(progress_ratio * len(path))))
+    path_type = path[path_index] if is_web_timing else (get_current_path_type(game) if turn else None)
+    phase = _web_player_phase(progress_ratio) if is_web_timing else _timing_phase(turn, max_turn, path_type)
     current_speed = float(player.get("current_max_speed") or style_rule["start"])
     acceleration = max(0.0, current_speed - float(style_rule["start"]))
 

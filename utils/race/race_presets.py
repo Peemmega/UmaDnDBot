@@ -21,6 +21,26 @@ PATH_TYPE_ICON = {
     4: "↘️",  # เนินลง
 }
 
+WEB_RACE_FINISH_DISTANCE_BY_TYPE = {
+    "sprint": 1400,
+    "short": 1400,
+    "short_mile": 1400,
+    "mile": 2000,
+    "medium": 2000,
+    "long": 3000,
+}
+
+
+def get_web_race_finish_distance(stage: dict | None) -> int:
+    stage = stage or {}
+    custom_distance = stage.get("finish_distance")
+    if custom_distance is not None:
+        return max(1, int(custom_distance))
+
+    distance_type = stage.get("category") or stage.get("distance_type") or stage.get("distance")
+    return WEB_RACE_FINISH_DISTANCE_BY_TYPE.get(str(distance_type or "").lower(), 2000)
+
+
 def get_current_path_type(game: dict) -> int:
     turn = game["turn"]
     path = game["path"]
