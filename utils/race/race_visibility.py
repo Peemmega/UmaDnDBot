@@ -13,6 +13,10 @@ from utils.skill.skill_presets import SKILLS
 from utils.race.web_timing_balance import get_web_timing_phase, get_web_timing_snapshot
 
 
+DEFAULT_GAUGE_HALF_CYCLE_MS = 1450
+WEB_TIMING_GAUGE_HALF_CYCLE_MS = DEFAULT_GAUGE_HALF_CYCLE_MS / 2
+
+
 def _player_name(user_id, player: dict) -> str:
     return (
         player.get("display_name")
@@ -323,5 +327,8 @@ def build_timing_gauge_config(game: dict, player: dict | None) -> dict:
         "last_distance_gain": player.get("last_distance_gain", player.get("web_last_distance_gain", 0)),
         "last_timing_result": player.get("web_latest_timing_result"),
         "marker_speed": round(marker_speed, 3),
-        "half_cycle_ms": round(1450 / marker_speed),
+        "half_cycle_ms": round(
+            (WEB_TIMING_GAUGE_HALF_CYCLE_MS if is_web_timing else DEFAULT_GAUGE_HALF_CYCLE_MS)
+            / marker_speed
+        ),
     }
