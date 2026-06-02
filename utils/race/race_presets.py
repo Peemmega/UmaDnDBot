@@ -23,9 +23,7 @@ PATH_TYPE_ICON = {
 
 WEB_RACE_FINISH_DISTANCE_BY_TYPE = {
     "sprint": 1400,
-    "short": 1400,
-    "short_mile": 1400,
-    "mile": 2000,
+    "mile": 1600,
     "medium": 2000,
     "long": 3000,
 }
