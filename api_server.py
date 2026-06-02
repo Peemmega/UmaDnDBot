@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 import json
 import asyncio
 
@@ -35,6 +37,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def log_timing_validation_error(request: Request, exc: RequestValidationError):
+    if request.url.path.endswith("/timing"):
+        body = (await request.body()).decode("utf-8", errors="replace")
+        print(f"[race-web] timing validation failed path={request.url.path} errors={exc.errors()} body={body}")
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
 @app.on_event("startup")
