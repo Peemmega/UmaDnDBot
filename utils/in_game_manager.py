@@ -7,10 +7,11 @@ from utils.dice.dice_presets import (
 
 def incrase_speed_by_acceleration(game ,player: dict, multiple):
     race_profile = player.get("race_profile", {})
+    effective_stats = player.get("effective_race_stats") or {}
     style = player["style"]
     current_max_speed = player.get("current_max_speed", 0)
 
-    power_stat = race_profile.get("power", 1)
+    power_stat = effective_stats.get("effective_power", race_profile.get("power", 1))
 
     speed_cap_base = 0
     phase = get_phase_from_turn(game["turn"], game["max_turn"])
@@ -36,7 +37,7 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
 
     max_speed_cap = (
         speed_cap_base
-        + race_profile.get("speed", 0)
+        + effective_stats.get("effective_speed", race_profile.get("speed", 0))
     )
 
     increase_speed = 0.3 + (scale_up * power_stat * multiple) 

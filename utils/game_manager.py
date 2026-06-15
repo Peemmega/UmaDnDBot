@@ -22,6 +22,11 @@ from utils.race.race_dice import (
     get_distance_color,
     get_phase_from_turn
 )
+from utils.race.race_aptitude import (
+    build_aptitude_debug_lines,
+    calculate_effective_race_stats,
+    get_roll_race_stats,
+)
 from utils.dice.dice_presets import (
     MAX_SPEED_PHASE
 )
@@ -31,6 +36,34 @@ from utils.icon_presets import Status_Icon_Type, ICONS
 
 VALID_STYLES = {"Front", "Pace", "Late", "End"}
 games = {}
+
+
+def refresh_player_race_aptitudes(player: dict, race: dict | None) -> dict:
+    effective_stats = calculate_effective_race_stats(player, race or {})
+    player["effective_race_stats"] = effective_stats
+    player["aptitude_bonus"] = {
+        "track": {
+            "rank": effective_stats["track_rank"],
+            "modifier": effective_stats["track_modifier"],
+            "percent": effective_stats["track_percent"],
+        },
+        "distance": {
+            "rank": effective_stats["distance_rank"],
+            "modifier": effective_stats["distance_modifier"],
+            "percent": effective_stats["distance_percent"],
+        },
+        "style": {
+            "rank": effective_stats["style_rank"],
+            "modifier": effective_stats["style_modifier"],
+            "percent": effective_stats["style_percent"],
+        },
+        "effective_speed": effective_stats["effective_speed"],
+        "effective_power": effective_stats["effective_power"],
+        "effective_wit_gain": effective_stats["effective_wit_gain"],
+        "effective_wit_requirement": effective_stats["effective_wit_requirement"],
+        "lines": build_aptitude_debug_lines(effective_stats),
+    }
+    return effective_stats
 
 
 def apply_web_timing_player_defaults(player: dict) -> dict:
@@ -89,6 +122,7 @@ def execute_roll_core(
     if race_player is None:
         return False, {"message": "ไม่พบข้อมูล stat ตอนเริ่มเกม"}
 
+    roll_stats = get_roll_race_stats(game_player)
     snapshot_scores = game["turn_snapshot_scores"]
 
     pending_effects, merged_stats = build_pending_effects_from_player(game_player)
@@ -104,7 +138,7 @@ def execute_roll_core(
 
     result = roll_race_dice(
         game_player=game_player,
-        player_stats=race_player,
+        player_stats=roll_stats,
         player_id=user_id,
         score_map=snapshot_scores,
         turn=game["turn"],
@@ -496,24 +530,9 @@ def start_game(channel_id: int):
         player["last_roll_turn"] = -1
         player["zone_left"] = 1
 
-        # ===== aptitude bonus =====
-        att_source = player["race_profile"]
+        refresh_player_race_aptitudes(player, game)
 
-        att = get_aptitude_values(
-            att_source,
-            game["track"],
-            game["distance"],
-            player["style"]
-        )
-
-        att_bonus = build_aptitude_stat_bonus(att)
-
-        player["race_profile"]["power"] += att_bonus["power"]
-        player["race_profile"]["speed"] += att_bonus["speed"]
-        player["race_profile"]["wit"] += att_bonus["wit"]
-
-        player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"] #+ math.floor(player["race_profile"]["power"]/2)
-        player["aptitude_bonus"] = att_bonus
+        player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"]
         player["wit_mana"] = 100 + (player["race_profile"]["wit"] * 6)
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
@@ -531,11 +550,18 @@ def build_join_embed(
     name_field: str = "ผู้เล่น",
     name_value: str,
 ) -> discord.Embed:
-    surface = game.get("surface", "Turf")
-    distance = game.get("distance", "Medium")
-
-    att = get_aptitude_values(aptitude_source, surface, distance, style)
-    att_bonus = build_aptitude_stat_bonus(att)
+    surface = game.get("track") or game.get("surface", "turf")
+    distance = game.get("distance", "medium")
+    effective_stats = calculate_effective_race_stats(
+        {
+            "style": style,
+            "race_profile": aptitude_source,
+        },
+        {
+            "track": surface,
+            "distance": distance,
+        },
+    )
 
     embed = discord.Embed(
         title=title,
@@ -547,11 +573,7 @@ def build_join_embed(
 
     embed.add_field(
         name="📊 Aptitude Bonus",
-        value=(
-            f"{Status_Icon_Type['SPD']} +{att_bonus['speed']} "
-            f"{Status_Icon_Type['POW']} +{att_bonus['power']} "
-            f"{Status_Icon_Type['WIT']} +{att_bonus['wit']}"
-        ),
+        value="\n".join(build_aptitude_debug_lines(effective_stats)),
         inline=False
     )
 
@@ -581,22 +603,6 @@ def build_mob_join_embed(game: dict, mob: dict):
         name_field="ชื่อ",
         name_value=mob_name,
     )
-
-def get_aptitude_values(db_player, surface, distance, style):
-    surface_key = "turf" if surface == "turf" else "dirt"
-
-    style_map = {
-        "Front": "front",
-        "Pace": "pace",
-        "Late": "late",
-        "End": "end_style",
-    }
-
-    return {
-        "track": db_player.get(surface_key, 1),
-        "distance": db_player.get(distance.lower(), 1),
-        "style": db_player.get(style_map.get(style, "pace"), 1),
-    }
 
 def get_player_skill_cd(channel_id: int, user_id: int, skill_id: str) -> int:
     game = get_game(channel_id)
@@ -997,9 +1003,8 @@ def use_reroll(channel_id: int, user_id: int):
     return True, player["reroll_left"]
 
 def build_single_wit_regen_text(game_player: dict) -> str:
-    race_profile = game_player.get("race_profile", {})
-    wit_stat = race_profile.get("wit", 0)
-    regen = 10 + (wit_stat * 1)
+    effective_stats = game_player.get("effective_race_stats") or {}
+    regen = int(effective_stats.get("effective_wit_gain", 10))
     current_mana = game_player.get("wit_mana", 0)
     return f"{current_mana} → {current_mana + regen}" #{Status_Icon_Type['WIT']} 
 
@@ -1127,9 +1132,8 @@ def apply_wit_regen(channel_id: int):
         return
 
     for _, player in game["players"].items():
-        race_profile = player.get("race_profile", {})
-        wit_stat = race_profile.get("wit", 0)
-        regen = 10 + (wit_stat * 1)
+        effective_stats = player.get("effective_race_stats") or refresh_player_race_aptitudes(player, game)
+        regen = int(effective_stats.get("effective_wit_gain", 10))
         player["wit_mana"] = player.get("wit_mana", 0) + regen
 
 def get_ranked_players(channel_id: int):
@@ -1434,9 +1438,8 @@ def update_player_score(channel_id: int, user_id: int, amount: int):
     return True, player["score"]
 
 def can_use_wit_reroll(game_player: dict, base_total: int) -> bool:
-    race_profile = game_player.get("race_profile", {})
-    wit_stat = race_profile.get("wit", 0)
-    threshold = wit_stat * 5
+    effective_stats = game_player.get("effective_race_stats") or {}
+    threshold = int(effective_stats.get("effective_wit_requirement", 0))
 
     if game_player.get("wit_reroll_left", 0) <= 0:
         return False

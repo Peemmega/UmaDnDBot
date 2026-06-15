@@ -31,9 +31,11 @@ from utils.game_manager import (
     start_turn_confirmation,
     update_player_score,
     use_block,
+    refresh_player_race_aptitudes,
     use_reroll,
     use_rush,
 )
+from utils.race.race_aptitude import get_roll_race_stats
 from utils.mob.mob_presets import MOB_PRESETS
 from utils.race.race_dice import roll_race_dice
 from utils.race.race_presets import PATH_TYPE_TEXT, RACE_PRESET
@@ -539,6 +541,7 @@ class RaceWebManager:
         schedule_now = time.monotonic()
         start_delay_seconds = get_web_timing_start_delay_seconds()
         for player_id, player in game.get("players", {}).items():
+            refresh_player_race_aptitudes(player, game)
             player["web_distance"] = 0
             player["score"] = 0
             player["web_timing_last_cycle"] = 0
@@ -681,6 +684,8 @@ class RaceWebManager:
             f"{self._player_label(user_id, player)} timed {result['timing_tier']} +{distance_gain}m",
             {
                 "timing": player["web_latest_timing_result"],
+                "effective_stats": player.get("effective_race_stats"),
+                "aptitude_bonus": player.get("aptitude_bonus"),
                 "client_phase": client_phase,
                 "is_bot": is_bot,
             },
@@ -719,6 +724,7 @@ class RaceWebManager:
         race_player = player.get("race_profile")
         if race_player is None:
             return False, {"message": "Race profile is missing"}
+        roll_stats = get_roll_race_stats(player)
 
         success, _ = update_player_score(room_id, str(user_id), -old_total)
         if not success:
@@ -729,7 +735,7 @@ class RaceWebManager:
         path_effect = get_path_effect(path_type, player, race_player)
         result = roll_race_dice(
             game_player=player,
-            player_stats=race_player,
+            player_stats=roll_stats,
             player_id=str(user_id),
             score_map=game.get("turn_snapshot_scores", {}),
             turn=game["turn"],
@@ -906,8 +912,9 @@ def _increase_web_timing_speed(player: dict, finish_distance: int) -> None:
         "Finished": "last_spurt",
     }.get(phase, "mid")
     race_profile = player.get("race_profile") or {}
-    speed_cap = float(style_rule[phase_cap_key]) + float(race_profile.get("speed", 0))
-    acceleration = 0.3 + (0.1 * float(race_profile.get("power", 1)))
+    effective_stats = player.get("effective_race_stats") or {}
+    speed_cap = float(style_rule[phase_cap_key]) + float(effective_stats.get("effective_speed", race_profile.get("speed", 0)))
+    acceleration = 0.3 + (0.1 * float(effective_stats.get("effective_power", race_profile.get("power", 1))))
     player["current_max_speed"] = min(speed_cap, float(player.get("current_max_speed", 0)) + acceleration)
 
 
@@ -931,6 +938,7 @@ def _roll_summary_payload(payload: dict) -> dict:
     path_effect = payload.get("path_effect") or {}
     race_profile = player.get("race_profile") or {}
     aptitude_bonus = player.get("aptitude_bonus") or {}
+    effective_stats = player.get("effective_race_stats") or {}
     lasted_buff = player.get("lastedBuff") or {}
     return {
         "total": result.get("total", 0),
@@ -964,6 +972,12 @@ def _roll_summary_payload(payload: dict) -> dict:
             "power": race_profile.get("power", 0),
             "gut": race_profile.get("gut", 0),
             "wit": race_profile.get("wit", 0),
+        },
+        "effective_stats": {
+            "effective_speed": effective_stats.get("effective_speed"),
+            "effective_power": effective_stats.get("effective_power"),
+            "effective_wit_gain": effective_stats.get("effective_wit_gain"),
+            "effective_wit_requirement": effective_stats.get("effective_wit_requirement"),
         },
         "aptitude_bonus": aptitude_bonus,
         "pending_bonus": lasted_buff,

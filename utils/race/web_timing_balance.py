@@ -48,13 +48,16 @@ def initialize_web_timing_player(player: dict, finish_distance: int, now: float 
     now = time.time() if now is None else now
     style = player.get("style") or "Pace"
     style_rule = MAX_SPEED_PHASE.get(style, MAX_SPEED_PHASE["Pace"])
-    race_profile = player.get("race_profile") or {}
-    player["web_timing_current_speed"] = max(0.0, float(style_rule["start"]))
+    effective_stats = player.get("effective_race_stats") or {}
+    speed_modifier = float(effective_stats.get("distance_modifier", 1.0))
+    effective_power = float(effective_stats.get("effective_power", (player.get("race_profile") or {}).get("power", 1)))
+    player["web_timing_current_speed"] = max(0.0, float(style_rule["start"]) * speed_modifier)
     player["web_timing_base_acceleration"] = max(MIN_WEB_TIMING_ACCELERATION, WEB_TIMING_BASE_ACCELERATION)
     player["web_timing_power_acceleration_multiplier"] = max(
         0.0,
-        1.0 + (WEB_TIMING_POWER_ACCELERATION_MULTIPLIER_PER_POINT * float(race_profile.get("power", 1))),
+        1.0 + (WEB_TIMING_POWER_ACCELERATION_MULTIPLIER_PER_POINT * effective_power),
     )
+    player["web_timing_speed_cap"] = max(0.0, MAX_WEB_TIMING_SPEED * speed_modifier)
     player["web_timing_speed_updated_at"] = now
     player["web_timing_phase"] = get_web_timing_phase(player.get("web_distance", 0), finish_distance)
     player["zone_active"] = False
@@ -82,7 +85,7 @@ def refresh_web_timing_player(
         elapsed = min(MAX_ACCELERATION_ELAPSED_SECONDS, max(0.0, now - previous_update))
         current_speed = max(0.0, float(player.get("web_timing_current_speed", 0.0)))
         current_speed += _effective_acceleration(player) * elapsed
-        player["web_timing_current_speed"] = min(MAX_WEB_TIMING_SPEED, current_speed)
+        player["web_timing_current_speed"] = min(float(player.get("web_timing_speed_cap", MAX_WEB_TIMING_SPEED)), current_speed)
     player["web_timing_speed_updated_at"] = now
 
     old_phase = int(player.get("web_timing_phase", 1))
@@ -180,7 +183,10 @@ def _sync_public_state(player: dict, now: float) -> None:
     )
     player["gauge_speed_multiplier"] = round(tempo["gauge_speed_multiplier"] * gauge_bonus, 3)
     player["current_speed"] = round(
-        min(MAX_WEB_TIMING_SPEED, max(0.0, float(player.get("web_timing_current_speed", 0.0)) * tempo["speed_multiplier"] * speed_bonus)),
+        min(
+            float(player.get("web_timing_speed_cap", MAX_WEB_TIMING_SPEED)),
+            max(0.0, float(player.get("web_timing_current_speed", 0.0)) * tempo["speed_multiplier"] * speed_bonus),
+        ),
         2,
     )
     player["acceleration"] = round(_effective_acceleration(player), 2)

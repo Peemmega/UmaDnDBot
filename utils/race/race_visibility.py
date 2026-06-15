@@ -99,6 +99,8 @@ def serialize_player(
         "zone_left": player.get("zone_left", 0),
         "reroll_left": player.get("reroll_left", 0),
         "wit_reroll_left": player.get("wit_reroll_left", 0),
+        "aptitude_bonus": player.get("aptitude_bonus"),
+        "effective_race_stats": player.get("effective_race_stats"),
         "no_reroll_this_turn": bool(player.get("no_reroll_this_turn")),
         "used_block": bool(player.get("used_block")),
         "used_rush": bool(player.get("used_rush")),
