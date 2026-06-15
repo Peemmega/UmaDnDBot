@@ -152,7 +152,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     power_bonus = player_stats.get("power", 1)
     stamina_bonus = player_stats.get("stamina", 1) * 1
 
-    nearby_count = min(context.get("nearby_count", 0), 2)
+    nearby_count = min(context.get("nearby_count", 0), 2) + 1
     gut_scale = player_stats.get("gut", 1) 
     gut_bonus = 0
 
