@@ -149,7 +149,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     power_total_multiplier = path_effect.get("power_total_multiplier", 1.0)
 
     speed_Bonus = player_stats.get("speed", 1) * 2
-    power_bonus = player_stats.get("power", 1) * power_total_multiplier
+    power_bonus = player_stats.get("power", 1)
     stamina_bonus = player_stats.get("stamina", 1) * 1
 
     nearby_count = min(context.get("nearby_count", 0), 2)
