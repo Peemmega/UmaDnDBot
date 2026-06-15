@@ -4,7 +4,8 @@ from utils.zone.zone_preset import (
     DEFAULT_ZONE_IMAGE, 
     ZONE_POINT_COST, 
     ZONE_FIELDS,
-    ZONE_VALUE
+    ZONE_VALUE,
+    normalize_zone_build,
 )
 from utils.database import set_player_zone_build, get_player
 from utils.in_game_manager import incrase_speed_by_acceleration
@@ -17,15 +18,7 @@ def get_player_zone(user_id: int) -> Optional[dict]:
 
     zone = player.get("zone") or {}
     build = zone.get("build", {})
-
-    normalized_build = {
-        "flat": int(build.get("flat", 0)),
-        "add_dkh": int(build.get("add_dkh", 0)),
-        "floor": int(build.get("floor", 0)),
-        "cap": int(build.get("cap", 0)),
-        "self_heal_stamina": int(build.get("self_heal_stamina", 0)), 
-        "modify_current_speed": int(build.get("modify_current_speed", 0)), 
-    }
+    normalized_build = normalize_zone_build(build)
 
     if build != normalized_build:
         set_player_zone_build(user_id, normalized_build)
@@ -39,7 +32,7 @@ def get_player_zone(user_id: int) -> Optional[dict]:
 
 
 def get_zone_points_used(zone: dict) -> int:
-    build = zone.get("build", {})
+    build = normalize_zone_build(zone.get("build", {}))
     total = 0
 
     for field, cost in ZONE_POINT_COST.items():
@@ -93,13 +86,17 @@ def downgrade_zone_stat(user_id: int, field: str, amount: int = 1) -> tuple[bool
     return True, f"ลด {field} -{amount} สำเร็จ"
 
 def get_zone_effects_from_build(zone_build: dict) -> dict:
+    normalized_build = normalize_zone_build(zone_build)
+    cap_floor_value = int(normalized_build.get("cap_floor", 0)) * ZONE_VALUE["cap_floor"]
+
     return {
-        "flat": int(zone_build.get("flat", 0)) * ZONE_VALUE["flat"],
-        "add_dkh": int(zone_build.get("add_dkh", 0)) * ZONE_VALUE["add_dkh"],
-        "floor": int(zone_build.get("floor", 0)) * ZONE_VALUE["floor"],
-        "cap": int(zone_build.get("cap", 0)) * ZONE_VALUE["cap"],
-        "self_heal_stamina": int(zone_build.get("self_heal_stamina", 0)) * ZONE_VALUE["self_heal_stamina"],
-        "modify_current_speed": int(zone_build.get("modify_current_speed", 0)) * ZONE_VALUE["modify_current_speed"],
+        "flat": int(normalized_build.get("flat", 0)) * ZONE_VALUE["flat"],
+        "add_dkh": int(normalized_build.get("add_dkh", 0)) * ZONE_VALUE["add_dkh"],
+        "floor": cap_floor_value,
+        "cap": cap_floor_value,
+        "cap_floor": cap_floor_value,
+        "self_heal_stamina": int(normalized_build.get("self_heal_stamina", 0)) * ZONE_VALUE["self_heal_stamina"],
+        "modify_current_speed": int(normalized_build.get("modify_current_speed", 0)) * ZONE_VALUE["modify_current_speed"],
     }
 
 def get_zone_effect(zone: dict) -> tuple[bool, str]:
@@ -119,10 +116,8 @@ def get_zone_effect(zone: dict) -> tuple[bool, str]:
         lines.append(f"✨ เพิ่มผลรวม +{effects['flat']}")
     if effects["add_dkh"]:
         lines.append(f"🎲 เพิ่มลูกเต๋า d/kh +{effects['add_dkh']}")
-    if effects["floor"]:
-        lines.append(f"🧱 เพิ่มแต้มขั้นต่ำ +{effects['floor']}")
-    if effects["cap"]:
-        lines.append(f"📈 เพิ่มแต้มสูงสุด +{effects['cap']}")
+    if effects["cap_floor"]:
+        lines.append(f"🧱📈 เพิ่มแต้มขั้นต่ำและสูงสุด +{effects['cap_floor']}")
     if heal_value:
         lines.append(f"❤️ ฟื้นฟู STA ตัวเอง +{heal_value}")
     if modify_current_speed:
@@ -165,13 +160,4 @@ def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
     return True, zone_effect
     
 def get_zone_effect_preview(zone: dict) -> dict:
-    build = zone.get("build", {})
-
-    return {
-        "flat": int(build.get("flat", 0)) * ZONE_VALUE["flat"],
-        "add_dkh": int(build.get("add_dkh", 0)) * ZONE_VALUE["add_dkh"],
-        "floor": int(build.get("floor", 0)) * ZONE_VALUE["floor"],
-        "cap": int(build.get("cap", 0)) * ZONE_VALUE["cap"],
-        "self_heal_stamina": int(build.get("self_heal_stamina", 0)) * ZONE_VALUE["self_heal_stamina"],
-        "modify_current_speed": int(build.get("modify_current_speed", 0)) * ZONE_VALUE["modify_current_speed"],
-    }
+    return get_zone_effects_from_build(zone.get("build", {}))

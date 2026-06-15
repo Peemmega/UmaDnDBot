@@ -15,7 +15,7 @@ from utils.database import (
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from utils.zone.zone_preset import ZONE_POINT_COST
+from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
 from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
@@ -252,8 +252,8 @@ def calc_zone_used(build: dict) -> int:
 @app.post("/player/zone/update")
 def api_update_player_zone(payload: ZoneUpdatePayload):
     safe_build = {
-        key: max(0, int(payload.build.get(key, 0)))
-        for key in ZONE_POINT_COST.keys()
+        key: max(0, int(value))
+        for key, value in normalize_zone_build(payload.build).items()
     }
 
     used_points = calc_zone_used(safe_build)

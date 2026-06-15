@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from typing import Optional
-from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST
+from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST, normalize_zone_build
 import json
 
 DB_PATH = os.getenv("PLAYER_DB_PATH", "/app/data/player.db")
@@ -219,8 +219,7 @@ def reset_all_zone_data():
     default_build = {
         "flat": 0,
         "add_dkh": 0,
-        "floor": 0,
-        "cap": 0,
+        "cap_floor": 0,
         "self_heal_stamina": 0,
         "modify_current_speed": 0,
     }
@@ -317,7 +316,7 @@ def set_player_zone_build(user_id: int, build: dict) -> None:
     conn = get_connection()
     cursor = conn.cursor()
 
-    safe_build = {field: int(build.get(field, 0)) for field in ZONE_FIELDS}
+    safe_build = normalize_zone_build(build)
 
     cursor.execute("""
     UPDATE players
@@ -541,10 +540,26 @@ def get_player(user_id: int) -> Optional[dict]:
     """, (user_id,))
 
     row = cursor.fetchone()
-    conn.close()
 
     if row is None:
+        conn.close()
         return None
+
+    raw_zone_build = json.loads(row[23] or "{}")
+    zone_build = normalize_zone_build(raw_zone_build)
+
+    if raw_zone_build != zone_build:
+        cursor.execute(
+            """
+            UPDATE players
+            SET zone_build = ?
+            WHERE user_id = ?
+            """,
+            (json.dumps(zone_build), user_id),
+        )
+        conn.commit()
+
+    conn.close()
 
     return {
         "user_id": row[0],
@@ -577,7 +592,7 @@ def get_player(user_id: int) -> Optional[dict]:
             "name": row[20],
             "image_url": row[21],
             "points": row[22],
-            "build": json.loads(row[23] or "{}")
+            "build": zone_build,
         }
     }
 
@@ -615,6 +630,9 @@ def reset_zone_build(zone: dict) -> None:
 
     for key in ZONE_POINT_COST.keys():
         zone["build"][key] = 0
+
+    for legacy_key in ("floor", "cap"):
+        zone["build"].pop(legacy_key, None)
 
 def ensure_player(user_id: int, username: str) -> dict:
     player = get_player(user_id)

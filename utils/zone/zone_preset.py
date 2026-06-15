@@ -1,8 +1,7 @@
 ZONE_FIELDS = {
     "flat", 
     "add_dkh", 
-    "floor", 
-    "cap", 
+    "cap_floor", 
     "self_heal_stamina",
     "modify_current_speed"
 }
@@ -22,19 +21,17 @@ ZONE_IMAGE_PRESET = {
 ZONE_POINT_COST = {
     "flat": 1,
     "add_dkh": 1,
-    "floor": 1,
-    "cap": 1,
+    "cap_floor": 1,
     "self_heal_stamina": 1,
     "modify_current_speed": 1,
 }
 
 ZONE_VALUE = {
-    "flat": 25,
+    "flat": 20,
     "add_dkh": 1,
-    "floor": 7,
-    "cap": 7,
+    "cap_floor": 3,
     "self_heal_stamina": 1,
-    "modify_current_speed": 0.5,
+    "modify_current_speed": 0.75,
 }
 
 DEFAULT_ZONE = {
@@ -44,9 +41,23 @@ DEFAULT_ZONE = {
     "build": {
         "flat": 0,
         "add_dkh": 0,
-        "floor": 0,
-        "cap": 0,
+        "cap_floor": 0,
         "self_heal_stamina": 0,
         "modify_current_speed": 0,
     }
 }
+
+
+def normalize_zone_build(build: dict | None) -> dict:
+    build = build or {}
+    shared_cap_floor = int(build.get("cap_floor", 0))
+    legacy_floor = int(build.get("floor", 0))
+    legacy_cap = int(build.get("cap", 0))
+
+    return {
+        "flat": int(build.get("flat", 0)),
+        "add_dkh": int(build.get("add_dkh", 0)),
+        "cap_floor": shared_cap_floor + legacy_floor + legacy_cap,
+        "self_heal_stamina": int(build.get("self_heal_stamina", 0)),
+        "modify_current_speed": int(build.get("modify_current_speed", 0)),
+    }

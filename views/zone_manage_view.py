@@ -1,20 +1,21 @@
 import copy
+
 import discord
 
 from utils.database import reset_zone_build
+from utils.zone.zone_embed import build_zone_manage_embed_from_zone
 from utils.zone.zone_manager import (
+    ZONE_POINT_COST,
     get_player_zone,
     get_zone_points_left,
     set_player_zone_build,
-    ZONE_POINT_COST,
 )
-from utils.zone.zone_embed import build_zone_manage_embed_from_zone
+
 
 ZONE_OPTIONS = [
     discord.SelectOption(label="เพิ่มคะแนน", value="flat", description="เพิ่มผลรวมโดยตรง | cost 1"),
-    discord.SelectOption(label="เพิ่มลูกเต๋า", value="add_dkh", description="เพิ่มจำนวนลูกเต๋า | cost 3"),
-    discord.SelectOption(label="เพิ่มพื้นลูกเต๋า", value="floor", description="เพิ่มแต้มขั้นต่ำ | cost 1"),
-    discord.SelectOption(label="เพิ่มแต้มสูงสุดลูกเต๋า", value="cap", description="เพิ่มแต้มสูงสุด | cost 1"),
+    discord.SelectOption(label="เพิ่มลูกเต๋า", value="add_dkh", description="เพิ่มจำนวนลูกเต๋า | cost 1"),
+    discord.SelectOption(label="เพิ่มขั้นต่ำ/สูงสุด", value="cap_floor", description="เพิ่มแต้มขั้นต่ำและสูงสุดพร้อมกัน | cost 1"),
     discord.SelectOption(label="ฟื้นฟู Stamina", value="self_heal_stamina", description="ฟื้นฟู STA ตัวเอง | cost 1"),
     discord.SelectOption(label="เพิ่มอัตราเร่ง", value="modify_current_speed", description="เพิ่มอัตราเร่ง 1 ระดับ | cost 1"),
 ]
@@ -26,7 +27,7 @@ class ZoneFieldSelect(discord.ui.Select):
             placeholder="เลือกค่าสำหรับอัป Zone",
             min_values=1,
             max_values=1,
-            options=ZONE_OPTIONS
+            options=ZONE_OPTIONS,
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -37,7 +38,7 @@ class ZoneFieldSelect(discord.ui.Select):
             view.temp_zone,
             interaction.user.display_name,
             selected_field=view.selected_field,
-            note="เลือกหมวดสำหรับปรับค่าแล้ว"
+            note="เลือกหมวดสำหรับปรับค่าแล้ว",
         )
         await interaction.response.edit_message(embed=embed, view=view)
 
@@ -53,7 +54,7 @@ class ZoneManageView(discord.ui.View):
             zone = {
                 "name": "Default Zone",
                 "build": {key: 0 for key in ZONE_POINT_COST.keys()},
-                "image_url": ""
+                "image_url": "",
             }
 
         zone.setdefault("build", {})
@@ -103,7 +104,7 @@ class ZoneManageView(discord.ui.View):
             self.temp_zone,
             interaction.user.display_name,
             selected_field=self.selected_field,
-            note=msg
+            note=msg,
         )
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -118,7 +119,7 @@ class ZoneManageView(discord.ui.View):
             self.temp_zone,
             interaction.user.display_name,
             selected_field=self.selected_field,
-            note=msg
+            note=msg,
         )
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -131,7 +132,7 @@ class ZoneManageView(discord.ui.View):
             self.temp_zone,
             interaction.user.display_name,
             selected_field=self.selected_field,
-            note="บันทึกค่า Zone เรียบร้อยแล้ว"
+            note="บันทึกค่า Zone เรียบร้อยแล้ว",
         )
         await interaction.response.edit_message(embed=embed, view=self)
 
@@ -144,6 +145,6 @@ class ZoneManageView(discord.ui.View):
             self.temp_zone,
             interaction.user.display_name,
             selected_field=self.selected_field,
-            note="รีเซ็ตแต้ม Zone ชั่วคราวแล้ว กรุณากด 💾 บันทึก เพื่อยืนยัน"
+            note="รีเซ็ตแต้ม Zone ชั่วคราวแล้ว กรุณากด 💾 บันทึก เพื่อยืนยัน",
         )
         await interaction.response.edit_message(embed=embed, view=self)
