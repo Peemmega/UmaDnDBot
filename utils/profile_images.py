@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_PUBLIC_BASE_URL = "http://127.0.0.1:8000"
+DEFAULT_PUBLIC_BASE_URL = "https://umadndbot-production.up.railway.app"
 ALLOWED_IMAGE_CONTENT_TYPES = {
     "image/jpeg",
     "image/jpg",
@@ -19,7 +19,19 @@ USER_ID_PATTERN = re.compile(r"^\d+$")
 
 
 def get_public_base_url() -> str:
-    return (os.getenv("PUBLIC_BASE_URL") or DEFAULT_PUBLIC_BASE_URL).rstrip("/")
+    explicit_base_url = (os.getenv("PUBLIC_BASE_URL") or "").strip()
+    if explicit_base_url:
+        return explicit_base_url.rstrip("/")
+
+    railway_public_domain = (os.getenv("RAILWAY_PUBLIC_DOMAIN") or "").strip()
+    if railway_public_domain:
+        return f"https://{railway_public_domain}".rstrip("/")
+
+    railway_static_url = (os.getenv("RAILWAY_STATIC_URL") or "").strip()
+    if railway_static_url:
+        return railway_static_url.rstrip("/")
+
+    return DEFAULT_PUBLIC_BASE_URL.rstrip("/")
 
 
 def get_upload_root_dir() -> Path:
@@ -83,4 +95,3 @@ def resolve_player_avatar_url(player: dict | None, fallback: str = "") -> str:
         return thumbnail
 
     return resolve_public_url(fallback)
-
