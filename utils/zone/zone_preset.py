@@ -31,7 +31,7 @@ ZONE_VALUE = {
     "add_dkh": 1,
     "cap_floor": 3,
     "self_heal_stamina": 1,
-    "modify_current_speed": 0.75,
+    "modify_current_speed": 1,
 }
 
 DEFAULT_ZONE = {
