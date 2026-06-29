@@ -38,6 +38,11 @@ def get_upload_root_dir() -> Path:
     upload_dir = (os.getenv("UPLOAD_DIR") or "").strip()
     if upload_dir:
         return Path(upload_dir)
+
+    player_db_path = (os.getenv("PLAYER_DB_PATH") or "").strip()
+    if player_db_path:
+        return Path(player_db_path).parent / "uploads"
+
     return BASE_DIR / "static" / "uploads"
 
 
