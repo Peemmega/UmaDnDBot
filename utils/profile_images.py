@@ -128,7 +128,8 @@ def resolve_player_render_image(player: dict | None, fallback: str = "") -> str:
             local_upload = get_profile_uploads_dir() / filename
             if local_upload.exists():
                 return str(local_upload)
-        return profile_image_url
+        else:
+            return profile_image_url
 
     raw_avatar = player.get("avatar")
     if is_local_filesystem_path(raw_avatar):
