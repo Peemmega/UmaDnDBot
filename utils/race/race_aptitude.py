@@ -100,8 +100,6 @@ def calculate_effective_race_stats(player: dict, race: dict | None) -> dict:
     effective_power = int(round(base_power * aptitude["track_modifier"]))
     effective_wit_gain = int(round(base_wit_gain * aptitude["style_modifier"]))
     effective_wit_requirement = int(round(base_wit_requirement * aptitude["style_modifier"]))
-    distance_roll_bonus = max(0, (effective_speed - base_speed) * 2)
-
     return {
         "track_rank": aptitude["track_rank"],
         "distance_rank": aptitude["distance_rank"],
@@ -117,7 +115,6 @@ def calculate_effective_race_stats(player: dict, race: dict | None) -> dict:
         "base_wit": base_wit,
         "base_wit_gain": base_wit_gain,
         "base_wit_requirement": base_wit_requirement,
-        "distance_roll_bonus": distance_roll_bonus,
         "effective_speed": effective_speed,
         "effective_power": effective_power,
         "effective_wit_gain": effective_wit_gain,

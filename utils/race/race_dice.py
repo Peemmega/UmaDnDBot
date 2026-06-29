@@ -152,7 +152,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     power_bonus = player_stats.get("power", 1)
     stamina_bonus = player_stats.get("stamina", 1) * 1
     effective_stats = game_player.get("effective_race_stats") or {}
-    distance_roll_bonus = int(effective_stats.get("distance_roll_bonus", 0))
+    distance_percent = int(effective_stats.get("distance_percent", 0))
 
     nearby_count = min(context.get("nearby_count", 0), 2) + 1
     gut_scale = player_stats.get("gut", 1) 
@@ -176,13 +176,17 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     base_total = sum(selected)
 
     final_power_bonus = int(power_bonus * power_total_multiplier)
-    total = (
+    subtotal = (
         sum(modified_selected)
         + final_power_bonus
         + gut_bonus
         + flat_velocity_bonus
         + speed_Bonus
         + stamina_bonus
+    )
+    distance_roll_bonus = int(round(subtotal * (distance_percent / 100)))
+    total = (
+        subtotal
         + distance_roll_bonus
     )
 
@@ -195,8 +199,8 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         bonus_parts.append(f"+{final_power_bonus}{get_stat_icon('POW')}")
     if stamina_bonus > 0:
         bonus_parts.append(f"+{stamina_bonus}{get_stat_icon('STA')}")   
-    if distance_roll_bonus > 0:
-        bonus_parts.append(f"+{distance_roll_bonus}DIST")
+    if distance_roll_bonus != 0:
+        bonus_parts.append(f"{distance_roll_bonus:+d}DIST")
     if flat_velocity_bonus > 0:
         bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
     if total_selected_die_bonus > 0:

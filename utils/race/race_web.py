@@ -980,7 +980,7 @@ def _roll_summary_payload(payload: dict) -> dict:
             "effective_power": effective_stats.get("effective_power"),
             "effective_wit_gain": effective_stats.get("effective_wit_gain"),
             "effective_wit_requirement": effective_stats.get("effective_wit_requirement"),
-            "distance_roll_bonus": effective_stats.get("distance_roll_bonus"),
+            "distance_percent": effective_stats.get("distance_percent"),
         },
         "aptitude_bonus": aptitude_bonus,
         "pending_bonus": lasted_buff,
