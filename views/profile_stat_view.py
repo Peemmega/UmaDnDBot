@@ -4,6 +4,7 @@ from utils.database import (
     update_player_stats,
 )
 from utils.display_helpers import get_stat_emoji, get_stat_icon
+from utils.profile_images import resolve_player_avatar_url
 STATS_CAP = 8
 
 
@@ -13,7 +14,7 @@ def build_stat_embed(user: discord.User | discord.Member, player: dict, title_te
         color=discord.Color.blurple()
     )
 
-    embed.set_thumbnail(url=user.display_avatar.url)
+    embed.set_thumbnail(url=resolve_player_avatar_url(player, user.display_avatar.url))
 
     embed.add_field(
         name="ค่าสเตตัส",

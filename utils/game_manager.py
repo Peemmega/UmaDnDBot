@@ -10,6 +10,7 @@ from utils.mob.mob_decision import decide_mob_skill_combo
 
 from utils.mob.mob_presets import MOB_PRESETS
 from utils.database import get_player, get_player_skill_slots
+from utils.profile_images import resolve_player_avatar_url
 from utils.zone.zone_manager import apply_zone_in_game
 from utils.race.race_presets import (
     get_path_effect,
@@ -1024,7 +1025,7 @@ def build_run_embed(
         color=discord.Color.gold()
     )
 
-    avatar = game_player.get("avatar", "0")
+    avatar = resolve_player_avatar_url(game_player) or game_player.get("avatar", "0")
     reroll = game_player.get("reroll_left", 0)
     current_max_speed = math.floor(game_player.get("current_max_speed", 0))
     wit_reroll = game_player.get("wit_reroll_left", 0)
@@ -1167,6 +1168,7 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
     game["players"][user_id] = {
         "username": player_data.get('username') ,
         "avatar": display_avatar,
+        "profile_image_url": db_player.get("profile_image_url") if db_player else "",
         "display_name": display_name,
         "style": style,
         "current_max_speed": MAX_SPEED_PHASE[style]["start"],
@@ -1232,11 +1234,18 @@ def add_player_as_mob_preset(
     race_profile = copy.deepcopy(preset["race_profile"])
     race_profile = apply_rookie_distance_stats(preset_key, race_profile, game.get("distance"))
 
+    skills = apply_rookie_distance_skills(
+        preset_key,
+        copy.deepcopy(preset["skills"]),
+        game.get("distance"),
+    )
+
     game["players"][user_id] = {
         "username": preset['name'],
         "display_name": preset['name'],
         "avatar": preset["avatar"],
         "thumnail": preset["thumnail"],
+        "profile_image_url": "",
         "style": preset["style"],
         "current_max_speed": MAX_SPEED_PHASE[preset["style"]]["start"],
         "score": 0,
@@ -1246,7 +1255,7 @@ def add_player_as_mob_preset(
         "wit_mana": 100,
         "wit_reroll_left": 2,
         "takeStaminaDebuff": False,
-        "skills": copy.deepcopy(preset["skills"]),
+        "skills": skills,
         "zone": copy.deepcopy(preset["zone"]),
         "zone_left": 1,
         "is_mob": False,
@@ -1306,6 +1315,24 @@ ROOKIE_DISTANCE_STAT_SHIFTS = {
 }
 
 
+ROOKIE_DISTANCE_SKILL_LOADOUTS = {
+    "rookie_front": {
+        "sprint": {
+            1: "s033",  # Runaway
+            2: "s016",  # Turbo Sprint
+            3: "s051",  # Escape Artist
+            4: "s049",  # Homestretch Haste
+        },
+        "mile": {
+            1: "s033",  # Runaway
+            2: "s015",  # Beeline Burst
+            3: "s051",  # Escape Artist
+            4: "s049",  # Homestretch Haste
+        },
+    },
+}
+
+
 def apply_rookie_distance_stats(preset_key: str, race_profile: dict, distance: str | None):
     if not preset_key.startswith("rookie_"):
         return race_profile
@@ -1336,6 +1363,18 @@ def apply_rookie_distance_stats(preset_key: str, race_profile: dict, distance: s
     return race_profile
 
 
+def apply_rookie_distance_skills(preset_key: str, skills: dict, distance: str | None):
+    if not preset_key.startswith("rookie_"):
+        return skills
+
+    distance_key = (distance or "").lower()
+    loadout = ROOKIE_DISTANCE_SKILL_LOADOUTS.get(preset_key, {}).get(distance_key)
+    if not loadout:
+        return skills
+
+    return copy.deepcopy(loadout)
+
+
 def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
     game = get_game(channel_id)
     if game is None:
@@ -1357,13 +1396,18 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
     race_profile = apply_rookie_distance_stats(preset_key, race_profile, game.get("distance"))
 
     zone = copy.deepcopy(preset["zone"])
-    skills = copy.deepcopy(preset["skills"])
+    skills = apply_rookie_distance_skills(
+        preset_key,
+        copy.deepcopy(preset["skills"]),
+        game.get("distance"),
+    )
 
     game["players"][mob_id] = {
         "username": preset['name'],
         "display_name": f"{preset['name']} Lv.{level}",
         "avatar": preset["avatar"],
         "thumnail": preset.get("thumnail", preset.get("avatar")),
+        "profile_image_url": "",
         "is_mob": True,
         "mob_level": level,
         "mob_preset_key": preset_key,

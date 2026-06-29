@@ -20,6 +20,7 @@ from utils.race.race_dice import (
 
 import math
 from io import BytesIO
+from utils.profile_images import resolve_player_avatar_url
 
 def build_phase_text(max_turn: int) -> str:
     phase_size = max_turn / 4
@@ -121,7 +122,7 @@ class StyleSelectView(discord.ui.View):
         embed = build_join_embed(
             game=game,
             display_name=interaction.user.display_name,
-            display_image=interaction.user.display_avatar.url,
+            display_image=resolve_player_avatar_url(db_player, interaction.user.display_avatar.url),
             style=style,
             aptitude_source=db_player,
             title="🏇 ผู้เล่นเข้าร่วม!",
@@ -233,7 +234,7 @@ class LobbyView(discord.ui.View):
                     result= payload["result"],
                     payload=payload,
                     path_label=payload["path_effect"]["label"],
-                    character_image_url=player.get("avatar"),
+                    character_image_url=resolve_player_avatar_url(player),
                 )
 
                 buffer = BytesIO()

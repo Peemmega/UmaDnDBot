@@ -4,6 +4,8 @@ from typing import Any
 
 from fastapi import WebSocket
 
+from utils.database import get_player
+from utils.profile_images import resolve_public_url
 from .tcg_decks import DECKS_BY_ID
 from .tcg_state import add_carrot, draw_cards, move_card, setup_game_state, shuffle_deck, tap_card, untap_all
 from .tcg_trainers import get_trainer
@@ -11,6 +13,14 @@ from .tcg_visibility import sanitize_room
 
 
 DEFAULT_TRAINER_ID = "UMT-001"
+
+
+def resolve_tcg_avatar_url(user_id: str, fallback_avatar_url: str = "") -> str:
+    player = get_player(str(user_id))
+    profile_image_url = resolve_public_url((player or {}).get("profile_image_url"))
+    if profile_image_url:
+        return profile_image_url
+    return resolve_public_url(fallback_avatar_url)
 
 
 class TcgRoomManager:
@@ -107,7 +117,12 @@ class TcgRoomManager:
             "host_id": user_id,
             "phase": "waiting",
             "players": {
-                "player1": {"user_id": user_id, "username": username, "avatar_url": avatar_url, "is_host": True},
+                "player1": {
+                    "user_id": user_id,
+                    "username": username,
+                    "avatar_url": resolve_tcg_avatar_url(user_id, avatar_url),
+                    "is_host": True,
+                },
                 "player2": None,
             },
             "player_slots": {user_id: "player1"},
@@ -140,7 +155,12 @@ class TcgRoomManager:
             raise ValueError("Room is full")
         if room["phase"] != "waiting":
             raise ValueError("Room already started")
-        room["players"]["player2"] = {"user_id": user_id, "username": username, "avatar_url": avatar_url, "is_host": False}
+        room["players"]["player2"] = {
+            "user_id": user_id,
+            "username": username,
+            "avatar_url": resolve_tcg_avatar_url(user_id, avatar_url),
+            "is_host": False,
+        }
         room["player_slots"][user_id] = "player2"
         room["updated_at"] = self._now()
         print(f"[tcg] join room user_id={user_id} room_id={room_id}")

@@ -3,6 +3,7 @@ import sqlite3
 from typing import Optional
 from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST, normalize_zone_build
 import json
+from utils.profile_images import resolve_public_url
 
 DB_PATH = os.getenv("PLAYER_DB_PATH", "/app/data/player.db")
 
@@ -51,6 +52,10 @@ def init_db():
         skill_slot_1 TEXT,
         skill_slot_2 TEXT,
         skill_slot_3 TEXT,
+        skill_slot_4 TEXT,
+
+        profile_image_url TEXT,
+        profile_image_updated_at INTEGER,
 
         zone_name TEXT DEFAULT 'Default Zone',
         zone_image_url TEXT DEFAULT '{DEFAULT_ZONE_IMAGE}',
@@ -76,6 +81,15 @@ def init_db():
     for col in ["skill_slot_1", "skill_slot_2", "skill_slot_3", "skill_slot_4"]:
         try:
             cursor.execute(f"ALTER TABLE players ADD COLUMN {col} TEXT")
+        except Exception:
+            pass
+
+    for col, col_type in [
+        ("profile_image_url", "TEXT"),
+        ("profile_image_updated_at", "INTEGER"),
+    ]:
+        try:
+            cursor.execute(f"ALTER TABLE players ADD COLUMN {col} {col_type}")
         except Exception:
             pass
 
@@ -353,6 +367,21 @@ def set_player_zone_image_url(user_id: int, image_url: str) -> None:
     conn.commit()
     conn.close()
 
+
+def set_player_profile_image(user_id: int | str, profile_image_url: str, updated_at: int) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE players
+    SET profile_image_url = ?,
+        profile_image_updated_at = ?
+    WHERE CAST(user_id AS TEXT) = ?
+    """, (profile_image_url, updated_at, str(user_id)))
+
+    conn.commit()
+    conn.close()
+
 def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
     if slot not in (1, 2, 3, 4):
         return False, "slot ต้องเป็น 1-4"
@@ -534,10 +563,11 @@ def get_player(user_id: int) -> Optional[dict]:
         sprint, mile, medium, long,
         front, pace, late, end_style,
         stats_point, uma_coin, skill_point,
+        profile_image_url, profile_image_updated_at,
         zone_name, zone_image_url, zone_points, zone_build
     FROM players
-    WHERE user_id = ?
-    """, (user_id,))
+    WHERE CAST(user_id AS TEXT) = ?
+    """, (str(user_id),))
 
     row = cursor.fetchone()
 
@@ -545,7 +575,7 @@ def get_player(user_id: int) -> Optional[dict]:
         conn.close()
         return None
 
-    raw_zone_build = json.loads(row[23] or "{}")
+    raw_zone_build = json.loads(row[25] or "{}")
     zone_build = normalize_zone_build(raw_zone_build)
 
     if raw_zone_build != zone_build:
@@ -553,9 +583,9 @@ def get_player(user_id: int) -> Optional[dict]:
             """
             UPDATE players
             SET zone_build = ?
-            WHERE user_id = ?
+            WHERE CAST(user_id AS TEXT) = ?
             """,
-            (json.dumps(zone_build), user_id),
+            (json.dumps(zone_build), str(user_id)),
         )
         conn.commit()
 
@@ -587,11 +617,13 @@ def get_player(user_id: int) -> Optional[dict]:
         "stats_point": row[17],
         "uma_coin": row[18],
         "skill_point": row[19],
+        "profile_image_url": resolve_public_url(row[20]),
+        "profile_image_updated_at": row[21],
 
         "zone": {
-            "name": row[20],
-            "image_url": row[21],
-            "points": row[22],
+            "name": row[22],
+            "image_url": row[23],
+            "points": row[24],
             "build": zone_build,
         }
     }

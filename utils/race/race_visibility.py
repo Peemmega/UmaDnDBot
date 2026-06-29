@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from utils.dice.dice_presets import DICE_PRESET, MAX_SPEED_PHASE
+from utils.profile_images import resolve_player_avatar_url, resolve_public_url
 from utils.race.race_dice import get_phase_from_turn
 from utils.race.race_presets import (
     PATH_TYPE_ICON,
@@ -48,8 +49,7 @@ def serialize_player(
             "cooldown": cooldowns.get(skill_id, 0) if skill_id else 0,
         })
 
-    player_avatar = player.get("thumnail") if player.get("is_mob") else player.get("avatar")
-    player_avatar = player_avatar or player.get("avatar") or player.get("thumnail")
+    player_avatar = resolve_player_avatar_url(player)
 
     distance = int(player.get("web_distance", player.get("score", 0)))
     distance_limit = max(1, int(finish_distance or 1))
@@ -62,6 +62,7 @@ def serialize_player(
         "name": _player_name(user_id, player),
         "username": player.get("username"),
         "avatar": str(player_avatar) if player_avatar else "",
+        "profile_image_url": resolve_public_url(player.get("profile_image_url")),
         "thumbnail": str(player.get("thumnail") or ""),
         "style": player.get("style"),
         "score": player.get("score", 0),

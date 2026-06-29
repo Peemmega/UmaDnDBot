@@ -1,8 +1,11 @@
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import json
 import asyncio
+import io
+import time
 
 from utils.database import (
     get_player, 
@@ -12,9 +15,11 @@ from utils.database import (
     set_player_skill_slot,
     get_player_skill_slots,
     init_db,
+    set_player_profile_image,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image, ImageOps, UnidentifiedImageError
 from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
 from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
@@ -22,6 +27,17 @@ from utils.skill.skill_manager import describe_trigger, describe_target, describ
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
 from utils.race.race_log_embed import build_race_log_embed
 from utils.race.race_web import race_web_manager
+from utils.profile_images import (
+    ALLOWED_IMAGE_CONTENT_TYPES,
+    MAX_PROFILE_IMAGE_BYTES,
+    PROFILE_IMAGE_SIZE,
+    build_profile_image_relative_url,
+    ensure_upload_dirs,
+    get_profile_uploads_dir,
+    get_upload_root_dir,
+    resolve_public_url,
+    sanitize_numeric_user_id,
+)
 from views.create_game_view import LobbyView, build_lobby_message_payload
 import bot_instance
 
@@ -37,6 +53,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+ensure_upload_dirs()
+app.mount("/uploads", StaticFiles(directory=str(get_upload_root_dir())), name="uploads")
 
 
 @app.exception_handler(RequestValidationError)
@@ -50,6 +68,7 @@ async def log_timing_validation_error(request: Request, exc: RequestValidationEr
 @app.on_event("startup")
 def api_startup():
     init_db()
+    ensure_upload_dirs()
 
 @app.get("/player/{user_id}")
 def api_get_player(user_id: str, username: str = "Unknown"):
@@ -60,6 +79,56 @@ def api_get_player(user_id: str, username: str = "Unknown"):
         player = get_player(user_id)
 
     return player
+
+
+@app.post("/player/{user_id}/profile-image")
+async def api_upload_profile_image(user_id: str, file: UploadFile = File(...)):
+    try:
+        safe_user_id = sanitize_numeric_user_id(user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    player = get_player(safe_user_id)
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    content_type = (file.content_type or "").lower().strip()
+    if content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Unsupported image type")
+
+    raw_bytes = await file.read(MAX_PROFILE_IMAGE_BYTES + 1)
+    await file.close()
+
+    if not raw_bytes:
+        raise HTTPException(status_code=400, detail="Empty upload")
+    if len(raw_bytes) > MAX_PROFILE_IMAGE_BYTES:
+        raise HTTPException(status_code=400, detail="File too large")
+
+    try:
+        source_image = Image.open(io.BytesIO(raw_bytes))
+        source_image.load()
+    except (UnidentifiedImageError, OSError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid image file") from exc
+
+    fitted_image = ImageOps.fit(
+        source_image.convert("RGBA"),
+        PROFILE_IMAGE_SIZE,
+        method=Image.Resampling.LANCZOS,
+    )
+
+    output_path = get_profile_uploads_dir() / f"{safe_user_id}.webp"
+    fitted_image.save(output_path, format="WEBP", quality=90, method=6)
+
+    updated_at = int(time.time())
+    relative_url = build_profile_image_relative_url(safe_user_id, updated_at)
+    set_player_profile_image(safe_user_id, relative_url, updated_at)
+
+    return {
+        "ok": True,
+        "user_id": safe_user_id,
+        "profile_image_url": resolve_public_url(relative_url),
+        "profile_image_updated_at": updated_at,
+    }
 
 class UpdateStatsPayload(BaseModel):
     user_id: str

@@ -6,6 +6,7 @@ from utils.database import ensure_player, update_player_username,set_player_zone
 from views.profile_stat_view import ProfileStatView, build_stat_embed
 from utils.player_card import create_stats_card
 from utils.icon_presets import GRADE_TEXT
+from utils.profile_images import resolve_player_avatar_url
 from views.zone_manage_view import ZoneManageView
 from utils.zone.zone_embed import build_zone_manage_embed, build_zone_used_preview_embed
 
@@ -61,7 +62,7 @@ class ProfileCog(commands.Cog):
         await interaction.response.defer()
 
         player = ensure_player(interaction.user.id, interaction.user.name)
-        avatar_url = interaction.user.display_avatar.url
+        avatar_url = resolve_player_avatar_url(player, interaction.user.display_avatar.url)
 
         image = await create_stats_card(player, avatar_url)
 

@@ -34,6 +34,7 @@ WIN_IMAGE = [
 
 
 from utils.database import ensure_player, record_race_rankings
+from utils.profile_images import resolve_player_avatar_url
 from utils.race.race_presets import (
     get_current_path_type, 
     build_path_effect_text, 
@@ -680,7 +681,7 @@ class GameCog(commands.GroupCog, name="game"):
                     result= payload["result"],
                     payload=payload,
                     path_label=payload["path_effect"]["label"],
-                    character_image_url=player.get("avatar"),
+                    character_image_url=resolve_player_avatar_url(player),
                 )
 
                 buffer = BytesIO()
@@ -839,7 +840,7 @@ class GameCog(commands.GroupCog, name="game"):
         result = payload["result"]
         path_effect = payload["path_effect"]
 
-        avatar_url = interaction.user.display_avatar.url
+        avatar_url = resolve_player_avatar_url(game_player, interaction.user.display_avatar.url)
 
 
         card = await create_race_dice_preview(
