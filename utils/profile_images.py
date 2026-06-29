@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -117,8 +118,16 @@ def resolve_player_avatar_url(player: dict | None, fallback: str = "") -> str:
 def resolve_player_render_image(player: dict | None, fallback: str = "") -> str:
     player = player or {}
 
-    profile_image_url = resolve_public_url(player.get("profile_image_url"))
+    raw_profile_image_url = str(player.get("profile_image_url") or "").strip()
+    profile_image_url = resolve_public_url(raw_profile_image_url)
     if profile_image_url:
+        parsed = urlparse(profile_image_url)
+        upload_prefix = "/uploads/profiles/"
+        if parsed.path.startswith(upload_prefix):
+            filename = Path(parsed.path).name
+            local_upload = get_profile_uploads_dir() / filename
+            if local_upload.exists():
+                return str(local_upload)
         return profile_image_url
 
     raw_avatar = player.get("avatar")
