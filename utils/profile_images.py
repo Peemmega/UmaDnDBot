@@ -117,6 +117,7 @@ def resolve_player_avatar_url(player: dict | None, fallback: str = "") -> str:
 
 def resolve_player_render_image(player: dict | None, fallback: str = "") -> str:
     player = player or {}
+    is_mob_player = str(player.get("user_id") or "").startswith("mob_") or bool(player.get("is_mob"))
 
     raw_profile_image_url = str(player.get("profile_image_url") or "").strip()
     profile_image_url = resolve_public_url(raw_profile_image_url)
@@ -132,7 +133,7 @@ def resolve_player_render_image(player: dict | None, fallback: str = "") -> str:
             return profile_image_url
 
     raw_avatar = player.get("avatar")
-    if is_local_filesystem_path(raw_avatar):
+    if is_mob_player and is_local_filesystem_path(raw_avatar):
         return str(raw_avatar).strip()
 
     avatar = resolve_public_url(raw_avatar)
