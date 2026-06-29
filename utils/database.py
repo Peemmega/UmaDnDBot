@@ -628,6 +628,82 @@ def get_player(user_id: int) -> Optional[dict]:
         }
     }
 
+
+def get_player_summary(user_id: int | str) -> Optional[dict]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    columns = {row["name"] for row in cursor.execute("PRAGMA table_info(players)").fetchall()}
+    has_profile_image = "profile_image_url" in columns
+
+    if has_profile_image:
+        cursor.execute(
+            """
+            SELECT user_id, username, profile_image_url
+            FROM players
+            WHERE CAST(user_id AS TEXT) = ?
+            """,
+            (str(user_id),),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT user_id, username
+            FROM players
+            WHERE CAST(user_id AS TEXT) = ?
+            """,
+            (str(user_id),),
+        )
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        "id": str(row["user_id"]),
+        "name": row["username"],
+        "image_url": resolve_public_url(row["profile_image_url"]) if has_profile_image else "",
+        "type": "Player",
+    }
+
+
+def list_player_summaries() -> list[dict]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    columns = {row["name"] for row in cursor.execute("PRAGMA table_info(players)").fetchall()}
+    has_profile_image = "profile_image_url" in columns
+
+    if has_profile_image:
+        cursor.execute(
+            """
+            SELECT user_id, username, profile_image_url
+            FROM players
+            WHERE username IS NOT NULL AND TRIM(username) <> ''
+            ORDER BY username COLLATE NOCASE ASC, user_id ASC
+            """
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT user_id, username
+            FROM players
+            WHERE username IS NOT NULL AND TRIM(username) <> ''
+            ORDER BY username COLLATE NOCASE ASC, user_id ASC
+            """
+        )
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "id": str(row["user_id"]),
+            "name": row["username"],
+            "image_url": resolve_public_url(row["profile_image_url"]) if has_profile_image else "",
+            "type": "Player",
+        }
+        for row in rows
+    ]
+
 def set_all_aptitude(user_id: int, value: int):
     conn = get_connection()
     cursor = conn.cursor()

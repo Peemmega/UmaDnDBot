@@ -9,6 +9,8 @@ import time
 
 from utils.database import (
     get_player, 
+    get_player_summary,
+    list_player_summaries,
     get_connection, 
     ensure_player, 
     update_player_username,
@@ -78,6 +80,19 @@ def api_get_player(user_id: str, username: str = "Unknown"):
         ensure_player(user_id, username)
         player = get_player(user_id)
 
+    return player
+
+
+@app.get("/api/players/summary")
+def api_get_players_summary():
+    return {"players": list_player_summaries()}
+
+
+@app.get("/api/players/{user_id}/summary")
+def api_get_player_summary(user_id: str):
+    player = get_player_summary(user_id)
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
     return player
 
 
