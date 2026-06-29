@@ -108,3 +108,28 @@ def resolve_player_avatar_url(player: dict | None, fallback: str = "") -> str:
 
     return resolve_public_url(fallback)
 
+
+def resolve_player_render_image(player: dict | None, fallback: str = "") -> str:
+    player = player or {}
+
+    profile_image_url = resolve_public_url(player.get("profile_image_url"))
+    if profile_image_url:
+        return profile_image_url
+
+    raw_avatar = player.get("avatar")
+    if is_local_filesystem_path(raw_avatar):
+        return str(raw_avatar).strip()
+
+    avatar = resolve_public_url(raw_avatar)
+    if avatar:
+        return avatar
+
+    thumbnail = resolve_public_url(player.get("thumnail") or player.get("thumbnail"))
+    if thumbnail:
+        return thumbnail
+
+    if is_local_filesystem_path(fallback):
+        return str(fallback).strip()
+
+    return resolve_public_url(fallback)
+

@@ -21,7 +21,7 @@ ICON_MAP = {
     "Velocity": ASSETS_DIR / "skill_icons/Velocity.png",
 }
 
-DEFAULT_IMAGE = BASE_DIR / "assets" / "mob_01.png"
+DEFAULT_IMAGE = BASE_DIR / "assets" / "characters" / "mob_01.png"
 
 async def load_image_url(path_or_url):
     try:

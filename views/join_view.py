@@ -20,7 +20,7 @@ from utils.race.race_dice import (
 
 import math
 from io import BytesIO
-from utils.profile_images import resolve_player_avatar_url
+from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
 
 def build_phase_text(max_turn: int) -> str:
     phase_size = max_turn / 4
@@ -234,7 +234,7 @@ class LobbyView(discord.ui.View):
                     result= payload["result"],
                     payload=payload,
                     path_label=payload["path_effect"]["label"],
-                    character_image_url=resolve_player_avatar_url(player),
+                    character_image_url=resolve_player_render_image(player),
                 )
 
                 buffer = BytesIO()

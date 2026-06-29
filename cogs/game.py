@@ -34,7 +34,7 @@ WIN_IMAGE = [
 
 
 from utils.database import ensure_player, record_race_rankings
-from utils.profile_images import resolve_player_avatar_url
+from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
 from utils.race.race_presets import (
     get_current_path_type, 
     build_path_effect_text, 
@@ -681,7 +681,7 @@ class GameCog(commands.GroupCog, name="game"):
                     result= payload["result"],
                     payload=payload,
                     path_label=payload["path_effect"]["label"],
-                    character_image_url=resolve_player_avatar_url(player),
+                    character_image_url=resolve_player_render_image(player),
                 )
 
                 buffer = BytesIO()
@@ -848,7 +848,7 @@ class GameCog(commands.GroupCog, name="game"):
             result=result,
             payload=payload,
             path_label=path_effect["label"],
-            character_image_url=avatar_url,
+            character_image_url=resolve_player_render_image(game_player, avatar_url),
         )
 
         buffer = BytesIO()
