@@ -6,6 +6,7 @@ import json
 import asyncio
 import io
 import time
+from pathlib import Path
 
 from utils.database import (
     get_player, 
@@ -43,6 +44,9 @@ from utils.profile_images import (
 from views.create_game_view import LobbyView, build_lobby_message_payload
 import bot_instance
 
+BASE_DIR = Path(__file__).resolve().parent
+ASSETS_DIR = BASE_DIR / "assets"
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -57,6 +61,7 @@ app.add_middleware(
 )
 ensure_upload_dirs()
 app.mount("/uploads", StaticFiles(directory=str(get_upload_root_dir())), name="uploads")
+app.mount("/app/assets", StaticFiles(directory=str(ASSETS_DIR)), name="app-assets")
 
 
 @app.exception_handler(RequestValidationError)
