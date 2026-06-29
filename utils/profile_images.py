@@ -80,13 +80,25 @@ def resolve_public_url(value: str | None) -> str:
     return f"{get_public_base_url()}/{text.lstrip('/')}"
 
 
+def is_local_filesystem_path(value: str | None) -> bool:
+    text = str(value or "").strip()
+    if not text:
+        return False
+    return bool(
+        re.match(r"^[A-Za-z]:[\\/]", text)
+        or text.startswith("\\\\")
+        or text.startswith("file://")
+    )
+
+
 def resolve_player_avatar_url(player: dict | None, fallback: str = "") -> str:
     player = player or {}
     profile_image_url = resolve_public_url(player.get("profile_image_url"))
     if profile_image_url:
         return profile_image_url
 
-    avatar = resolve_public_url(player.get("avatar"))
+    raw_avatar = player.get("avatar")
+    avatar = "" if is_local_filesystem_path(raw_avatar) else resolve_public_url(raw_avatar)
     if avatar:
         return avatar
 
@@ -95,3 +107,4 @@ def resolve_player_avatar_url(player: dict | None, fallback: str = "") -> str:
         return thumbnail
 
     return resolve_public_url(fallback)
+
