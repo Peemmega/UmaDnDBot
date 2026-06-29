@@ -734,7 +734,7 @@ MOB_PRESETS = {
         },
         "zone": {
             "name": "Peerless Heroine",
-            "image_url": "https://media.discordapp.net/attachments/1494733536656097340/1496040180648378428/-almond-eye.gif?ex=69e86f7e&is=69e71dfe&hm=3201c1caf77c93aebaa9050246a12b44920d492936be5df9ba20d7426a00f1a0&=&width=561&height=317",
+            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1521266934841348117/almond-eye-umamusume.gif?ex=6a4435bd&is=6a42e43d&hm=c58f901c38d17e9078c8fbdd0c8cf357432814b33ddd2aeedc3bc47545ed27e6&=&width=747&height=422",
             
             "build": {
                 "flat": 0,
