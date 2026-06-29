@@ -62,7 +62,8 @@ from utils.game_manager import (
     build_mob_join_embed,
     process_mob_turn,
     has_real_player,
-    run_bot_race_test
+    run_bot_race_test,
+    refresh_player_profile_snapshot,
 )
 
 def build_race_log_embed(game: dict, ranked_players):
@@ -839,6 +840,7 @@ class GameCog(commands.GroupCog, name="game"):
         game_player = payload["game_player"]
         result = payload["result"]
         path_effect = payload["path_effect"]
+        refresh_player_profile_snapshot(interaction.user.id, game_player)
 
         avatar_url = resolve_player_avatar_url(game_player, interaction.user.display_avatar.url)
 

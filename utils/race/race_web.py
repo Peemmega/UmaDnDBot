@@ -31,6 +31,7 @@ from utils.game_manager import (
     start_turn_confirmation,
     update_player_score,
     use_block,
+    refresh_player_profile_snapshot,
     refresh_player_race_aptitudes,
     use_reroll,
     use_rush,
@@ -161,6 +162,7 @@ class RaceWebManager:
         game = self._get_room(room_id)
         existing_player_id, existing_player = self._find_player_entry(game, user_id)
         if existing_player and not mob_preset:
+            refresh_player_profile_snapshot(existing_player_id, existing_player)
             existing_player["display_name"] = username or existing_player.get("display_name")
             existing_player["username"] = username or existing_player.get("username")
             if avatar_url:

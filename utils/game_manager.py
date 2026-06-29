@@ -39,6 +39,22 @@ VALID_STYLES = {"Front", "Pace", "Late", "End"}
 games = {}
 
 
+def refresh_player_profile_snapshot(user_id, player: dict | None) -> dict | None:
+    if player is None:
+        return None
+
+    if str(user_id).startswith("mob_") or player.get("is_mob"):
+        return player
+
+    db_player = get_player(user_id)
+    if not db_player:
+        return player
+
+    player["username"] = db_player.get("username") or player.get("username")
+    player["profile_image_url"] = db_player.get("profile_image_url") or ""
+    return player
+
+
 def refresh_player_race_aptitudes(player: dict, race: dict | None) -> dict:
     effective_stats = calculate_effective_race_stats(player, race or {})
     player["effective_race_stats"] = effective_stats

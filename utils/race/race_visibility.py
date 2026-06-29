@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from utils.database import get_player
 from utils.dice.dice_presets import DICE_PRESET, MAX_SPEED_PHASE
 from utils.profile_images import resolve_player_avatar_url, resolve_public_url
 from utils.race.race_dice import get_phase_from_turn
@@ -34,6 +35,12 @@ def serialize_player(
     rank: int | None = None,
     finish_distance: int | None = None,
 ) -> dict:
+    if not str(user_id).startswith("mob_") and not player.get("is_mob"):
+        db_player = get_player(user_id)
+        if db_player:
+            player["username"] = db_player.get("username") or player.get("username")
+            player["profile_image_url"] = db_player.get("profile_image_url") or ""
+
     skill_slots = player.get("skills") or {}
     skills = []
     for slot in (1, 2, 3, 4):
