@@ -100,6 +100,7 @@ def calculate_effective_race_stats(player: dict, race: dict | None) -> dict:
     effective_power = int(round(base_power * aptitude["track_modifier"]))
     effective_wit_gain = int(round(base_wit_gain * aptitude["style_modifier"]))
     effective_wit_requirement = int(round(base_wit_requirement * aptitude["style_modifier"]))
+    distance_roll_bonus = max(0, (effective_speed - base_speed) * 2)
 
     return {
         "track_rank": aptitude["track_rank"],
@@ -116,6 +117,7 @@ def calculate_effective_race_stats(player: dict, race: dict | None) -> dict:
         "base_wit": base_wit,
         "base_wit_gain": base_wit_gain,
         "base_wit_requirement": base_wit_requirement,
+        "distance_roll_bonus": distance_roll_bonus,
         "effective_speed": effective_speed,
         "effective_power": effective_power,
         "effective_wit_gain": effective_wit_gain,
@@ -132,7 +134,7 @@ def build_aptitude_debug_lines(effective_stats: dict | None) -> list[str]:
         ),
         (
             f"Distance Aptitude {effective_stats.get('distance_rank', 'E')} "
-            f"({effective_stats.get('distance_percent', 0):+d}% Speed)"
+            f"({effective_stats.get('distance_percent', 0):+d}% Total)"
         ),
         (
             f"Style Aptitude {effective_stats.get('style_rank', 'E')} "
@@ -144,6 +146,5 @@ def build_aptitude_debug_lines(effective_stats: dict | None) -> list[str]:
 def get_roll_race_stats(player: dict) -> dict:
     race_profile = ((player or {}).get("race_profile") or {}).copy()
     effective_stats = (player or {}).get("effective_race_stats") or {}
-    race_profile["speed"] = int(effective_stats.get("effective_speed", race_profile.get("speed", 0)))
     race_profile["power"] = int(effective_stats.get("effective_power", race_profile.get("power", 0)))
     return race_profile
