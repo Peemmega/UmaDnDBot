@@ -11,7 +11,7 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
     style = player["style"]
     current_max_speed = player.get("current_max_speed", 0)
 
-    power_stat = effective_stats.get("effective_power", race_profile.get("power", 1))
+    power_stat = effective_stats.get("effective_power", race_profile.get("power", 1)) * 2
 
     speed_cap_base = 0
     phase = get_phase_from_turn(game["turn"], game["max_turn"])

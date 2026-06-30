@@ -550,7 +550,7 @@ def start_game(channel_id: int):
         refresh_player_race_aptitudes(player, game)
 
         player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"]
-        player["wit_mana"] = 100 + (player["race_profile"]["wit"] * 6)
+        player["wit_mana"] = 100 + (player["race_profile"]["wit"] * 10)
 
     return True, "เริ่มเกมเรียบร้อยแล้ว"
 

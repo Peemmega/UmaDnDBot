@@ -1,9 +1,11 @@
+import io
+
 import discord
 
 from utils.race.rank_display import gold_range_marker
 
 
-def build_race_log_embed(game: dict, ranked_players):
+def build_race_log_text(game: dict, ranked_players, markdown: bool = True) -> str:
     rank_lines = []
 
     for index, (user_id, info) in enumerate(ranked_players, start=1):
@@ -14,9 +16,14 @@ def build_race_log_embed(game: dict, ranked_players):
         )
 
         marker = gold_range_marker(user_id, info, ranked_players)
-        rank_lines.append(
-            f"**{index}. {name}{marker}** | {info.get('style')} | Score: **{info.get('score', 0)}**"
-        )
+        if markdown:
+            rank_lines.append(
+                f"**{index}. {name}{marker}** | {info.get('style')} | Score: **{info.get('score', 0)}**"
+            )
+        else:
+            rank_lines.append(
+                f"{index}. {name}{marker} | {info.get('style')} | Score: {info.get('score', 0)}"
+            )
 
     turn_logs = game.get("turn_score_logs", [])
     player_logs = {}
@@ -36,8 +43,8 @@ def build_race_log_embed(game: dict, ranked_players):
 
     for player_name, data in player_logs.items():
         style = data["style"]
-
-        log_lines.append(f"\n**{player_name}** ({style})")
+        header = f"\n**{player_name}** ({style})" if markdown else f"\n{player_name} ({style})"
+        log_lines.append(header)
 
         for item in data["logs"]:
             detail_parts = []
@@ -59,19 +66,38 @@ def build_race_log_embed(game: dict, ranked_players):
                 f"{item['turn']} {item['score_after']} (+{item['gain']}){detail}"
             )
 
-    description = (
-        f"สนาม: **{game.get('stage_name', 'Unknown')}**\n\n"
-        f"🏆 **อันดับสุดท้าย**\n"
-        + "\n".join(rank_lines)
-        + "\n\n📜 **Turn Score Log**\n"
-        + "\n".join(log_lines)
-    )
+    if markdown:
+        description = (
+            f"สนาม: **{game.get('stage_name', 'Unknown')}**\n\n"
+            f"🏆 **อันดับสุดท้าย**\n"
+            + "\n".join(rank_lines)
+            + "\n\n📜 **Turn Score Log**\n"
+            + "\n".join(log_lines)
+        )
+    else:
+        description = (
+            f"สนาม: {game.get('stage_name', 'Unknown')}\n\n"
+            f"อันดับสุดท้าย\n"
+            + "\n".join(rank_lines)
+            + "\n\nTurn Score Log\n"
+            + "\n".join(log_lines)
+        )
 
     if len(description) > 3900:
         description = description[:3900] + "\n...log ยาวเกินไป ถูกตัดบางส่วน"
 
+    return description
+
+
+def build_race_log_embed(game: dict, ranked_players):
     return discord.Embed(
         title="📘 Race Result Log",
-        description=description,
+        description=build_race_log_text(game, ranked_players, markdown=True),
         color=discord.Color.blue(),
     )
+
+
+def build_race_log_file(game: dict, ranked_players, filename: str = "race_result_log.txt"):
+    content = build_race_log_text(game, ranked_players, markdown=False)
+    buffer = io.BytesIO(content.encode("utf-8"))
+    return discord.File(buffer, filename=filename)

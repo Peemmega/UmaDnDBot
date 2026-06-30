@@ -28,7 +28,7 @@ from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET, get_web_race_fin
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
-from utils.race.race_log_embed import build_race_log_embed
+from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
 from utils.race.race_web import race_web_manager
 from utils.profile_images import (
     ALLOWED_IMAGE_CONTENT_TYPES,
@@ -489,13 +489,13 @@ async def send_lobby_message(channel_id: int):
 
     return True, "ส่ง lobby embed แล้ว"
 
-async def send_test_log_to_discord(bot, log_channel_id, log_embed):
+async def send_test_log_to_discord(bot, log_channel_id, log_embed, log_file):
     log_channel = bot.get_channel(log_channel_id)
 
     if log_channel is None:
         return False, "ไม่พบห้อง log ที่กำหนด"
 
-    await log_channel.send(embed=log_embed)
+    await log_channel.send(embed=log_embed, file=log_file)
     return True, "ส่ง log สำเร็จ"
 
 async def run_api_test_bot_race(bot, channel_id: int):
@@ -517,11 +517,12 @@ async def run_api_test_bot_race(bot, channel_id: int):
     ranked_players = payload["ranked_players"]
 
     log_embed = build_race_log_embed(game, ranked_players)
+    log_file = build_race_log_file(game, ranked_players)
 
     log_channel_id = 1502217575717798050
 
     future = asyncio.run_coroutine_threadsafe(
-        send_test_log_to_discord(bot, log_channel_id, log_embed),
+        send_test_log_to_discord(bot, log_channel_id, log_embed, log_file),
         bot.loop
     )
 

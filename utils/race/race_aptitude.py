@@ -93,8 +93,8 @@ def calculate_effective_race_stats(player: dict, race: dict | None) -> dict:
     base_speed = int(race_profile.get("speed", 0))
     base_power = int(race_profile.get("power", 0))
     base_wit = int(race_profile.get("wit", 0))
-    base_wit_gain = 10 + base_wit
-    base_wit_requirement = base_wit * 5
+    base_wit_gain = 10 + base_wit * 2
+    base_wit_requirement = base_wit * 25
 
     effective_speed = int(round(base_speed * aptitude["distance_modifier"]))
     effective_power = int(round(base_power * aptitude["track_modifier"]))

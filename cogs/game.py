@@ -20,7 +20,7 @@ from utils.narrater import (
 from utils.music_manager import play_bgm, stop_bgm
 
 from utils.race.race_presets import RACE_PRESET, render_path, build_track_progress_text, build_current_track_text
-from utils.race.race_log_embed import build_race_log_embed
+from utils.race.race_log_embed import build_race_log_file
 from utils.race.rank_display import gold_range_marker
 from utils.dice.roll_service import (execute_player_roll)
 
@@ -299,7 +299,8 @@ class GameCog(commands.GroupCog, name="game"):
             delete_game(channel_id)
             return
 
-        await log_channel.send(embed=log_embed)
+        log_file = build_race_log_file(game, ranked_players)
+        await log_channel.send(embed=log_embed, file=log_file)
 
         delete_game(channel_id)
 
@@ -586,7 +587,8 @@ class GameCog(commands.GroupCog, name="game"):
 
             if log_channel:
                 log_embed = build_race_log_embed(game, ranked_players)
-                await log_channel.send(embed=log_embed)
+                log_file = build_race_log_file(game, ranked_players)
+                await log_channel.send(embed=log_embed, file=log_file)
 
             ok, msg = stop_bgm(guild)
 

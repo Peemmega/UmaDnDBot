@@ -44,7 +44,7 @@ def get_distance_color(
     """
     score_map = {user_id: score}
 
-    ถ้าระยะห่างจากม้าที่ใกล้ที่สุด <= 10 + bonus => Gold
+    ถ้าระยะห่างจากม้าที่ใกล้ที่สุด <= 20 + bonus => Gold
     ถ้ามากกว่า => White
     """
 
