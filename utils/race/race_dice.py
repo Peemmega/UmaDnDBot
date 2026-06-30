@@ -200,7 +200,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     if stamina_bonus > 0:
         bonus_parts.append(f"+{stamina_bonus}{get_stat_icon('STA')}")   
     if distance_roll_bonus != 0:
-        bonus_parts.append(f"{distance_roll_bonus:+d}DIST")
+        bonus_parts.append(f"{distance_percent:+d}%")
     if flat_velocity_bonus > 0:
         bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
     if total_selected_die_bonus > 0:
