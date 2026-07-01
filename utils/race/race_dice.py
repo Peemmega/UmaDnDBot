@@ -98,6 +98,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     flat_velocity_bonus = 0
     selected_die_bonus = 0
     roll_cap_increase = 0
+    total_percent_modifier = 0
 
     for effect in skill_effects:
         effect_type = effect.get("type")
@@ -112,6 +113,8 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
             flat_velocity_bonus += value
         elif effect_type == "modify_roll_cap":
             roll_cap_increase += value
+        elif effect_type == "modify_total_percent":
+            total_percent_modifier += value
             
 
     d += extra_d
@@ -189,6 +192,8 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         subtotal
         + distance_roll_bonus
     )
+    total_percent_adjustment = int(round(total * (total_percent_modifier / 100)))
+    total += total_percent_adjustment
 
     bonus_parts = []
     if speed_Bonus > 0:
@@ -201,6 +206,8 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         bonus_parts.append(f"+{stamina_bonus}{get_stat_icon('STA')}")   
     if distance_roll_bonus != 0:
         bonus_parts.append(f"{distance_percent:+d}%")
+    if total_percent_modifier != 0:
+        bonus_parts.append(f"{total_percent_modifier:+d}%TOTAL")
     if flat_velocity_bonus > 0:
         bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
     if total_selected_die_bonus > 0:

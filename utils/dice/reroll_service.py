@@ -1,5 +1,6 @@
 import discord
 from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player,build_run_embed
+from utils.race.race_aptitude import get_roll_race_stats
 from utils.race.race_presets import get_current_path_type, get_path_effect
 from utils.race.race_dice import roll_race_dice
 from utils.icon_presets import Status_Icon_Type
@@ -23,6 +24,8 @@ async def execute_reroll(
     if race_player is None:
         return False, {"message": "ไม่พบข้อมูล stat ตอนเริ่มเกม"}
 
+    roll_stats = get_roll_race_stats(game_player)
+
     success, _ = update_player_score(
         interaction.channel_id,
         interaction.user.id,
@@ -37,6 +40,12 @@ async def execute_reroll(
     merged_stats = {}
 
     skill_effects,merged_stats = build_pending_effects_from_player(game_player)
+    if game_player.get("takeStaminaDebuff", False):
+        skill_effects.append({
+            "type": "modify_total_percent",
+            "value": -25,
+            "duration": "this_roll",
+        })
 
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, game_player, race_player)
@@ -44,7 +53,7 @@ async def execute_reroll(
   
     result = roll_race_dice(
         game_player=game_player,
-        player_stats=race_player,
+        player_stats=roll_stats,
         player_id=interaction.user.id,
         score_map=score_map,
         turn=game["turn"],
@@ -56,11 +65,7 @@ async def execute_reroll(
 
     staminaNote = None
     if game_player.get("takeStaminaDebuff", False):
-        staminaNote = f"ไม่พอ Cap ลูกเต๋า -20"
-        if result['bonus_display'] == "-":
-            result['bonus_display'] = "20CAP"
-        else:
-            result['bonus_display'] += " -20CAP" 
+        staminaNote = f"Stamina ไม่พอ ผลรวม -25%"
    
     ## Clear Debuff -----------------------------------------------
     game_player["lastedBuff"] = merged_stats

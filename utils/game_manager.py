@@ -188,12 +188,6 @@ def execute_roll_core(
     game_player["gold_range_bonus_this_turn"] = 0
     game_player["enemy_gold_range_penalty_next_turn"] = 0
 
-    if stamina_penalty_active:
-        if result['bonus_display'] == "-":
-            result['bonus_display'] = "-20CAP"
-        else:
-            result['bonus_display'] += " -20CAP"
-            
     success, new_score = update_player_score(
         channel_id,
         user_id,
@@ -225,11 +219,11 @@ def apply_stamina_debuff(game_player: dict,
         return stamina_note, False
     else:
         pending_effects.append({
-            "type": "modify_roll_cap",
-            "value": -20,
+            "type": "modify_total_percent",
+            "value": -25,
             "duration": "this_roll"
         })
-        stamina_note = f"ไม่พอ Cap ลูกเต๋า -20"
+        stamina_note = f"Stamina ไม่พอ ผลรวม -25%"
         return stamina_note, True
 
 def apply_stamina_for_roll(

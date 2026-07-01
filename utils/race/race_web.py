@@ -733,6 +733,12 @@ class RaceWebManager:
             return False, {"message": "Could not remove old score"}
 
         pending_effects, merged_stats = build_pending_effects_from_player(player)
+        if player.get("takeStaminaDebuff", False):
+            pending_effects.append({
+                "type": "modify_total_percent",
+                "value": -25,
+                "duration": "this_roll",
+            })
         path_type = get_current_path_type(game)
         path_effect = get_path_effect(path_type, player, race_player)
         result = roll_race_dice(
@@ -746,12 +752,6 @@ class RaceWebManager:
             skill_effects=pending_effects,
             minimum_total=minimum_total,
         )
-
-        if player.get("takeStaminaDebuff", False):
-            if result["bonus_display"] == "-":
-                result["bonus_display"] = "-20CAP"
-            else:
-                result["bonus_display"] += " -20CAP"
 
         player["lastedBuff"] = merged_stats
         player["next_roll_flat_bonus"] = 0
