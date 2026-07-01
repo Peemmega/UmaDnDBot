@@ -106,6 +106,17 @@ class RaceWebManager:
             or str(player_id)
         )
 
+    def _build_lane_order_summary(self, game: dict) -> str:
+        ranked_players = get_ranked_players(game.get("room_id"))
+        if not ranked_players:
+            return "No players"
+
+        parts = []
+        for index, (player_id, player) in enumerate(ranked_players, start=1):
+            lane = int(player.get("current_lane", player.get("entry_number", 1)) or 1)
+            parts.append(f"{index}. {self._player_label(player_id, player)} L{lane}")
+        return " | ".join(parts)
+
     def _find_player_entry(self, game: dict, user_id: str) -> tuple[Any, dict] | tuple[None, None]:
         for player_id, player in game.get("players", {}).items():
             if str(player_id) == str(user_id):
@@ -554,7 +565,7 @@ class RaceWebManager:
                 break
 
             next_turn(room_id)
-            self._log(game, f"Turn {game.get('turn')} started")
+            self._log(game, f"Turn {game.get('turn')} started | {self._build_lane_order_summary(game)}")
             self._process_mobs(room_id)
             game = self._get_room(room_id)
 

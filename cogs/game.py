@@ -149,6 +149,25 @@ def build_race_log_embed(game: dict, ranked_players):
 
     return embed
 
+
+def _format_rank_line(index: int, user_id, info: dict, ranked_players) -> str:
+    if str(user_id).startswith("mob_"):
+        display_name = (
+            info.get("display_name")
+            or info.get("username")
+            or info.get("name")
+            or "Mob"
+        )
+    else:
+        display_name = info.get("username") or f"<@{user_id}>"
+
+    marker = gold_range_marker(user_id, info, ranked_players)
+    current_lane = int(info.get("current_lane", info.get("entry_number", 1)) or 1)
+    return (
+        f"à¸¥à¸³à¸”à¸±à¸šà¸—à¸µà¹ˆ {index}: {display_name}{marker} | "
+        f"Lane {current_lane} | Score: {info['score']} ({info['style']})"
+    )
+
 def build_game_end_embed(ranked_players, commentary_text: str | None = None):
     rank_lines = []
     for index, (user_id, info) in enumerate(ranked_players, start=1):
@@ -336,6 +355,11 @@ class GameCog(commands.GroupCog, name="game"):
                     rank_lines.append(
                         f"ลำดับที่ {index}: {display_name}{marker} | Score: {info['score']} ({info['style']})"
                     )
+
+                rank_lines = [
+                    _format_rank_line(index, user_id, info, ranked_players)
+                    for index, (user_id, info) in enumerate(ranked_players, start=1)
+                ]
 
                 if not rank_lines:
                     rank_lines.append("ยังไม่มีผู้เล่น")
@@ -618,6 +642,11 @@ class GameCog(commands.GroupCog, name="game"):
             rank_lines.append(
                 f"ลำดับที่ {index}: {display_name}{marker} | Score: {info['score']} ({info['style']})"
             )
+
+        rank_lines = [
+            _format_rank_line(index, user_id, info, ranked_players)
+            for index, (user_id, info) in enumerate(ranked_players, start=1)
+        ]
 
         if not rank_lines:
             rank_lines.append("ยังไม่มีผู้เล่น")

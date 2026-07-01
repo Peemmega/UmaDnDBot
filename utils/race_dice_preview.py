@@ -4,6 +4,7 @@ import os
 import math
 from PIL import Image, ImageDraw, ImageFont
 from utils.race.wit import build_single_wit_regen_text
+from utils.race.runtime_stamina import format_runtime_stamina
 import aiohttp
 import re
 
@@ -315,7 +316,7 @@ async def create_race_dice_preview(
     )
   
     # stamina
-    sta_text = payload["stamina_note"]
+    sta_text = format_runtime_stamina(game_player)
     draw.text((595, 340), sta_text, font=font_mid, fill=brown)
 
     # wit mana
