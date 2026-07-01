@@ -164,7 +164,7 @@ def _format_rank_line(index: int, user_id, info: dict, ranked_players) -> str:
     marker = gold_range_marker(user_id, info, ranked_players)
     current_lane = int(info.get("current_lane", info.get("entry_number", 1)) or 1)
     return (
-        f"à¸¥à¸³à¸”à¸±à¸šà¸—à¸µà¹ˆ {index}: {display_name}{marker} | "
+        f"ลำดับที่ {index}: {display_name}{marker} | "
         f"Lane {current_lane} | Score: {info['score']} ({info['style']})"
     )
 
