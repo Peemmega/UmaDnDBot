@@ -275,9 +275,10 @@ async def create_race_dice_preview(
         fill=green,
     )
 
+    current_lane = int(game_player.get("current_lane", game_player.get("entry_number", 1)) or 1)
     draw.text(
         (520, 100),
-        f"{path_label} / {distance_color}",
+        f"{path_label} / {distance_color} / lane {current_lane}",
         font=font_mid,
         fill=brown,
     )
