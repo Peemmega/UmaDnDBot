@@ -96,16 +96,16 @@ def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dic
     }
 
     if path_type == 1:  # ทางตรง
-        effect["stamina_cost"] = 1
+        effect["stamina_cost"] = 100
 
     elif path_type == 2:  # ทางโค้ง
-        effect["stamina_cost"] = 1
+        effect["stamina_cost"] = 100
         effect["reduce_dice_value"] = 5
         effect["extra_max_from_wit"] = player_stat.get("wit", 0)
         effect["extra_floor_from_wit"] = player_stat.get("wit", 0)
 
     elif path_type == 3:  # เนินขึ้น
-        effect["stamina_cost"] = 2
+        effect["stamina_cost"] = 200
         effect["power_total_multiplier"] = 3.0
         if (not game_player.get("debuffPower")):
             game_player["debuffPower"] = True

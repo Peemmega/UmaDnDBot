@@ -9,6 +9,11 @@ from utils.zone.zone_preset import (
 )
 from utils.database import set_player_zone_build, get_player
 from utils.in_game_manager import incrase_speed_by_acceleration
+from utils.race.runtime_stamina import (
+    runtime_stamina_effect_units,
+    set_runtime_stamina,
+    sync_runtime_stamina,
+)
 
 
 def get_player_zone(user_id: int) -> Optional[dict]:
@@ -147,7 +152,12 @@ def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
 
     heal_value = effects.get("self_heal_stamina", 0)
     if heal_value > 0:
-        player["stamina_left"] = player.get("stamina_left", 0) + heal_value
+        sync_runtime_stamina(player)
+        set_runtime_stamina(
+            player,
+            player.get("stamina_stat", 0),
+            player.get("stamina_left", 0) + runtime_stamina_effect_units(heal_value),
+        )
         
     modify_current_speed = effects.get("modify_current_speed", 0)
     if modify_current_speed > 0:

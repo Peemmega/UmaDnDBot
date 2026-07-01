@@ -3,6 +3,7 @@ from utils.game_manager import get_game, get_player_in_game, update_player_score
 from utils.race.race_aptitude import get_roll_race_stats
 from utils.race.race_presets import get_current_path_type, get_path_effect
 from utils.race.race_dice import roll_race_dice
+from utils.race.runtime_stamina import build_runtime_stamina_note, format_runtime_stamina
 from utils.icon_presets import Status_Icon_Type
 
 async def execute_reroll(
@@ -65,7 +66,7 @@ async def execute_reroll(
 
     staminaNote = None
     if game_player.get("takeStaminaDebuff", False):
-        staminaNote = f"Stamina ไม่พอ ผลรวม -25%"
+        staminaNote = build_runtime_stamina_note(game_player, penalty=True)
    
     ## Clear Debuff -----------------------------------------------
     game_player["lastedBuff"] = merged_stats
@@ -92,7 +93,7 @@ async def execute_reroll(
         game_player=game_player,
         result=result,
         new_score=new_score,
-        stamina_note= staminaNote or game_player['stamina_left'],
+        stamina_note= staminaNote or format_runtime_stamina(game_player),
         path_effect=path_effect,
         title_prefix=title_prefix,
     )

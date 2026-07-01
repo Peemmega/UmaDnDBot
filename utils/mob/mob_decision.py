@@ -6,6 +6,7 @@ from utils.race.race_dice import (
     get_distance_color,
     get_dice_rule,
 )
+from utils.race.runtime_stamina import runtime_stamina_effect_units
 
 # =========================================================
 # CONFIG
@@ -493,10 +494,10 @@ def evaluate_skill_score(game, user_id, skill):
     # =====================================================
 
     if has_recovery:
-        if stamina_left <= 2:
+        if stamina_left <= runtime_stamina_effect_units(2):
             score += effect_info["recovery"] * 38
 
-        elif stamina_left <= 4:
+        elif stamina_left <= runtime_stamina_effect_units(4):
             score += effect_info["recovery"] * 22
 
         else:
@@ -704,7 +705,7 @@ def evaluate_skill_combo_score(game, user_id, combo):
         if total_velocity > 0:
             score += 15
 
-    if stamina_left <= 2 and total_recovery > 0:
+    if stamina_left <= runtime_stamina_effect_units(2) and total_recovery > 0:
         score += 35
 
     if "front" in position_group and total_debuff > 0:

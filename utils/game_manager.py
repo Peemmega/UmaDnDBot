@@ -28,6 +28,14 @@ from utils.race.race_aptitude import (
     calculate_effective_race_stats,
     get_roll_race_stats,
 )
+from utils.race.runtime_stamina import (
+    build_runtime_stamina_note,
+    format_runtime_stamina,
+    get_runtime_stamina_snapshot,
+    runtime_stamina_effect_units,
+    set_runtime_stamina,
+    sync_runtime_stamina,
+)
 from utils.dice.dice_presets import (
     MAX_SPEED_PHASE
 )
@@ -141,6 +149,7 @@ def execute_roll_core(
 
     roll_stats = get_roll_race_stats(game_player)
     snapshot_scores = game["turn_snapshot_scores"]
+    sync_runtime_stamina(game_player)
 
     pending_effects, merged_stats = build_pending_effects_from_player(game_player)
 
@@ -175,6 +184,8 @@ def execute_roll_core(
         "rule": rule_text,
         "total": result.get("total"),
         "bonus_display": result.get("bonus_display"),
+        "stamina": get_runtime_stamina_snapshot(game_player),
+        "stamina_note": stamina_note,
     }
 
     game_player["lastedBuff"] = merged_stats
@@ -215,7 +226,8 @@ def apply_stamina_debuff(game_player: dict,
                          ):
     stamina_note = None
     stamina_cost = path_effect.get("stamina_cost", 0)
-    if game_player["stamina_left"] >= stamina_cost:
+    stamina_snapshot = sync_runtime_stamina(game_player)
+    if stamina_snapshot["current_stamina"] >= stamina_cost:
         return stamina_note, False
     else:
         pending_effects.append({
@@ -223,7 +235,12 @@ def apply_stamina_debuff(game_player: dict,
             "value": -25,
             "duration": "this_roll"
         })
-        stamina_note = f"Stamina ไม่พอ ผลรวม -25%"
+        stamina_note = build_runtime_stamina_note(
+            game_player,
+            drain=stamina_cost,
+            penalty=True,
+            uphill=stamina_cost > 100,
+        )
         return stamina_note, True
 
 def apply_stamina_for_roll(
@@ -233,21 +250,28 @@ def apply_stamina_for_roll(
     stamina_note = None
     stamina_gain = path_effect.get("stamina_gain", 0)
     stamina_cost = path_effect.get("stamina_cost", 0)
+    sync_runtime_stamina(game_player)
 
     if stamina_gain > 0:
-        game_player["stamina_left"] += stamina_gain
+        set_runtime_stamina(
+            game_player,
+            game_player.get("stamina_stat", 0),
+            game_player.get("stamina_left", 0) + stamina_gain,
+        )
 
 
     if game_player["stamina_left"] >= stamina_cost:
-        game_player["stamina_left"] -= stamina_cost
-        
-        if stamina_cost == 0 and stamina_gain == 0:
-            stamina_note = f"{game_player['stamina_left']}"
-        else:
-            if stamina_gain > 0:
-                stamina_note = f"+{stamina_gain} / -{stamina_cost} เหลือ {game_player['stamina_left']}"
-            else:
-                stamina_note = f"{game_player['stamina_left'] + stamina_cost} → {game_player['stamina_left']}"
+        set_runtime_stamina(
+            game_player,
+            game_player.get("stamina_stat", 0),
+            game_player.get("stamina_left", 0) - stamina_cost,
+        )
+        stamina_note = build_runtime_stamina_note(
+            game_player,
+            gain=stamina_gain,
+            drain=stamina_cost,
+            uphill=stamina_cost > 100,
+        )
     else:
         game_player["takeStaminaDebuff"] = True
         
@@ -439,7 +463,7 @@ def start_game(channel_id: int):
 
             player["reroll_left"] = player.get("reroll_left", 0)
             player["wit_reroll_left"] = player.get("wit_reroll_left", 0)
-            player["stamina_left"] = 8 + base_player["stamina"]
+            set_runtime_stamina(player, base_player["stamina"])
 
             # reset race_profile ใหม่จากฐาน preset
             player["race_profile"] = base_player.copy()
@@ -458,7 +482,7 @@ def start_game(channel_id: int):
 
             player["reroll_left"] = 2
             player["wit_reroll_left"] = 2
-            player["stamina_left"] = 8 + base_player.get("stamina", 1)
+            set_runtime_stamina(player, base_player.get("stamina", 1))
             player["race_profile"] = base_player.copy()
 
             # สำคัญ: ใช้ skills เดิมจาก preset ห้ามทับด้วย DB
@@ -494,7 +518,7 @@ def start_game(channel_id: int):
 
             player["reroll_left"] = 2
             player["wit_reroll_left"] = 2
-            player["stamina_left"] = 8 + db_player["stamina"]
+            set_runtime_stamina(player, db_player["stamina"])
 
             player["race_profile"] = db_player.copy()
 
@@ -693,10 +717,16 @@ def use_player_stamina(channel_id: int, user_id: int, amount: int = 1):
     if player is None:
         return False, "ไม่พบผู้เล่นในเกม"
 
-    if player["stamina_left"] < amount:
+    sync_runtime_stamina(player)
+    runtime_amount = runtime_stamina_effect_units(amount)
+    if player["stamina_left"] < runtime_amount:
         return False, player["stamina_left"]
 
-    player["stamina_left"] -= amount
+    set_runtime_stamina(
+        player,
+        player.get("stamina_stat", 0),
+        player["stamina_left"] - runtime_amount,
+    )
     return True, player["stamina_left"]
 
 def apply_stamina_cost(channel_id: int, user_id: int, turn: int):
@@ -715,8 +745,13 @@ def apply_stamina_cost(channel_id: int, user_id: int, turn: int):
             "stamina_left": player["stamina_left"]
         }
 
+    sync_runtime_stamina(player)
     if player["stamina_left"] > 0:
-        player["stamina_left"] -= 1
+        set_runtime_stamina(
+            player,
+            player.get("stamina_stat", 0),
+            player["stamina_left"] - 100,
+        )
         return {
             "used": True,
             "penalty": 0,
@@ -738,6 +773,7 @@ def get_player_stamina_left(channel_id: int, user_id: int):
     if player is None:
         return None
 
+    sync_runtime_stamina(player)
     return player["stamina_left"]
 
 def get_players_ahead(channel_id: int, user_id: int):
@@ -1043,7 +1079,7 @@ def build_run_embed(
     embed.add_field(name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {result['distance_color']}", value= f"{result['display']} {result['bonus_display']}" , inline=False)
     
     if stamina_note == None:
-        stamina_note = str(game_player["stamina_left"])
+        stamina_note = format_runtime_stamina(game_player)
 
     embed.add_field(
         name= f"🏁 Score รวม: **{new_score}** ({result['total']})",
@@ -1186,6 +1222,10 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
         "last_roll_turn": -1,
         "reroll_left": 0,
         "stamina_left": 0,
+        "max_stamina": 0,
+        "stamina_stat": 0,
+        "current_stamina": 0,
+        "stamina_percent": 0,
         "wit_mana": 100,
         "wit_reroll_left": 2,
         "takeStaminaDebuff": False,
@@ -1217,6 +1257,7 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
             "build": db_player["zone"]["build"],
         }
     }
+    set_runtime_stamina(game["players"][user_id], race_profile.get("stamina", 1))
     apply_web_timing_player_defaults(game["players"][user_id])
 
     return True, "เข้าร่วมเกมสำเร็จ"
@@ -1262,6 +1303,10 @@ def add_player_as_mob_preset(
         "last_roll_turn": -1,
         "reroll_left": 0,
         "stamina_left": 0,
+        "max_stamina": 0,
+        "stamina_stat": 0,
+        "current_stamina": 0,
+        "stamina_percent": 0,
         "wit_mana": 100,
         "wit_reroll_left": 2,
         "takeStaminaDebuff": False,
@@ -1427,7 +1472,11 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         "last_roll_turn": -1,
         "reroll_left": 0,
         "wit_reroll_left": 0,
-        "stamina_left": 8 + race_profile.get("stamina", 1),
+        "stamina_left": 0,
+        "max_stamina": 0,
+        "stamina_stat": 0,
+        "current_stamina": 0,
+        "stamina_percent": 0,
         "wit_mana": 100,
 
         "skills": skills,
@@ -1451,6 +1500,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
 
         "zone": zone,
     }
+    set_runtime_stamina(game["players"][mob_id], race_profile.get("stamina", 1))
     apply_web_timing_player_defaults(game["players"][mob_id])
 
     return True, f"เพิ่ม mob `{preset['name']}` Lv.{level} เรียบร้อย"
@@ -2205,7 +2255,12 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
         value = effect.get("value", 0)
 
         if effect_type == "recover_stamina":
-            player["stamina_left"] += value
+            sync_runtime_stamina(player)
+            set_runtime_stamina(
+                player,
+                player.get("stamina_stat", 0),
+                player["stamina_left"] + runtime_stamina_effect_units(value),
+            )
             applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
 
         elif effect_type == "modify_current_speed":
@@ -2214,7 +2269,12 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
             applied_texts.append(f"เร่งความเร็วขึ้น {value} ระดับ")
 
         elif effect_type == "self_heal_stamina":
-            player["stamina_left"] += value
+            sync_runtime_stamina(player)
+            set_runtime_stamina(
+                player,
+                player.get("stamina_stat", 0),
+                player["stamina_left"] + runtime_stamina_effect_units(value),
+            )
             applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
 
         elif effect_type == "flat_total":
@@ -2239,8 +2299,13 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                 continue
 
             for target_id, target_info in targets:
+                sync_runtime_stamina(target_info)
                 before = target_info.get("stamina_left", 0)
-                target_info["stamina_left"] = max(0, before - value)
+                set_runtime_stamina(
+                    target_info,
+                    target_info.get("stamina_stat", 0),
+                    before - runtime_stamina_effect_units(value),
+                )
                 applied_texts.append(f"ลด STA ของ <@{target_id}> -{value}")
 
         elif effect_type == "apply_debuff_next_turn":

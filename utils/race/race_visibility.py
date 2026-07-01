@@ -15,6 +15,7 @@ from utils.race.race_presets import (
     get_current_path_type,
     get_web_race_finish_distance,
 )
+from utils.race.runtime_stamina import get_runtime_stamina_snapshot
 from utils.skill.skill_presets import SKILLS
 from utils.race.web_timing_balance import get_web_timing_phase, get_web_timing_snapshot
 from utils.race.web_timing_config import (
@@ -71,6 +72,7 @@ def serialize_player(
     progress_ratio = min(1.0, max(0.0, distance / distance_limit)) if finish_distance else 0.0
     timing_state = get_web_timing_snapshot(player, distance_limit) if finish_distance else {}
 
+    stamina_snapshot = get_runtime_stamina_snapshot(player)
     return {
         "id": str(user_id),
         "user_id": str(user_id),
@@ -109,7 +111,11 @@ def serialize_player(
         "mob_preset_key": player.get("mob_preset_key"),
         "last_roll_turn": player.get("last_roll_turn", -1),
         "has_rolled": player.get("last_roll_turn") == player.get("_current_turn"),
-        "stamina_left": player.get("stamina_left", 0),
+        "stamina_left": stamina_snapshot["current_stamina"],
+        "current_stamina": stamina_snapshot["current_stamina"],
+        "max_stamina": stamina_snapshot["max_stamina"],
+        "stamina_stat": stamina_snapshot["stamina_stat"],
+        "stamina_percent": stamina_snapshot["stamina_percent"],
         "wit_mana": player.get("wit_mana", 0),
         "current_max_speed": player.get("current_max_speed", 0),
         "zone_left": player.get("zone_left", 0),

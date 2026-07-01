@@ -37,6 +37,10 @@ from utils.game_manager import (
     use_rush,
 )
 from utils.race.race_aptitude import get_roll_race_stats
+from utils.race.runtime_stamina import (
+    format_runtime_stamina,
+    get_runtime_stamina_snapshot,
+)
 from utils.mob.mob_presets import MOB_PRESETS
 from utils.race.race_dice import roll_race_dice
 from utils.race.race_presets import PATH_TYPE_TEXT, RACE_PRESET
@@ -432,7 +436,7 @@ class RaceWebManager:
                 "zone": player.get("zone"),
                 "result_text": result_text,
                 "buffs": _current_buff_payload(player),
-                "stamina_left": player.get("stamina_left", 0),
+                "stamina": get_runtime_stamina_snapshot(player),
                 "current_max_speed": player.get("current_max_speed", 0),
             },
         )
@@ -789,7 +793,7 @@ class RaceWebManager:
             "result": result,
             "new_score": new_score,
             "path_effect": path_effect,
-            "stamina_note": player.get("stamina_left", 0),
+            "stamina_note": format_runtime_stamina(player),
         }
 
     async def connect(self, room_id: str, websocket: WebSocket) -> None:
@@ -942,6 +946,7 @@ def _roll_summary_payload(payload: dict) -> dict:
     aptitude_bonus = player.get("aptitude_bonus") or {}
     effective_stats = player.get("effective_race_stats") or {}
     lasted_buff = player.get("lastedBuff") or {}
+    stamina_snapshot = get_runtime_stamina_snapshot(player)
     return {
         "total": result.get("total", 0),
         "raw_total": result.get("raw_total"),
@@ -966,7 +971,11 @@ def _roll_summary_payload(payload: dict) -> dict:
             "extra_floor_from_wit": path_effect.get("extra_floor_from_wit", 0),
         },
         "stamina_note": payload.get("stamina_note"),
-        "stamina_left": player.get("stamina_left", 0),
+        "stamina_left": stamina_snapshot["current_stamina"],
+        "current_stamina": stamina_snapshot["current_stamina"],
+        "max_stamina": stamina_snapshot["max_stamina"],
+        "stamina_stat": stamina_snapshot["stamina_stat"],
+        "stamina_percent": stamina_snapshot["stamina_percent"],
         "current_max_speed": player.get("current_max_speed", 0),
         "stats": {
             "speed": race_profile.get("speed", 0),
