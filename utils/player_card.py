@@ -253,7 +253,7 @@ async def create_stats_card(player: dict, avatar_url: str):
 
     draw.text((470, 270), "Uma Coins", fill=(120, 70, 35), font=topicFont)
     draw.text((670, 270), "Stats Points", fill=(120, 70, 35), font=topicFont)
-    draw.text((870, 270), "Skill Points", fill=(120, 70, 35), font=topicFont)
+    draw.text((870, 270), "Event Point", fill=(120, 70, 35), font=topicFont)
 
     # draw_debug_grid(draw)
     return card

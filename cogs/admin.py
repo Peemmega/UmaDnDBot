@@ -390,11 +390,11 @@ class Admin(commands.Cog):
         success, msg = add_player_skill_point(target.id, amount)
 
         if success:
-            result_text = f"เพิ่ม Skill Point ให้ {target.display_name} +{amount}"
+            result_text = f"เพิ่ม Event Point ให้ {target.display_name} +{amount}"
             await self.send_result_embed(
                 ctx,
-                title="เพิ่ม Skill Point สำเร็จ",
-                description=f"{target.mention}\nเพิ่ม Skill Point +{amount}",
+                title="เพิ่ม Event Point สำเร็จ",
+                description=f"{target.mention}\nเพิ่ม Event Point +{amount}",
                 color=discord.Color.green()
             )
             await self.send_log_embed(
@@ -407,7 +407,7 @@ class Admin(commands.Cog):
         else:
             await self.send_result_embed(
                 ctx,
-                title="เพิ่ม Skill Point ไม่สำเร็จ",
+                title="เพิ่ม Event Point ไม่สำเร็จ",
                 description=msg,
                 color=discord.Color.red()
             )
