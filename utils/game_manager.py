@@ -1474,7 +1474,7 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
             "build": db_player["zone"]["build"],
         }
     }
-    set_runtime_stamina(game["players"][user_id], race_profile.get("stamina", 1))
+    set_runtime_stamina(game["players"][user_id], db_player.get("stamina", 1))
     apply_web_timing_player_defaults(game["players"][user_id])
 
     return True, "เข้าร่วมเกมสำเร็จ"
