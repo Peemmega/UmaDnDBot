@@ -12,6 +12,7 @@ from utils.database import ensure_player
 from utils.dice.dice_presets import MAX_SPEED_PHASE
 from utils.game_manager import (
     add_mob_from_preset,
+    apply_lane_tactics_to_result,
     add_player,
     build_pending_effects_from_player,
     can_use_wit_reroll,
@@ -33,6 +34,7 @@ from utils.game_manager import (
     use_block,
     refresh_player_profile_snapshot,
     refresh_player_race_aptitudes,
+    queue_player_lane_change,
     use_reroll,
     use_rush,
 )
@@ -472,6 +474,23 @@ class RaceWebManager:
         )
         return serialize_room(game, room_id, str(user_id))
 
+    def change_lane(self, room_id: str, user_id: str, target_lane: int) -> dict:
+        game = self._get_room(room_id)
+        player = game.get("players", {}).get(str(user_id))
+        success, result = queue_player_lane_change(room_id, str(user_id), target_lane)
+        if not success:
+            raise ValueError(result)
+
+        self._log(
+            game,
+            f"{self._player_label(user_id, player)} queued lane {result.get('pending_lane')}",
+            {
+                "current_lane": result.get("current_lane"),
+                "pending_lane": result.get("pending_lane"),
+            },
+        )
+        return serialize_room(game, room_id, str(user_id))
+
     def get_room(self, room_id: str, user_id: str | None = None) -> dict:
         return serialize_room(self._get_room(room_id), room_id, user_id)
 
@@ -756,6 +775,15 @@ class RaceWebManager:
             skill_effects=pending_effects,
             minimum_total=minimum_total,
         )
+        lane_resolution = apply_lane_tactics_to_result(
+            game=game,
+            user_id=str(user_id),
+            game_player=player,
+            result=result,
+            path_effect=path_effect,
+            score_map=game.get("turn_snapshot_scores", {}),
+            consume_stamina=False,
+        )
 
         player["lastedBuff"] = merged_stats
         player["next_roll_flat_bonus"] = 0
@@ -793,7 +821,7 @@ class RaceWebManager:
             "result": result,
             "new_score": new_score,
             "path_effect": path_effect,
-            "stamina_note": format_runtime_stamina(player),
+            "stamina_note": lane_resolution["stamina_note"],
         }
 
     async def connect(self, room_id: str, websocket: WebSocket) -> None:
@@ -976,6 +1004,12 @@ def _roll_summary_payload(payload: dict) -> dict:
         "max_stamina": stamina_snapshot["max_stamina"],
         "stamina_stat": stamina_snapshot["stamina_stat"],
         "stamina_percent": stamina_snapshot["stamina_percent"],
+        "current_lane": int(player.get("current_lane", 1) or 1),
+        "previous_lane": int(player.get("previous_lane", player.get("current_lane", 1)) or 1),
+        "lane_changed": bool(player.get("lane_changed")),
+        "blocked_count": int(result.get("blocked_count", player.get("blocked_count", 0)) or 0),
+        "blocking_penalty": float(result.get("blocking_penalty", player.get("blocking_penalty", 0.0)) or 0.0),
+        "drafting_active": bool(result.get("drafting_active", player.get("drafting_active", False))),
         "current_max_speed": player.get("current_max_speed", 0),
         "stats": {
             "speed": race_profile.get("speed", 0),

@@ -62,6 +62,7 @@ from utils.game_manager import (
     build_mob_join_embed,
     process_mob_turn,
     has_real_player,
+    queue_player_lane_change,
     run_bot_race_test,
     refresh_player_profile_snapshot,
 )
@@ -873,6 +874,19 @@ class GameCog(commands.GroupCog, name="game"):
 
         game = payload["game"]
         await self.handle_after_roll(interaction, game)
+
+    @app_commands.command(name="lane", description="เลือกเลนสำหรับเทิร์นถัดไป")
+    @app_commands.describe(target_lane="เลนที่ต้องการ 1-6")
+    async def lane(self, interaction: discord.Interaction, target_lane: int):
+        success, result = queue_player_lane_change(interaction.channel_id, interaction.user.id, target_lane)
+        if not success:
+            await interaction.response.send_message(result, ephemeral=True)
+            return
+
+        await interaction.response.send_message(
+            f"ตั้งเลนถัดไปเป็น Lane {result['pending_lane']} แล้ว (ตอนนี้ Lane {result['current_lane']})",
+            ephemeral=True,
+        )
 
     @discord.app_commands.command(name="skill", description="เปิดเมนูใช้สกิล")
     async def skill(self, interaction: discord.Interaction):

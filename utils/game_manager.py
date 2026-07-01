@@ -36,6 +36,14 @@ from utils.race.runtime_stamina import (
     set_runtime_stamina,
     sync_runtime_stamina,
 )
+from utils.race.race_lane import (
+    clamp_lane,
+    calculate_lane_block_penalty,
+    get_default_lane,
+    get_lane_stamina_cost,
+    has_drafting_bonus,
+    resolve_pending_lane_changes,
+)
 from utils.dice.dice_presets import (
     MAX_SPEED_PHASE
 )
@@ -45,6 +53,137 @@ from utils.icon_presets import Status_Icon_Type, ICONS
 
 VALID_STYLES = {"Front", "Pace", "Late", "End"}
 games = {}
+
+
+def _supports_lane_system(game: dict | None) -> bool:
+    if not game:
+        return False
+    return game.get("race_mode", "discord_classic") != "web_timing"
+
+
+def _entry_order_lane(channel_id: int) -> int:
+    game = get_game(channel_id)
+    player_count = len(game.get("players", {})) if game else 0
+    return get_default_lane(player_count + 1)
+
+
+def _ensure_lane_state(player: dict, entry_number: int | None = None) -> None:
+    entry = int(player.get("entry_number") or entry_number or 1)
+    player["entry_number"] = entry
+    lane = clamp_lane(player.get("current_lane", get_default_lane(entry)))
+    player["current_lane"] = lane
+    player["previous_lane"] = clamp_lane(player.get("previous_lane", lane))
+    player.setdefault("pending_lane", None)
+    player.setdefault("lane_changed", False)
+    player.setdefault("blocked_count", 0)
+    player.setdefault("blocking_penalty", 0.0)
+    player.setdefault("drafting_active", False)
+    player.setdefault("last_stamina_drain", 0)
+
+
+def _clone_lane_players_with_scores(game: dict, score_map: dict) -> dict:
+    cloned: dict = {}
+    for player_id, info in game.get("players", {}).items():
+        clone = {
+            "score": int(score_map.get(player_id, info.get("score", 0)) or 0),
+            "current_lane": info.get("current_lane"),
+        }
+        cloned[player_id] = clone
+    return cloned
+
+
+def apply_lane_tactics_to_result(
+    *,
+    game: dict,
+    user_id,
+    game_player: dict,
+    result: dict,
+    path_effect: dict,
+    score_map: dict,
+    consume_stamina: bool,
+) -> dict:
+    supports_lane = _supports_lane_system(game)
+    _ensure_lane_state(game_player)
+    sync_runtime_stamina(game_player)
+
+    base_total = int(result.get("total", 0) or 0)
+    final_total = base_total
+    blocked_count = 0
+    blocking_penalty = 0.0
+    drafting_active = False
+    lane_cost = 0
+    stamina_drain = int(path_effect.get("stamina_cost", 0) or 0)
+
+    working_players = _clone_lane_players_with_scores(game, score_map)
+    temp_player = working_players.get(user_id, {"score": 0, "current_lane": game_player.get("current_lane", 1)})
+
+    if supports_lane:
+        block_info = calculate_lane_block_penalty(temp_player, working_players, base_total)
+        blocked_count = int(block_info["blocked_count"])
+        blocking_penalty = float(block_info["blocking_penalty"])
+        final_total = int(block_info["final_score"])
+        temp_player["score"] = int(temp_player.get("score", 0)) + final_total
+        lane_cost = get_lane_stamina_cost(game_player)
+        stamina_drain += lane_cost
+        drafting_active = has_drafting_bonus(temp_player, working_players)
+        if drafting_active:
+            stamina_drain = int(round(stamina_drain * 0.90))
+
+    reference_stamina = int(game_player.get("turn_stamina_before_roll", game_player.get("stamina_left", 0)) or 0)
+    stamina_penalty_active = stamina_drain > 0 and reference_stamina < stamina_drain
+    if stamina_penalty_active:
+        final_total = int(round(final_total * 0.75))
+
+    def append_bonus(label: str) -> None:
+        current = result.get("bonus_display", "-")
+        result["bonus_display"] = label if current == "-" else f"{current} {label}"
+
+    if blocking_penalty > 0:
+        append_bonus(f"-{int(blocking_penalty * 100)}%BLOCK")
+    if drafting_active:
+        append_bonus("DRAFT")
+    if stamina_penalty_active:
+        append_bonus("-25%STA")
+
+    result["pre_lane_total"] = base_total
+    result["total"] = final_total
+    result["total_display"] = str(final_total)
+    result["blocked_count"] = blocked_count
+    result["blocking_penalty"] = blocking_penalty
+    result["drafting_active"] = drafting_active
+    result["lane_cost"] = lane_cost
+    result["stamina_drain"] = stamina_drain
+    result["current_lane"] = game_player.get("current_lane")
+    result["previous_lane"] = game_player.get("previous_lane")
+
+    game_player["blocked_count"] = blocked_count
+    game_player["blocking_penalty"] = blocking_penalty
+    game_player["drafting_active"] = drafting_active
+    game_player["last_stamina_drain"] = stamina_drain
+    game_player["takeStaminaDebuff"] = stamina_penalty_active
+
+    stamina_note = build_runtime_stamina_note(
+        game_player,
+        drain=stamina_drain,
+        penalty=stamina_penalty_active,
+        uphill=int(path_effect.get("stamina_cost", 0) or 0) > 100,
+    )
+
+    if consume_stamina:
+        set_runtime_stamina(
+            game_player,
+            game_player.get("stamina_stat", 0),
+            reference_stamina - stamina_drain,
+        )
+
+    return {
+        "stamina_note": stamina_note,
+        "stamina_penalty_active": stamina_penalty_active,
+        "stamina_drain": stamina_drain,
+        "drafting_active": drafting_active,
+        "blocked_count": blocked_count,
+        "blocking_penalty": blocking_penalty,
+    }
 
 
 def refresh_player_profile_snapshot(user_id, player: dict | None) -> dict | None:
@@ -155,12 +294,7 @@ def execute_roll_core(
 
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, game_player, race_player)
-
-    stamina_note, stamina_penalty_active = apply_stamina_debuff(game_player,path_effect,pending_effects)
-    new_stamina_note = apply_stamina_for_roll(game_player,path_effect)
-
-    if (new_stamina_note != None):
-        stamina_note = new_stamina_note
+    game_player["turn_stamina_before_roll"] = int(game_player.get("stamina_left", 0) or 0)
 
     result = roll_race_dice(
         game_player=game_player,
@@ -172,6 +306,16 @@ def execute_roll_core(
         path_effect=path_effect,
         skill_effects=pending_effects,
     )
+    lane_resolution = apply_lane_tactics_to_result(
+        game=game,
+        user_id=user_id,
+        game_player=game_player,
+        result=result,
+        path_effect=path_effect,
+        score_map=snapshot_scores,
+        consume_stamina=True,
+    )
+    stamina_note = lane_resolution["stamina_note"]
 
     rule = result.get("rule", {})
     rule_text = f"{rule.get('d', 0)}d"
@@ -186,6 +330,9 @@ def execute_roll_core(
         "bonus_display": result.get("bonus_display"),
         "stamina": get_runtime_stamina_snapshot(game_player),
         "stamina_note": stamina_note,
+        "blocked_count": result.get("blocked_count", 0),
+        "blocking_penalty": result.get("blocking_penalty", 0.0),
+        "drafting_active": result.get("drafting_active", False),
     }
 
     game_player["lastedBuff"] = merged_stats
@@ -434,7 +581,14 @@ def start_game(channel_id: int):
     }
 
     
-    for user_id, player in game["players"].items():
+    for index, (user_id, player) in enumerate(game["players"].items(), start=1):
+        _ensure_lane_state(player, index)
+        player["pending_lane"] = None
+        player["lane_changed"] = False
+        player["blocked_count"] = 0
+        player["blocking_penalty"] = 0.0
+        player["drafting_active"] = False
+        player["last_stamina_drain"] = 0
         is_mob = player.get("is_mob", False)
         using_mob_preset = player.get("using_mob_preset", False)
         
@@ -775,6 +929,28 @@ def get_player_stamina_left(channel_id: int, user_id: int):
 
     sync_runtime_stamina(player)
     return player["stamina_left"]
+
+
+def queue_player_lane_change(channel_id: int, user_id: int, target_lane: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+    if not _supports_lane_system(game):
+        return False, "Race mode นี้ยังไม่รองรับ lane system"
+    if not game.get("started") or game.get("ended"):
+        return False, "Race ยังไม่อยู่ในสถานะที่เปลี่ยนเลนได้"
+
+    player = game["players"].get(user_id)
+    if player is None:
+        return False, "ไม่พบผู้เล่นในเกม"
+
+    _ensure_lane_state(player)
+    lane = clamp_lane(target_lane)
+    player["pending_lane"] = lane
+    return True, {
+        "current_lane": player["current_lane"],
+        "pending_lane": lane,
+    }
 
 def get_players_ahead(channel_id: int, user_id: int):
     game = get_game(channel_id)
@@ -1139,6 +1315,29 @@ def next_turn(channel_id: int):
             "skills": info.get("used_skills_this_turn", []),
         })
 
+    if _supports_lane_system(game):
+        resolve_pending_lane_changes(game["players"])
+        for player_id, player in game["players"].items():
+            if not player.get("lane_changed"):
+                continue
+            display_name = player.get("display_name") or player.get("username") or str(player_id)
+            game["turn_score_logs"].append({
+                "turn": current_turn,
+                "player_id": str(player_id),
+                "name": display_name,
+                "style": player.get("style"),
+                "gain": 0,
+                "score_before": player.get("score", 0),
+                "score_after": player.get("score", 0),
+                "roll": {
+                    "lane_change": {
+                        "from": player.get("previous_lane"),
+                        "to": player.get("current_lane"),
+                    }
+                },
+                "skills": [],
+            })
+
     game["turn"] += 1
 
     tick_skill_cooldowns(channel_id)
@@ -1152,7 +1351,14 @@ def next_turn(channel_id: int):
             player["debuffPower"] = False
         player.pop("lastedBuff", None)
         player.pop("last_roll_log", None)
+        player.pop("turn_stamina_before_roll", None)
         player["used_skills_this_turn"] = []
+        player["blocked_count"] = 0
+        player["blocking_penalty"] = 0.0
+        player["drafting_active"] = False
+        player["last_stamina_drain"] = 0
+        if not player.get("lane_changed"):
+            player["previous_lane"] = player.get("current_lane", player.get("previous_lane", 1))
 
     game["turn_snapshot_scores"] = {
         user_id: info["score"]
@@ -1211,6 +1417,8 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
     
     db_player = get_player(user_id)
 
+    entry_number = len(game["players"]) + 1
+    default_lane = get_default_lane(entry_number)
     game["players"][user_id] = {
         "username": player_data.get('username') ,
         "avatar": display_avatar,
@@ -1226,6 +1434,15 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
         "stamina_stat": 0,
         "current_stamina": 0,
         "stamina_percent": 0,
+        "entry_number": entry_number,
+        "current_lane": default_lane,
+        "previous_lane": default_lane,
+        "pending_lane": None,
+        "lane_changed": False,
+        "blocked_count": 0,
+        "blocking_penalty": 0.0,
+        "drafting_active": False,
+        "last_stamina_drain": 0,
         "wit_mana": 100,
         "wit_reroll_left": 2,
         "takeStaminaDebuff": False,
@@ -1307,6 +1524,15 @@ def add_player_as_mob_preset(
         "stamina_stat": 0,
         "current_stamina": 0,
         "stamina_percent": 0,
+        "entry_number": entry_number,
+        "current_lane": default_lane,
+        "previous_lane": default_lane,
+        "pending_lane": None,
+        "lane_changed": False,
+        "blocked_count": 0,
+        "blocking_penalty": 0.0,
+        "drafting_active": False,
+        "last_stamina_drain": 0,
         "wit_mana": 100,
         "wit_reroll_left": 2,
         "takeStaminaDebuff": False,
@@ -1457,6 +1683,8 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         game.get("distance"),
     )
 
+    entry_number = len(game["players"]) + 1
+    default_lane = get_default_lane(entry_number)
     game["players"][mob_id] = {
         "username": preset['name'],
         "display_name": f"{preset['name']} Lv.{level}",
@@ -1477,6 +1705,15 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         "stamina_stat": 0,
         "current_stamina": 0,
         "stamina_percent": 0,
+        "entry_number": entry_number,
+        "current_lane": default_lane,
+        "previous_lane": default_lane,
+        "pending_lane": None,
+        "lane_changed": False,
+        "blocked_count": 0,
+        "blocking_penalty": 0.0,
+        "drafting_active": False,
+        "last_stamina_drain": 0,
         "wit_mana": 100,
 
         "skills": skills,

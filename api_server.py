@@ -464,6 +464,11 @@ class WebRaceTimingPayload(BaseModel):
     phase: str | None = None
     running_style: str | None = None
 
+
+class WebRaceLanePayload(BaseModel):
+    user_id: str
+    target_lane: int
+
 async def send_lobby_message(channel_id: int):
     bot = bot_instance.bot
 
@@ -773,6 +778,16 @@ async def api_web_race_rush(room_id: str, payload: WebRacePlayerPayload):
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+@app.post("/race/rooms/{room_id}/change-lane")
+async def api_web_race_change_lane(room_id: str, payload: WebRaceLanePayload):
+    try:
+        room = race_web_manager.change_lane(room_id, payload.user_id, payload.target_lane)
+        await race_web_manager.broadcast(room_id)
+        return room
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @app.websocket("/ws/race/{room_id}")
 async def websocket_race_room(websocket: WebSocket, room_id: str, user_id: str = ""):
     try:
@@ -818,6 +833,8 @@ async def websocket_race_room(websocket: WebSocket, room_id: str, user_id: str =
                     race_web_manager.block(room_id, action_user_id)
                 elif message_type == "RUSH":
                     race_web_manager.rush(room_id, action_user_id)
+                elif message_type == "CHANGE_LANE":
+                    race_web_manager.change_lane(room_id, action_user_id, message.get("target_lane"))
                 elif message_type == "LEAVE_ROOM":
                     race_web_manager.leave_room(room_id, action_user_id)
                 await race_web_manager.broadcast(room_id)

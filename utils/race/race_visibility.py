@@ -39,6 +39,7 @@ def serialize_player(
     player: dict,
     rank: int | None = None,
     finish_distance: int | None = None,
+    viewer_id: str | None = None,
 ) -> dict:
     if not str(user_id).startswith("mob_") and not player.get("is_mob"):
         db_player = get_player(user_id)
@@ -82,6 +83,7 @@ def serialize_player(
         "profile_image_url": resolve_public_url(player.get("profile_image_url")),
         "thumbnail": player_thumbnail,
         "style": player.get("style"),
+        "display_number": int(player.get("entry_number", rank or 1) or 1),
         "score": player.get("score", 0),
         "distance": distance,
         "distance_left": max(0, distance_limit - distance) if finish_distance else None,
@@ -116,6 +118,14 @@ def serialize_player(
         "max_stamina": stamina_snapshot["max_stamina"],
         "stamina_stat": stamina_snapshot["stamina_stat"],
         "stamina_percent": stamina_snapshot["stamina_percent"],
+        "current_lane": int(player.get("current_lane", player.get("entry_number", 1)) or 1),
+        "previous_lane": int(player.get("previous_lane", player.get("current_lane", 1)) or 1),
+        "pending_lane": int(player.get("pending_lane", 0) or 0) if str(viewer_id or "") == str(user_id) and player.get("pending_lane") is not None else None,
+        "lane_changed": bool(player.get("lane_changed")),
+        "blocked_count": int(player.get("blocked_count", 0) or 0),
+        "blocking_penalty": float(player.get("blocking_penalty", 0.0) or 0.0),
+        "drafting_active": bool(player.get("drafting_active")),
+        "last_stamina_drain": int(player.get("last_stamina_drain", 0) or 0),
         "wit_mana": player.get("wit_mana", 0),
         "current_max_speed": player.get("current_max_speed", 0),
         "zone_left": player.get("zone_left", 0),
@@ -158,7 +168,7 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
     players = []
     for player_id, player in game.get("players", {}).items():
         player["_current_turn"] = game.get("turn", 0)
-        players.append(serialize_player(player_id, player, rank_by_id.get(player_id), finish_distance))
+        players.append(serialize_player(player_id, player, rank_by_id.get(player_id), finish_distance, str(user_id) if user_id else None))
         player.pop("_current_turn", None)
 
     turn = game.get("turn", 0)
@@ -200,6 +210,7 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
         "timing_config": get_web_timing_ui_config() if is_web_timing else None,
         "gameplay_mode": game.get("web_gameplay_mode", "manual"),
         "race_mode": race_mode,
+        "lane_system_enabled": not is_web_timing,
         "cycle_id": 0,
         "finish_distance": finish_distance,
         "leader_distance": leader_distance,
