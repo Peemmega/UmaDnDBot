@@ -970,6 +970,35 @@ def queue_player_lane_change(channel_id: int, user_id: int, target_lane: int):
         "pending_lane": lane,
     }
 
+
+def apply_pending_lane_change_now(channel_id: int, user_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+    if not _supports_lane_system(game):
+        return False, "Race mode นี้ยังไม่รองรับ lane system"
+
+    player = game["players"].get(user_id)
+    if player is None:
+        return False, "ไม่พบผู้เล่นในเกม"
+
+    _ensure_lane_state(player)
+    pending_lane = player.get("pending_lane")
+    if pending_lane is None:
+        return False, "ยังไม่มี Lane ที่รอเปลี่ยน"
+
+    current_lane = clamp_lane(player.get("current_lane"))
+    next_lane = clamp_lane(pending_lane)
+    player["previous_lane"] = current_lane
+    player["current_lane"] = next_lane
+    player["pending_lane"] = None
+    player["lane_changed"] = next_lane != current_lane
+    return True, {
+        "previous_lane": current_lane,
+        "current_lane": next_lane,
+        "lane_changed": player["lane_changed"],
+    }
+
 def get_players_ahead(channel_id: int, user_id: int):
     game = get_game(channel_id)
     if game is None or user_id not in game["players"]:
@@ -2491,6 +2520,10 @@ def execute_skill_core(
         "skill": skill,
         "result_texts": result_texts,
         "cost": cost,
+        "show_lane_preview": any(
+            effect.get("type") == "resolve_pending_lane_now"
+            for effect in instant_effects
+        ),
     }
 
 def apply_skill(channel_id: int, user_id: int, skill: dict):
@@ -2524,7 +2557,7 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                 player.get("stamina_stat", 0),
                 player["stamina_left"] + stamina_gain,
             )
-            applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
+            applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{stamina_gain}")
 
         elif effect_type == "modify_current_speed":
 
@@ -2539,7 +2572,7 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                 player.get("stamina_stat", 0),
                 player["stamina_left"] + stamina_gain,
             )
-            applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
+            applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{stamina_gain}")
 
         elif effect_type == "flat_total":
             # ถ้า target เป็น self ก็ลงตัวเอง ถ้าไม่ใช่ก็ลง target
@@ -2571,7 +2604,19 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                     target_info.get("stamina_stat", 0),
                     before - stamina_loss,
                 )
-                applied_texts.append(f"ลด STA ของ <@{target_id}> -{value}")
+                applied_texts.append(f"ลด STA ของ <@{target_id}> -{stamina_loss}")
+
+        elif effect_type == "resolve_pending_lane_now":
+            lane_success, lane_result = apply_pending_lane_change_now(channel_id, user_id)
+            if not lane_success:
+                return False, lane_result
+
+            previous_lane = lane_result["previous_lane"]
+            current_lane = lane_result["current_lane"]
+            if lane_result.get("lane_changed"):
+                applied_texts.append(f"เปลี่ยน Lane ทันที {previous_lane} -> {current_lane}")
+            else:
+                applied_texts.append(f"ยืนยัน Lane {current_lane} ทันที")
 
         elif effect_type == "apply_debuff_next_turn":
             if not targets:

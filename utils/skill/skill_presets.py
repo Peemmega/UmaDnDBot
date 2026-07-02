@@ -2,6 +2,7 @@ ICON = {
     "Concentration": "<:Concentration:1494389544127172728>",
     "Acceleration": "<:Acceleration:1494389491337527538>",
     "Velocity": "<:Velocity:1494389507666088100>",
+    "Navigation": "↔️",
     "Recovery": "<:Recovery:1494389472337330196>",
     "DecreaseVelocity": "<:DecreaseVelocity:1494389430721577070>",
     "ReduceSTA": "<:ReduceSTA:1494389406109270026>",
@@ -28,6 +29,7 @@ EFFECT_TYPES = {
     "block_reroll",             # ห้าม reroll
     "force_path_bonus",         # เปลี่ยนผลของ path
     "modify_current_speed",   # เพิ่ม current speed โดยตรง
+    "resolve_pending_lane_now",
 }
 
 SKILL_TAG_OPTIONS = [
@@ -92,10 +94,10 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 25,
+                "value": 30,
                 "duration": "this_roll"
             },
-            {"type": "modify_roll_cap", "value": 14, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
 
         "tags": ["corner", "velocity"],
@@ -205,7 +207,7 @@ SKILLS = {
         },
         "effects": [
             {"type": "recover_stamina","value": 1},
-            {"type": "modify_roll_cap", "value": -7, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": -10, "duration": "this_roll"},
         ],
 
         "tags": ["recovery", "debuff", "front_target"],
@@ -224,7 +226,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_roll_cap",
-                "value": 21,
+                "value": 15,
                 "duration": "this_roll"
             }
         ],
@@ -246,7 +248,7 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_gold_range", "value": 50, "duration": "this_turn"},
-            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
         ],
 
         "tags": ["medium", "positioning", "back"],
@@ -265,7 +267,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
         ],
 
@@ -285,7 +287,7 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_gold_range", "value": 50, "duration": "this_turn"},
-            {"type": "modify_roll_floor", "value": 7, "duration": "this_roll"},
+            {"type": "modify_roll_floor", "value": 5, "duration": "this_roll"},
         ],
 
         "tags": ["vision", "end", "positioning"],
@@ -304,7 +306,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
         ],
 
@@ -322,8 +324,8 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 14, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 25, "duration": "this_roll"}
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
+            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
         ],
 
         "tags": ["pace", "final_corner", "velocity"],
@@ -410,7 +412,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
         ],
 
@@ -428,7 +430,7 @@ SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
             {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
         ],
 
@@ -781,7 +783,7 @@ SKILLS = {
             },
             {
                 "type": "modify_roll_cap",
-                "value":7,
+                "value": 5,
                 "duration": "this_roll"
             },
             {
@@ -820,7 +822,7 @@ SKILLS = {
             },
             {
             "type": "modify_roll_cap",
-            "value": 7,
+            "value": 5,
             "duration": "this_roll"
             }
         ],
@@ -848,7 +850,7 @@ SKILLS = {
             },
             {
             "type": "modify_roll_cap",
-            "value": 7,
+            "value": 5,
             "duration": "this_roll"
             }
         ],
@@ -901,13 +903,13 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_roll_cap",
-                "value": 14,
+                "value": 10,
                 "duration": "this_roll"
             },
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 25,
+                "value": 30,
                 "duration": "this_roll"
             }
         ],
@@ -931,7 +933,7 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_roll_cap",
-                "value": 14,
+                "value": 10,
                 "duration": "this_roll"
             }
         ],
@@ -974,12 +976,8 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed","value": 1.5},
-            {
-                "type": "add_dkh",
-                "value": 2,
-                "duration": "this_roll"
-            },
+            {"type": "modify_current_speed","value": 2},
+            {"type": "modify_roll_cap","value": 15,"duration": "this_roll"}
         ],
 
         "tags": ["corner", "late_race", "acceleration", "unique"],
@@ -1002,10 +1000,10 @@ SKILLS = {
         "effects": [
             {
                 "type": "add_dkh",
-                "value": 3,
+                "value": 2,
                 "duration": "this_roll"
             },
-            {"type": "modify_roll_floor","value": 14,"duration": "this_roll"},
+            {"type": "modify_roll_cap","value": 15,"duration": "this_roll"},
         ],
 
         "tags": ["corner", "late_race", "lead", "acceleration", "unique"],
@@ -1028,9 +1026,8 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_cap","value": 21,"duration": "this_roll"},
-            {"type": "modify_roll_floor","value": 7,"duration": "this_roll"},
-            {"type": "add_dkh","value": 1,"duration": "this_roll"},
+            {"type": "modify_roll_cap","value": 15,"duration": "this_roll"},
+            {"type": "modify_roll_floor","value": 10,"duration": "this_roll"},
         ],
 
         "tags": ["late_race", "lead", "velocity", "positioning", "unique"],
@@ -1052,7 +1049,7 @@ SKILLS = {
         },
         "effects": [
             {"type": "add_dkh","value": 3,"duration": "this_roll"},
-            {"type": "modify_current_speed","value": 1}
+            {"type": "modify_current_speed","value": 2}
         ],
 
         "tags": ["mid_race", "late_race", "acceleration", "unique"],
@@ -1079,7 +1076,7 @@ SKILLS = {
             },
             {
                 "type": "modify_roll_cap",
-                "value": 14,
+                "value": 10,
                 "duration": "this_roll"
             },
         ],
@@ -1106,7 +1103,7 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 50,
+                "value": 40,
                 "duration": "this_roll"
             }
         ],
@@ -1128,7 +1125,6 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_floor","value": 4,"duration": "this_roll"},
             {"type": "modify_roll_cap","value": 10,"duration": "this_roll"},
         ],
 
@@ -1148,7 +1144,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_cap","value": 7,"duration": "this_roll"},
+            {"type": "modify_roll_cap","value": 10,"duration": "this_roll"},
         ],
 
         "tags": ["velocity"],
@@ -1209,13 +1205,13 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 50,
+                "value": 40,
                 "duration": "this_roll"
             },
 
             {
                 "type": "modify_roll_cap",
-                "value": 7,
+                "value": 5,
                 "duration": "this_roll"
             },
 
@@ -1251,12 +1247,12 @@ SKILLS = {
         "effects": [
             {
                 "type": "modify_roll_cap",
-                "value": 14,
+                "value": 10,
                 "duration": "this_roll",
             },
             {
                 "type": "modify_roll_floor",
-                "value": 7,
+                "value": 5,
                 "duration": "this_roll",
             },
         ],
@@ -1286,4 +1282,102 @@ SKILLS = {
     #     ],
     #     "tags": ["vision", "end", "positioning"],
     # },
+
+    "s053": {
+        "name": "Go with the Flow",
+        "icon": "Navigation",
+        "cooldown": 8,
+        "cost": 45,
+        "trigger": {},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "resolve_pending_lane_now"}
+        ],
+        "tags": ["positioning"],
+    },
+
+    "s054": {
+        "name": "Cacao Operation Cacao",
+        "icon": "UniqueVelocity",
+        "cooldown": 8,
+        "cost": 120,
+
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "front",
+            "path_type": 2,
+        },
+
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 40,
+                "duration": "this_roll"
+            },
+            {
+                "type": "modify_roll_cap",
+                "value": 10,
+                "duration": "this_roll"
+            },
+            {
+                "type": "recover_stamina",
+                "value": 1
+            }
+        ],
+
+        "tags": [
+            "corner",
+            "mid_race",
+            "lead",
+            "velocity",
+            "recovery",
+            "unique"
+        ],
+    },
+    "s055": {
+        "name": "U=ma2",
+        "icon": "UniqueAcceleration",
+        "cooldown": 8,
+        "cost": 100,
+
+        "trigger": {
+            "phase_min": 3,
+            "phase_max": 4,
+            "position_group": "middle",
+            "path_type": 2,
+        },
+
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+
+        "effects": [
+            {
+                "type": "modify_roll_cap",
+                "value": 10,
+                "duration": "this_roll"
+            },
+            {
+                "type": "recover_stamina",
+                "value": 3
+            }
+        ],
+
+        "tags": [
+            "corner",
+            "late_race",
+            "middle",
+            "acceleration",
+            "recovery",
+            "unique"
+        ],
+    }
 }

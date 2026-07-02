@@ -20,6 +20,7 @@ ICON_MAP = {
     "Power": ASSETS_DIR / "stats_icon/utx_ico_obtain_02.png",
     "Gut": ASSETS_DIR / "stats_icon/utx_ico_obtain_03.png",
     "Velocity": ASSETS_DIR / "skill_icons/Velocity.png",
+    "Navigation": ASSETS_DIR / "skill_icons/Navigation.png",
 }
 
 DEFAULT_IMAGE = BASE_DIR / "assets" / "characters" / "mob_01.png"
@@ -119,7 +120,7 @@ def parse_display_text(text: str):
     tokens = []
 
     # split ด้วย __ __ และ emoji
-    pattern = r"(__.*?__|<:.*?:\d+>|Speed|Power|Gut|Velocity|Stamina)"
+    pattern = r"(__.*?__|<:.*?:\d+>|Speed|Power|Gut|Velocity|Navigation|Stamina)"
     parts = re.split(pattern, text)
 
     for part in parts:

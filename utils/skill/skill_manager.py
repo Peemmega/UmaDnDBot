@@ -248,6 +248,8 @@ def describe_effect(effect: dict) -> str:
     if effect_type in ["modify_current_speed"]:
         return f"เร่งความเร็วปัจจุบัน {value} ระดับ"
     
+    if effect_type == "resolve_pending_lane_now":
+        return "ย้ายไป Lane ที่ตั้งรอไว้ทันที"
     if effect_type == "self_heal_stamina":
         return f"ฟื้นฟู {Status_Icon_Type['STA']} ให้ตัวเอง +{value}"
     if effect_type == "reduce_stamina":
