@@ -23,6 +23,7 @@ from utils.race.race_presets import RACE_PRESET, render_path, build_track_progre
 from utils.race.race_log_embed import build_race_log_file
 from utils.race.rank_display import gold_range_marker
 from utils.dice.roll_service import (execute_player_roll)
+from utils.turn_result_image import create_turn_result_card
 
 WIN_IMAGE = [
     "https://media.discordapp.net/attachments/1493575422007447622/1493676112952426629/i-won-taurus-cup-with-tm-opera-o-v0-w2a0zxpycglf1.gif",
@@ -375,7 +376,23 @@ class GameCog(commands.GroupCog, name="game"):
 
                 from views.turn_confirm_view import TurnConfirmView
                 view = TurnConfirmView(self, interaction.channel_id)
-                msg = await interaction.followup.send(embed=confirm_embed, view=view)
+                send_kwargs = {
+                    "embed": confirm_embed,
+                    "view": view,
+                }
+
+                try:
+                    result_card = await create_turn_result_card(game, ranked_players)
+                    buffer = BytesIO()
+                    result_card.save(buffer, format="PNG")
+                    buffer.seek(0)
+                    result_file = discord.File(buffer, filename="turn_result.png")
+                    confirm_embed.set_image(url="attachment://turn_result.png")
+                    send_kwargs["file"] = result_file
+                except Exception as exc:
+                    print("Turn result image error:", exc)
+
+                msg = await interaction.followup.send(**send_kwargs)
                 view.message = msg
 
     @app_commands.command(name="create", description="สร้างเกมใหม่")
