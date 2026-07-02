@@ -69,6 +69,9 @@ def decide_mob_target_lane(game, user_id) -> int | None:
     style = str(player.get("style", "Pace"))
     estimated_gain = max(80, int(player.get("current_max_speed", 0) or 0))
     gold_range = get_gold_range_value(player)
+    current_gold_count = _gold_count_for_lane(player, players, current_lane, user_id=user_id)
+    current_front_gaps = _front_gaps_for_lane(player, players, current_lane, user_id=user_id)
+    current_likely_blockers = sum(1 for gap in current_front_gaps if gap <= estimated_gain)
 
     best_lane = current_lane
     best_score = -10**9
@@ -82,10 +85,21 @@ def decide_mob_target_lane(game, user_id) -> int | None:
         nearest_front_gap = front_gaps[0] if front_gaps else None
 
         score = 0
-        score += gold_count * 18
-        score += same_lane_front_in_gold * 28
-        score -= likely_blockers * 26
-        score -= max(0, same_lane_front - likely_blockers) * 6
+        blocker_relief = current_likely_blockers - likely_blockers
+
+        # Base preference: stay lower to conserve stamina, especially lane 1.
+        score -= (target_lane - 1) * 22
+        if target_lane == 1:
+            score += 26
+        elif target_lane == 2:
+            score += 10
+
+        # Only move out when there is a concrete payoff.
+        score += blocker_relief * 34
+        score += gold_count * 10
+        score += same_lane_front_in_gold * 18
+        score -= likely_blockers * 24
+        score -= max(0, same_lane_front - likely_blockers) * 7
 
         if same_lane_front == 0:
             score += 14 if phase >= 3 else 6
@@ -93,26 +107,42 @@ def decide_mob_target_lane(game, user_id) -> int | None:
         if nearest_front_gap is not None and nearest_front_gap <= 25:
             score -= 12
 
+        # Leaving the pack can be good if the current lane is crowded and target lane goes white.
+        if current_gold_count > 0 and gold_count == 0:
+            score += 16
+        elif current_gold_count == 0 and gold_count > 0:
+            score += 6
+
         if style in {"Front", "Pace"}:
             if phase <= 2:
-                score += gold_count * 10
+                score += gold_count * 8
             else:
-                score -= likely_blockers * 6
+                score -= likely_blockers * 8
+            if target_lane > 2 and blocker_relief <= 0:
+                score -= 18
 
         if style in {"Late", "End"}:
             if phase >= 3 and same_lane_front == 0:
                 score += 24
             if phase >= 3 and likely_blockers > 0:
                 score -= 10
+            if gold_count == 0 and blocker_relief > 0:
+                score += 12
 
         if phase >= 3:
-            score += max(0, 3 - target_lane) * 6
+            score += max(0, 3 - target_lane) * 8
         if phase >= 4:
-            score += max(0, 2 - target_lane) * 8
+            score += max(0, 2 - target_lane) * 10
 
-        score -= abs(target_lane - current_lane) * 4
+        score -= abs(target_lane - current_lane) * 5
         if target_lane == current_lane:
-            score += 2
+            score += 8
+
+        # Hard discourage climbing outward without enough upside.
+        if target_lane > current_lane and blocker_relief <= 0 and gold_count >= current_gold_count:
+            score -= 20
+        if target_lane >= 4 and blocker_relief < 2:
+            score -= 22
 
         if score > best_score:
             best_score = score
