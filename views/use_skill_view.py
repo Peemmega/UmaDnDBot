@@ -83,11 +83,14 @@ class UseSkillView(discord.ui.View):
             file = discord.File(buffer, filename="lane_preview.png")
             embed.set_image(url="attachment://lane_preview.png")
 
-        await interaction.response.send_message(
-            embed=embed,
-            file=file,
-            ephemeral=False
-        )
+        response_kwargs = {
+            "embed": embed,
+            "ephemeral": False,
+        }
+        if file is not None:
+            response_kwargs["file"] = file
+
+        await interaction.response.send_message(**response_kwargs)
 
     @discord.ui.button(label="1", style=discord.ButtonStyle.primary)
     async def slot1(self, interaction: discord.Interaction, button: discord.ui.Button):
