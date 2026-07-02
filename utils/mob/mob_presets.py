@@ -487,10 +487,10 @@ MOB_PRESETS = {
                 "front": 1,"pace": 1,"late": 6,"end_style": 7,
             },
             "skills": {
-                1: "s010",  # The Coast Is Clear!
+                1: "s035",  # Radiant Star!
                 2: "s002",  # Encroaching Shadow
                 3: "s037",  # In Body and Mind
-                4: "s031",  # No Stopping Me!
+                4: "s036",  # Sturm und Drang
             },
             "zone": {
                 "name": "Meteor of Dioscuri",
@@ -498,10 +498,10 @@ MOB_PRESETS = {
                 
                 "build": {
                     "flat": 0,
-                    "add_dkh": 0,
-                    "cap_floor": 3,
+                    "add_dkh": 3,
+                    "cap_floor": 2,
                     "self_heal_stamina": 0,
-                    "modify_current_speed": 2,
+                    "modify_current_speed": 0,
                 }
             },
         },
@@ -523,7 +523,7 @@ MOB_PRESETS = {
                 "front": 5,"pace": 7,"late": 7,"end_style": 1,
             },
             "skills": {
-                1: "s021",  # Calm and Collected
+                1: "s047",  # Ramp Up
                 2: "s032",  # Neck and Neck
                 3: "s035",  # Radiant Star
                 4: "s015",  # Beeline Burst
