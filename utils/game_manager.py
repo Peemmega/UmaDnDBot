@@ -2518,10 +2518,11 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
 
         if effect_type == "recover_stamina":
             sync_runtime_stamina(player)
+            stamina_gain = max(1, int(round(player.get("max_stamina", 0) * 0.10 * float(value or 0))))
             set_runtime_stamina(
                 player,
                 player.get("stamina_stat", 0),
-                player["stamina_left"] + runtime_stamina_effect_units(value),
+                player["stamina_left"] + stamina_gain,
             )
             applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
 
@@ -2532,10 +2533,11 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
 
         elif effect_type == "self_heal_stamina":
             sync_runtime_stamina(player)
+            stamina_gain = max(1, int(round(player.get("max_stamina", 0) * 0.10 * float(value or 0))))
             set_runtime_stamina(
                 player,
                 player.get("stamina_stat", 0),
-                player["stamina_left"] + runtime_stamina_effect_units(value),
+                player["stamina_left"] + stamina_gain,
             )
             applied_texts.append(f"ฟื้นฟู STA ตัวเอง +{value}")
 
@@ -2563,10 +2565,11 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
             for target_id, target_info in targets:
                 sync_runtime_stamina(target_info)
                 before = target_info.get("stamina_left", 0)
+                stamina_loss = max(1, int(round(target_info.get("max_stamina", 0) * 0.10 * float(value or 0))))
                 set_runtime_stamina(
                     target_info,
                     target_info.get("stamina_stat", 0),
-                    before - runtime_stamina_effect_units(value),
+                    before - stamina_loss,
                 )
                 applied_texts.append(f"ลด STA ของ <@{target_id}> -{value}")
 
@@ -2685,20 +2688,39 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
     front.sort(key=lambda x: x[0])
     back.sort(key=lambda x: x[0])
 
+    def _same_lane_only(candidates):
+        my_lane = clamp_lane(player.get("current_lane"))
+        return [
+            item
+            for item in candidates
+            if clamp_lane(item[2].get("current_lane")) == my_lane
+        ]
+
+    restrict_same_lane = "debuff" in set(skill.get("tags", []))
+    if restrict_same_lane:
+        front = _same_lane_only(front)
+        back = _same_lane_only(back)
+
+    def _target_pairs(candidates):
+        return [
+            (tid, info)
+            for _, tid, info in candidates
+        ]
+
     if scope == "nearest_front":
-        return [(tid, info) for _, tid, info in front[:1]]
+        return _target_pairs(front[:1])
 
     if scope == "nearest_back":
-        return [(tid, info) for _, tid, info in back[:1]]
+        return _target_pairs(back[:1])
 
     if scope == "all_front":
-        return [(tid, info) for _, tid, info in front[:limit]]
+        return _target_pairs(front[:limit])
 
     if scope == "all_back":
-        return [(tid, info) for _, tid, info in back[:limit]]
+        return _target_pairs(back[:limit])
 
     if scope == "random_enemy":
-        enemies = [(tid, info) for _, tid, info in front + back]
+        enemies = _target_pairs(front + back)
         random.shuffle(enemies)
         return enemies[:limit]
 
