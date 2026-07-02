@@ -440,11 +440,11 @@ MOB_PRESETS = {
             "thumnail": thumnails["NaritaTopRoad"],
             "style": "Pace",
             "race_profile": {
-                "speed": 7,
+                "speed": 5,
                 "stamina": 6,
-                "power": 8,
-                "gut": 6,
-                "wit": 1,
+                "power": 4,
+                "gut": 3,
+                "wit": 2,
     
                 "turf": 7,"dirt": 1,
                 "sprint": 1,"mile": 5,"medium": 7,"long": 7,
@@ -476,11 +476,11 @@ MOB_PRESETS = {
             "thumnail": thumnails["AdmireVega"],
             "style": "End",
             "race_profile": {
-                "speed": 7,
+                "speed": 5,
                 "stamina": 6,
-                "power": 8,
-                "gut": 6,
-                "wit": 1,
+                "power": 6,
+                "gut": 1,
+                "wit": 2,
     
                 "turf": 7,"dirt": 1,
                 "sprint": 2,"mile": 5,"medium": 7,"long": 5,
