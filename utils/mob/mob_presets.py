@@ -21,6 +21,12 @@ thumnails = {
     "StillInLove": "https://media.discordapp.net/attachments/697810514448744448/1501877410348400740/still_in_love.png?ex=69fdabd6&is=69fc5a56&hm=1e0ee128672b833bbfb0b743917d19d22063850714ad15b122862ec9b41641a5&=&format=webp&quality=lossless&width=1289&height=1265",
     "SpecialWeek": "https://media.discordapp.net/attachments/697810514448744448/1501877410948186222/special_week_2.png?ex=69fdabd6&is=69fc5a56&hm=80e639767f44a85c7855d9a6fa30dd7954b17198dd986e7f111803e5f8c3a163&=&format=webp&quality=lossless&width=560&height=545",
     "SilecneSusuka": "https://media.discordapp.net/attachments/697810514448744448/1501877411267219559/silent_susuka.png?ex=69fdabd6&is=69fc5a56&hm=ea687d3b478824505cf91f4ed30b6ef8cabbcfc702766f355f6986843fb54555&=&format=webp&quality=lossless&width=734&height=749",
+
+    "NaritaTopRoad": "https://media.discordapp.net/attachments/697810514448744448/1522305958670499941/narita_top_road.png?ex=6a47fd67&is=6a46abe7&hm=3cb1f25e33a3dc24998ca890082f5f318316f014592df62b6b0222c310468426&=&format=webp&quality=lossless&width=681&height=681",
+    "TMOperaO": "https://media.discordapp.net/attachments/697810514448744448/1522305957273796691/tm_opera_o.png?ex=6a47fd67&is=6a46abe7&hm=c3b17823dad2baf8e02bfc83648ca009c751ce38649d589791057618cbcb1c75&=&format=webp&quality=lossless&width=492&height=515",
+    "AdmireVega": "https://media.discordapp.net/attachments/697810514448744448/1522305957722325244/admire_vega.png?ex=6a47fd67&is=6a46abe7&hm=d4e64cde381980479b1391603f6dc1f9cdf5b3c93da1c68e7121d23278e0d813&=&format=webp&quality=lossless&width=690&height=707",
+    "JunglePocket": "https://media.discordapp.net/attachments/697810514448744448/1522305958297075852/jungle_pocket.png?ex=6a47fd67&is=6a46abe7&hm=e41dcb29a8cf4cabdf9f3cdcb399a251958d699d0e61731de29319efdbf8c3ec&=&format=webp&quality=lossless&width=837&height=870",
+
     
     "aaa": "",
 }
@@ -56,9 +62,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 3,
                 "add_dkh": 0,
-                "floor": 0,
-                
-                "cap": 0,
+                "cap_floor": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             },
@@ -94,9 +98,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 3,
-                "floor": 0,
-                
-                "cap": 0,
+                "cap_floor": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             },
@@ -132,9 +134,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 0,
-                "floor": 0,
-                
-                "cap": 0,
+                "cap_floor": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 3,
             },
@@ -170,9 +170,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 3,
-                "floor": 0,
-                
-                "cap": 2,
+                "cap_floor": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             },
@@ -208,8 +206,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 0,
-                "floor": 0,
-                "cap": 1,
+                "cap_floor": 1,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             },
@@ -245,8 +242,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 3,
-                "floor": 0,
-                "cap": 0,
+                "cap_floor": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             },
@@ -282,8 +278,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 0,
-                "floor": 0,
-                "cap": 0,
+                "cap_floor": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 3,
             },
@@ -319,8 +314,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 3,
                 "add_dkh": 0,
-                "floor": 0,
-                "cap": 0,
+                "cap_floor": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             },
@@ -357,9 +351,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 3,
-                "floor": 1,
-                
-                "cap": 1,
+                "cap_floor": 1,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             },
@@ -397,9 +389,7 @@ MOB_PRESETS = {
                 "flat": 0,
                 "add_dkh": 3,
                 
-                "floor": 0,
-                
-                "cap": 2,
+                "cap_floor": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             }
@@ -437,26 +427,168 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 3,
-                "floor": 0,
-                
-                "cap": 0,
+                "cap_floor": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             }
         },
     },
 
-    # LEVEL 4
+    "narita_top_road": {
+            "name": "Narita Top Road",
+            "avatar": CHARACTER_DIR / "narita_top_road.png",
+            "thumnail": thumnails["NaritaTopRoad"],
+            "style": "Pace",
+            "race_profile": {
+                "speed": 7,
+                "stamina": 6,
+                "power": 8,
+                "gut": 6,
+                "wit": 1,
+    
+                "turf": 7,"dirt": 1,
+                "sprint": 1,"mile": 5,"medium": 7,"long": 7,
+                "front": 2,"pace": 7,"late": 6,"end_style": 4,
+            },
+            "skills": {
+                1: "s021",  # Calm and Collected
+                2: "s032",  # Neck and Neck
+                3: "s035",  # Radiant Star
+                4: "s012",  # Speed Star
+            },
+            "zone": {
+                "name": "Road to Glory",
+                "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1522307526694011030/umamusume-uma-musume_1.gif?ex=6a47fedd&is=6a46ad5d&hm=4ca9d411409282d4476bc5806fe9b80e350e1e878940e996bb7306b5e3670eff&",
+                
+                "build": {
+                    "flat": 0,
+                    "add_dkh": 4,
+                    "cap_floor": 1,
+                    "self_heal_stamina": 0,
+                    "modify_current_speed": 0,
+                }
+            },
+        },
+
+    "admire_vega": {
+            "name": "Admire Vega",
+            "avatar": CHARACTER_DIR / "admire_vega.png",
+            "thumnail": thumnails["AdmireVega"],
+            "style": "End",
+            "race_profile": {
+                "speed": 7,
+                "stamina": 6,
+                "power": 8,
+                "gut": 6,
+                "wit": 1,
+    
+                "turf": 7,"dirt": 1,
+                "sprint": 2,"mile": 5,"medium": 7,"long": 5,
+                "front": 1,"pace": 1,"late": 6,"end_style": 7,
+            },
+            "skills": {
+                1: "s010",  # The Coast Is Clear!
+                2: "s002",  # Encroaching Shadow
+                3: "s037",  # In Body and Mind
+                4: "s031",  # No Stopping Me!
+            },
+            "zone": {
+                "name": "Meteor of Dioscuri",
+                "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1522307527231143936/admire-vega-ayabe-admire-vega.gif?ex=6a47fedd&is=6a46ad5d&hm=5e2ebef8ea46b48118b167061ab28fe30117ff0a7cbc2689f2544cc22e61f1e8&",
+                
+                "build": {
+                    "flat": 0,
+                    "add_dkh": 0,
+                    "cap_floor": 3,
+                    "self_heal_stamina": 0,
+                    "modify_current_speed": 2,
+                }
+            },
+        },
+
+    "tm_opera_o": {
+            "name": "TM Opera O",
+            "avatar": CHARACTER_DIR / "tm_opera_o.png",
+            "thumnail": thumnails["TMOperaO"],
+            "style": "Pace",
+            "race_profile": {
+                "speed": 4,
+                "stamina": 6,
+                "power": 4,
+                "gut": 3,
+                "wit": 3,
+    
+                "turf": 7,"dirt": 3,
+                "sprint": 1,"mile": 3,"medium": 7,"long": 7,
+                "front": 5,"pace": 7,"late": 7,"end_style": 1,
+            },
+            "skills": {
+                1: "s021",  # Calm and Collected
+                2: "s032",  # Neck and Neck
+                3: "s035",  # Radiant Star
+                4: "s015",  # Beeline Burst
+            },
+            "zone": {
+                "name": "Dance for Vittoria",
+                "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495378081085657162/tm_zone.gif",
+                
+                "build": {
+                    "flat": 0,
+                    "add_dkh": 2,
+                    "cap_floor": 3,
+                    "self_heal_stamina": 0,
+                    "modify_current_speed": 0,
+                }
+            },
+        },
+
+    "jungle_pocket": {
+            "name": "Jungle Pocket",
+            "avatar": CHARACTER_DIR / "jungle_pocket.png",
+            "thumnail": thumnails["JunglePocket"],
+            "style": "Late",
+            "race_profile": {
+                "speed": 5,
+                "stamina": 6,
+                "power": 5,
+                "gut": 2,
+                "wit": 2,
+    
+                "turf": 7,"dirt": 1,
+                "sprint": 1,"mile": 5,"medium": 7,"long": 6,
+                "front": 1,"pace": 4,"late": 7,"end_style": 6,
+            },
+            "skills": {
+                1: "s014",  # On Your Left!
+                2: "s038",  # All-Seeing Eyes
+                3: "s037",  # In Body and Mind
+                4: "s039",  # Rising Dragon
+            },
+            "zone": {
+                "name": "Faith in the Feral",
+                "image_url": "https://media.discordapp.net/attachments/1494733536656097340/1495425409184174191/uma-musume-anime.gif?ex=69e632f1&is=69e4e171&hm=621a4f3ffb8053eee63d14e62ac6ed635030c9657a50126821b1ce31bcccef54&=&width=560&height=237",
+                
+                "build": {
+                    "flat": 0,
+                    "add_dkh": 2,
+                    "cap_floor": 2,
+                    "self_heal_stamina":0,
+                    "modify_current_speed": 1,
+                }
+            },
+        },
+
+    # LEVEL 5
     "obey_your_master": {
         "name": "Obey Your Master",
         "avatar": CHARACTER_DIR / "obey_your_master.jpg",
         "thumnail": thumnails["ObeyYourMaster"],
         "style": "End",
         "race_profile": {
-            "speed": 4,
+            "speed": 6,
             "stamina": 4,
             "power": 7,
-            "gut": 1,
+            "gut": 2,
             "wit": 3,
 
             "turf": 7,"dirt": 1,
@@ -476,14 +608,15 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 3,
-                "floor": 0,
-                   
-                "cap": 2,            
+                "cap_floor": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             }
         },
     },
+
+    # LEVEL 6
+
 
     # LEVEL 7
     "orfevre": {
@@ -515,9 +648,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 0,
-                "floor": 0,
-                
-                "cap": 3,
+                "cap_floor": 3,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             }
@@ -552,9 +683,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 3,
-                "floor": 0,
-                
-                "cap": 2,
+                "cap_floor": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             }
@@ -589,9 +718,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 3,
                 "add_dkh": 0,
-                "floor": 0,
-                
-                "cap": 0,
+                "cap_floor": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             }
@@ -625,12 +752,10 @@ MOB_PRESETS = {
             
             "build": {
                 "flat": 0,
-                "add_dkh": 0,
-                "floor": 0,
-                
-                "cap": 2,
+                "add_dkh": 2,
+                "cap_floor": 2,
                 "self_heal_stamina": 0,
-                "modify_current_speed": 3,
+                "modify_current_speed": 1,
             }
         },
     },
@@ -663,9 +788,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 0,
-                "floor": 0,
-                
-                "cap": 5,
+                "cap_floor": 5,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             }
@@ -700,9 +823,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 0,
-                "floor": 0,
-                
-                "cap": 0,
+                "cap_floor": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 3,
             }
@@ -739,9 +860,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 3,
-                "floor": 0,
-                
-                "cap": 2,
+                "cap_floor": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             }
@@ -778,8 +897,7 @@ MOB_PRESETS = {
             "build": {
                 "flat": 0,
                 "add_dkh": 3,
-                "floor": 0,
-                "cap": 2,
+                "cap_floor": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             }
