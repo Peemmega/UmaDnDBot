@@ -34,6 +34,14 @@ WIN_IMAGE = [
 ]
 
 
+async def build_turn_result_discord_file(game: dict, ranked_players):
+    result_card = await create_turn_result_card(game, ranked_players)
+    buffer = BytesIO()
+    result_card.save(buffer, format="PNG")
+    buffer.seek(0)
+    return discord.File(buffer, filename="turn_result.png")
+
+
 from utils.database import ensure_player, record_race_rankings
 from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
 from utils.race.race_presets import (
@@ -382,11 +390,7 @@ class GameCog(commands.GroupCog, name="game"):
                 }
 
                 try:
-                    result_card = await create_turn_result_card(game, ranked_players)
-                    buffer = BytesIO()
-                    result_card.save(buffer, format="PNG")
-                    buffer.seek(0)
-                    result_file = discord.File(buffer, filename="turn_result.png")
+                    result_file = await build_turn_result_discord_file(game, ranked_players)
                     confirm_embed.set_image(url="attachment://turn_result.png")
                     send_kwargs["file"] = result_file
                 except Exception as exc:
@@ -713,7 +717,15 @@ class GameCog(commands.GroupCog, name="game"):
             url="https://media.discordapp.net/attachments/1494733536656097340/1495342542470778983/utx_ico_itemlist_roommatch_00.png?ex=69e5e5c4&is=69e49444&hm=8dcadb111d4f0a7cd59d85e3c2023bc491ba78c8edd65ba2ac3f1471e89d0656&=&format=webp&quality=lossless&width=228&height=200"
         )
 
-        await send_func(embed=embed)
+        send_kwargs = {"embed": embed}
+        try:
+            result_file = await build_turn_result_discord_file(game, ranked_players)
+            embed.set_image(url="attachment://turn_result.png")
+            send_kwargs["file"] = result_file
+        except Exception as exc:
+            print("Next turn result image error:", exc)
+
+        await send_func(**send_kwargs)
 
         game = get_game(channel_id)
         for user_id, player in game["players"].items():

@@ -54,6 +54,7 @@ BLACK = (28, 28, 28, 255)
 GREEN = (91, 183, 0, 255)
 CUSTOM_EMOJI_RE = re.compile(r"<a?:([A-Za-z0-9_]+):\d+>")
 EFFECT_TOKEN_RE = re.compile(r"(STA|SPD|POW|GUT|WIT)")
+DEFAULT_AVATAR = ASSETS_DIR / "characters" / "mob_01.png"
 
 
 def _font(size: int, *, bold: bool = True) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -68,12 +69,16 @@ async def _load_avatar_image(source: str, size: tuple[int, int]) -> Image.Image:
     image = None
 
     try:
-        if is_local_filesystem_path(source):
-            local_path = Path(str(source).replace("file://", ""))
+        source_text = str(source or "").strip()
+        local_path = Path(source_text.replace("file://", "")) if source_text else None
+
+        if local_path and local_path.exists():
             image = Image.open(local_path).convert("RGBA")
-        elif source:
+        elif is_local_filesystem_path(source_text):
+            image = None
+        elif source_text:
             async with aiohttp.ClientSession() as session:
-                async with session.get(source) as response:
+                async with session.get(source_text) as response:
                     response.raise_for_status()
                     data = await response.read()
             image = Image.open(BytesIO(data)).convert("RGBA")
@@ -81,7 +86,10 @@ async def _load_avatar_image(source: str, size: tuple[int, int]) -> Image.Image:
         image = None
 
     if image is None:
-        image = Image.new("RGBA", size, (190, 190, 190, 255))
+        if DEFAULT_AVATAR.exists():
+            image = Image.open(DEFAULT_AVATAR).convert("RGBA")
+        else:
+            image = Image.new("RGBA", size, (190, 190, 190, 255))
 
     return ImageOps.fit(image, size, Image.LANCZOS)
 
