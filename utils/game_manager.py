@@ -67,6 +67,21 @@ def _entry_order_lane(channel_id: int) -> int:
     return get_default_lane(player_count + 1)
 
 
+def _randomize_starting_positions(game: dict) -> list[tuple[object, dict]]:
+    shuffled_players = list(game.get("players", {}).items())
+    random.shuffle(shuffled_players)
+
+    for index, (_, player) in enumerate(shuffled_players, start=1):
+        lane = get_default_lane(index)
+        player["entry_number"] = index
+        player["current_lane"] = lane
+        player["previous_lane"] = lane
+        player["pending_lane"] = None
+        player["lane_changed"] = False
+
+    return shuffled_players
+
+
 def _ensure_lane_state(player: dict, entry_number: int | None = None) -> None:
     entry = int(player.get("entry_number") or entry_number or 1)
     player["entry_number"] = entry
@@ -122,8 +137,10 @@ def apply_lane_tactics_to_result(
         blocked_count = int(block_info["blocked_count"])
         blocking_penalty = float(block_info["blocking_penalty"])
         final_total = int(block_info["final_score"])
-        lane_cost = get_lane_stamina_cost(game_player)
-        stamina_drain += lane_cost
+        if int(game.get("turn", 1) or 1) > 1:
+            adjusted_stamina_drain = get_lane_stamina_cost(game_player, stamina_drain)
+            lane_cost = adjusted_stamina_drain - stamina_drain
+            stamina_drain = adjusted_stamina_drain
         drafting_active = has_drafting_bonus(temp_player, working_players)
         temp_player["score"] = int(temp_player.get("score", 0)) + final_total
         if drafting_active:
@@ -576,16 +593,16 @@ def start_game(channel_id: int):
     game["phase"] = "running"
     game["turn"] = 1
 
+    shuffled_players = _randomize_starting_positions(game)
+
     game["turn_snapshot_scores"] = {
         user_id: info["score"]
         for user_id, info in game["players"].items()
     }
 
     
-    for index, (user_id, player) in enumerate(game["players"].items(), start=1):
+    for index, (user_id, player) in enumerate(shuffled_players, start=1):
         _ensure_lane_state(player, index)
-        player["pending_lane"] = None
-        player["lane_changed"] = False
         player["blocked_count"] = 0
         player["blocking_penalty"] = 0.0
         player["drafting_active"] = False

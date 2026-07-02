@@ -5,11 +5,17 @@ from utils.race.rank_display import is_in_gold_range_against
 
 LANE_MIN = 1
 LANE_MAX = 6
-LANE_BASE_DRAIN = 100
-LANE_COST_STEP = 5
 LANE_DRAFT_FACTOR = 0.90
 LANE_BLOCK_PENALTY_STEP = 0.10
 LANE_BLOCK_PENALTY_CAP = 0.50
+LANE_STAMINA_MULTIPLIERS = {
+    1: 0.90,
+    2: 1.00,
+    3: 1.10,
+    4: 1.20,
+    5: 1.30,
+    6: 1.40,
+}
 
 
 def clamp_lane(lane: int | None) -> int:
@@ -21,12 +27,20 @@ def clamp_lane(lane: int | None) -> int:
 
 
 def get_default_lane(entry_number: int | None) -> int:
-    return clamp_lane(entry_number or LANE_MIN)
+    try:
+        entry = int(entry_number or LANE_MIN)
+    except (TypeError, ValueError):
+        entry = LANE_MIN
+    return clamp_lane(((max(1, entry) - 1) // 2) + 1)
 
 
-def get_lane_stamina_cost(player: dict) -> int:
+def get_lane_stamina_multiplier(player: dict) -> float:
     lane = clamp_lane(player.get("current_lane"))
-    return (lane - 1) * LANE_COST_STEP
+    return LANE_STAMINA_MULTIPLIERS.get(lane, 1.0)
+
+
+def get_lane_stamina_cost(player: dict, base_drain: int) -> int:
+    return int(round(int(base_drain or 0) * get_lane_stamina_multiplier(player)))
 
 
 def get_player_lane(player: dict) -> int:

@@ -275,6 +275,15 @@ async def create_race_dice_preview(
         fill=green,
     )
 
+    total = result.get("total", 0)
+    draw.text(
+        (1325, 18),
+        str(total),
+        font=font_score,
+        fill=brown,
+        anchor="ra",
+    )
+
     current_lane = int(game_player.get("current_lane", game_player.get("entry_number", 1)) or 1)
     draw.text(
         (520, 100),
@@ -306,18 +315,10 @@ async def create_race_dice_preview(
         brown
     )
 
-    # total score this roll
-    total = result.get("total", 0)
-    draw.text(
-        (1300, 200),
-        str(total),
-        font=font_score,
-        fill=brown,
-        anchor="ra",
-    )
-  
     # stamina
-    sta_text = format_runtime_stamina(game_player)
+    current_stamina = int(game_player.get("stamina_left", 0) or 0)
+    stamina_drain = int(game_player.get("last_stamina_drain", 0) or 0)
+    sta_text = f"{current_stamina} (-{stamina_drain})" if stamina_drain > 0 else str(current_stamina)
     draw.text((595, 340), sta_text, font=font_mid, fill=brown)
 
     # wit mana
