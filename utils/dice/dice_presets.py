@@ -12,13 +12,13 @@ MAX_SPEED_PHASE = {
         "last_spurt": 24,
     },
     "Late": {
-        "start": 15,
-        "mid": 17,
+        "start": 12,
+        "mid": 18,
         "late": 23,
         "last_spurt": 23,
     },
     "End": {
-        "start": 15,
+        "start": 12,
         "mid": 17,
         "late": 19,
         "last_spurt": 25,
@@ -43,10 +43,10 @@ DICE_PRESET = {
 
     "Pace": {
         "White": {
-            1: {"d": 2},
+            1: {"d": 1},
             2: {"d": 2},
             3: {"d": 2},
-            4: {"d": 2},
+            4: {"d": 3},
         },
         "Gold": {
             1: {"d": 4, "kh": 1},
