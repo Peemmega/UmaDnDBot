@@ -1,13 +1,13 @@
 MAX_SPEED_PHASE = {
     "Front": {
-        "start": 18,
+        "start": 16,
         "mid": 21,
         "late": 22,
         "last_spurt": 23,
     },
     "Pace": {
-        "start": 15,
-        "mid": 18,
+        "start": 16,
+        "mid": 19,
         "late": 21,
         "last_spurt": 24,
     },
@@ -43,14 +43,14 @@ DICE_PRESET = {
 
     "Pace": {
         "White": {
-            1: {"d": 1},
+            1: {"d": 2},
             2: {"d": 2},
             3: {"d": 2},
-            4: {"d": 3},
+            4: {"d": 2},
         },
         "Gold": {
-            1: {"d": 3, "kh": 1},
-            2: {"d": 3, "kh": 2},
+            1: {"d": 4, "kh": 1},
+            2: {"d": 4, "kh": 2},
             3: {"d": 4, "kh": 2},
             4: {"d": 4, "kh": 3},
         },
