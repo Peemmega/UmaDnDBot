@@ -114,6 +114,30 @@ def _circular_avatar(base_avatar: Image.Image, *, border_color: tuple[int, int, 
     return framed
 
 
+def _draw_number_badge(
+    canvas: Image.Image,
+    number: int,
+    pos: tuple[int, int],
+    *,
+    diameter: int = 26,
+) -> None:
+    badge = Image.new("RGBA", (diameter, diameter), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(badge)
+    draw.ellipse((0, 0, diameter - 1, diameter - 1), fill=GREEN, outline=WHITE, width=2)
+    font = _font(max(13, diameter - 11), bold=True)
+    text = str(number)
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    draw.text(
+        ((diameter - text_w) / 2, (diameter - text_h) / 2 - 3),
+        text,
+        font=font,
+        fill=WHITE,
+    )
+    canvas.alpha_composite(badge, pos)
+
+
 def _fit_text(draw: ImageDraw.ImageDraw, text: str, font, max_width: int) -> str:
     if draw.textbbox((0, 0), text, font=font)[2] <= max_width:
         return text
@@ -243,6 +267,7 @@ def _build_scoreboard_rows(ranked_players: list[tuple[Any, dict]]) -> list[dict[
         rows.append({
             "rank": index,
             "user_id": user_id,
+            "entry_number": int(info.get("entry_number", index) or index),
             "name": str(name),
             "style": str(info.get("style") or "-"),
             "score": int(info.get("score", 0) or 0),
@@ -336,6 +361,7 @@ async def create_turn_result_card(game: dict, ranked_players: list[tuple[Any, di
         paste_x = row["track_x"] - framed.width // 2 + int(row["track_offset_x"])
         paste_y = row["lane_y"] - framed.height // 2 + int(row["lane_offset"])
         canvas.paste(framed, (paste_x, paste_y), framed)
+        _draw_number_badge(canvas, row["entry_number"], (paste_x - 8, paste_y - 18), diameter=28)
 
     row_count = len(rows)
     available_height = RIGHT_PANEL_BOTTOM - RIGHT_PANEL_Y
@@ -361,7 +387,7 @@ async def create_turn_result_card(game: dict, ranked_players: list[tuple[Any, di
         )
 
         rank_box = draw.textbbox((RIGHT_PANEL_X, y), rank_text, font=font, stroke_width=2)
-        label = _fit_text(draw, f"{row['name']} | {row['style']}", font, NAME_MAX_WIDTH)
+        label = _fit_text(draw, f"#{row['entry_number']} {row['name']} | {row['style']}", font, NAME_MAX_WIDTH)
         draw.text(
             (rank_box[2] + 10, y),
             label,

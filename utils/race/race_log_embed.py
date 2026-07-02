@@ -83,7 +83,7 @@ def build_race_log_text(game: dict, ranked_players, markdown: bool = True) -> st
             + "\n".join(log_lines)
         )
 
-    if len(description) > 3900:
+    if markdown and len(description) > 3900:
         description = description[:3900] + "\n...log ยาวเกินไป ถูกตัดบางส่วน"
 
     return description

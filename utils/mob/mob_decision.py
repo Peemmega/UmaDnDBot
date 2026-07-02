@@ -7,6 +7,7 @@ from utils.race.race_dice import (
     get_dice_rule,
 )
 from utils.race.runtime_stamina import runtime_stamina_effect_units
+from utils.race.rank_display import get_gold_range_value
 
 # =========================================================
 # CONFIG
@@ -18,6 +19,106 @@ BIG_FUTURE_GAIN_TO_HOLD = 80
 
 def has_position(position_groups, *targets):
     return any(t in position_groups for t in targets)
+
+
+def _player_lane(player: dict) -> int:
+    try:
+        return int(player.get("current_lane", player.get("entry_number", 1)) or 1)
+    except (TypeError, ValueError):
+        return 1
+
+
+def _gold_count_for_lane(player: dict, players: dict, target_lane: int, *, user_id) -> int:
+    my_score = int(player.get("score", 0) or 0)
+    gold_range = get_gold_range_value(player)
+    count = 0
+    for other_id, other in players.items():
+        if other_id == user_id:
+            continue
+        if abs(int(other.get("score", 0) or 0) - my_score) > gold_range:
+            continue
+        if abs(_player_lane(other) - target_lane) > 1:
+            continue
+        count += 1
+    return count
+
+
+def _front_gaps_for_lane(player: dict, players: dict, target_lane: int, *, user_id) -> list[int]:
+    my_score = int(player.get("score", 0) or 0)
+    gaps: list[int] = []
+    for other_id, other in players.items():
+        if other_id == user_id:
+            continue
+        if _player_lane(other) != target_lane:
+            continue
+        other_score = int(other.get("score", 0) or 0)
+        if other_score > my_score:
+            gaps.append(other_score - my_score)
+    gaps.sort()
+    return gaps
+
+
+def decide_mob_target_lane(game, user_id) -> int | None:
+    player = game["players"].get(user_id)
+    if not player:
+        return None
+
+    players = game.get("players", {})
+    current_lane = _player_lane(player)
+    phase = get_phase_from_turn(game.get("turn", 1), game.get("max_turn", 20))
+    style = str(player.get("style", "Pace"))
+    estimated_gain = max(80, int(player.get("current_max_speed", 0) or 0))
+    gold_range = get_gold_range_value(player)
+
+    best_lane = current_lane
+    best_score = -10**9
+
+    for target_lane in range(1, 7):
+        gold_count = _gold_count_for_lane(player, players, target_lane, user_id=user_id)
+        front_gaps = _front_gaps_for_lane(player, players, target_lane, user_id=user_id)
+        same_lane_front = len(front_gaps)
+        same_lane_front_in_gold = sum(1 for gap in front_gaps if gap <= gold_range)
+        likely_blockers = sum(1 for gap in front_gaps if gap <= estimated_gain)
+        nearest_front_gap = front_gaps[0] if front_gaps else None
+
+        score = 0
+        score += gold_count * 18
+        score += same_lane_front_in_gold * 28
+        score -= likely_blockers * 26
+        score -= max(0, same_lane_front - likely_blockers) * 6
+
+        if same_lane_front == 0:
+            score += 14 if phase >= 3 else 6
+
+        if nearest_front_gap is not None and nearest_front_gap <= 25:
+            score -= 12
+
+        if style in {"Front", "Pace"}:
+            if phase <= 2:
+                score += gold_count * 10
+            else:
+                score -= likely_blockers * 6
+
+        if style in {"Late", "End"}:
+            if phase >= 3 and same_lane_front == 0:
+                score += 24
+            if phase >= 3 and likely_blockers > 0:
+                score -= 10
+
+        if phase >= 3:
+            score += max(0, 3 - target_lane) * 6
+        if phase >= 4:
+            score += max(0, 2 - target_lane) * 8
+
+        score -= abs(target_lane - current_lane) * 4
+        if target_lane == current_lane:
+            score += 2
+
+        if score > best_score:
+            best_score = score
+            best_lane = target_lane
+
+    return best_lane
 
 # =========================================================
 # FUTURE DICE EVALUATION

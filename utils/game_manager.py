@@ -6,7 +6,7 @@ import random
 
 from utils.race.race_presets import RACE_PRESET
 from utils.skill.skill_presets import SKILLS, ICON
-from utils.mob.mob_decision import decide_mob_skill_combo
+from utils.mob.mob_decision import decide_mob_skill_combo, decide_mob_target_lane
 
 from utils.mob.mob_presets import MOB_PRESETS
 from utils.database import get_player, get_player_skill_slots
@@ -2223,6 +2223,11 @@ def process_mob_turn(channel_id: int, user_id: str):
 
     if not player.get("is_mob"):
         return False, {"message": "ผู้เล่นนี้ไม่ใช่ mob"}
+
+    if _supports_lane_system(game):
+        target_lane = decide_mob_target_lane(game, user_id)
+        if target_lane is not None:
+            player["pending_lane"] = clamp_lane(target_lane)
 
     zone_success = False
     used_skill_payloads = []

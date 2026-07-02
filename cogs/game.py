@@ -315,8 +315,6 @@ class GameCog(commands.GroupCog, name="game"):
         game = payload["game"]
         ranked_players = payload["ranked_players"]
 
-        log_embed = build_race_log_embed(game, ranked_players)
-
         log_channel_id = 1502217575717798050
         log_channel = interaction.guild.get_channel(log_channel_id)
 
@@ -329,7 +327,7 @@ class GameCog(commands.GroupCog, name="game"):
             return
 
         log_file = build_race_log_file(game, ranked_players)
-        await log_channel.send(embed=log_embed, file=log_file)
+        await log_channel.send(file=log_file)
 
         delete_game(channel_id)
 
@@ -632,9 +630,8 @@ class GameCog(commands.GroupCog, name="game"):
                 log_channel = guild.get_channel(log_channel_id)
 
             if log_channel:
-                log_embed = build_race_log_embed(game, ranked_players)
                 log_file = build_race_log_file(game, ranked_players)
-                await log_channel.send(embed=log_embed, file=log_file)
+                await log_channel.send(file=log_file)
 
             ok, msg = stop_bgm(guild)
 
