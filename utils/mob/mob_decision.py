@@ -53,6 +53,7 @@ def get_current_dice_context(game, user_id):
         user_id,
         score_map,
         skill_effects or [],
+        game.get("players", {}),
     )
 
     rule = get_dice_rule(

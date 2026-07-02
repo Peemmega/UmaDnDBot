@@ -785,6 +785,7 @@ class RaceWebManager:
             path_effect=path_effect,
             skill_effects=pending_effects,
             minimum_total=minimum_total,
+            player_map=game.get("players", {}),
         )
         lane_resolution = apply_lane_tactics_to_result(
             game=game,

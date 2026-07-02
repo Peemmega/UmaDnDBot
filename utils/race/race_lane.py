@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Iterable
+from utils.race.rank_display import is_in_gold_range_against
 
 LANE_MIN = 1
 LANE_MAX = 6
@@ -83,7 +84,7 @@ def has_drafting_bonus(player: dict, players: dict | Iterable[dict]) -> bool:
             continue
         if get_player_lane(target) != my_lane:
             continue
-        if int(target.get("score", 0) or 0) > my_position:
+        if int(target.get("score", 0) or 0) > my_position and is_in_gold_range_against(player, target):
             return True
     return False
 

@@ -4,8 +4,24 @@ from utils.dice.dice_presets import DICE_PRESET
 from utils.skill.skill_presets import ICON
 from utils.dice.dice_table import format_rule
 from utils.display_helpers import get_stat_icon
+from utils.race.rank_display import get_gold_range_value, get_player_lane
 
-def count_nearby_players(player_id: int, score_map: dict[int, int], radius: int = 20) -> int:
+def _lane_match(player_id, other_id, player_map: dict | None, tolerance: int = 1) -> bool:
+    if not player_map:
+        return True
+    player = player_map.get(player_id)
+    other = player_map.get(other_id)
+    if not player or not other:
+        return True
+    return abs(get_player_lane(player) - get_player_lane(other)) <= tolerance
+
+
+def count_nearby_players(
+    player_id: int,
+    score_map: dict[int, int],
+    radius: int = 20,
+    player_map: dict | None = None,
+) -> int:
     if player_id not in score_map:
         return 0
 
@@ -16,7 +32,7 @@ def count_nearby_players(player_id: int, score_map: dict[int, int], radius: int 
         if uid == player_id:
             continue
 
-        if abs(player_score - score) <= radius:
+        if abs(player_score - score) <= radius and _lane_match(player_id, uid, player_map):
             count += 1
 
     return count
@@ -40,6 +56,7 @@ def get_distance_color(
     player_id: int,
     score_map: dict[int, int],
     skill_effects: list | None = None,
+    player_map: dict | None = None,
 ) -> str:
     """
     score_map = {user_id: score}
@@ -61,8 +78,6 @@ def get_distance_color(
     if not other_scores:
         return "Gold",0
 
-    nearest_gap = min(abs(player_score - score) for score in other_scores)
-
     skill_effects = skill_effects or []
 
     bonus = 0
@@ -74,11 +89,17 @@ def get_distance_color(
         elif eff.get("type") == "modify_enemy_gold_range":
             penalty += abs(eff.get("value", 0))
 
-    max_range = 20 + bonus - penalty
-    gold_range = max(1, max_range)
-    umaInRange = count_nearby_players(player_id, score_map, radius=gold_range)
+    player_info = player_map.get(player_id, {}) if player_map else {}
+    gold_range = get_gold_range_value(
+        {
+            "gold_range_bonus_this_turn": bonus,
+            "enemy_gold_range_penalty_next_turn": -penalty,
+            **player_info,
+        }
+    )
+    umaInRange = count_nearby_players(player_id, score_map, radius=gold_range, player_map=player_map)
 
-    if nearest_gap <= gold_range:
+    if umaInRange > 0:
         return "Gold", umaInRange
     return "White", umaInRange
 
@@ -248,9 +269,10 @@ def roll_race_dice(
     path_effect: dict | None = None,
     skill_effects: list | None = None,
     minimum_total: int | None = None,
+    player_map: dict | None = None,
 ) -> dict:
     phase = get_phase_from_turn(turn, max_turn)
-    distance_color,nearby_count = get_distance_color(player_id, score_map, skill_effects or [])
+    distance_color,nearby_count = get_distance_color(player_id, score_map, skill_effects or [], player_map)
     rule = get_dice_rule(game_player["style"], distance_color, phase)
     roll_context = {
         "distance_color": distance_color,

@@ -122,10 +122,10 @@ def apply_lane_tactics_to_result(
         blocked_count = int(block_info["blocked_count"])
         blocking_penalty = float(block_info["blocking_penalty"])
         final_total = int(block_info["final_score"])
-        temp_player["score"] = int(temp_player.get("score", 0)) + final_total
         lane_cost = get_lane_stamina_cost(game_player)
         stamina_drain += lane_cost
         drafting_active = has_drafting_bonus(temp_player, working_players)
+        temp_player["score"] = int(temp_player.get("score", 0)) + final_total
         if drafting_active:
             stamina_drain = int(round(stamina_drain * 0.90))
 
@@ -305,6 +305,7 @@ def execute_roll_core(
         max_turn=game["max_turn"],
         path_effect=path_effect,
         skill_effects=pending_effects,
+        player_map=game["players"],
     )
     lane_resolution = apply_lane_tactics_to_result(
         game=game,
@@ -2032,6 +2033,7 @@ def check_skill_trigger(
             user_id,
             score_map,
             skill_effects or [],
+            game.get("players", {}),
         )
         if distance_color != required_distance_color:
             return False, "สีระยะไม่ตรงเงื่อนไข"
@@ -2086,7 +2088,8 @@ def check_skill_trigger(
         _, nearby_count = get_distance_color(
             user_id,
             score_map,
-            skill_effects or []
+            skill_effects or [],
+            game.get("players", {}),
         )
 
         if nearby_count < required_nearby_count:
