@@ -179,7 +179,8 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     distance_percent = int(effective_stats.get("distance_percent", 0))
 
     nearby_count = min(context.get("nearby_count", 0), 2) + 1
-    gut_scale = player_stats.get("gut", 1) 
+    gut_scale = player_stats.get("gut", 1)
+    gut_base_bonus = gut_scale
     gut_bonus = 0
 
     if (context.get("phase", 1) >= 3):
@@ -203,6 +204,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     subtotal = (
         sum(modified_selected)
         + final_power_bonus
+        + gut_base_bonus
         + gut_bonus
         + flat_velocity_bonus
         + speed_Bonus
@@ -219,8 +221,9 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     bonus_parts = []
     if speed_Bonus > 0:
         bonus_parts.append(f"+{speed_Bonus}{get_stat_icon('SPD')}")
-    if gut_bonus > 0:
-        bonus_parts.append(f"+{gut_bonus}{get_stat_icon('GUT')}")
+    total_gut_bonus = gut_base_bonus + gut_bonus
+    if total_gut_bonus > 0:
+        bonus_parts.append(f"+{total_gut_bonus}{get_stat_icon('GUT')}")
     if final_power_bonus > 0:
         bonus_parts.append(f"+{final_power_bonus}{get_stat_icon('POW')}")
     if stamina_bonus > 0:

@@ -107,6 +107,12 @@ def _clone_lane_players_with_scores(game: dict, score_map: dict) -> dict:
     return cloned
 
 
+def get_stamina_debuff_percent(game_player: dict) -> int:
+    race_profile = game_player.get("race_profile") or {}
+    gut_stat = int(race_profile.get("gut", 0) or 0)
+    return max(0, 25 - gut_stat)
+
+
 def apply_lane_tactics_to_result(
     *,
     game: dict,
@@ -116,6 +122,7 @@ def apply_lane_tactics_to_result(
     path_effect: dict,
     score_map: dict,
     consume_stamina: bool,
+    apply_stamina_penalty: bool = True,
 ) -> dict:
     supports_lane = _supports_lane_system(game)
     _ensure_lane_state(game_player)
@@ -132,8 +139,18 @@ def apply_lane_tactics_to_result(
     working_players = _clone_lane_players_with_scores(game, score_map)
     temp_player = working_players.get(user_id, {"score": 0, "current_lane": game_player.get("current_lane", 1)})
 
+    race_profile = game_player.get("race_profile") or {}
+    effective_stats = game_player.get("effective_race_stats") or {}
+    power_stat = int(effective_stats.get("effective_power", race_profile.get("power", 0)) or 0)
+    stamina_debuff_percent = get_stamina_debuff_percent(game_player)
+
     if supports_lane:
-        block_info = calculate_lane_block_penalty(temp_player, working_players, base_total)
+        block_info = calculate_lane_block_penalty(
+            temp_player,
+            working_players,
+            base_total,
+            power_stat=power_stat,
+        )
         blocked_count = int(block_info["blocked_count"])
         blocking_penalty = float(block_info["blocking_penalty"])
         final_total = int(block_info["final_score"])
@@ -147,9 +164,13 @@ def apply_lane_tactics_to_result(
             stamina_drain = int(round(stamina_drain * 0.90))
 
     reference_stamina = int(game_player.get("turn_stamina_before_roll", game_player.get("stamina_left", 0)) or 0)
-    stamina_penalty_active = stamina_drain > 0 and reference_stamina < stamina_drain
+    stamina_penalty_active = (
+        apply_stamina_penalty
+        and stamina_drain > 0
+        and reference_stamina < stamina_drain
+    )
     if stamina_penalty_active:
-        final_total = int(round(final_total * 0.75))
+        final_total = int(round(final_total * ((100 - stamina_debuff_percent) / 100)))
 
     def append_bonus(label: str) -> None:
         current = result.get("bonus_display", "-")
@@ -159,8 +180,8 @@ def apply_lane_tactics_to_result(
         append_bonus(f"-{int(blocking_penalty * 100)}%BLOCK")
     if drafting_active:
         append_bonus("DRAFT")
-    if stamina_penalty_active:
-        append_bonus("-25%STA")
+    if stamina_penalty_active and stamina_debuff_percent > 0:
+        append_bonus(f"-{stamina_debuff_percent}%STA")
 
     result["pre_lane_total"] = base_total
     result["total"] = final_total
@@ -395,9 +416,10 @@ def apply_stamina_debuff(game_player: dict,
     if stamina_snapshot["current_stamina"] >= stamina_cost:
         return stamina_note, False
     else:
+        stamina_debuff_percent = get_stamina_debuff_percent(game_player)
         pending_effects.append({
             "type": "modify_total_percent",
-            "value": -25,
+            "value": -stamina_debuff_percent,
             "duration": "this_roll"
         })
         stamina_note = build_runtime_stamina_note(

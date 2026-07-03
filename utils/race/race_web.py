@@ -22,6 +22,7 @@ from utils.game_manager import (
     execute_roll_core,
     execute_skill_core,
     games,
+    get_stamina_debuff_percent,
     get_game,
     get_ranked_players,
     have_all_players_rolled,
@@ -770,7 +771,7 @@ class RaceWebManager:
         if player.get("takeStaminaDebuff", False):
             pending_effects.append({
                 "type": "modify_total_percent",
-                "value": -25,
+                "value": -get_stamina_debuff_percent(player),
                 "duration": "this_roll",
             })
         path_type = get_current_path_type(game)
@@ -795,6 +796,7 @@ class RaceWebManager:
             path_effect=path_effect,
             score_map=game.get("turn_snapshot_scores", {}),
             consume_stamina=False,
+            apply_stamina_penalty=False,
         )
 
         player["lastedBuff"] = merged_stats
