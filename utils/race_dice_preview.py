@@ -5,6 +5,7 @@ import math
 from PIL import Image, ImageDraw, ImageFont
 from utils.race.wit import build_single_wit_regen_text
 from utils.race.runtime_stamina import format_runtime_stamina
+from utils.race.result_display import format_bonus_display, format_stamina_line
 import aiohttp
 import re
 
@@ -21,6 +22,7 @@ ICON_MAP = {
     "Gut": ASSETS_DIR / "stats_icon/utx_ico_obtain_03.png",
     "Velocity": ASSETS_DIR / "skill_icons/Velocity.png",
     "Navigation": ASSETS_DIR / "skill_icons/Navigation.png",
+    "Block": ASSETS_DIR / "icons" / "block_icon.png",
 }
 
 DEFAULT_IMAGE = BASE_DIR / "assets" / "characters" / "mob_01.png"
@@ -120,7 +122,7 @@ def parse_display_text(text: str):
     tokens = []
 
     # split ด้วย __ __ และ emoji
-    pattern = r"(__.*?__|<:.*?:\d+>|Speed|Power|Gut|Velocity|Navigation|Stamina)"
+    pattern = r"(__.*?__|<:.*?:\d+>|Speed|Power|Gut|Velocity|Navigation|Stamina|Block)"
     parts = re.split(pattern, text)
 
     for part in parts:
@@ -135,6 +137,9 @@ def parse_display_text(text: str):
         elif part.startswith("<:"):
             name = part.split(":")[1]
             tokens.append(("icon", name))
+
+        elif part in ICON_MAP:
+            tokens.append(("icon", part))
 
         else:
             tokens.append(("text", part))
@@ -295,7 +300,7 @@ async def create_race_dice_preview(
 
     # dice breakdown
     display = result.get("display", "")
-    bonus = result.get("bonus_display", "")
+    bonus = format_bonus_display(result.get("bonus_display", ""), block_label="Block")
 
 
     draw_rich_text(
@@ -320,6 +325,10 @@ async def create_race_dice_preview(
     current_stamina = int(game_player.get("stamina_left", 0) or 0)
     stamina_drain = int(game_player.get("last_stamina_drain", 0) or 0)
     sta_text = f"{current_stamina} (-{stamina_drain})" if stamina_drain > 0 else str(current_stamina)
+    sta_text = format_stamina_line(
+        sta_text,
+        drafting_active=bool(result.get("drafting_active", game_player.get("drafting_active", False))),
+    )
     draw.text((595, 340), sta_text, font=font_mid, fill=brown)
 
     # wit mana

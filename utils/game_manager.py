@@ -36,6 +36,7 @@ from utils.race.runtime_stamina import (
     set_runtime_stamina,
     sync_runtime_stamina,
 )
+from utils.race.result_display import format_bonus_display, format_stamina_line
 from utils.race.race_lane import (
     clamp_lane,
     calculate_lane_block_penalty,
@@ -1321,15 +1322,20 @@ def build_run_embed(
     current_max_speed = math.floor(game_player.get("current_max_speed", 0))
     wit_reroll = game_player.get("wit_reroll_left", 0)
 
-    embed.add_field(name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {result['distance_color']}", value= f"{result['display']} {result['bonus_display']}" , inline=False)
+    bonus_display = format_bonus_display(result.get("bonus_display", "-"), block_label="🚫")
+    embed.add_field(name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {result['distance_color']}", value= f"{result['display']} {bonus_display}" , inline=False)
     
     if stamina_note == None:
         stamina_note = format_runtime_stamina(game_player)
+    stamina_line = format_stamina_line(
+        stamina_note,
+        drafting_active=bool(result.get("drafting_active", game_player.get("drafting_active", False))),
+    )
 
     embed.add_field(
         name= f"🏁 Score รวม: **{new_score}** ({result['total']})",
         value=(
-            f"{Status_Icon_Type['STA']} : **{stamina_note}**　"
+            f"{Status_Icon_Type['STA']} : **{stamina_line}**　"
             f"{Status_Icon_Type['WIT']} : **{build_single_wit_regen_text(game_player)}** "
         ),
         inline=False
