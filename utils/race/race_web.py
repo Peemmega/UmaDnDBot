@@ -478,10 +478,9 @@ class RaceWebManager:
         if not success:
             raise ValueError(result)
 
-        target = game.get("players", {}).get(result.get("target_id"))
         self._log(
             game,
-            f"{self._player_label(user_id, player)} used Rush toward {self._player_label(result.get('target_id'), target)}",
+            f"{self._player_label(user_id, player)} used Rush +{result.get('move_forward', 0)}",
             result,
         )
         return serialize_room(game, room_id, str(user_id))

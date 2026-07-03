@@ -74,6 +74,7 @@ from utils.game_manager import (
     queue_player_lane_change,
     run_bot_race_test,
     refresh_player_profile_snapshot,
+    format_player_reference,
 )
 
 def build_race_log_embed(game: dict, ranked_players):
@@ -160,15 +161,7 @@ def build_race_log_embed(game: dict, ranked_players):
 
 
 def _format_rank_line(index: int, user_id, info: dict, ranked_players) -> str:
-    if str(user_id).startswith("mob_"):
-        display_name = (
-            info.get("display_name")
-            or info.get("username")
-            or info.get("name")
-            or "Mob"
-        )
-    else:
-        display_name = info.get("username") or f"<@{user_id}>"
+    display_name = format_player_reference(user_id, info)
 
     marker = gold_range_marker(user_id, info, ranked_players)
     current_lane = int(info.get("current_lane", info.get("entry_number", 1)) or 1)
@@ -180,10 +173,7 @@ def _format_rank_line(index: int, user_id, info: dict, ranked_players) -> str:
 def build_game_end_embed(ranked_players, commentary_text: str | None = None):
     rank_lines = []
     for index, (user_id, info) in enumerate(ranked_players, start=1):
-        if str(user_id).startswith("mob_"):
-            display_name = info.get("display_name") or info.get('username') or "Mob"
-        else:
-            display_name = f"<@{user_id}>"
+        display_name = format_player_reference(user_id, info)
 
         marker = gold_range_marker(user_id, info, ranked_players)
         rank_lines.append(
@@ -198,7 +188,7 @@ def build_game_end_embed(ranked_players, commentary_text: str | None = None):
     if ranked_players:
         winner_id, winner_info = ranked_players[0]
         winner_text = (
-            f"🏆 ผู้ชนะ: <@{winner_id}>\n"
+            f"🏆 ผู้ชนะ: {format_player_reference(winner_id, winner_info)}\n"
             f"Style: {winner_info['style']}\n"
             f"Score: {winner_info['score']}"
         )
@@ -353,10 +343,7 @@ class GameCog(commands.GroupCog, name="game"):
 
                 rank_lines = []
                 for index, (user_id, info) in enumerate(ranked_players, start=1):
-                    if str(user_id).startswith("mob_"):
-                        display_name = info.get("display_name") or info.get('username') or "Mob"
-                    else:
-                        display_name = info.get('username') or f"<@{user_id}>"
+                    display_name = format_player_reference(user_id, info)
 
                     marker = gold_range_marker(user_id, info, ranked_players)
                     rank_lines.append(
@@ -646,15 +633,7 @@ class GameCog(commands.GroupCog, name="game"):
 
         rank_lines = []
         for index, (user_id, info) in enumerate(ranked_players, start=1):
-            if str(user_id).startswith("mob_"):
-                display_name = (
-                    info.get("display_name")
-                    or info.get('username') 
-                    or info.get("name")
-                    or "Mob"
-                )
-            else:
-                display_name = info.get('username') or f"<@{user_id}>"
+            display_name = format_player_reference(user_id, info)
 
             marker = gold_range_marker(user_id, info, ranked_players)
             rank_lines.append(

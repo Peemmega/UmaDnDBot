@@ -37,6 +37,7 @@ from utils.race.runtime_stamina import (
     sync_runtime_stamina,
 )
 from utils.race.result_display import format_bonus_display, format_stamina_line
+from utils.race.rank_display import get_gold_range_value, get_player_lane, is_in_gold_range_against
 from utils.race.race_lane import (
     clamp_lane,
     calculate_lane_block_penalty,
@@ -239,6 +240,45 @@ def refresh_player_profile_snapshot(user_id, player: dict | None) -> dict | None
     player["username"] = db_player.get("username") or player.get("username")
     player["profile_image_url"] = db_player.get("profile_image_url") or ""
     return player
+
+
+def format_player_reference(user_id, player: dict | None = None) -> str:
+    player = player or {}
+    if str(user_id).startswith("mob_") or player.get("is_mob"):
+        return (
+            player.get("display_name")
+            or player.get("username")
+            or player.get("name")
+            or str(user_id)
+        )
+    return f"<@{user_id}>"
+
+
+def _get_rush_stamina_cost(player: dict) -> int:
+    snapshot = sync_runtime_stamina(player)
+    return max(1, int(round(snapshot["max_stamina"] * 0.05)))
+
+
+def _get_block_candidates(channel_id: int, user_id: int) -> list[tuple[int, int, dict]]:
+    game = get_game(channel_id)
+    if game is None or user_id not in game["players"]:
+        return []
+
+    player = game["players"][user_id]
+    my_lane = get_player_lane(player)
+    my_score = int(player.get("score", 0) or 0)
+    result = []
+
+    for uid, info in game["players"].items():
+        if uid == user_id:
+            continue
+        if abs(get_player_lane(info) - my_lane) > 1:
+            continue
+        gap = my_score - int(info.get("score", 0) or 0)
+        if gap > 0:
+            result.append((uid, gap, info))
+
+    return sorted(result, key=lambda item: item[1])
 
 
 def refresh_player_race_aptitudes(player: dict, race: dict | None) -> dict:
@@ -1096,23 +1136,26 @@ def use_block(channel_id: int, user_id: int):
     if player["used_block"]:
         return False, "คุณใช้ Block ไปแล้ว"
 
-    behind_players = get_players_behind(channel_id, user_id)
-    valid_targets = [(uid, gap, info) for uid, gap, info in behind_players if gap > 20]
+    behind_players = _get_block_candidates(channel_id, user_id)
+    if any(is_in_gold_range_against(player, info) for _, _, info in behind_players):
+        return False, "คุณอยู่ในระยะ Gold แล้ว"
+    gold_range = get_gold_range_value(player)
+    valid_targets = [(uid, gap, info) for uid, gap, info in behind_players if gold_range < gap <= gold_range + 20]
 
-    if not valid_targets:
+    if snapshot["current_stamina"] < rush_cost:
         return False, "ไม่มีคนด้านหลังที่ห่างเกิน 20"
 
     target_id, gap, target_info = valid_targets[0]
 
-    move_back = gap - 20
+    move_back = gap - gold_range
     player["score"] -= move_back
 
-    target_info["next_roll_flat_bonus"] -= 20
     player["used_block"] = True
     player["action_locked"] = True
 
     return True, {
         "target_id": target_id,
+        "target": target_info,
         "move_back": move_back,
         "new_score": player["score"],
     }
@@ -1129,8 +1172,8 @@ def can_use_rush(channel_id: int, user_id: int) -> tuple[bool, str | None]:
     if player["used_rush"]:
         return False, "คุณใช้ Rush ไปแล้ว"
 
-    ahead_players = get_players_ahead(channel_id, user_id)
-    valid_targets = [(uid, gap, info) for uid, gap, info in ahead_players if gap <= 30]
+    rush_cost = _get_rush_stamina_cost(player)
+    snapshot = get_runtime_stamina_snapshot(player)
 
     if not valid_targets:
         return False, "ไม่มีคนด้านหน้าที่อยู่ในระยะ 30"
@@ -1187,6 +1230,114 @@ def can_force_rush_targets(channel_id: int, targets: list[tuple[int, dict]]) -> 
             return True, None
 
     return False, "ไม่มีเป้าหมายที่สามารถถูกบังคับใช้ Rush ได้"
+
+def use_block(channel_id: int, user_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+
+    player = game["players"].get(user_id)
+    if player is None:
+        return False, "ไม่พบผู้เล่น"
+
+    if player["used_block"]:
+        return False, "คุณใช้ Block ไปแล้วในเทิร์นนี้"
+
+    behind_players = _get_block_candidates(channel_id, user_id)
+    if any(is_in_gold_range_against(player, info) for _, _, info in behind_players):
+        return False, "คุณอยู่ในระยะ Gold แล้ว"
+
+    gold_range = get_gold_range_value(player)
+    valid_targets = [
+        (uid, gap, info)
+        for uid, gap, info in behind_players
+        if gold_range < gap <= gold_range + 20
+    ]
+    if not valid_targets:
+        return False, "ไม่มีเป้าหมายด้านหลังในเลนเดียวกันหรือเลนติดกันที่ถอยเข้า Gold ได้ไม่เกิน 20"
+
+    target_id, gap, target_info = valid_targets[0]
+    move_back = gap - gold_range
+    player["score"] -= move_back
+    player["used_block"] = True
+    player["action_locked"] = True
+
+    return True, {
+        "target_id": target_id,
+        "target": target_info,
+        "move_back": move_back,
+        "new_score": player["score"],
+    }
+
+
+def can_use_rush(channel_id: int, user_id: int) -> tuple[bool, str | None]:
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+
+    player = game["players"].get(user_id)
+    if player is None:
+        return False, "ไม่พบผู้เล่น"
+
+    if player["used_rush"]:
+        return False, "คุณใช้ Rush ไปแล้วในเกมนี้"
+
+    rush_cost = _get_rush_stamina_cost(player)
+    snapshot = get_runtime_stamina_snapshot(player)
+    if snapshot["current_stamina"] < rush_cost:
+        return False, f"STA ไม่พอสำหรับ Rush (ต้องใช้ {rush_cost})"
+
+    return True, None
+
+
+def use_rush(channel_id: int, user_id: int):
+    ok, reason = can_use_rush(channel_id, user_id)
+    if not ok:
+        return False, reason
+
+    game = get_game(channel_id)
+    player = game["players"].get(user_id)
+    rush_cost = _get_rush_stamina_cost(player)
+    snapshot = sync_runtime_stamina(player)
+    set_runtime_stamina(
+        player,
+        snapshot["stamina_stat"],
+        snapshot["current_stamina"] - rush_cost,
+    )
+
+    move_forward = 20
+    player["score"] += move_forward
+    player["used_rush"] = True
+    player["action_locked"] = True
+
+    return True, {
+        "move_forward": move_forward,
+        "stamina_cost": rush_cost,
+        "stamina_left": player.get("stamina_left", 0),
+        "new_score": player["score"],
+    }
+
+
+def can_force_rush_targets(channel_id: int, targets: list[tuple[int, dict]]) -> tuple[bool, str | None]:
+    if not targets:
+        return False, "ไม่มีเป้าหมายสำหรับบังคับ Rush"
+
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+
+    for target_id, _ in targets:
+        player = game["players"].get(target_id)
+        if player is None or player.get("used_rush"):
+            continue
+
+        rush_cost = _get_rush_stamina_cost(player)
+        snapshot = get_runtime_stamina_snapshot(player)
+        if snapshot["current_stamina"] >= rush_cost:
+            return True, None
+
+    return False, "ไม่มีเป้าหมายที่สามารถถูกบังคับใช้ Rush ได้"
+
 
 def build_aptitude_stat_bonus(att):
     return {
@@ -1418,6 +1569,7 @@ def next_turn(channel_id: int):
     tick_skill_cooldowns(channel_id)
 
     for player in game["players"].values():
+        player["used_block"] = False
         player["no_reroll_this_turn"] = player.get("no_reroll_next_turn", False)
         player["no_reroll_next_turn"] = False
         player["action_locked"] = False
@@ -2617,7 +2769,7 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                         if target_id == user_id:
                             applied_texts.append(f"ปรับคะแนนตัวเองทันที {sign}{value}")
                         else:
-                            applied_texts.append(f"ปรับคะแนน <@{target_id}> ทันที {sign}{value}")
+                            applied_texts.append(f"ปรับคะแนน {format_player_reference(target_id, target_info)} ทันที {sign}{value}")
 
         elif effect_type == "reduce_stamina":
             if not targets:
@@ -2632,7 +2784,7 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                     target_info.get("stamina_stat", 0),
                     before - stamina_loss,
                 )
-                applied_texts.append(f"ลด STA ของ <@{target_id}> -{stamina_loss}")
+                applied_texts.append(f"ลด STA ของ {format_player_reference(target_id, target_info)} -{stamina_loss}")
 
         elif effect_type == "resolve_pending_lane_now":
             lane_success, lane_result = apply_pending_lane_change_now(channel_id, user_id)
@@ -2659,14 +2811,14 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                     target_info.setdefault("next_roll_flat_bonus", 0)
                     target_info["next_roll_flat_bonus"] += value
                     applied_texts.append(
-                        f"ใส่ดีบัฟให้ <@{target_id}> เทิร์นหน้า Flat {value}"
+                        f"ใส่ดีบัฟให้ {format_player_reference(target_id, target_info)} เทิร์นหน้า Flat {value}"
                     )
 
                 elif stat == "cap":
                     target_info.setdefault("next_roll_cap_bonus", 0)
                     target_info["next_roll_cap_bonus"] += value
                     applied_texts.append(
-                        f"ใส่ดีบัฟให้ <@{target_id}> เทิร์นหน้า Cap {value}"
+                        f"ใส่ดีบัฟให้ {format_player_reference(target_id, target_info)} เทิร์นหน้า Cap {value}"
                     )
 
         elif effect_type == "force_rush":
@@ -2684,11 +2836,11 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
 
                 if rush_success:
                     applied_texts.append(
-                        f"บังคับ <@{target_id}> ใช้ Rush สำเร็จ"
+                        f"บังคับ {format_player_reference(target_id, target_info)} ใช้ Rush สำเร็จ"
                     )
                 else:
                     applied_texts.append(
-                        f"บังคับ <@{target_id}> ใช้ Rush ไม่สำเร็จ ({rush_payload})"
+                        f"บังคับ {format_player_reference(target_id, target_info)} ใช้ Rush ไม่สำเร็จ ({rush_payload})"
                     )
 
         elif effect_type == "modify_gold_range":
@@ -2704,7 +2856,7 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
             for target_id, target_info in targets:
                 target_info.setdefault("enemy_gold_range_penalty_next_turn", 0)
                 target_info["enemy_gold_range_penalty_next_turn"] += value
-                applied_texts.append(f"ลดระยะตรวจ Gold ของ <@{target_id}> {value}")
+                applied_texts.append(f"ลดระยะตรวจ Gold ของ {format_player_reference(target_id, target_info)} {value}")
 
     if not applied_texts:
         return False, "สกิลนี้ยังไม่มีผลที่รองรับในระบบตอนนี้"
