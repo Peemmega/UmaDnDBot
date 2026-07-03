@@ -16,6 +16,12 @@ def get_gold_range_value(info: dict, base_range: int = BASE_GOLD_RANGE) -> int:
     return max(1, base_range + bonus - penalty)
 
 
+def get_gold_lane_tolerance(info: dict, base_tolerance: int = GOLD_LANE_TOLERANCE) -> int:
+    bonus = int(info.get("gold_lane_bonus_this_turn", 0) or 0)
+    penalty = abs(int(info.get("enemy_gold_lane_penalty_next_turn", 0) or 0))
+    return max(0, base_tolerance + bonus - penalty)
+
+
 def is_in_gold_range_against(
     info: dict,
     other_info: dict,
@@ -27,7 +33,8 @@ def is_in_gold_range_against(
     other_score = int(other_info.get("score", 0) or 0)
     if abs(score - other_score) > get_gold_range_value(info, base_range):
         return False
-    return abs(get_player_lane(info) - get_player_lane(other_info)) <= lane_tolerance
+    effective_lane_tolerance = get_gold_lane_tolerance(info, lane_tolerance)
+    return abs(get_player_lane(info) - get_player_lane(other_info)) <= effective_lane_tolerance
 
 
 def count_gold_range_players(

@@ -425,6 +425,8 @@ def execute_roll_core(
     game_player["next_roll_cap_bonus"] = 0
     game_player["gold_range_bonus_this_turn"] = 0
     game_player["enemy_gold_range_penalty_next_turn"] = 0
+    game_player["gold_lane_bonus_this_turn"] = 0
+    game_player["enemy_gold_lane_penalty_next_turn"] = 0
 
     success, new_score = update_player_score(
         channel_id,
@@ -794,6 +796,8 @@ def start_game(channel_id: int):
         player["next_roll_cap_bonus"] = 0
         player["gold_range_bonus_this_turn"] = 0
         player["enemy_gold_range_penalty_next_turn"] = 0
+        player["gold_lane_bonus_this_turn"] = 0
+        player["enemy_gold_lane_penalty_next_turn"] = 0
 
         player["no_reroll_this_turn"] = False
         player["no_reroll_next_turn"] = False
@@ -1356,6 +1360,8 @@ def build_pending_effects_from_player(
     cap = player.get("next_roll_cap_bonus", 0)
     gold_range = player.get("gold_range_bonus_this_turn", 0)
     enemy_gold_range_penalty = abs(player.get("enemy_gold_range_penalty_next_turn", 0))
+    gold_lane_bonus = player.get("gold_lane_bonus_this_turn", 0)
+    enemy_gold_lane_penalty = abs(player.get("enemy_gold_lane_penalty_next_turn", 0))
 
     # รวม lastedBuff
     buff = player.get("lastedBuff", {})
@@ -1366,6 +1372,7 @@ def build_pending_effects_from_player(
         floor += buff.get("floor", 0)
         cap += buff.get("cap", 0)
         gold_range += buff.get("gold_range", 0)
+        gold_lane_bonus += buff.get("gold_lane_bonus", 0)
 
     pending_effects = []
 
@@ -1418,6 +1425,20 @@ def build_pending_effects_from_player(
             "duration": "this_roll"
         })
 
+    if gold_lane_bonus != 0:
+        pending_effects.append({
+            "type": "modify_gold_lane_range",
+            "value": gold_lane_bonus,
+            "duration": "this_roll"
+        })
+
+    if enemy_gold_lane_penalty != 0:
+        pending_effects.append({
+            "type": "modify_enemy_gold_lane_range",
+            "value": enemy_gold_lane_penalty,
+            "duration": "this_roll"
+        })
+
     merged_stats = {
         "flat": flat,
         "add_d": add_d,
@@ -1426,6 +1447,8 @@ def build_pending_effects_from_player(
         "cap": cap,
         "gold_range": gold_range,  
         "enemy_gold_range_penalty": enemy_gold_range_penalty,
+        "gold_lane_bonus": gold_lane_bonus,
+        "enemy_gold_lane_penalty": enemy_gold_lane_penalty,
     }
 
     return pending_effects, merged_stats
@@ -1673,6 +1696,8 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
         "wit_mana": 100,
         "wit_reroll_left": 2,
         "takeStaminaDebuff": False,
+        "gold_lane_bonus_this_turn": 0,
+        "enemy_gold_lane_penalty_next_turn": 0,
         "skills": {
             1: None,
             2: None,
@@ -1763,6 +1788,8 @@ def add_player_as_mob_preset(
         "wit_mana": 100,
         "wit_reroll_left": 2,
         "takeStaminaDebuff": False,
+        "gold_lane_bonus_this_turn": 0,
+        "enemy_gold_lane_penalty_next_turn": 0,
         "skills": skills,
         "zone": copy.deepcopy(preset["zone"]),
         "zone_left": 1,
@@ -1941,6 +1968,8 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         "blocking_penalty": 0.0,
         "drafting_active": False,
         "last_stamina_drain": 0,
+        "gold_lane_bonus_this_turn": 0,
+        "enemy_gold_lane_penalty_next_turn": 0,
         "wit_mana": 100,
 
         "skills": skills,
@@ -2848,6 +2877,11 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
             player["gold_range_bonus_this_turn"] += value
             applied_texts.append(f"เพิ่มระยะตรวจ Gold +{value}")
 
+        elif effect_type == "modify_gold_lane_range":
+            player.setdefault("gold_lane_bonus_this_turn", 0)
+            player["gold_lane_bonus_this_turn"] += value
+            applied_texts.append(f"เพิ่มระยะตรวจเลน Gold +{value}")
+
         elif effect_type == "modify_enemy_gold_range":
             if not targets:
                 continue
@@ -2857,6 +2891,16 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                 target_info.setdefault("enemy_gold_range_penalty_next_turn", 0)
                 target_info["enemy_gold_range_penalty_next_turn"] += value
                 applied_texts.append(f"ลดระยะตรวจ Gold ของ {format_player_reference(target_id, target_info)} {value}")
+
+        elif effect_type == "modify_enemy_gold_lane_range":
+            if not targets:
+                continue
+
+            value = abs(value)
+            for target_id, target_info in targets:
+                target_info.setdefault("enemy_gold_lane_penalty_next_turn", 0)
+                target_info["enemy_gold_lane_penalty_next_turn"] += value
+                applied_texts.append(f"ลดระยะตรวจเลน Gold ของ {format_player_reference(target_id, target_info)} {value}")
 
     if not applied_texts:
         return False, "สกิลนี้ยังไม่มีผลที่รองรับในระบบตอนนี้"
@@ -3010,6 +3054,9 @@ def build_next_roll_buff_text(player: dict) -> str:
     gold_range = player.get("gold_range_bonus_this_turn", 0)
     if gold_range:
         lines.append(f"เพิ่มระยะในการนับโรล Gold +{gold_range}")
+    gold_lane_bonus = player.get("gold_lane_bonus_this_turn", 0)
+    if gold_lane_bonus:
+        lines.append(f"เพิ่มระยะตรวจเลน Gold +{gold_lane_bonus}")
 
     selected = player.get("next_roll_selected_die_bonus", 0)
     if selected:

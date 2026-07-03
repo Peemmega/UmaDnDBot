@@ -4,7 +4,7 @@ from utils.dice.dice_presets import DICE_PRESET
 from utils.skill.skill_presets import ICON
 from utils.dice.dice_table import format_rule
 from utils.display_helpers import get_stat_icon
-from utils.race.rank_display import get_gold_range_value, get_player_lane
+from utils.race.rank_display import get_gold_lane_tolerance, get_gold_range_value, get_player_lane
 
 def _lane_match(player_id, other_id, player_map: dict | None, tolerance: int = 1) -> bool:
     if not player_map:
@@ -21,6 +21,7 @@ def count_nearby_players(
     score_map: dict[int, int],
     radius: int = 20,
     player_map: dict | None = None,
+    lane_tolerance: int = 1,
 ) -> int:
     if player_id not in score_map:
         return 0
@@ -32,7 +33,7 @@ def count_nearby_players(
         if uid == player_id:
             continue
 
-        if abs(player_score - score) <= radius and _lane_match(player_id, uid, player_map):
+        if abs(player_score - score) <= radius and _lane_match(player_id, uid, player_map, tolerance=lane_tolerance):
             count += 1
 
     return count
@@ -97,7 +98,14 @@ def get_distance_color(
             **player_info,
         }
     )
-    umaInRange = count_nearby_players(player_id, score_map, radius=gold_range, player_map=player_map)
+    lane_tolerance = get_gold_lane_tolerance(player_info)
+    umaInRange = count_nearby_players(
+        player_id,
+        score_map,
+        radius=gold_range,
+        player_map=player_map,
+        lane_tolerance=lane_tolerance,
+    )
 
     if umaInRange > 0:
         return "Gold", umaInRange

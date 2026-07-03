@@ -287,6 +287,7 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_gold_range", "value": 50, "duration": "this_turn"},
+            {"type": "modify_gold_lane_range", "value": 1, "duration": "this_turn"},
             {"type": "modify_roll_floor", "value": 5, "duration": "this_roll"},
         ],
 
@@ -623,7 +624,8 @@ SKILLS = {
         },
         "target": {"scope": "all_back", "limit": 3},
         "effects": [
-            {"type": "modify_enemy_gold_range", "value": -15, "duration": "next_turn"}
+            {"type": "modify_enemy_gold_range", "value": -15, "duration": "next_turn"},
+            {"type": "modify_enemy_gold_lane_range", "value": -1, "duration": "next_turn"}
         ],
 
         "tags": ["blind", "pace", "debuff", "lead"],
@@ -643,7 +645,8 @@ SKILLS = {
         },
         "target": {"scope": "all_front", "limit": 5},
         "effects": [
-            {"type": "modify_enemy_gold_range", "value": -12, "duration": "next_turn"}
+            {"type": "modify_enemy_gold_range", "value": -12, "duration": "next_turn"},
+            {"type": "modify_enemy_gold_lane_range", "value": -1, "duration": "next_turn"}
         ],
 
         "tags": ["blind", "long", "debuff"],

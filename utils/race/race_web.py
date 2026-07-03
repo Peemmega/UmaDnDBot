@@ -807,6 +807,8 @@ class RaceWebManager:
         player["next_roll_cap_bonus"] = 0
         player["gold_range_bonus_this_turn"] = 0
         player["enemy_gold_range_penalty_next_turn"] = 0
+        player["gold_lane_bonus_this_turn"] = 0
+        player["enemy_gold_lane_penalty_next_turn"] = 0
 
         success, new_score = update_player_score(room_id, str(user_id), result["total"])
         if not success:
