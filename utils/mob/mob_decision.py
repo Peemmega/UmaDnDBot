@@ -58,6 +58,16 @@ def _front_gaps_for_lane(player: dict, players: dict, target_lane: int, *, user_
     return gaps
 
 
+def _immediate_push_score(player: dict) -> int:
+    return (
+        int(player.get("next_roll_flat_bonus", 0) or 0)
+        + int(player.get("next_roll_floor_bonus", 0) or 0)
+        + int(player.get("next_roll_cap_bonus", 0) or 0)
+        + (int(player.get("next_roll_add_d", 0) or 0) * 24)
+        + (int(player.get("next_roll_add_kh", 0) or 0) * 28)
+    )
+
+
 def decide_mob_target_lane(game, user_id) -> int | None:
     player = game["players"].get(user_id)
     if not player:
@@ -66,8 +76,10 @@ def decide_mob_target_lane(game, user_id) -> int | None:
     players = game.get("players", {})
     current_lane = _player_lane(player)
     phase = get_phase_from_turn(game.get("turn", 1), game.get("max_turn", 20))
+    path_type = get_current_path_type(game)
     style = str(player.get("style", "Pace"))
     estimated_gain = max(80, int(player.get("current_max_speed", 0) or 0))
+    immediate_push = _immediate_push_score(player)
     gold_range = get_gold_range_value(player)
     current_gold_count = _gold_count_for_lane(player, players, current_lane, user_id=user_id)
     current_front_gaps = _front_gaps_for_lane(player, players, current_lane, user_id=user_id)
@@ -86,6 +98,9 @@ def decide_mob_target_lane(game, user_id) -> int | None:
 
         score = 0
         blocker_relief = current_likely_blockers - likely_blockers
+        lane_shift = abs(target_lane - current_lane)
+        downhill = path_type == 4
+        uphill = path_type == 3
 
         # Base preference: stay lower to conserve stamina, especially lane 1.
         score -= (target_lane - 1) * 22
@@ -106,6 +121,24 @@ def decide_mob_target_lane(game, user_id) -> int | None:
 
         if nearest_front_gap is not None and nearest_front_gap <= 25:
             score -= 12
+
+        if downhill:
+            score += blocker_relief * 16
+            score -= likely_blockers * 12
+            if same_lane_front == 0:
+                score += 18
+            if target_lane >= 4 and likely_blockers == 0:
+                score += 10
+
+        if uphill:
+            score -= max(0, target_lane - 1) * 16
+            score -= lane_shift * 8
+            if target_lane >= 4:
+                score -= 20
+            if target_lane > current_lane:
+                score -= 10
+            if blocker_relief >= 2:
+                score += 10
 
         # Leaving the pack can be good if the current lane is crowded and target lane goes white.
         if current_gold_count > 0 and gold_count == 0:
@@ -134,7 +167,7 @@ def decide_mob_target_lane(game, user_id) -> int | None:
         if phase >= 4:
             score += max(0, 2 - target_lane) * 10
 
-        score -= abs(target_lane - current_lane) * 5
+        score -= lane_shift * 5
         if target_lane == current_lane:
             score += 8
 
@@ -143,6 +176,19 @@ def decide_mob_target_lane(game, user_id) -> int | None:
             score -= 20
         if target_lane >= 4 and blocker_relief < 2:
             score -= 22
+
+        safe_to_press = (
+            likely_blockers == 0
+            and (nearest_front_gap is None or nearest_front_gap > estimated_gain + gold_range)
+        )
+        if style in {"Front", "Pace"} and safe_to_press:
+            score += 14
+            if immediate_push >= 20:
+                score += 14
+            if downhill:
+                score += 8
+        elif style in {"Late", "End"} and uphill and lane_shift > 0 and blocker_relief <= 0:
+            score -= 10
 
         if score > best_score:
             best_score = score
