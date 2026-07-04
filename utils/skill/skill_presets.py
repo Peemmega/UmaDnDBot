@@ -948,9 +948,9 @@ SKILLS = {
         "name": "Tantalizing Trick",
         "icon": "ReduceSTA",
         "cooldown": 8,
-        "cost": 50,
+        "cost": 40,
         "trigger": {
-            "target_distance_min": -11,
+            "target_distance_min": 0,
             "target_distance_max": -30,
         },
         "target": {
@@ -1290,7 +1290,7 @@ SKILLS = {
         "name": "Go with the Flow",
         "icon": "Navigation",
         "cooldown": 8,
-        "cost": 45,
+        "cost": 40,
         "trigger": {},
         "target": {"scope": "self", "limit": 1},
         "effects": [
