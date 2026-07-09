@@ -640,6 +640,22 @@ async def api_web_race_player_preview(room_id: str, user_id: str, v: str = ""):
         raise HTTPException(status_code=404, detail=str(exc))
 
 
+@app.get("/race/rooms/{room_id}/players/{user_id}/preview.webp")
+async def api_web_race_player_preview_webp(room_id: str, user_id: str, v: str = ""):
+    try:
+        _ = v
+        image_bytes = await race_web_manager.build_player_preview_webp(room_id, user_id)
+        return StreamingResponse(
+            io.BytesIO(image_bytes),
+            media_type="image/webp",
+            headers={
+                "Cache-Control": "public, max-age=31536000, immutable",
+            },
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
 @app.post("/race/rooms/{room_id}/join")
 async def api_web_race_join_room(room_id: str, payload: WebRacePlayerPayload):
     try:

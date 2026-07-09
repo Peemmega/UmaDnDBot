@@ -76,6 +76,7 @@ class RaceWebManager:
         self.connections: dict[str, set[WebSocket]] = {}
         self.web_timing_bot_tasks: dict[str, asyncio.Task] = {}
         self.preview_png_cache: dict[tuple[str, str, int], bytes] = {}
+        self.preview_webp_cache: dict[tuple[str, str, int], bytes] = {}
 
     def _now(self) -> int:
         return int(time.time())
@@ -152,6 +153,12 @@ class RaceWebManager:
         ]
         for key in stale_keys:
             self.preview_png_cache.pop(key, None)
+        stale_webp_keys = [
+            key for key in self.preview_webp_cache
+            if key[0] == str(room_id) and key[1] == str(user_id) and key[2] != int(keep_version)
+        ]
+        for key in stale_webp_keys:
+            self.preview_webp_cache.pop(key, None)
 
     def _encode_preview_png(self, card) -> bytes:
         import io
@@ -162,7 +169,38 @@ class RaceWebManager:
         encoded.save(buffer, format="PNG", optimize=True, compress_level=9)
         return buffer.getvalue()
 
+    def _encode_preview_webp(self, card) -> bytes:
+        import io
+
+        # WebP is for the web UI only, so favor transfer size over perfect lossless fidelity.
+        encoded = card.convert("RGB")
+        buffer = io.BytesIO()
+        encoded.save(buffer, format="WEBP", quality=82, method=6)
+        return buffer.getvalue()
+
     async def build_player_preview_png(self, room_id: str, user_id: str) -> bytes:
+        card, room_id, user_id, preview_version = await self._build_player_preview_card(room_id, user_id)
+        cache_key = (str(room_id), str(user_id), preview_version)
+        cached = self.preview_png_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        png_bytes = self._encode_preview_png(card)
+        self.preview_png_cache[cache_key] = png_bytes
+        self._prune_preview_cache(room_id, user_id, preview_version)
+        return png_bytes
+
+    async def build_player_preview_webp(self, room_id: str, user_id: str) -> bytes:
+        card, room_id, user_id, preview_version = await self._build_player_preview_card(room_id, user_id)
+        cache_key = (str(room_id), str(user_id), preview_version)
+        cached = self.preview_webp_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        webp_bytes = self._encode_preview_webp(card)
+        self.preview_webp_cache[cache_key] = webp_bytes
+        self._prune_preview_cache(room_id, user_id, preview_version)
+        return webp_bytes
+
+    async def _build_player_preview_card(self, room_id: str, user_id: str):
         game = self._get_room(room_id)
         player_id, player = self._find_player_entry(game, str(user_id))
         if player is None:
@@ -174,11 +212,6 @@ class RaceWebManager:
 
         preview = player.get("web_last_roll_preview") or {}
         preview_version = int(game.get("updated_at") or self._now())
-        cache_key = (str(room_id), str(user_id), preview_version)
-        cached = self.preview_png_cache.get(cache_key)
-        if cached is not None:
-            return cached
-
         card = await create_race_dice_preview(
             game_player=player,
             result=result,
@@ -188,10 +221,7 @@ class RaceWebManager:
             path_label=preview.get("path_label") or PATH_TYPE_TEXT.get(get_current_path_type(game), "Straight"),
             character_image_url=resolve_player_render_image(player),
         )
-        png_bytes = self._encode_preview_png(card)
-        self.preview_png_cache[cache_key] = png_bytes
-        self._prune_preview_cache(room_id, user_id, preview_version)
-        return png_bytes
+        return card, str(room_id), str(user_id), preview_version
 
     def list_rooms(self) -> list[dict]:
         summaries = []
