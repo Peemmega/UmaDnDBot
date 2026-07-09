@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 import json
 import asyncio
@@ -620,6 +620,16 @@ async def api_web_race_create_room(payload: WebRacePlayerPayload):
 def api_web_race_room(room_id: str, user_id: str = ""):
     try:
         return race_web_manager.get_room(room_id, user_id or None)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get("/race/rooms/{room_id}/players/{user_id}/preview.png")
+async def api_web_race_player_preview(room_id: str, user_id: str, v: str = ""):
+    try:
+        _ = v
+        image_bytes = await race_web_manager.build_player_preview_png(room_id, user_id)
+        return StreamingResponse(io.BytesIO(image_bytes), media_type="image/png")
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 

@@ -44,6 +44,7 @@ from utils.race.runtime_stamina import (
     format_runtime_stamina,
     get_runtime_stamina_snapshot,
 )
+from utils.race_dice_preview import create_race_dice_preview
 from utils.mob.mob_presets import MOB_PRESETS
 from utils.race.race_dice import roll_race_dice
 from utils.race.race_presets import PATH_TYPE_TEXT, RACE_PRESET
@@ -63,6 +64,7 @@ from utils.race.web_timing_balance import (
     refresh_web_timing_player,
     roll_web_timing_distance_gain,
 )
+from utils.profile_images import resolve_player_render_image
 
 
 WEB_ROOM_PREFIX = "web_race_"
@@ -73,6 +75,14 @@ class RaceWebManager:
     def __init__(self) -> None:
         self.connections: dict[str, set[WebSocket]] = {}
         self.web_timing_bot_tasks: dict[str, asyncio.Task] = {}
+
+    def _now(self) -> int:
+        return int(time.time())
+
+    def _touch(self, game: dict) -> int:
+        updated_at = self._now()
+        game["updated_at"] = updated_at
+        return updated_at
 
     def _room_key(self, room_id: str) -> str:
         return room_id
@@ -87,6 +97,7 @@ class RaceWebManager:
         return game
 
     def _log(self, game: dict, message: str, payload: dict | None = None) -> None:
+        self._touch(game)
         game.setdefault("web_action_logs", []).append({
             "id": uuid.uuid4().hex[:8],
             "turn": game.get("turn", 0),
@@ -123,6 +134,40 @@ class RaceWebManager:
             if str(player_id) == str(user_id):
                 return player_id, player
         return None, None
+
+    def _store_roll_preview_context(self, player: dict, payload: dict) -> None:
+        path_effect = payload.get("path_effect") or {}
+        player["web_last_roll_preview"] = {
+            "new_score": payload.get("new_score", player.get("score", 0)),
+            "path_label": path_effect.get("label") or "Straight",
+        }
+
+    async def build_player_preview_png(self, room_id: str, user_id: str) -> bytes:
+        game = self._get_room(room_id)
+        player_id, player = self._find_player_entry(game, str(user_id))
+        if player is None:
+            raise ValueError("Player is not in this race room")
+
+        result = player.get("web_last_roll_result") or {}
+        if not result:
+            raise ValueError("No race roll preview available for this player")
+
+        preview = player.get("web_last_roll_preview") or {}
+        card = await create_race_dice_preview(
+            game_player=player,
+            result=result,
+            payload={
+                "new_score": preview.get("new_score", player.get("score", 0)),
+            },
+            path_label=preview.get("path_label") or PATH_TYPE_TEXT.get(get_current_path_type(game), "Straight"),
+            character_image_url=resolve_player_render_image(player),
+        )
+
+        import io
+
+        buffer = io.BytesIO()
+        card.save(buffer, format="PNG")
+        return buffer.getvalue()
 
     def list_rooms(self) -> list[dict]:
         summaries = []
@@ -275,11 +320,13 @@ class RaceWebManager:
             game,
             f"{player.get('display_name') or player.get('username') or user_id} ran +{result.get('total', 0)}",
             {
+                "player_id": str(user_id),
                 "result": result,
                 "roll_summary": _roll_summary_payload(payload),
             },
         )
         player["web_last_roll_result"] = result
+        self._store_roll_preview_context(player, payload)
         self._advance_if_ready(room_id)
         return serialize_room(self._get_room(room_id), room_id, str(user_id))
 
@@ -382,11 +429,13 @@ class RaceWebManager:
             game,
             f"{self._player_label(user_id, player)} {'WIT ' if use_wit else ''}rerolled +{result.get('total', 0)}",
             {
+                "player_id": str(user_id),
                 "result": result,
                 "roll_summary": _roll_summary_payload(payload),
                 "reroll_type": "wit" if use_wit else "normal",
             },
         )
+        self._store_roll_preview_context(player, payload)
         return serialize_room(game, room_id, str(user_id))
 
     def confirm(self, room_id: str, user_id: str) -> dict:
@@ -523,11 +572,14 @@ class RaceWebManager:
                     game,
                     f"{player.get('display_name') or player.get('username') or player_id} auto ran +{result.get('total', 0)}",
                     {
+                        "player_id": str(player_id),
                         "result": result,
                         "used_skill_ids": payload.get("used_skill_ids", []),
                         "roll_summary": _roll_summary_payload(payload),
                     },
                 )
+                player["web_last_roll_result"] = result
+                self._store_roll_preview_context(player, payload)
             else:
                 self._log(game, f"Bot turn failed: {payload.get('message', 'unknown error')}")
 

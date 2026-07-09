@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from utils.database import get_player
 from utils.dice.dice_presets import DICE_PRESET, MAX_SPEED_PHASE
 from utils.profile_images import (
@@ -195,6 +197,7 @@ def serialize_room(game: dict, room_id: str | None = None, user_id: str | None =
     return {
         "room_id": room_id or str(game.get("room_id") or ""),
         "room_code": (room_id or str(game.get("room_id") or ""))[-6:].upper(),
+        "updated_at": int(game.get("updated_at") or time.time()),
         "owner_id": owner_id,
         "my_player_id": str(user_id) if user_id else None,
         "stage_key": stage_key,
@@ -256,6 +259,7 @@ def serialize_room_summary(game: dict, room_id: str) -> dict:
     return {
         "room_id": room_id,
         "room_code": room_id[-6:].upper(),
+        "updated_at": int(game.get("updated_at") or time.time()),
         "phase": "ended" if game.get("ended") else ("running" if game.get("started") else "waiting"),
         "race_name": game.get("stage_name"),
         "stage_key": game.get("stage_key"),
