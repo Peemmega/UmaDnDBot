@@ -75,6 +75,7 @@ class RaceWebManager:
     def __init__(self) -> None:
         self.connections: dict[str, set[WebSocket]] = {}
         self.web_timing_bot_tasks: dict[str, asyncio.Task] = {}
+        self.preview_png_cache: dict[tuple[str, str, int], bytes] = {}
 
     def _now(self) -> int:
         return int(time.time())
@@ -144,6 +145,23 @@ class RaceWebManager:
             "path_label": path_effect.get("label") or "Straight",
         }
 
+    def _prune_preview_cache(self, room_id: str, user_id: str, keep_version: int) -> None:
+        stale_keys = [
+            key for key in self.preview_png_cache
+            if key[0] == str(room_id) and key[1] == str(user_id) and key[2] != int(keep_version)
+        ]
+        for key in stale_keys:
+            self.preview_png_cache.pop(key, None)
+
+    def _encode_preview_png(self, card) -> bytes:
+        import io
+
+        # Palette PNG is much smaller than raw RGBA for this mostly-flat preview card.
+        encoded = card.convert("P", palette=Image.ADAPTIVE, colors=256)
+        buffer = io.BytesIO()
+        encoded.save(buffer, format="PNG", optimize=True, compress_level=9)
+        return buffer.getvalue()
+
     async def build_player_preview_png(self, room_id: str, user_id: str) -> bytes:
         game = self._get_room(room_id)
         player_id, player = self._find_player_entry(game, str(user_id))
@@ -155,6 +173,12 @@ class RaceWebManager:
             raise ValueError("No race roll preview available for this player")
 
         preview = player.get("web_last_roll_preview") or {}
+        preview_version = int(game.get("updated_at") or self._now())
+        cache_key = (str(room_id), str(user_id), preview_version)
+        cached = self.preview_png_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         card = await create_race_dice_preview(
             game_player=player,
             result=result,
@@ -164,12 +188,10 @@ class RaceWebManager:
             path_label=preview.get("path_label") or PATH_TYPE_TEXT.get(get_current_path_type(game), "Straight"),
             character_image_url=resolve_player_render_image(player),
         )
-
-        import io
-
-        buffer = io.BytesIO()
-        card.save(buffer, format="PNG")
-        return buffer.getvalue()
+        png_bytes = self._encode_preview_png(card)
+        self.preview_png_cache[cache_key] = png_bytes
+        self._prune_preview_cache(room_id, user_id, preview_version)
+        return png_bytes
 
     def list_rooms(self) -> list[dict]:
         summaries = []

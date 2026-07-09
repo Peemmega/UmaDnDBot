@@ -629,7 +629,13 @@ async def api_web_race_player_preview(room_id: str, user_id: str, v: str = ""):
     try:
         _ = v
         image_bytes = await race_web_manager.build_player_preview_png(room_id, user_id)
-        return StreamingResponse(io.BytesIO(image_bytes), media_type="image/png")
+        return StreamingResponse(
+            io.BytesIO(image_bytes),
+            media_type="image/png",
+            headers={
+                "Cache-Control": "public, max-age=31536000, immutable",
+            },
+        )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
