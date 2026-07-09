@@ -98,11 +98,13 @@ class RaceWebManager:
 
     def _log(self, game: dict, message: str, payload: dict | None = None) -> None:
         self._touch(game)
+        log_payload = dict(payload or {})
+        log_payload.setdefault("updated_at", game.get("updated_at"))
         game.setdefault("web_action_logs", []).append({
             "id": uuid.uuid4().hex[:8],
             "turn": game.get("turn", 0),
             "message": message,
-            "payload": payload or {},
+            "payload": log_payload,
         })
         game["web_action_logs"] = game["web_action_logs"][-120:]
         safe_message = str(message).encode("ascii", "backslashreplace").decode("ascii")
