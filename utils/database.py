@@ -5,6 +5,7 @@ from typing import Iterator, Optional
 from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST, normalize_zone_build
 import json
 from utils.profile_images import resolve_public_url
+from utils.icon_presets import USING_MAIN_EMOJIS
 
 DB_PATH = os.getenv("PLAYER_DB_PATH", "/app/data/player.db")
 
@@ -286,14 +287,17 @@ def add_mail(conn, user_id, title, message, reward_type, reward_amount):
 
 def get_available_trainees(trainer_user_id: str) -> list[dict]:
     conn = get_connection()
-    rows = conn.execute("""
+    same_account_filter = "AND CAST(p.user_id AS TEXT) <> ?" if USING_MAIN_EMOJIS else ""
+    params = (str(trainer_user_id),) if USING_MAIN_EMOJIS else ()
+    rows = conn.execute(f"""
         SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url, p.fans
         FROM players p
         LEFT JOIN trainer_teams t ON t.trainee_user_id = CAST(p.user_id AS TEXT)
         WHERE p.profile_image_url IS NOT NULL AND TRIM(p.profile_image_url) <> ''
           AND t.trainee_user_id IS NULL
+          {same_account_filter}
         ORDER BY p.username COLLATE NOCASE
-    """).fetchall()
+    """, params).fetchall()
     conn.close()
     return [{"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"]), "fans": row["fans"]} for row in rows]
 
