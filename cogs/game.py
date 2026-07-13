@@ -6,6 +6,7 @@ import random
 
 from utils.race_dice_preview import create_race_dice_preview
 from utils.image_encoding import encode_png
+from utils.mob.mob_fast_output import build_mob_fast_roll_text
 
 from views.confirmDeleteGameView import ConfirmDeleteView
 from views.use_skill_view import UseSkillView
@@ -37,9 +38,10 @@ WIN_IMAGE = [
 MOB_RENDER_MODE = os.getenv("MOB_RENDER_MODE", "detailed").strip().lower()
 
 
-def should_render_mob_preview() -> bool:
+def should_render_mob_preview(game: dict | None = None) -> bool:
     """Compact mode avoids per-mob image attachments and Discord rate limits."""
-    return MOB_RENDER_MODE != "compact"
+    mode = (game or {}).get("mob_render_mode", MOB_RENDER_MODE)
+    return str(mode).strip().lower() != "compact"
 
 
 async def build_turn_result_discord_file(game: dict, ranked_players):
@@ -720,7 +722,7 @@ class GameCog(commands.GroupCog, name="game"):
                     for skill_embed in payload["skill_embeds"]:
                         await send_func(embed=skill_embed)
                 
-                if should_render_mob_preview():
+                if should_render_mob_preview(game):
                     card = await create_race_dice_preview(
                         game_player=player,
                         result= payload["result"],
@@ -732,7 +734,14 @@ class GameCog(commands.GroupCog, name="game"):
                     file = discord.File(buffer, filename="race_dice_preview.png")
                     await send_func(content=f"{player.get('username') }", file=file)
                 else:
-                    await send_func(content=f"🤖 {player.get('username')} ได้คะแนน +{payload['result']['total']}")
+                    await send_func(
+                        content=build_mob_fast_roll_text(
+                            game_player=player,
+                            result=payload["result"],
+                            payload=payload,
+                            path_label=payload["path_effect"]["label"],
+                        )
+                    )
 
         if game and game["started"] and not has_real_player(game):
             await self._process_next_turn_core(
@@ -826,6 +835,33 @@ class GameCog(commands.GroupCog, name="game"):
 
     #     await interaction.response.send_message(embed=embed)
 
+
+    @app_commands.command(name="mob_fast_mode", description="Enable or disable compact Mob dice output")
+    @app_commands.describe(enabled="True: text-only Mob dice output; False: show dice images")
+    @app_commands.default_permissions(administrator=True)
+    async def mob_fast_mode(self, interaction: discord.Interaction, enabled: bool):
+        """Set the Mob output mode for the active game in this channel."""
+        if interaction.guild is None or not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message(
+                "Only server administrators can change Mob Fast Mode.",
+                ephemeral=True,
+            )
+            return
+
+        game = get_game(interaction.channel_id)
+        if game is None:
+            await interaction.response.send_message(
+                "Create a game in this channel before changing Mob Fast Mode.",
+                ephemeral=True,
+            )
+            return
+
+        game["mob_render_mode"] = "compact" if enabled else "detailed"
+        status = "ON (text-only Mob dice output)" if enabled else "OFF (dice images enabled)"
+        await interaction.response.send_message(
+            f"Mob Fast Mode: **{status}**",
+            ephemeral=True,
+        )
 
     @app_commands.command(name="close", description="ลบหรือจบเกมในห้องนี้")
     async def close(self, interaction: discord.Interaction):
