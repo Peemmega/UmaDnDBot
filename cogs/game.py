@@ -6,6 +6,7 @@ import random
 
 from utils.race_dice_preview import create_race_dice_preview
 from utils.image_encoding import encode_png
+from utils.mob.mob_fast_output import build_mob_fast_roll_text
 
 from views.confirmDeleteGameView import ConfirmDeleteView
 from views.use_skill_view import UseSkillView
@@ -733,7 +734,14 @@ class GameCog(commands.GroupCog, name="game"):
                     file = discord.File(buffer, filename="race_dice_preview.png")
                     await send_func(content=f"{player.get('username') }", file=file)
                 else:
-                    await send_func(content=f"🤖 {player.get('username')} ได้คะแนน +{payload['result']['total']}")
+                    await send_func(
+                        content=build_mob_fast_roll_text(
+                            game_player=player,
+                            result=payload["result"],
+                            payload=payload,
+                            path_label=payload["path_effect"]["label"],
+                        )
+                    )
 
         if game and game["started"] and not has_real_player(game):
             await self._process_next_turn_core(

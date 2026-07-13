@@ -15,6 +15,7 @@ from utils.game_manager import (
 
 from utils.dice.dice_presets import DICE_PRESET
 from utils.race_dice_preview import create_race_dice_preview
+from utils.mob.mob_fast_output import build_mob_fast_roll_text
 
 from utils.race.race_dice import (
     build_dice_table_grid
@@ -237,7 +238,12 @@ class LobbyView(discord.ui.View):
                 )
                 if str(mob_render_mode).strip().lower() == "compact":
                     await interaction.followup.send(
-                        f"🤖 {player.get('username')} ได้คะแนน +{payload['result']['total']}"
+                        build_mob_fast_roll_text(
+                            game_player=player,
+                            result=payload["result"],
+                            payload=payload,
+                            path_label=payload["path_effect"]["label"],
+                        )
                     )
                 else:
                     card = await create_race_dice_preview(
