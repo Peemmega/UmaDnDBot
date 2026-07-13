@@ -1,4 +1,6 @@
 import discord
+import os
+
 from utils.game_manager import (
     add_player,
     is_game_started,
@@ -229,23 +231,28 @@ class LobbyView(discord.ui.View):
                     for skill_embed in payload["skill_embeds"]:
                         await interaction.followup.send(embed=skill_embed)
                 
-                card = await create_race_dice_preview(
-                    game_player=player,
-                    result= payload["result"],
-                    payload=payload,
-                    path_label=payload["path_effect"]["label"],
-                    character_image_url=resolve_player_render_image(player),
+                mob_render_mode = game.get(
+                    "mob_render_mode",
+                    os.getenv("MOB_RENDER_MODE", "detailed"),
                 )
-
-                buffer = await encode_png(card)
-
-                file = discord.File(buffer, filename="race_dice_preview.png")
-
-                send_kwargs = {
-                    "content": f"{player.get('username') }",
-                    "file": file,
-                }
-                await interaction.followup.send(**send_kwargs)
+                if str(mob_render_mode).strip().lower() == "compact":
+                    await interaction.followup.send(
+                        f"🤖 {player.get('username')} ได้คะแนน +{payload['result']['total']}"
+                    )
+                else:
+                    card = await create_race_dice_preview(
+                        game_player=player,
+                        result=payload["result"],
+                        payload=payload,
+                        path_label=payload["path_effect"]["label"],
+                        character_image_url=resolve_player_render_image(player),
+                    )
+                    buffer = await encode_png(card)
+                    file = discord.File(buffer, filename="race_dice_preview.png")
+                    await interaction.followup.send(
+                        content=f"{player.get('username')}",
+                        file=file,
+                    )
         
         if not has_real_player(game):
             game_cog = interaction.client.get_cog("game")
