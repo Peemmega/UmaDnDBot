@@ -327,14 +327,16 @@ def get_trainer_team(trainer_user_id: str) -> list[dict]:
 def get_trainee_trainer(trainee_user_id: str) -> Optional[dict]:
     conn = get_connection()
     row = conn.execute("""
-        SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url
-        FROM trainer_teams t JOIN players p ON CAST(p.user_id AS TEXT) = t.trainer_user_id
+        SELECT t.trainer_user_id AS user_id, preset.name, preset.image_url
+        FROM trainer_teams t
+        JOIN profile_presets preset
+          ON preset.user_id = t.trainer_user_id AND preset.profile_type = 'trainer'
         WHERE t.trainee_user_id = ?
     """, (str(trainee_user_id),)).fetchone()
     conn.close()
     if not row:
         return None
-    return {"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"])}
+    return {"user_id": row["user_id"], "username": row["name"], "image_url": row["image_url"]}
 
 
 def save_profile_preset(user_id: str, profile_type: str, name: str, image_url: str) -> None:
