@@ -421,6 +421,11 @@ class GameCog(commands.GroupCog, name="game"):
                     )
                 )
                 confirm_embed.set_footer(text="ทุกคนต้องกดยืนยันก่อนจะไปเทิร์นถัดไป")
+                confirm_embed.add_field(
+                    name="🛣️ เปลี่ยนเลนเทิร์นถัดไป",
+                    value="ก่อนกดยืนยัน สามารถใช้ `/game lane target_lane:1-6` เพื่อเลือกเลนของเทิร์นถัดไปได้",
+                    inline=False,
+                )
 
                 from views.turn_confirm_view import TurnConfirmView
                 view = TurnConfirmView(self, interaction.channel_id)
