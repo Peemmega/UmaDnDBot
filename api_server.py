@@ -31,6 +31,7 @@ from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
+from utils.channel_config import RACE_LOG_CHANNEL_ID
 from utils.race.race_web import race_web_manager
 from utils.profile_images import (
     ALLOWED_IMAGE_CONTENT_TYPES,
@@ -471,7 +472,7 @@ async def run_api_test_bot_race(bot, channel_id: int):
     log_embed = build_race_log_embed(game, ranked_players)
     log_file = build_race_log_file(game, ranked_players)
 
-    log_channel_id = 1502217575717798050
+    log_channel_id = RACE_LOG_CHANNEL_ID
 
     future = asyncio.run_coroutine_threadsafe(
         send_test_log_to_discord(bot, log_channel_id, log_embed, log_file),
