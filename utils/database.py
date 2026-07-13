@@ -313,6 +313,19 @@ def get_trainer_team(trainer_user_id: str) -> list[dict]:
     return [{"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"]), "fans": row["fans"]} for row in rows]
 
 
+def get_trainee_trainer(trainee_user_id: str) -> Optional[dict]:
+    conn = get_connection()
+    row = conn.execute("""
+        SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url
+        FROM trainer_teams t JOIN players p ON CAST(p.user_id AS TEXT) = t.trainer_user_id
+        WHERE t.trainee_user_id = ?
+    """, (str(trainee_user_id),)).fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"])}
+
+
 def create_team_invitation(trainer_user_id: str, trainee_user_id: str) -> int:
     with database_connection() as conn:
         trainee = conn.execute("SELECT username FROM players WHERE CAST(user_id AS TEXT) = ?", (str(trainee_user_id),)).fetchone()

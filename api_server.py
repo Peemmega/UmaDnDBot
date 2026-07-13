@@ -23,6 +23,7 @@ from utils.database import (
     update_player_stat_pool,
     get_available_trainees,
     get_trainer_team,
+    get_trainee_trainer,
     create_team_invitation,
     respond_to_team_invitation,
 )
@@ -249,6 +250,11 @@ class TeamInviteResponsePayload(BaseModel):
 def api_get_trainer_team(trainer_user_id: str):
     members = get_trainer_team(trainer_user_id)
     return {"members": members, "fans": sum(int(member["fans"] or 0) for member in members)}
+
+
+@app.get("/trainee/{trainee_user_id}/trainer")
+def api_get_trainee_trainer(trainee_user_id: str):
+    return {"trainer": get_trainee_trainer(trainee_user_id)}
 
 
 @app.get("/trainer/{trainer_user_id}/available-trainees")
