@@ -61,7 +61,7 @@ def init_db():
         end_style INTEGER NOT NULL DEFAULT 1,
 
         stats_point INTEGER NOT NULL DEFAULT 5,
-        uma_coin INTEGER NOT NULL DEFAULT 0,
+        fans INTEGER NOT NULL DEFAULT 1,
         skill_point INTEGER NOT NULL DEFAULT 12,
 
         skill_slot_1 TEXT,
@@ -107,6 +107,22 @@ def init_db():
             cursor.execute(f"ALTER TABLE players ADD COLUMN {col} {col_type}")
         except Exception:
             pass
+
+    # Uma Coin was replaced by Fans. Keep the legacy column untouched for
+    # SQLite compatibility, but expose and maintain only the new column.
+    player_columns = {row["name"] for row in cursor.execute("PRAGMA table_info(players)").fetchall()}
+    if "fans" not in player_columns:
+        cursor.execute("ALTER TABLE players ADD COLUMN fans INTEGER NOT NULL DEFAULT 1")
+        if "uma_coin" in player_columns:
+            cursor.execute(
+                """
+                UPDATE players
+                SET fans = CASE
+                    WHEN COALESCE(uma_coin, 0) > 0 THEN uma_coin
+                    ELSE 1
+                END
+                """
+            )
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS mailbox (
@@ -465,7 +481,7 @@ def create_player(user_id: int, username: str):
         turf, dirt,
         sprint, mile, medium, long,
         front, pace, late, end_style,
-        stats_point, uma_coin, skill_point
+        stats_point, fans, skill_point
     )
     VALUES (
         ?, ?,
@@ -473,7 +489,7 @@ def create_player(user_id: int, username: str):
         1, 1,
         1, 1, 1, 1,
         1, 1, 1, 1,
-        12, 0, 0
+        12, 1, 0
     )
     """, (user_id, username))
 
@@ -577,7 +593,7 @@ def get_player(user_id: int) -> Optional[dict]:
         turf, dirt,
         sprint, mile, medium, long,
         front, pace, late, end_style,
-        stats_point, uma_coin, skill_point,
+        stats_point, fans, skill_point,
         profile_image_url, profile_image_updated_at,
         zone_name, zone_image_url, zone_points, zone_build
     FROM players
@@ -630,7 +646,7 @@ def get_player(user_id: int) -> Optional[dict]:
         "end_style": row[16],
 
         "stats_point": row[17],
-        "uma_coin": row[18],
+        "fans": row[18],
         "skill_point": row[19],
         "profile_image_url": resolve_public_url(row[20]),
         "profile_image_updated_at": row[21],
@@ -854,7 +870,7 @@ def update_player_stats(
     end_style: Optional[int] = None,
 
     stats_point: Optional[int] = None,
-    uma_coin: Optional[int] = None,
+    fans: Optional[int] = None,
     skill_point: Optional[int] = None,
 ):
     conn = get_connection()
@@ -885,7 +901,7 @@ def update_player_stats(
     new_end_style = current["end_style"] if end_style is None else end_style
 
     new_stats_point = current["stats_point"] if stats_point is None else stats_point
-    new_uma_coin = current["uma_coin"] if uma_coin is None else uma_coin
+    new_fans = current["fans"] if fans is None else fans
     new_skill_point = current["skill_point"] if skill_point is None else skill_point
 
     cursor.execute("""
@@ -907,7 +923,7 @@ def update_player_stats(
         late = ?,
         end_style = ?,
         stats_point = ?,
-        uma_coin = ?,
+        fans = ?,
         skill_point = ?
     WHERE user_id = ?
     """, (
@@ -927,7 +943,7 @@ def update_player_stats(
         new_late,
         new_end_style,
         new_stats_point,
-        new_uma_coin,
+        new_fans,
         new_skill_point,
         user_id
     ))

@@ -12,7 +12,7 @@ FRAME_PATH = ASSETS_DIR / "ImageFrame.png"
 FRAME_Item = ASSETS_DIR / "utx_btn_s_00_sl.png"
 SKILL_POINT_ICON = ASSETS_DIR / "skillPoint.png"
 STATS_POINT_ICON = ASSETS_DIR / "statsPoint.png"
-UMACOIN_ICON = ASSETS_DIR / "umaCoin.png"
+FANS_ICON = ASSETS_DIR / "icons" / "fans.png"
 
 GRADE_IMAGE_MAP = {
     1: "G.png",
@@ -68,11 +68,11 @@ POS = {
     "frame_2": (650, 300),
     "frame_3": (850, 300),
 
-    "umaCoin": (568, 306),
+    "fans": (568, 306),
     "statsPoint": (768, 306),
     "skillPoint": (968, 306),
 
-    "umaCoin_Val": (470, 308),
+    "fans_Val": (470, 308),
     "statsPoint_Val": (670, 308),
     "skillPoint_Val": (870, 308),
 }
@@ -238,20 +238,20 @@ async def create_stats_card(player: dict, avatar_url: str):
     card.paste(button_img, POS["frame_2"], button_img)
     card.paste(button_img, POS["frame_3"], button_img)
 
-    button_img = get_ui_image(UMACOIN_ICON, (50,50))
-    card.paste(button_img, POS["umaCoin"], button_img)
+    button_img = get_ui_image(FANS_ICON, (50,50))
+    card.paste(button_img, POS["fans"], button_img)
     button_img = get_ui_image(STATS_POINT_ICON, (50,50))
     card.paste(button_img, POS["statsPoint"], button_img)
     button_img = get_ui_image(SKILL_POINT_ICON, (50,50))
     card.paste(button_img, POS["skillPoint"], button_img)
     
-    draw.text(POS["umaCoin_Val"], str(player["uma_coin"]), fill=(120, 70, 35), font=value_font)
+    draw.text(POS["fans_Val"], str(player["fans"]), fill=(120, 70, 35), font=value_font)
     draw.text(POS["statsPoint_Val"], str(player["stats_point"]), fill=(120, 70, 35), font=value_font)
     draw.text(POS["skillPoint_Val"], str(player["skill_point"]), fill=(120, 70, 35), font=value_font)
     
     topicFont = ImageFont.truetype(str(FONT_PATH), 24)
 
-    draw.text((470, 270), "Uma Coins", fill=(120, 70, 35), font=topicFont)
+    draw.text((470, 270), "Fans", fill=(120, 70, 35), font=topicFont)
     draw.text((670, 270), "Stats Points", fill=(120, 70, 35), font=topicFont)
     draw.text((870, 270), "Event Point", fill=(120, 70, 35), font=topicFont)
 
