@@ -26,6 +26,8 @@ from utils.database import (
     get_trainee_trainer,
     create_team_invitation,
     respond_to_team_invitation,
+    save_profile_preset,
+    list_uploaded_profile_summaries,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -109,7 +111,23 @@ def api_get_player(user_id: str, username: str = "Unknown"):
 
 @app.get("/api/players/summary")
 def api_get_players_summary():
-    return {"players": list_player_summaries()}
+    return {"players": [*list_player_summaries(), *list_uploaded_profile_summaries()]}
+
+
+class ProfilePresetPayload(BaseModel):
+    user_id: str
+    profile_type: str
+    name: str
+    image_url: str = ""
+
+
+@app.post("/profiles/preset")
+def api_save_profile_preset(payload: ProfilePresetPayload):
+    try:
+        save_profile_preset(payload.user_id, payload.profile_type, payload.name, payload.image_url)
+        return {"success": True}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/api/players/{user_id}/summary")

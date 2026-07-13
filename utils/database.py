@@ -148,6 +148,17 @@ def init_db():
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS profile_presets (
+        user_id TEXT NOT NULL,
+        profile_type TEXT NOT NULL,
+        name TEXT NOT NULL,
+        image_url TEXT NOT NULL DEFAULT '',
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, profile_type)
+    )
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS team_invitations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         trainer_user_id TEXT NOT NULL,
@@ -324,6 +335,28 @@ def get_trainee_trainer(trainee_user_id: str) -> Optional[dict]:
     if not row:
         return None
     return {"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"])}
+
+
+def save_profile_preset(user_id: str, profile_type: str, name: str, image_url: str) -> None:
+    if profile_type not in {"trainer", "npc"}:
+        raise ValueError("Only trainer and npc presets are supported")
+    with database_connection() as conn:
+        conn.execute("""
+            INSERT INTO profile_presets (user_id, profile_type, name, image_url, updated_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id, profile_type) DO UPDATE SET
+              name = excluded.name, image_url = excluded.image_url, updated_at = CURRENT_TIMESTAMP
+        """, (str(user_id), profile_type, name.strip() or profile_type.title(), image_url or ""))
+
+
+def list_uploaded_profile_summaries() -> list[dict]:
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT user_id, profile_type, name, image_url FROM profile_presets
+        WHERE TRIM(image_url) <> '' ORDER BY name COLLATE NOCASE
+    """).fetchall()
+    conn.close()
+    return [{"id": f"{row['user_id']}:{row['profile_type']}", "name": row["name"], "image_url": row["image_url"], "type": row["profile_type"].title()} for row in rows]
 
 
 def create_team_invitation(trainer_user_id: str, trainee_user_id: str) -> int:
