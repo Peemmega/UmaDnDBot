@@ -9,7 +9,7 @@ from utils.skill.skill_presets import SKILLS, ICON
 from utils.mob.mob_decision import decide_mob_skill_combo, decide_mob_target_lane
 
 from utils.mob.mob_presets import MOB_PRESETS
-from utils.database import get_player, get_player_skill_slots
+from utils.database import ensure_player, get_player, get_player_skill_slots
 from utils.profile_images import resolve_player_avatar_url
 from utils.zone.zone_manager import apply_zone_in_game
 from utils.race.race_presets import (
@@ -1651,7 +1651,6 @@ def get_ranked_players(channel_id: int):
     )
 
 def add_player(channel_id, user_id, display_name: str, display_avatar: str, style):
-    player_data = get_player(user_id)
     game = get_game(channel_id)
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
@@ -1665,12 +1664,16 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
     if user_id in game["players"]:
         return False, "คุณเข้าร่วมเกมนี้แล้ว"
     
-    db_player = get_player(user_id)
+    # A Discord user can open the lobby before visiting the web profile/API.
+    # Create the default record here so joining a game never dereferences None.
+    db_player = ensure_player(user_id, display_name)
+    if db_player is None:
+        return False, "Unable to prepare the player profile. Please try again."
 
     entry_number = len(game["players"]) + 1
     default_lane = get_default_lane(entry_number)
     game["players"][user_id] = {
-        "username": player_data.get('username') ,
+        "username": db_player.get("username") or display_name,
         "avatar": display_avatar,
         "profile_image_url": db_player.get("profile_image_url") if db_player else "",
         "display_name": display_name,
