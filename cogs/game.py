@@ -13,6 +13,7 @@ from views.use_skill_view import UseSkillView
 from views.create_game_view import CreateGameView
 
 from utils.icon_presets import Status_Icon_Type
+from utils.channel_config import RACE_LOG_CHANNEL_ID
 from utils.skill.skill_presets import SKILLS, ICON
 from utils.narrater import (
     generate_commentary,
@@ -313,7 +314,7 @@ class GameCog(commands.GroupCog, name="game"):
         game = payload["game"]
         ranked_players = payload["ranked_players"]
 
-        log_channel_id = 1502217575717798050
+        log_channel_id = RACE_LOG_CHANNEL_ID
         log_channel = interaction.guild.get_channel(log_channel_id)
 
         if log_channel is None:
@@ -670,7 +671,7 @@ class GameCog(commands.GroupCog, name="game"):
                 )
             await send_func(embed=embed)
 
-            log_channel_id = 1502217575717798050
+            log_channel_id = RACE_LOG_CHANNEL_ID
 
             log_channel = None
             if guild:

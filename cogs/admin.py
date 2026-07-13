@@ -11,12 +11,11 @@ from utils.database import (
     clear_race_rankings,
 )
 from utils.race.race_presets import RACE_PRESET
+from utils.channel_config import COMMAND_LOG_CHANNEL_ID
 
 ADMIN_IDS = {
     464058883556769793,
 }
-
-LOG_CHANNEL_ID = 1496060150929166488
 
 VALID_APTITUDE_FIELDS = {
     "turf", "dirt",
@@ -64,10 +63,10 @@ class Admin(commands.Cog):
         target: discord.Member | None = None,
         color: discord.Color = discord.Color.dark_gold(),
     ):
-        channel = self.bot.get_channel(LOG_CHANNEL_ID)
+        channel = self.bot.get_channel(COMMAND_LOG_CHANNEL_ID)
         if channel is None:
             try:
-                channel = await self.bot.fetch_channel(LOG_CHANNEL_ID)
+                channel = await self.bot.fetch_channel(COMMAND_LOG_CHANNEL_ID)
             except Exception:
                 return
 
