@@ -1,7 +1,23 @@
 import os
 
 
-EMOJI_SET = os.getenv("BOT_EMOJI_SET", "test").strip().lower()
+def _resolve_emoji_set() -> str:
+    """Use an explicit setting, with the known production domain as fallback."""
+    configured = os.getenv("BOT_EMOJI_SET", "").strip().lower()
+    if configured in {"main", "test"}:
+        return configured
+
+    runtime_hosts = (
+        os.getenv("PUBLIC_BASE_URL", ""),
+        os.getenv("RAILWAY_PUBLIC_DOMAIN", ""),
+        os.getenv("RAILWAY_STATIC_URL", ""),
+    )
+    if any("umadndbot-production.up.railway.app" in host for host in runtime_hosts):
+        return "main"
+    return "test"
+
+
+EMOJI_SET = _resolve_emoji_set()
 USING_MAIN_EMOJIS = EMOJI_SET == "main"
 
 
