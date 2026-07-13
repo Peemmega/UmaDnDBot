@@ -624,6 +624,9 @@ def add_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     if player["stats_point"] < amount:
         raise ValueError("Not enough stats points")
 
+    if player[stat_name] + amount > MAX_CORE_STAT:
+        raise ValueError(f"{stat_name} cannot exceed {MAX_CORE_STAT}")
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -886,6 +889,7 @@ def update_player_username(user_id: str, username: str):
 
 
 CORE_STAT_FIELDS = ("speed", "stamina", "power", "gut", "wit")
+MAX_CORE_STAT = 8
 
 
 def update_player_stat_pool(user_id: int | str, *, stats: dict[str, int], stats_point: int) -> dict:
@@ -896,8 +900,8 @@ def update_player_stat_pool(user_id: int | str, *, stats: dict[str, int], stats_
     """
     if set(stats) != set(CORE_STAT_FIELDS):
         raise ValueError("Stats must contain speed, stamina, power, gut, and wit")
-    if any(not isinstance(value, int) or value < 1 for value in stats.values()):
-        raise ValueError("Each stat must be an integer of at least 1")
+    if any(not isinstance(value, int) or not 1 <= value <= MAX_CORE_STAT for value in stats.values()):
+        raise ValueError(f"Each stat must be an integer from 1 to {MAX_CORE_STAT}")
     if not isinstance(stats_point, int) or stats_point < 0:
         raise ValueError("Stats point must be a non-negative integer")
 
@@ -968,6 +972,10 @@ def update_player_stats(
     new_power = current["power"] if power is None else power
     new_gut = current["gut"] if gut is None else gut
     new_wit = current["wit"] if wit is None else wit
+
+    if any(not isinstance(value, int) or not 1 <= value <= MAX_CORE_STAT for value in (new_speed, new_stamina, new_power, new_gut, new_wit)):
+        conn.close()
+        raise ValueError(f"Core stats must be integers from 1 to {MAX_CORE_STAT}")
 
     new_turf = current["turf"] if turf is None else turf
     new_dirt = current["dirt"] if dirt is None else dirt
