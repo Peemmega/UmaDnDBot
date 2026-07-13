@@ -341,7 +341,54 @@ class GameCog(commands.GroupCog, name="game"):
             return False, "คุณใช้สิทธิ์ทอยในเทิร์นนี้ไปแล้ว จึงใช้สกิลประเภท Active Roll ไม่ได้"
         return True, None
 
+    async def _process_pending_mobs_after_player_roll(
+        self,
+        interaction: discord.Interaction,
+        game: dict,
+    ) -> None:
+        """Finish unrolled Mobs so the player's roll can close the turn."""
+        current_turn = game.get("turn")
+        for user_id, player in list(game.get("players", {}).items()):
+            if not player.get("is_mob") or player.get("last_roll_turn") == current_turn:
+                continue
+
+            success, payload = process_mob_turn(interaction.channel_id, user_id)
+            if not success:
+                print(f"Mob turn failed for {user_id}: {payload.get('message', payload)}")
+                continue
+
+            if payload.get("zone_preview"):
+                await interaction.followup.send(embed=payload["zone_preview"])
+            for skill_embed in payload.get("skill_embeds", []):
+                await interaction.followup.send(embed=skill_embed)
+
+            if should_render_mob_preview(game):
+                card = await create_race_dice_preview(
+                    game_player=player,
+                    result=payload["result"],
+                    payload=payload,
+                    path_label=payload["path_effect"]["label"],
+                    character_image_url=resolve_player_render_image(player),
+                )
+                buffer = await encode_png(card)
+                await interaction.followup.send(
+                    content=f"{player.get('username')}",
+                    file=discord.File(buffer, filename="race_dice_preview.png"),
+                )
+            else:
+                await interaction.followup.send(
+                    build_mob_fast_roll_text(
+                        game_player=player,
+                        result=payload["result"],
+                        payload=payload,
+                        path_label=payload["path_effect"]["label"],
+                    )
+                )
+
     async def handle_after_roll(self, interaction: discord.Interaction, game: dict):
+        if not game.get("awaiting_turn_confirm"):
+            await self._process_pending_mobs_after_player_roll(interaction, game)
+
         if have_all_players_rolled(interaction.channel_id):
             if not game["awaiting_turn_confirm"]:
                 start_turn_confirmation(interaction.channel_id)
