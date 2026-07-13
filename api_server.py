@@ -56,6 +56,7 @@ def _cors_origins() -> list[str]:
     """Allow production, local development, and the Railway web URL for this environment."""
     origins = {
         "https://umaroleplaycommunity.up.railway.app",
+        "https://umaroleplaytest.up.railway.app",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     }
