@@ -7,6 +7,7 @@ import asyncio
 import io
 import time
 from pathlib import Path
+import os
 
 from utils.database import (
     get_player, 
@@ -49,13 +50,23 @@ BASE_DIR = Path(__file__).resolve().parent
 ASSETS_DIR = BASE_DIR / "assets"
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+
+
+def _cors_origins() -> list[str]:
+    """Allow production, local development, and the Railway web URL for this environment."""
+    origins = {
         "https://umaroleplaycommunity.up.railway.app",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-    ],
+    }
+    configured_origins = os.getenv("CORS_ORIGINS") or os.getenv("FRONTEND_URL") or ""
+    origins.update(origin.strip().rstrip("/") for origin in configured_origins.split(",") if origin.strip())
+    return sorted(origins)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
