@@ -13,7 +13,7 @@ from utils.tcg.tcg_visibility import sanitize_room
 
 def _cors_origins() -> list[str]:
     default_origins = [
-        "https://umabotapp-production-c99a.up.railway.app",
+        "https://umaroleplaycommunity.up.railway.app",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
