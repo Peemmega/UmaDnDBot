@@ -292,9 +292,8 @@ def get_available_trainees(trainer_user_id: str) -> list[dict]:
         LEFT JOIN trainer_teams t ON t.trainee_user_id = CAST(p.user_id AS TEXT)
         WHERE p.profile_image_url IS NOT NULL AND TRIM(p.profile_image_url) <> ''
           AND t.trainee_user_id IS NULL
-          AND CAST(p.user_id AS TEXT) <> ?
         ORDER BY p.username COLLATE NOCASE
-    """, (str(trainer_user_id),)).fetchall()
+    """).fetchall()
     conn.close()
     return [{"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"]), "fans": row["fans"]} for row in rows]
 
