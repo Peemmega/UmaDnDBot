@@ -1,15 +1,21 @@
-ICON = {
-    "Concentration": "<:Concentration:1494389544127172728>",
-    "Acceleration": "<:Acceleration:1494389491337527538>",
-    "Velocity": "<:Velocity:1494389507666088100>",
-    "Navigation": "↔️",
-    "Recovery": "<:Recovery:1494389472337330196>",
-    "DecreaseVelocity": "<:DecreaseVelocity:1494389430721577070>",
-    "ReduceSTA": "<:ReduceSTA:1494389406109270026>",
-    "LookUp": "<:LookUp:1494389526359969873>",
-    "Blind": "<:Blind:1494389451114151939>",
-    "UniqueVelocity": "<:UniqueSkillVelocity:1499064862888824923>",
-    "UniqueAcceleration": "<:UniqueSkillVelocity:1499064862888824923>",
+from utils.icon_presets import SKILL_ICONS
+
+
+# Selected at startup using BOT_EMOJI_SET (main or test).
+ICON = dict(SKILL_ICONS)
+
+ICON_URL = {
+    "Concentration": "https://media.discordapp.net/attachments/697810514448744448/1526292466570100956/Concentration.png?ex=6a567e21&is=6a552ca1&hm=ba72a3078b0e0cd3cc9ba5128a8280d78bfb14de88c696fe40855a455a597a97&=&format=webp&quality=lossless&width=240&height=240",
+    "Acceleration": "https://media.discordapp.net/attachments/697810514448744448/1526292465185722469/Acceleration.png?ex=6a567e20&is=6a552ca0&hm=5887f9dfc6348323c2e75c277470052d38bf9d8f15d50b9e84182107fdf32f67&=&format=webp&quality=lossless&width=240&height=240",
+    "Velocity": "https://media.discordapp.net/attachments/697810514448744448/1526292464552640652/Velocity.png?ex=6a567e20&is=6a552ca0&hm=cdec2ebfd23657a87bdcecbfd11d1c8dfd528917561d628b792825a64d017add&=&format=webp&quality=lossless&width=240&height=240",
+    "Navigation": "https://media.discordapp.net/attachments/697810514448744448/1526292468520321267/Navigation.png?ex=6a567e21&is=6a552ca1&hm=bd100dd98982668b999927406c724fdc5cc8d68c2e366286ee9446d03a85b545&=&format=webp&quality=lossless&width=240&height=240",
+    "Recovery": "https://media.discordapp.net/attachments/697810514448744448/1526292463436693565/Recovery.png?ex=6a567e20&is=6a552ca0&hm=a8f676d62e27898fcfe21a282a019de5585a298635afa011ec96b472c97f56e1&=&format=webp&quality=lossless&width=240&height=240",
+    "DecreaseVelocity": "https://media.discordapp.net/attachments/697810514448744448/1526292466993467513/DecreaseVelocity.png?ex=6a567e21&is=6a552ca1&hm=a12f7f4f7803e42dded5b924be383355dc1bd0861067e8018cd67822bce2f9d7&=&format=webp&quality=lossless&width=240&height=240",
+    "ReduceSTA": "https://media.discordapp.net/attachments/697810514448744448/1526292463990472745/ReduceSTA.png?ex=6a567e20&is=6a552ca0&hm=4440cdf2afbcada9225a656eb455334b54e5a8c4fe7bd2377b9c945279ef27ee&=&format=webp&quality=lossless&width=240&height=240",
+    "LookUp": "https://media.discordapp.net/attachments/697810514448744448/1526292467794837644/LookUp.png?ex=6a567e21&is=6a552ca1&hm=3b9ea7d0b5969d7c01acbc51b002861014736acf8e78404dfd1402fa01b6b369&=&format=webp&quality=lossless&width=240&height=240",
+    "Blind": "https://media.discordapp.net/attachments/697810514448744448/1526292465932566711/Blind.png?ex=6a567e21&is=6a552ca1&hm=5600daab0bbce3ea5864c631eebd5c9e4ea47eae2ebae7b97fc421579841e383&=&format=webp&quality=lossless&width=240&height=240",
+    "UniqueVelocity": "https://media.discordapp.net/attachments/697810514448744448/1526293634964787290/UniqueSkillVelocity.png?ex=6a567f37&is=6a552db7&hm=5e684019a190cc2ac0ac7af155d6b3e6407e5393132151b037b8c0d85ff0804d&=&format=webp&quality=lossless&width=240&height=240",
+    "UniqueAcceleration": "https://media.discordapp.net/attachments/697810514448744448/1526293634671050953/UniqueSkillAcceleration.png?ex=6a567f37&is=6a552db7&hm=1b6f28a0127dea9deb384c6de4deacb21fca958325aff0cc6c663b44b5fdf5af&=&format=webp&quality=lossless&width=240&height=240",
 }
 
 EFFECT_TYPES = {

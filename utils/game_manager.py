@@ -5,7 +5,7 @@ import discord
 import random
 
 from utils.race.race_presets import RACE_PRESET
-from utils.skill.skill_presets import SKILLS, ICON
+from utils.skill.skill_presets import SKILLS, ICON_URL
 from utils.mob.mob_decision import decide_mob_skill_combo, decide_mob_target_lane
 
 from utils.mob.mob_presets import MOB_PRESETS
@@ -3002,15 +3002,17 @@ def build_skill_use_embed(
     skill,
     payload,
 ):
-    emoji = ICON.get(skill.get("icon"), "❓")
+    icon_url = ICON_URL.get(skill.get("icon"))
 
     embed = discord.Embed(
-        title=f"{emoji} {player_name} ใช้สกิล {skill['name']}",
+        title=f"{player_name} ใช้สกิล {skill['name']}",
         description="\n".join(
             payload.get("result_texts", [])
         ),
         color=discord.Color.green()
     )
+    if icon_url:
+        embed.set_thumbnail(url=icon_url)
 
     embed.add_field(
         name=f"{Status_Icon_Type['WIT']} คงเหลือ",
