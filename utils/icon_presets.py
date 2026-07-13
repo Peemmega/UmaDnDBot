@@ -1,3 +1,10 @@
+import os
+
+
+EMOJI_SET = os.getenv("BOT_EMOJI_SET", "test").strip().lower()
+USING_MAIN_EMOJIS = EMOJI_SET == "main"
+
+
 STAT_EMOJIS = {
     1: "<:G_Rank:1493694904323412142>",
     2: "<:F_Rank:1493695005188161618>",
@@ -9,7 +16,7 @@ STAT_EMOJIS = {
     8: "<:S_Rank:1493694983574655168>"
 }
 
-Status_Icon_Type = {
+TEST_STATUS_ICONS = {
     "SPD": "<:Speed:1493706249714270248>",
     "STA": "<:Stamina:1493706286490189824>",
     "POW": "<:Power:1493706270488789082>",
@@ -17,10 +24,55 @@ Status_Icon_Type = {
     "WIT": "<:Wit:1493706329406308352>",
 }
 
-ICONS = {
+MAIN_STATUS_ICONS = {
+    "SPD": "<:Speed:1526294214114148513>",
+    "STA": "<:Stamina:1526294249610674358>",
+    "POW": "<:Power:1526294283336814784>",
+    "GUT": "<:Gut:1526294332024422523>",
+    "WIT": "<:Wit:1526294374340628510>",
+}
+
+TEST_SKILL_ICONS = {
+    "Concentration": "<:Concentration:1494389544127172728>",
+    "Acceleration": "<:Acceleration:1494389491337527538>",
+    "Velocity": "<:Velocity:1494389507666088100>",
+    "Navigation": "<:Navigation:1526295662881407108>",
+    "Recovery": "<:Recovery:1494389472337330196>",
+    "DecreaseVelocity": "<:DecreaseVelocity:1494389430721577070>",
+    "ReduceSTA": "<:ReduceSTA:1494389406109270026>",
+    "LookUp": "<:LookUp:1494389526359969873>",
+    "Blind": "<:Blind:1494389451114151939>",
+    "UniqueVelocity": "<:UniqueSkillVelocity:1499064862888824923>",
+    "UniqueAcceleration": "<:UniqueSkillVelocity:1499064862888824923>",
+}
+
+MAIN_SKILL_ICONS = {
+    "Acceleration": "<:Acceleration:1526293975512907926>",
+    "Blind": "<:Blind:1526293997264441384>",
+    "Concentration": "<:Concentration:1526294014330933518>",
+    "DecreaseVelocity": "<:DecreaseVelocity:1526294031288504531>",
+    "LookUp": "<:LookUp:1526294046530867320>",
+    "Navigation": "<:Navigation:1526294065124216832>",
+    "Recovery": "<:Recovery:1526294082597552228>",
+    "ReduceSTA": "<:ReduceSTA:1526294099249074216>",
+    "UniqueAcceleration": "<:UniqueSkillAcceleration:1526294117968117871>",
+    "UniqueVelocity": "<:UniqueSkillVelocity:1526294132996308992>",
+    "Velocity": "<:Velocity:1526294150130172045>",
+}
+
+TEST_ICONS = {
     "Aoharu": "<:Aoharu:1495417469328949258>",
     "AlarmClock": "<:AlarmClock:1499708925711487116>",
 }
+
+MAIN_ICONS = {
+    "Aoharu": "<:Aoharu:1526296049365418156>",
+    "AlarmClock": "<:AlarmClock:1526296859369279498>",
+}
+
+Status_Icon_Type = MAIN_STATUS_ICONS if USING_MAIN_EMOJIS else TEST_STATUS_ICONS
+SKILL_ICONS = MAIN_SKILL_ICONS if USING_MAIN_EMOJIS else TEST_SKILL_ICONS
+ICONS = MAIN_ICONS if USING_MAIN_EMOJIS else TEST_ICONS
 
 GRADE_TEXT = {
     1: "G",
