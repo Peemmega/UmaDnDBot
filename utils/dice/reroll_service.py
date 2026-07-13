@@ -3,7 +3,11 @@ from utils.game_manager import get_game, get_player_in_game, update_player_score
 from utils.race.race_aptitude import get_roll_race_stats
 from utils.race.race_presets import get_current_path_type, get_path_effect
 from utils.race.race_dice import roll_race_dice
-from utils.race.runtime_stamina import build_runtime_stamina_note, format_runtime_stamina
+from utils.race.runtime_stamina import (
+    build_runtime_stamina_note,
+    format_runtime_stamina,
+    get_runtime_stamina_snapshot,
+)
 from utils.icon_presets import Status_Icon_Type
 
 
