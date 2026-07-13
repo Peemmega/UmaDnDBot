@@ -1,6 +1,7 @@
 import os
 import sqlite3
-from typing import Optional
+from contextlib import contextmanager
+from typing import Iterator, Optional
 from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST, normalize_zone_build
 import json
 from utils.profile_images import resolve_public_url
@@ -15,6 +16,20 @@ def get_connection():
     conn.execute("PRAGMA synchronous=NORMAL;")
 
     return conn
+
+
+@contextmanager
+def database_connection() -> Iterator[sqlite3.Connection]:
+    """Provide a connection that always commits successful writes and closes."""
+    conn = get_connection()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def init_db():
@@ -770,6 +785,51 @@ def update_player_username(user_id: str, username: str):
 
     conn.commit()
     conn.close()
+
+
+CORE_STAT_FIELDS = ("speed", "stamina", "power", "gut", "wit")
+
+
+def update_player_stat_pool(user_id: int | str, *, stats: dict[str, int], stats_point: int) -> dict:
+    """Replace core stats while preserving the player's total stat-point pool.
+
+    Keeping this rule next to the persistence code ensures every future caller
+    gets the same validation and avoids partially-updated player records.
+    """
+    if set(stats) != set(CORE_STAT_FIELDS):
+        raise ValueError("Stats must contain speed, stamina, power, gut, and wit")
+    if any(not isinstance(value, int) or value < 1 for value in stats.values()):
+        raise ValueError("Each stat must be an integer of at least 1")
+    if not isinstance(stats_point, int) or stats_point < 0:
+        raise ValueError("Stats point must be a non-negative integer")
+
+    with database_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT speed, stamina, power, gut, wit, stats_point
+            FROM players
+            WHERE CAST(user_id AS TEXT) = ?
+            """,
+            (str(user_id),),
+        ).fetchone()
+        if row is None:
+            raise LookupError("Player not found")
+
+        old_total = sum(row[field] for field in (*CORE_STAT_FIELDS, "stats_point"))
+        new_total = sum(stats.values()) + stats_point
+        if old_total != new_total:
+            raise ValueError("Invalid total stat pool")
+
+        conn.execute(
+            """
+            UPDATE players
+            SET speed = ?, stamina = ?, power = ?, gut = ?, wit = ?, stats_point = ?
+            WHERE CAST(user_id AS TEXT) = ?
+            """,
+            (*[stats[field] for field in CORE_STAT_FIELDS], stats_point, str(user_id)),
+        )
+
+    return {**stats, "stats_point": stats_point}
 
 def update_player_stats(
     user_id: int,

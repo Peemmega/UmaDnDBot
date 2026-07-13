@@ -112,6 +112,7 @@ def serialize_player(
         "rank": rank,
         "is_mob": bool(player.get("is_mob")),
         "mob_level": player.get("mob_level"),
+        "ai_level": player.get("ai_level"),
         "mob_preset_key": player.get("mob_preset_key"),
         "last_roll_turn": player.get("last_roll_turn", -1),
         "has_rolled": player.get("last_roll_turn") == player.get("_current_turn"),

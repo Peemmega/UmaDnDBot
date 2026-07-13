@@ -1947,6 +1947,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         "profile_image_url": "",
         "is_mob": True,
         "mob_level": level,
+        "ai_level": level,
         "mob_preset_key": preset_key,
         "style": preset["style"],
 
@@ -2492,9 +2493,7 @@ def process_mob_turn(channel_id: int, user_id: str):
     )
 
     if turn_trigger and player.get("zone_left", 0) > 0:
-        zone_success = apply_zone_in_game(game, player)
-        if zone_success:
-            player["zone_left"] -= 1
+        zone_success, _zone_message = apply_zone_in_game(game, player)
 
     usable_skills = get_mob_usable_skills(
         channel_id=channel_id,
@@ -2506,8 +2505,6 @@ def process_mob_turn(channel_id: int, user_id: str):
         game=game,
         user_id=user_id,
         usable_skills=usable_skills,
-        max_skill_per_turn=3,
-        min_combo_score=45,
         debug=False,
     )
 

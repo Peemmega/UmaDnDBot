@@ -1,10 +1,10 @@
 import discord
 from discord.ext import commands
-import io
 
 from utils.database import ensure_player, update_player_username,set_player_zone_name,set_player_zone_image_url,set_all_aptitude
 from views.profile_stat_view import ProfileStatView, build_stat_embed
 from utils.player_card import create_stats_card
+from utils.image_encoding import encode_png
 from utils.icon_presets import GRADE_TEXT
 from utils.profile_images import resolve_player_avatar_url
 from views.zone_manage_view import ZoneManageView
@@ -66,9 +66,7 @@ class ProfileCog(commands.Cog):
 
         image = await create_stats_card(player, avatar_url)
 
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
-        buffer.seek(0)
+        buffer = await encode_png(image)
 
         file = discord.File(fp=buffer, filename="profile_card.png")
         await interaction.followup.send(

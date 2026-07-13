@@ -19,6 +19,7 @@ from utils.database import (
     get_player_skill_slots,
     init_db,
     set_player_profile_image,
+    update_player_stat_pool,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -161,90 +162,24 @@ class UpdateStatsPayload(BaseModel):
 
 @app.post("/player/stats/update")
 def update_player_stats(payload: UpdateStatsPayload):
-    conn = get_connection()
-    cur = conn.cursor()
-    # print(payload)
-
     try:
-        cur.execute("""
-            SELECT speed, stamina, power, gut, wit, stats_point
-            FROM players
-            WHERE CAST(user_id AS TEXT) = ?
-        """, (payload.user_id,))
-        row = cur.fetchone()
-
-        if row is None:
-            raise HTTPException(status_code=404, detail="Player not found")
-
-        old_speed, old_stamina, old_power, old_gut, old_wit, old_stats_point = row
-
-        stat_values = [
-            payload.speed,
-            payload.stamina,
-            payload.power,
-            payload.gut,
-            payload.wit,
-        ]
-
-        if any(v < 1 for v in stat_values):
-            raise HTTPException(status_code=400, detail="Each stat must be at least 1")
-
-        total_before = (
-            old_speed +
-            old_stamina +
-            old_power +
-            old_gut +
-            old_wit +
-            old_stats_point
-        )
-
-        total_after = (
-            payload.speed +
-            payload.stamina +
-            payload.power +
-            payload.gut +
-            payload.wit +
-            payload.stats_point
-        )
-
-        if total_before != total_after:
-            raise HTTPException(status_code=400, detail="Invalid total stat pool")
-
-        cur.execute("""
-            UPDATE players
-            SET speed = ?,
-                stamina = ?,
-                power = ?,
-                gut = ?,
-                wit = ?,
-                stats_point = ?
-            WHERE CAST(user_id AS TEXT) = ?
-        """, (
-            payload.speed,
-            payload.stamina,
-            payload.power,
-            payload.gut,
-            payload.wit,
-            payload.stats_point,
+        player = update_player_stat_pool(
             payload.user_id,
-        ))
-
-        conn.commit()
-
-        return {
-            "success": True,
-            "message": "Stats updated successfully",
-            "player": {
+            stats={
                 "speed": payload.speed,
                 "stamina": payload.stamina,
                 "power": payload.power,
                 "gut": payload.gut,
                 "wit": payload.wit,
-                "stats_point": payload.stats_point,
-            }
-        }
-    finally:
-        conn.close()
+            },
+            stats_point=payload.stats_point,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {"success": True, "message": "Stats updated successfully", "player": player}
 
 @app.get("/mailbox/{user_id}")
 def get_mailbox(user_id: str):

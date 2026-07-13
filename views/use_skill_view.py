@@ -1,10 +1,9 @@
-from io import BytesIO
-
 import discord
 from utils.game_manager import (
     get_game,execute_skill_core,build_skill_use_embed,get_ranked_players
 )
 from utils.turn_result_image import create_turn_result_card
+from utils.image_encoding import encode_png
 
 from utils.zone.zone_manager import apply_zone_in_game
 from utils.zone.zone_embed import build_zone_used_preview_embed
@@ -77,9 +76,7 @@ class UseSkillView(discord.ui.View):
         if payload.get("show_lane_preview"):
             ranked_players = get_ranked_players(self.channel_id)
             result_card = await create_turn_result_card(game, ranked_players)
-            buffer = BytesIO()
-            result_card.save(buffer, format="PNG")
-            buffer.seek(0)
+            buffer = await encode_png(result_card)
             file = discord.File(buffer, filename="lane_preview.png")
             embed.set_image(url="attachment://lane_preview.png")
 

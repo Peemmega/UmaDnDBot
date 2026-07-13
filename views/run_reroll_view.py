@@ -5,7 +5,7 @@ from utils.game_manager import (
     use_reroll,
     can_use_wit_reroll,
 )
-from utils.dice.reroll_service import execute_reroll
+from utils.dice.reroll_service import can_execute_reroll, execute_reroll
 
 class RunRerollView(discord.ui.View):
     def __init__(self, owner_id: int, channel_id: int, old_total: int, base_total: int, wit_reroll_ok: bool):
@@ -15,6 +15,8 @@ class RunRerollView(discord.ui.View):
         self.old_total = old_total
         self.base_total = base_total
         self.wit_reroll_ok = wit_reroll_ok
+        game = get_game(channel_id)
+        self.roll_turn = game.get("turn", -1) if game else -1
 
         self.refresh_button_states()
 
@@ -46,6 +48,15 @@ class RunRerollView(discord.ui.View):
 
     @discord.ui.button(label="สุ่มใหม่", style=discord.ButtonStyle.primary, emoji="🎲")
     async def reroll(self, interaction: discord.Interaction, button: discord.ui.Button):
+        allowed, message = can_execute_reroll(
+            self.channel_id,
+            self.owner_id,
+            self.roll_turn,
+        )
+        if not allowed:
+            await interaction.response.send_message(message, ephemeral=True)
+            return
+
         success, reroll_left = use_reroll(self.channel_id, self.owner_id)
         if not success:
             await interaction.response.send_message(reroll_left, ephemeral=True)
@@ -54,6 +65,7 @@ class RunRerollView(discord.ui.View):
         success, payload = await execute_reroll(
             interaction,
             old_total=self.old_total,
+            expected_turn=self.roll_turn,
             title_prefix="สุ่มใหม่สำเร็จ",
         )
         if not success:
@@ -73,6 +85,15 @@ class RunRerollView(discord.ui.View):
 
     @discord.ui.button(label="WIT Reroll", style=discord.ButtonStyle.success, emoji="🔮")
     async def wit_reroll(self, interaction: discord.Interaction, button: discord.ui.Button):
+        allowed, message = can_execute_reroll(
+            self.channel_id,
+            self.owner_id,
+            self.roll_turn,
+        )
+        if not allowed:
+            await interaction.response.send_message(message, ephemeral=True)
+            return
+
         game = get_game(self.channel_id)
         if game is None:
             await interaction.response.send_message("ไม่พบเกมนี้แล้ว", ephemeral=True)
@@ -96,6 +117,7 @@ class RunRerollView(discord.ui.View):
         success, payload = await execute_reroll(
             interaction,
             old_total=self.old_total,
+            expected_turn=self.roll_turn,
             minimum_total=self.old_total,
             title_prefix="WIT Reroll สำเร็จ",
         )

@@ -1,10 +1,11 @@
 import discord
+import os
 from discord.ext import commands
 from discord import app_commands
 import random
 
-from io import BytesIO
 from utils.race_dice_preview import create_race_dice_preview
+from utils.image_encoding import encode_png
 
 from views.confirmDeleteGameView import ConfirmDeleteView
 from views.use_skill_view import UseSkillView
@@ -33,12 +34,17 @@ WIN_IMAGE = [
     "https://cdn.discordapp.com/attachments/697810514448744448/1501846524420821103/uma-musume-pretty-derby-jungle-pocket-roar.gif"
 ]
 
+MOB_RENDER_MODE = os.getenv("MOB_RENDER_MODE", "detailed").strip().lower()
+
+
+def should_render_mob_preview() -> bool:
+    """Compact mode avoids per-mob image attachments and Discord rate limits."""
+    return MOB_RENDER_MODE != "compact"
+
 
 async def build_turn_result_discord_file(game: dict, ranked_players):
     result_card = await create_turn_result_card(game, ranked_players)
-    buffer = BytesIO()
-    result_card.save(buffer, format="PNG")
-    buffer.seek(0)
+    buffer = await encode_png(result_card)
     return discord.File(buffer, filename="turn_result.png")
 
 
@@ -714,25 +720,19 @@ class GameCog(commands.GroupCog, name="game"):
                     for skill_embed in payload["skill_embeds"]:
                         await send_func(embed=skill_embed)
                 
-                card = await create_race_dice_preview(
-                    game_player=player,
-                    result= payload["result"],
-                    payload=payload,
-                    path_label=payload["path_effect"]["label"],
-                    character_image_url=resolve_player_render_image(player),
-                )
-
-                buffer = BytesIO()
-                card.save(buffer, format="PNG")
-                buffer.seek(0)
-
-                file = discord.File(buffer, filename="race_dice_preview.png")
-
-                send_kwargs = {
-                    "content": f"{player.get('username') }",
-                    "file": file,
-                }
-                await send_func(**send_kwargs)
+                if should_render_mob_preview():
+                    card = await create_race_dice_preview(
+                        game_player=player,
+                        result= payload["result"],
+                        payload=payload,
+                        path_label=payload["path_effect"]["label"],
+                        character_image_url=resolve_player_render_image(player),
+                    )
+                    buffer = await encode_png(card)
+                    file = discord.File(buffer, filename="race_dice_preview.png")
+                    await send_func(content=f"{player.get('username') }", file=file)
+                else:
+                    await send_func(content=f"🤖 {player.get('username')} ได้คะแนน +{payload['result']['total']}")
 
         if game and game["started"] and not has_real_player(game):
             await self._process_next_turn_core(
@@ -890,9 +890,7 @@ class GameCog(commands.GroupCog, name="game"):
             character_image_url=resolve_player_render_image(game_player, avatar_url),
         )
 
-        buffer = BytesIO()
-        card.save(buffer, format="PNG")
-        buffer.seek(0)
+        buffer = await encode_png(card)
 
         file = discord.File(buffer, filename="race_dice_preview.png")
 

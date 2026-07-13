@@ -17,6 +17,24 @@ FUTURE_LOOKAHEAD_TURNS = 4
 MIN_FUTURE_GAIN_TO_HOLD = 40
 BIG_FUTURE_GAIN_TO_HOLD = 80
 
+# AI level is intentionally separate from race stats.  A higher level makes
+# better choices, while the existing mob level still controls aptitude growth.
+AI_LEVEL_CONFIG = {
+    1: {"max_skills": 1, "min_combo_score": 75, "lane_candidates": 4, "simulation_samples": 0},
+    2: {"max_skills": 1, "min_combo_score": 65, "lane_candidates": 3, "simulation_samples": 0},
+    3: {"max_skills": 2, "min_combo_score": 55, "lane_candidates": 2, "simulation_samples": 0},
+    4: {"max_skills": 2, "min_combo_score": 50, "lane_candidates": 2, "simulation_samples": 12},
+    5: {"max_skills": 2, "min_combo_score": 45, "lane_candidates": 1, "simulation_samples": 24},
+    6: {"max_skills": 3, "min_combo_score": 42, "lane_candidates": 1, "simulation_samples": 40},
+    7: {"max_skills": 3, "min_combo_score": 38, "lane_candidates": 1, "simulation_samples": 60},
+    8: {"max_skills": 3, "min_combo_score": 35, "lane_candidates": 1, "simulation_samples": 80},
+}
+
+
+def get_ai_profile(player: dict) -> dict:
+    level = max(1, min(int(player.get("ai_level", player.get("mob_level", 1)) or 1), 8))
+    return {"level": level, **AI_LEVEL_CONFIG[level]}
+
 def has_position(position_groups, *targets):
     return any(t in position_groups for t in targets)
 
@@ -85,8 +103,7 @@ def decide_mob_target_lane(game, user_id) -> int | None:
     current_front_gaps = _front_gaps_for_lane(player, players, current_lane, user_id=user_id)
     current_likely_blockers = sum(1 for gap in current_front_gaps if gap <= estimated_gain)
 
-    best_lane = current_lane
-    best_score = -10**9
+    lane_scores: list[tuple[int, int]] = []
 
     for target_lane in range(1, 7):
         gold_count = _gold_count_for_lane(player, players, target_lane, user_id=user_id)
@@ -190,11 +207,14 @@ def decide_mob_target_lane(game, user_id) -> int | None:
         elif style in {"Late", "End"} and uphill and lane_shift > 0 and blocker_relief <= 0:
             score -= 10
 
-        if score > best_score:
-            best_score = score
-            best_lane = target_lane
+        lane_scores.append((score, target_lane))
 
-    return best_lane
+    lane_scores.sort(reverse=True)
+    profile = get_ai_profile(player)
+    candidate_count = min(profile["lane_candidates"], len(lane_scores))
+    # Lower levels deliberately pick among good-enough lanes, while high levels
+    # always take the best evaluated lane.
+    return random.choice(lane_scores[:candidate_count])[1]
 
 # =========================================================
 # FUTURE DICE EVALUATION
@@ -219,7 +239,7 @@ def get_current_dice_context(game, user_id):
     max_turn = game.get("max_turn", 20)
     phase = get_phase_from_turn(turn, max_turn)
 
-    score_map = {
+    score_map = game.get("turn_snapshot_scores") or {
         pid: p.get("score", 0)
         for pid, p in game["players"].items()
     }
@@ -344,6 +364,61 @@ def estimate_roll_value(game, user_id):
     return value
 
 
+def _simulate_combo_gain(game, user_id, combo, samples: int) -> float:
+    """Estimate the immediate dice gain of a skill combo without mutating game state."""
+    if samples <= 0:
+        return 0.0
+
+    player = game["players"][user_id]
+    context = get_current_dice_context(game, user_id)
+    rule = context["rule"]
+    base_dice = int(rule.get("d", 1))
+    base_keep = rule.get("kh")
+    extra_dice = extra_keep = floor = cap = flat = 0
+
+    for item in combo:
+        for effect in item["skill"].get("effects", []):
+            effect_type = effect.get("type")
+            value = int(get_effect_value(effect))
+            if effect_type == "add_d":
+                extra_dice += value
+            elif effect_type == "add_kh":
+                extra_keep += value
+            elif effect_type == "add_dkh":
+                extra_dice += value
+                extra_keep += value
+            elif effect_type == "modify_roll_floor":
+                floor += value
+            elif effect_type == "modify_roll_cap":
+                cap += value
+            elif effect_type == "modify_velocity":
+                flat += value
+
+    if not any((extra_dice, extra_keep, floor, cap, flat)):
+        return 0.0
+
+    max_die = max(1, int(player.get("current_max_speed", 1) or 1) + cap)
+    min_die = max(1, int(max_die * 0.25) + floor)
+    max_die = max(max_die, min_die)
+    dice_count = max(1, base_dice + extra_dice)
+    keep_count = None if base_keep is None else min(dice_count, max(0, int(base_keep) + extra_keep))
+    seed = f"{game.get('turn', 1)}:{user_id}:{','.join(sorted(item['skill_id'] for item in combo))}"
+    rng = random.Random(seed)
+
+    base_total = projected_total = 0.0
+    for _ in range(samples):
+        base_rolls = [rng.randint(min_die, max_die) for _ in range(base_dice)]
+        projected_rolls = base_rolls + [rng.randint(min_die, max_die) for _ in range(dice_count - base_dice)]
+        if base_keep is not None:
+            base_total += sum(sorted(base_rolls, reverse=True)[:int(base_keep)])
+            projected_total += sum(sorted(projected_rolls, reverse=True)[:keep_count])
+        else:
+            base_total += sum(base_rolls)
+            projected_total += sum(projected_rolls)
+
+    return (projected_total - base_total) / samples + flat
+
+
 # =========================================================
 # MAIN DECISION
 # =========================================================
@@ -353,8 +428,8 @@ def decide_mob_skill_combo(
     user_id,
     usable_skills,
     *,
-    max_skill_per_turn=3,
-    min_combo_score=45,
+    max_skill_per_turn: int | None = None,
+    min_combo_score: int | None = None,
     debug=False,
 ):
     if debug:
@@ -377,6 +452,11 @@ def decide_mob_skill_combo(
         return []
 
     player = game["players"][user_id]
+    profile = get_ai_profile(player)
+    if max_skill_per_turn is None:
+        max_skill_per_turn = profile["max_skills"]
+    if min_combo_score is None:
+        min_combo_score = profile["min_combo_score"]
     skill_point = player.get("skill_point", player.get("wit_mana", 0))
 
     scored = []
@@ -433,12 +513,19 @@ def decide_mob_skill_combo(
                 continue
 
             combo_score = evaluate_skill_combo_score(game, user_id, combo)
+            simulation_gain = _simulate_combo_gain(
+                game,
+                user_id,
+                combo,
+                profile["simulation_samples"],
+            )
+            combo_score += simulation_gain * 1.5
             ids = [item["skill_id"] for item in combo]
 
             if debug:
                 print(
                     f"[MOB AI] combo={ids} "
-                    f"combo_score={combo_score} "
+                    f"combo_score={combo_score:.1f} simulation_gain={simulation_gain:.1f} "
                     f"total_cost={total_cost}"
                 )
 

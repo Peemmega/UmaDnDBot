@@ -19,8 +19,8 @@ from utils.race.race_dice import (
 )
 
 import math
-from io import BytesIO
 from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
+from utils.image_encoding import encode_png
 
 def build_phase_text(max_turn: int) -> str:
     phase_size = max_turn / 4
@@ -237,9 +237,7 @@ class LobbyView(discord.ui.View):
                     character_image_url=resolve_player_render_image(player),
                 )
 
-                buffer = BytesIO()
-                card.save(buffer, format="PNG")
-                buffer.seek(0)
+                buffer = await encode_png(card)
 
                 file = discord.File(buffer, filename="race_dice_preview.png")
 

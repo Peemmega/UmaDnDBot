@@ -8,6 +8,7 @@ from utils.race.runtime_stamina import format_runtime_stamina
 from utils.race.result_display import format_bonus_display, format_stamina_line
 import aiohttp
 import re
+from functools import lru_cache
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = BASE_DIR / "assets"
@@ -26,6 +27,20 @@ ICON_MAP = {
 }
 
 DEFAULT_IMAGE = BASE_DIR / "assets" / "characters" / "mob_01.png"
+_REMOTE_IMAGE_CACHE: dict[str, Image.Image] = {}
+
+
+@lru_cache(maxsize=64)
+def _load_local_rgba(path: str) -> Image.Image:
+    return Image.open(path).convert("RGBA")
+
+
+@lru_cache(maxsize=8)
+def _font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    try:
+        return ImageFont.truetype(str(FONT_PATH), size)
+    except OSError:
+        return ImageFont.load_default()
 
 async def load_image_url(path_or_url):
     try:
@@ -33,27 +48,35 @@ async def load_image_url(path_or_url):
             raise ValueError("empty image path")
 
         path_or_url = str(path_or_url)
+        cached = _REMOTE_IMAGE_CACHE.get(path_or_url)
+        if cached is not None:
+            return cached.copy()
 
         # local file
         local_path = Path(path_or_url)
         if local_path.exists():
-            return Image.open(local_path).convert("RGBA")
+            image = _load_local_rgba(str(local_path.resolve()))
+            _REMOTE_IMAGE_CACHE[path_or_url] = image
+            return image.copy()
 
         # URL
         if path_or_url.startswith(("http://", "https://")):
-            async with aiohttp.ClientSession() as session:
+            timeout = aiohttp.ClientTimeout(total=8)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.get(path_or_url) as resp:
                     if resp.status != 200:
                         raise ValueError(f"HTTP {resp.status}")
 
                     data = await resp.read()
-                    return Image.open(BytesIO(data)).convert("RGBA")
+                    image = Image.open(BytesIO(data)).convert("RGBA")
+                    _REMOTE_IMAGE_CACHE[path_or_url] = image
+                    return image.copy()
 
         raise ValueError(f"invalid image path: {path_or_url}")
 
     except Exception as e:
         if DEFAULT_IMAGE.exists():
-            return Image.open(DEFAULT_IMAGE).convert("RGBA")
+            return _load_local_rgba(str(DEFAULT_IMAGE.resolve())).copy()
 
         # fallback สุดท้าย: สร้างรูปโปร่งใส กัน crash
         return Image.new("RGBA", (512, 512), (0, 0, 0, 0))
@@ -104,7 +127,7 @@ def draw_text_outline(draw, xy, text, font, fill, outline=(255, 255, 255), width
 
 
 def paste_icon(card: Image.Image, path: Path, pos, size):
-    icon = Image.open(path).convert("RGBA").resize(size, Image.LANCZOS)
+    icon = _load_local_rgba(str(path.resolve())).resize(size, Image.LANCZOS)
     card.paste(icon, pos, icon)
 
 def draw_debug_grid(draw):
@@ -189,16 +212,13 @@ async def create_race_dice_preview(
     path_label: str,
     character_image_url: str,
 ):
-    card = Image.open(BG_PATH).convert("RGBA")
+    card = _load_local_rgba(str(BG_PATH.resolve())).copy()
     draw = ImageDraw.Draw(card)
 
-    try:
-        font_big = ImageFont.truetype(str(FONT_PATH), 58)
-        font_mid = ImageFont.truetype(str(FONT_PATH), 42)
-        font_small = ImageFont.truetype(str(FONT_PATH), 30)
-        font_score = ImageFont.truetype(str(FONT_PATH), 92)
-    except:
-        font_big = font_mid = font_small = font_score = ImageFont.load_default()
+    font_big = _font(58)
+    font_mid = _font(42)
+    font_small = _font(30)
+    font_score = _font(92)
 
     brown = (112, 70, 35)
     green = (105, 178, 45)

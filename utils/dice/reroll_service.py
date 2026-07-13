@@ -6,13 +6,43 @@ from utils.race.race_dice import roll_race_dice
 from utils.race.runtime_stamina import build_runtime_stamina_note, format_runtime_stamina
 from utils.icon_presets import Status_Icon_Type
 
+
+def can_execute_reroll(channel_id: int, user_id: int, expected_turn: int) -> tuple[bool, str]:
+    """Verify that a reroll belongs to the roll that created its UI control."""
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ไม่พบเกมนี้แล้ว"
+    if not game.get("started"):
+        return False, "เกมยังไม่เริ่มหรือจบแล้ว"
+    if game.get("turn") != expected_turn:
+        return False, "ปุ่ม reroll นี้หมดอายุแล้ว"
+
+    player = get_player_in_game(channel_id, user_id)
+    if player is None:
+        return False, "ไม่พบผู้เล่นในเกม"
+    if player.get("last_roll_turn") != expected_turn:
+        return False, "ต้องทอยในเทิร์นนี้ก่อนจึงจะ reroll ได้"
+    if player.get("no_reroll_this_turn", False):
+        return False, "ไม่สามารถ reroll ในเทิร์นนี้ได้"
+    return True, ""
+
+
 async def execute_reroll(
     interaction: discord.Interaction,
     *,
     old_total: int,
+    expected_turn: int,
     minimum_total: int | None = None,
     title_prefix: str = "สุ่มใหม่สำเร็จ",
 ) -> tuple[bool, dict]:
+    allowed, message = can_execute_reroll(
+        interaction.channel_id,
+        interaction.user.id,
+        expected_turn,
+    )
+    if not allowed:
+        return False, {"message": message}
+
     game = get_game(interaction.channel_id)
     if game is None:
         return False, {"message": "ยังไม่มีเกมในห้องนี้"}
@@ -101,6 +131,24 @@ async def execute_reroll(
     )
     if not success:
         return False, {"message": "ไม่สามารถอัปเดตคะแนนใหม่ได้"}
+
+    rule = result.get("rule", {})
+    rule_text = f"{rule.get('d', 0)}d"
+    if rule.get("kh") is not None:
+        rule_text += f" kh{rule['kh']}"
+    game_player["last_roll_log"] = {
+        "phase": result.get("phase"),
+        "distance_color": result.get("distance_color"),
+        "rule": rule_text,
+        "total": result.get("total"),
+        "base_total": result.get("base_total"),
+        "bonus_display": result.get("bonus_display"),
+        "stamina": get_runtime_stamina_snapshot(game_player),
+        "stamina_note": staminaNote or format_runtime_stamina(game_player),
+        "blocked_count": result.get("blocked_count", 0),
+        "blocking_penalty": result.get("blocking_penalty", 0.0),
+        "drafting_active": result.get("drafting_active", False),
+    }
 
     embed = build_run_embed(
         game_player=game_player,
