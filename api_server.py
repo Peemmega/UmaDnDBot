@@ -21,6 +21,10 @@ from utils.database import (
     init_db,
     set_player_profile_image,
     update_player_stat_pool,
+    get_available_trainees,
+    get_trainer_team,
+    create_team_invitation,
+    respond_to_team_invitation,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -195,7 +199,7 @@ def update_player_stats(payload: UpdateStatsPayload):
     return {"success": True, "message": "Stats updated successfully", "player": player}
 
 @app.get("/mailbox/{user_id}")
-def get_mailbox(user_id: str):
+def get_mailbox(user_id: str, profile_type: str = "trainee"):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -206,11 +210,11 @@ def get_mailbox(user_id: str):
     """)
 
     cur.execute("""
-        SELECT id, title, message, reward_type, reward_amount, is_read, created_at
+        SELECT id, title, message, reward_type, reward_amount, is_read, created_at, invitation_id
         FROM mailbox
-        WHERE CAST(user_id AS TEXT) = ?
+        WHERE CAST(user_id AS TEXT) = ? AND profile_type = ?
         ORDER BY id DESC
-    """, (str(user_id),))
+    """, (str(user_id), profile_type))
 
     rows = cur.fetchall()
     conn.commit()
@@ -225,9 +229,48 @@ def get_mailbox(user_id: str):
             "reward_amount": row[4],
             "is_read": bool(row[5]),
             "created_at": row[6],
+            "invitation_id": row[7],
         }
         for row in rows
     ]
+
+
+class TeamInvitePayload(BaseModel):
+    trainer_user_id: str
+    trainee_user_id: str
+
+
+class TeamInviteResponsePayload(BaseModel):
+    trainee_user_id: str
+    accepted: bool
+
+
+@app.get("/trainer/{trainer_user_id}/team")
+def api_get_trainer_team(trainer_user_id: str):
+    members = get_trainer_team(trainer_user_id)
+    return {"members": members, "fans": sum(int(member["fans"] or 0) for member in members)}
+
+
+@app.get("/trainer/{trainer_user_id}/available-trainees")
+def api_get_available_trainees(trainer_user_id: str):
+    return {"trainees": get_available_trainees(trainer_user_id)}
+
+
+@app.post("/trainer/invitations")
+def api_create_team_invitation(payload: TeamInvitePayload):
+    try:
+        return {"invitation_id": create_team_invitation(payload.trainer_user_id, payload.trainee_user_id)}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/trainer/invitations/{invitation_id}/respond")
+def api_respond_team_invitation(invitation_id: int, payload: TeamInviteResponsePayload):
+    try:
+        respond_to_team_invitation(invitation_id, payload.trainee_user_id, payload.accepted)
+        return {"success": True}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/mailbox/{mail_id}/read")

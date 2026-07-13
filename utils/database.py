@@ -138,6 +138,32 @@ def init_db():
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS trainer_teams (
+        trainer_user_id TEXT NOT NULL,
+        trainee_user_id TEXT NOT NULL UNIQUE,
+        joined_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (trainer_user_id, trainee_user_id)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS team_invitations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        trainer_user_id TEXT NOT NULL,
+        trainee_user_id TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        responded_at TEXT
+    )
+    """)
+
+    mailbox_columns = {row["name"] for row in cursor.execute("PRAGMA table_info(mailbox)").fetchall()}
+    if "profile_type" not in mailbox_columns:
+        cursor.execute("ALTER TABLE mailbox ADD COLUMN profile_type TEXT NOT NULL DEFAULT 'trainee'")
+    if "invitation_id" not in mailbox_columns:
+        cursor.execute("ALTER TABLE mailbox ADD COLUMN invitation_id INTEGER")
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS race_rankings (
         stage_key TEXT NOT NULL,
         user_id TEXT NOT NULL,
@@ -256,6 +282,62 @@ def add_mail(conn, user_id, title, message, reward_type, reward_amount):
         INSERT INTO mailbox (user_id, title, message, reward_type, reward_amount)
         VALUES (?, ?, ?, ?, ?)
     """, (str(user_id), title, message, reward_type, reward_amount))
+
+
+def get_available_trainees(trainer_user_id: str) -> list[dict]:
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url, p.fans
+        FROM players p
+        LEFT JOIN trainer_teams t ON t.trainee_user_id = CAST(p.user_id AS TEXT)
+        WHERE p.profile_image_url IS NOT NULL AND TRIM(p.profile_image_url) <> ''
+          AND t.trainee_user_id IS NULL
+          AND CAST(p.user_id AS TEXT) <> ?
+        ORDER BY p.username COLLATE NOCASE
+    """, (str(trainer_user_id),)).fetchall()
+    conn.close()
+    return [{"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"]), "fans": row["fans"]} for row in rows]
+
+
+def get_trainer_team(trainer_user_id: str) -> list[dict]:
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url, p.fans
+        FROM trainer_teams t JOIN players p ON CAST(p.user_id AS TEXT) = t.trainee_user_id
+        WHERE t.trainer_user_id = ? ORDER BY t.joined_at ASC
+    """, (str(trainer_user_id),)).fetchall()
+    conn.close()
+    return [{"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"]), "fans": row["fans"]} for row in rows]
+
+
+def create_team_invitation(trainer_user_id: str, trainee_user_id: str) -> int:
+    with database_connection() as conn:
+        trainee = conn.execute("SELECT username FROM players WHERE CAST(user_id AS TEXT) = ?", (str(trainee_user_id),)).fetchone()
+        trainer = conn.execute("SELECT username FROM players WHERE CAST(user_id AS TEXT) = ?", (str(trainer_user_id),)).fetchone()
+        if not trainee or not trainer:
+            raise ValueError("Profile not found")
+        if conn.execute("SELECT 1 FROM trainer_teams WHERE trainee_user_id = ?", (str(trainee_user_id),)).fetchone():
+            raise ValueError("Trainee already has a trainer")
+        existing = conn.execute("SELECT id FROM team_invitations WHERE trainer_user_id = ? AND trainee_user_id = ? AND status = 'pending'", (str(trainer_user_id), str(trainee_user_id))).fetchone()
+        if existing:
+            raise ValueError("Invitation is already pending")
+        cur = conn.execute("INSERT INTO team_invitations (trainer_user_id, trainee_user_id) VALUES (?, ?)", (str(trainer_user_id), str(trainee_user_id)))
+        invitation_id = cur.lastrowid
+        conn.execute("INSERT INTO mailbox (user_id, profile_type, invitation_id, title, message) VALUES (?, 'trainee', ?, ?, ?)", (str(trainee_user_id), invitation_id, "Team invitation", f"{trainer['username']} invited you to join their team."))
+        return invitation_id
+
+
+def respond_to_team_invitation(invitation_id: int, trainee_user_id: str, accepted: bool) -> None:
+    with database_connection() as conn:
+        invite = conn.execute("SELECT trainer_user_id, trainee_user_id, status FROM team_invitations WHERE id = ?", (invitation_id,)).fetchone()
+        if not invite or invite["trainee_user_id"] != str(trainee_user_id) or invite["status"] != "pending":
+            raise ValueError("Invitation is no longer available")
+        status = "accepted" if accepted else "declined"
+        conn.execute("UPDATE team_invitations SET status = ?, responded_at = CURRENT_TIMESTAMP WHERE id = ?", (status, invitation_id))
+        if accepted:
+            conn.execute("INSERT INTO trainer_teams (trainer_user_id, trainee_user_id) VALUES (?, ?)", (invite["trainer_user_id"], str(trainee_user_id)))
+        trainee_name = conn.execute("SELECT username FROM players WHERE CAST(user_id AS TEXT) = ?", (str(trainee_user_id),)).fetchone()["username"]
+        conn.execute("INSERT INTO mailbox (user_id, profile_type, title, message) VALUES (?, 'trainer', ?, ?)", (invite["trainer_user_id"], "Team invitation response", f"{trainee_name} {'joined your team' if accepted else 'declined your invitation'}."))
 
 def reset_all_zone_data():
     conn = get_connection()
