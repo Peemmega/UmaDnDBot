@@ -28,6 +28,8 @@ from utils.database import (
     respond_to_team_invitation,
     save_profile_preset,
     list_uploaded_profile_summaries,
+    get_account_role,
+    select_account_role,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -107,6 +109,30 @@ def api_get_player(user_id: str, username: str = "Unknown"):
         player = get_player(user_id)
 
     return player
+
+
+class AccountRolePayload(BaseModel):
+    user_id: str
+    username: str
+    role: str
+
+
+@app.get("/account/{user_id}/role")
+def api_get_account_role(user_id: str):
+    return {"role": get_account_role(user_id)}
+
+
+@app.post("/account/role")
+def api_select_account_role(payload: AccountRolePayload):
+    try:
+        role = select_account_role(payload.user_id, payload.username, payload.role)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "role": role,
+        "player": get_player(payload.user_id) if role == "trainee" else None,
+    }
 
 
 @app.get("/api/players/summary")

@@ -159,6 +159,14 @@ def init_db():
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS account_roles (
+        user_id TEXT PRIMARY KEY,
+        role TEXT NOT NULL CHECK(role IN ('trainee', 'trainer', 'npc')),
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS team_invitations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         trainer_user_id TEXT NOT NULL,
@@ -370,6 +378,50 @@ def save_profile_preset(user_id: str, profile_type: str, name: str, image_url: s
             ON CONFLICT(user_id, profile_type) DO UPDATE SET
               name = excluded.name, image_url = excluded.image_url, updated_at = CURRENT_TIMESTAMP
         """, (str(user_id), profile_type, name.strip() or profile_type.title(), image_url or ""))
+
+
+VALID_ACCOUNT_ROLES = {"trainee", "trainer", "npc"}
+
+
+def get_account_role(user_id: str) -> Optional[str]:
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT role FROM account_roles WHERE user_id = ?",
+        (str(user_id),),
+    ).fetchone()
+    conn.close()
+    if row:
+        return row["role"]
+
+    # Accounts created before role selection existed are Trainee accounts.
+    return "trainee" if get_player(user_id) else None
+
+
+def select_account_role(user_id: str, username: str, role: str) -> str:
+    """Set an account's initial role and create only that role's data."""
+    normalized_role = role.strip().lower()
+    if normalized_role not in VALID_ACCOUNT_ROLES:
+        raise ValueError("Role must be trainee, trainer, or npc")
+
+    existing_role = get_account_role(user_id)
+    if existing_role:
+        if existing_role != normalized_role:
+            raise ValueError("This account already has a role")
+        return existing_role
+
+    display_name = username.strip() or normalized_role.title()
+    if normalized_role == "trainee":
+        ensure_player(user_id, display_name)
+    else:
+        save_profile_preset(user_id, normalized_role, display_name, "")
+
+    with database_connection() as conn:
+        conn.execute(
+            "INSERT INTO account_roles (user_id, role) VALUES (?, ?)",
+            (str(user_id), normalized_role),
+        )
+
+    return normalized_role
 
 
 def list_uploaded_profile_summaries() -> list[dict]:
