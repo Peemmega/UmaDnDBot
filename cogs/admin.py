@@ -9,6 +9,7 @@ from utils.database import (
     add_player_stats_point,
     add_player_skill_point,
     clear_race_rankings,
+    reset_all_data,
 )
 from utils.race.race_presets import RACE_PRESET
 from utils.channel_config import COMMAND_LOG_CHANNEL_ID
@@ -173,6 +174,54 @@ class Admin(commands.Cog):
             action_name="clear_race_ranking",
             result_text=result_text,
             color=discord.Color.green(),
+        )
+
+    @commands.command(name="resetall")
+    async def reset_all(self, ctx: commands.Context, confirmation: str = ""):
+        """Permanently clear all persisted player and gameplay data."""
+        if not self.is_admin_user(ctx.author.id):
+            await self.silent_delete(ctx.message)
+            await self.send_log_embed(
+                ctx,
+                action_name="resetall",
+                result_text="Permission denied",
+                color=discord.Color.red(),
+            )
+            return
+
+        await self.silent_delete(ctx.message)
+
+        if confirmation != "CONFIRM":
+            result_text = "This permanently deletes all player data. Run `!resetall CONFIRM` to continue."
+            await self.send_result_embed(
+                ctx,
+                title="Reset All Cancelled",
+                description=result_text,
+                color=discord.Color.orange(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="resetall",
+                result_text="Cancelled: confirmation text was not supplied.",
+                color=discord.Color.orange(),
+            )
+            return
+
+        deleted_counts = reset_all_data()
+        deleted_total = sum(deleted_counts.values())
+        result_text = f"Permanently deleted {deleted_total} record(s) from all player and gameplay data."
+
+        await self.send_result_embed(
+            ctx,
+            title="Reset All Complete",
+            description=result_text,
+            color=discord.Color.red(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="resetall",
+            result_text=result_text,
+            color=discord.Color.red(),
         )
 
     @commands.command(name="add_att")

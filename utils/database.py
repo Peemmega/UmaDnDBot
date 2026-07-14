@@ -253,6 +253,27 @@ def clear_race_rankings(stage_key: str | None = None) -> int:
     return deleted_count
 
 
+def reset_all_data() -> dict[str, int]:
+    """Remove every persisted player and gameplay record without dropping the schema."""
+    tables = (
+        "mailbox",
+        "trainer_teams",
+        "profile_presets",
+        "team_invitations",
+        "race_rankings",
+        "players",
+    )
+    deleted_counts: dict[str, int] = {}
+
+    with database_connection() as conn:
+        cursor = conn.cursor()
+        for table_name in tables:
+            cursor.execute(f"DELETE FROM {table_name}")
+            deleted_counts[table_name] = cursor.rowcount
+
+    return deleted_counts
+
+
 def get_race_rankings(stage_key: str, limit: int = 10) -> list[dict]:
     conn = get_connection()
     cursor = conn.cursor()
