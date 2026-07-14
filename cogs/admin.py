@@ -94,6 +94,45 @@ class Admin(commands.Cog):
         except Exception:
             pass
 
+    @commands.command(name="help")
+    async def admin_help(self, ctx: commands.Context):
+        if not self.is_admin_user(ctx.author.id):
+            await self.silent_delete(ctx.message)
+            await self.send_log_embed(
+                ctx,
+                action_name="help",
+                result_text="Permission denied",
+                color=discord.Color.red(),
+            )
+            return
+
+        await self.silent_delete(ctx.message)
+        embed = discord.Embed(
+            title="Admin Commands",
+            description="Available only to configured bot administrators.",
+            color=discord.Color.blurple(),
+        )
+        embed.add_field(
+            name="Data management",
+            value=(
+                "`!resetall CONFIRM` - Permanently delete all player and gameplay data.\n"
+                "`!resetzoneall` - Reset every player's Zone Build and Zone Points.\n"
+                "`!clear_race_ranking [stage_key|all]` - Clear race rankings."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Player management",
+            value=(
+                "`!add_att <aptitude> [@member]`\n"
+                "`!set_all_att <1-8> [@member]`\n"
+                "`!add_stats_pt <amount> [@member]`\n"
+                "`!add_skill_pt <amount> [@member]`"
+            ),
+            inline=False,
+        )
+        await ctx.send(embed=embed)
+
     @commands.command(name="resetzoneall")
     async def reset_zone_all(self, ctx: commands.Context):
         if not self.is_admin_user(ctx.author.id):
