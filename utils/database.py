@@ -435,13 +435,20 @@ def create_team_invitation(trainer_user_id: str, trainee_user_id: str) -> int:
     with database_connection() as conn:
         trainee = conn.execute("SELECT username FROM players WHERE CAST(user_id AS TEXT) = ?", (str(trainee_user_id),)).fetchone()
         trainer = conn.execute("""
-            SELECT COALESCE(NULLIF(preset.name, ''), player.username) AS username
-            FROM players player
-            LEFT JOIN profile_presets preset
-              ON preset.user_id = CAST(player.user_id AS TEXT) AND preset.profile_type = 'trainer'
-            WHERE CAST(player.user_id AS TEXT) = ?
-        """, (str(trainer_user_id),)).fetchone()
-        if not trainee or not trainer:
+            SELECT COALESCE(
+                (
+                    SELECT NULLIF(name, '')
+                    FROM profile_presets
+                    WHERE user_id = ? AND profile_type = 'trainer'
+                ),
+                (
+                    SELECT username
+                    FROM players
+                    WHERE CAST(user_id AS TEXT) = ?
+                )
+            ) AS username
+        """, (str(trainer_user_id), str(trainer_user_id))).fetchone()
+        if not trainee or not trainer or not trainer["username"]:
             raise ValueError("Profile not found")
         if conn.execute("SELECT 1 FROM trainer_teams WHERE trainee_user_id = ?", (str(trainee_user_id),)).fetchone():
             raise ValueError("Trainee already has a trainer")
