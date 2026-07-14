@@ -390,11 +390,7 @@ def get_account_role(user_id: str) -> Optional[str]:
         (str(user_id),),
     ).fetchone()
     conn.close()
-    if row:
-        return row["role"]
-
-    # Accounts created before role selection existed are Trainee accounts.
-    return "trainee" if get_player(user_id) else None
+    return row["role"] if row else None
 
 
 def select_account_role(user_id: str, username: str, role: str) -> str:
