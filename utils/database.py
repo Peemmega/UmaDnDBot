@@ -269,6 +269,7 @@ def reset_all_data() -> dict[str, int]:
         "profile_presets",
         "team_invitations",
         "race_rankings",
+        "account_roles",
         "players",
     )
     deleted_counts: dict[str, int] = {}
