@@ -763,6 +763,7 @@ def start_game(channel_id: int):
                 "slot_1": None,
                 "slot_2": None,
                 "slot_3": None,
+                "slot_4": None,
             }
             player["zone_left"] = 1
 
@@ -2465,6 +2466,13 @@ def process_mob_turn(channel_id: int, user_id: str):
 
     if not player.get("is_mob"):
         return False, {"message": "ผู้เล่นนี้ไม่ใช่ mob"}
+
+    # This function can be reached from both the turn-start flow and the
+    # after-player-roll flow.  Discord sends await between mob results, so a
+    # player can roll while the turn-start loop is still in progress.  Make
+    # the mob turn idempotent to prevent a second score roll in that case.
+    if player.get("last_roll_turn") == game.get("turn"):
+        return False, {"message": "Mob already rolled this turn", "already_rolled": True}
 
     if _supports_lane_system(game):
         target_lane = decide_mob_target_lane(game, user_id)
