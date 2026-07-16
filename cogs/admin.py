@@ -9,6 +9,7 @@ from utils.database import (
     add_player_stats_point,
     add_player_skill_point,
     clear_race_rankings,
+    clear_legacy_profile_data,
     reset_all_data,
 )
 from utils.race.race_presets import RACE_PRESET
@@ -117,7 +118,8 @@ class Admin(commands.Cog):
             value=(
                 "`!resetall CONFIRM` - Permanently delete all player and gameplay data.\n"
                 "`!resetzoneall` - Reset every player's Zone Build and Zone Points.\n"
-                "`!clear_race_ranking [stage_key|all]` - Clear race rankings."
+                "`!clear_race_ranking [stage_key|all]` - Clear race rankings.\n"
+                "`!clear_legacy_profile @member CONFIRM` - Remove old role/profile records for one member."
             ),
             inline=False,
         )
@@ -261,6 +263,67 @@ class Admin(commands.Cog):
             action_name="resetall",
             result_text=result_text,
             color=discord.Color.red(),
+        )
+
+    @commands.command(name="clear_legacy_profile", aliases=["clearprofile", "resetprofile"])
+    async def clear_legacy_profile(
+        self,
+        ctx: commands.Context,
+        member: discord.Member,
+        confirmation: str = "",
+    ):
+        """Remove old role/profile records for one member without deleting gameplay data."""
+        if not self.is_admin_user(ctx.author.id):
+            await self.silent_delete(ctx.message)
+            await self.send_log_embed(
+                ctx,
+                action_name="clear_legacy_profile",
+                result_text="Permission denied",
+                target=member,
+                color=discord.Color.red(),
+            )
+            return
+
+        await self.silent_delete(ctx.message)
+
+        if confirmation != "CONFIRM":
+            result_text = (
+                "This removes the member's old role/profile records but keeps player and gameplay data. "
+                "Run `!clear_legacy_profile @member CONFIRM` to continue."
+            )
+            await self.send_result_embed(
+                ctx,
+                title="Clear Legacy Profile Cancelled",
+                description=result_text,
+                color=discord.Color.orange(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="clear_legacy_profile",
+                result_text="Cancelled: confirmation text was not supplied.",
+                target=member,
+                color=discord.Color.orange(),
+            )
+            return
+
+        deleted_counts = clear_legacy_profile_data(member.id)
+        deleted_total = sum(deleted_counts.values())
+        result_text = (
+            f"Removed {deleted_total} old role/profile record(s) for {member.display_name}. "
+            "Their player and gameplay data were kept."
+        )
+        await self.send_result_embed(
+            ctx,
+            title="Legacy Profile Cleared",
+            description=f"{member.mention}\n{result_text}",
+            color=discord.Color.green(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="clear_legacy_profile",
+            result_text=result_text,
+            target=member,
+            color=discord.Color.green(),
         )
 
     @commands.command(name="add_att")

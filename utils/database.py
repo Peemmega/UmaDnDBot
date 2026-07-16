@@ -261,6 +261,23 @@ def clear_race_rankings(stage_key: str | None = None) -> int:
     return deleted_count
 
 
+def clear_legacy_profile_data(user_id: str) -> dict[str, int]:
+    """Remove deprecated role/profile records so the account can choose a new role.
+
+    Player, team, mailbox, and race data are deliberately retained.
+    """
+    target_user_id = str(user_id)
+    deleted_counts: dict[str, int] = {}
+
+    with database_connection() as conn:
+        cursor = conn.cursor()
+        for table_name in ("profile_presets", "account_roles"):
+            cursor.execute(f"DELETE FROM {table_name} WHERE user_id = ?", (target_user_id,))
+            deleted_counts[table_name] = cursor.rowcount
+
+    return deleted_counts
+
+
 def reset_all_data() -> dict[str, int]:
     """Remove every persisted player and gameplay record without dropping the schema."""
     tables = (
