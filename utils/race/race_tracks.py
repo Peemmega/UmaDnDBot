@@ -10,17 +10,17 @@ PATH_TYPE = {
 }
 
 PATH_TYPE_TEXT = {
-    1: "à¸—à¸²à¸‡à¸•à¸£à¸‡",
-    2: "à¸—à¸²à¸‡à¹‚à¸„à¹‰à¸‡",
-    3: "à¹€à¸™à¸´à¸™à¸‚à¸¶à¹‰à¸™",
-    4: "à¹€à¸™à¸´à¸™à¸¥à¸‡",
+    1: "ทางตรง",
+    2: "ทางโค้ง",
+    3: "เนินขึ้น",
+    4: "เนินลง",
 }
 
 PATH_TYPE_ICON = {
-    1: "âž¡ï¸",  # à¸—à¸²à¸‡à¸•à¸£à¸‡
-    2: "â¤µï¸",  # à¹‚à¸„à¹‰à¸‡
-    3: "â†—ï¸",  # à¹€à¸™à¸´à¸™à¸‚à¸¶à¹‰à¸™
-    4: "â†˜ï¸",  # à¹€à¸™à¸´à¸™à¸¥à¸‡
+    1: "➡️",  # ทางตรง
+    2: "⤵️",  # ทางโค้ง
+    3: "↗️",  # เนินขึ้น
+    4: "↘️",  # เนินลง
 }
 
 WEB_RACE_FINISH_DISTANCE_BY_TYPE = {
@@ -51,39 +51,43 @@ def get_current_path_type(game: dict) -> int:
     index = max(0, min(turn - 1, len(path) - 1))
     return path[index]
 
+
 def build_path_effect_text(path_type: int) -> str:
     if path_type == 1:
-        return f"à¸«à¸±à¸ 1 {Status_Icon_Type['STA']}"
+        return f"หัก 1 {Status_Icon_Type['STA']}"
     if path_type == 2:
-        return f"à¸«à¸±à¸ 1 {Status_Icon_Type['STA']} â€¢ à¹à¸•à¹‰à¸¡à¸ªà¸¹à¸‡à¸ªà¸¸à¸”à¸¥à¸¹à¸à¹€à¸•à¹‹à¸²à¸¥à¸”à¸¥à¸‡ 5"
+        return f"หัก 1 {Status_Icon_Type['STA']} • แต้มสูงสุดลูกเต๋าลดลง 5"
     if path_type == 3:
-        return f"à¸«à¸±à¸ 2 {Status_Icon_Type['STA']} â€¢ {Status_Icon_Type['SPD']} à¹€à¸«à¸¥à¸·à¸­à¸„à¸£à¸¶à¹ˆà¸‡à¸«à¸™à¸¶à¹ˆà¸‡ â€¢ {Status_Icon_Type['POW']} à¹‚à¸šà¸™à¸±à¸ªà¸£à¸§à¸¡ x3"
+        return f"หัก 2 {Status_Icon_Type['STA']} • {Status_Icon_Type['SPD']} เหลือครึ่งหนึ่ง • {Status_Icon_Type['POW']} โบนัสรวม x3"
     if path_type == 4:
-        return f"à¹„à¸¡à¹ˆà¹€à¸ªà¸µà¸¢ {Status_Icon_Type['STA']} â€¢ à¹€à¸žà¸´à¹ˆà¸¡à¹à¸•à¹‰à¸¡à¸ªà¸¹à¸‡à¸ªà¸¸à¸”à¸¥à¸¹à¸à¹€à¸•à¹‹à¸²à¸•à¸²à¸¡à¸„à¹ˆà¸² {Status_Icon_Type['WIT']}"
+        return f"ไม่เสีย {Status_Icon_Type['STA']} • เพิ่มแต้มสูงสุดลูกเต๋าตามค่า {Status_Icon_Type['WIT']}"
     return "-"
+
 
 def build_track_progress_text(path: list[int], current_turn: int) -> str:
     parts = []
 
     for i, path_type in enumerate(path, start=1):
-        icon = PATH_TYPE_ICON.get(path_type, "âž¡ï¸")
+        icon = PATH_TYPE_ICON.get(path_type, "➡️")
 
         if i == current_turn:
-            parts.append(f"ã€{icon}ã€‘")
+            parts.append(f"【{icon}】")
         else:
             parts.append(icon)
 
     return " ".join(parts)
 
+
 def build_current_track_text(path: list[int], current_turn: int) -> str:
     if not path:
-        return "à¹„à¸¡à¹ˆà¸žà¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ªà¸™à¸²à¸¡"
+        return "ไม่พบข้อมูลสนาม"
 
     current_turn = max(1, min(current_turn, len(path)))
     path_type = path[current_turn - 1]
-    path_label = PATH_TYPE_TEXT.get(path_type, "à¸—à¸²à¸‡à¸•à¸£à¸‡")
+    path_label = PATH_TYPE_TEXT.get(path_type, "ทางตรง")
 
-    return f"à¸•à¸­à¸™à¸™à¸µà¹‰à¸­à¸¢à¸¹à¹ˆà¸Šà¹ˆà¸§à¸‡à¸—à¸µà¹ˆ {current_turn}/{len(path)} : {path_label}"
+    return f"ตอนนี้อยู่ช่วงที่ {current_turn}/{len(path)} : {path_label}"
+
 
 def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dict:
     effect = {
@@ -94,35 +98,36 @@ def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dic
         "power_total_multiplier": 1.0,
         "extra_max_from_wit": 0,
         "extra_floor_from_wit": 0,
-        "label": PATH_TYPE_TEXT.get(path_type, "à¸—à¸²à¸‡à¸•à¸£à¸‡"),
+        "label": PATH_TYPE_TEXT.get(path_type, "ทางตรง"),
     }
 
-    if path_type == 1:  # à¸—à¸²à¸‡à¸•à¸£à¸‡
+    if path_type == 1:  # ทางตรง
         effect["stamina_cost"] = 100
 
-    elif path_type == 2:  # à¸—à¸²à¸‡à¹‚à¸„à¹‰à¸‡
+    elif path_type == 2:  # ทางโค้ง
         effect["stamina_cost"] = 100
         effect["reduce_dice_value"] = 5
         effect["extra_max_from_wit"] = player_stat.get("wit", 0)
         effect["extra_floor_from_wit"] = player_stat.get("wit", 0)
 
-    elif path_type == 3:  # à¹€à¸™à¸´à¸™à¸‚à¸¶à¹‰à¸™
+    elif path_type == 3:  # เนินขึ้น
         effect["stamina_cost"] = 200
         effect["power_total_multiplier"] = 3.0
-        if (not game_player.get("debuffPower")):
+        if not game_player.get("debuffPower"):
             game_player["debuffPower"] = True
             game_player["current_max_speed"] *= 0.95
-        
 
-    elif path_type == 4:  # à¹€à¸™à¸´à¸™à¸¥à¸‡
+    elif path_type == 4:  # เนินลง
         effect["stamina_cost"] = 0
         effect["extra_max_from_wit"] = player_stat.get("wit", 0) * 3
         effect["extra_floor_from_wit"] = player_stat.get("wit", 0) * 3
 
     return effect
 
+
 def render_path(path: list[int]) -> str:
-    return "".join(PATH_TYPE_ICON.get(x, "â¬œ") for x in path)
+    return "".join(PATH_TYPE_ICON.get(x, "⬜") for x in path)
+
 
 RACE_SCHEDULE = [
     {
