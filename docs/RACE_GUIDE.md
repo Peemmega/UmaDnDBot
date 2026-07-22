@@ -162,10 +162,10 @@ Score ที่ได้จาก Run คือผลเต๋าหลังโ
 
 | Rank | G | F | E | D | C | B | A | S |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ตัวคูณ | 0.90 | 0.95 | 1.00 | 1.05 | 1.10 | 1.15 | 1.20 | 1.25 |
+| ตัวคูณ | 1.00 | 1.05 | 1.10 | 1.15 | 1.20 | 1.25 | 1.30 | 1.35 |
 
 - Effective Speed = `round(Speed × Distance modifier)`
-- Effective Power = `round(Power × Track modifier)`
+- Track acceleration = `(0.3 + 0.1 × Power) × Track modifier` per turn
 - Distance bonus to Run total = `round(subtotal × Distance aptitude %)`
 - Wit gain = `round((10 + 2 × Wit) × Style modifier)`
 - Wit Reroll requirement = `round((25 × Wit) × Style modifier)`

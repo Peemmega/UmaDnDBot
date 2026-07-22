@@ -11,7 +11,7 @@ from utils.race.web_timing_config import (
     MAX_WEB_TIMING_SPEED,
     TIMING_RESULT_MULTIPLIERS,
     WEB_TIMING_BASE_ACCELERATION,
-    WEB_TIMING_POWER_ACCELERATION_MULTIPLIER_PER_POINT,
+    WEB_TIMING_POWER_ACCELERATION_PER_POINT,
     WEB_TIMING_TEMPO_CONFIG,
     WEB_TIMING_TEMPO_TABLE,
     WEB_TIMING_ZONE_EFFECT,
@@ -50,12 +50,17 @@ def initialize_web_timing_player(player: dict, finish_distance: int, now: float 
     style_rule = MAX_SPEED_PHASE.get(style, MAX_SPEED_PHASE["Pace"])
     effective_stats = player.get("effective_race_stats") or {}
     speed_modifier = float(effective_stats.get("distance_modifier", 1.0))
-    effective_power = float(effective_stats.get("effective_power", (player.get("race_profile") or {}).get("power", 1)))
+    race_profile = player.get("race_profile") or {}
+    base_power = float(effective_stats.get("base_power", race_profile.get("power", 1)))
+    track_modifier = float(effective_stats.get("track_modifier", 1.0))
     player["web_timing_current_speed"] = max(0.0, float(style_rule["start"]) * speed_modifier)
-    player["web_timing_base_acceleration"] = max(MIN_WEB_TIMING_ACCELERATION, WEB_TIMING_BASE_ACCELERATION)
+    player["web_timing_base_acceleration"] = max(
+        MIN_WEB_TIMING_ACCELERATION,
+        WEB_TIMING_BASE_ACCELERATION + (WEB_TIMING_POWER_ACCELERATION_PER_POINT * base_power),
+    )
     player["web_timing_power_acceleration_multiplier"] = max(
         0.0,
-        1.0 + (WEB_TIMING_POWER_ACCELERATION_MULTIPLIER_PER_POINT * effective_power),
+        track_modifier,
     )
     player["web_timing_speed_cap"] = max(0.0, MAX_WEB_TIMING_SPEED * speed_modifier)
     player["web_timing_speed_updated_at"] = now

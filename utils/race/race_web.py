@@ -1069,7 +1069,9 @@ def _increase_web_timing_speed(player: dict, finish_distance: int) -> None:
     race_profile = player.get("race_profile") or {}
     effective_stats = player.get("effective_race_stats") or {}
     speed_cap = float(style_rule[phase_cap_key]) + float(effective_stats.get("effective_speed", race_profile.get("speed", 0)))
-    acceleration = 0.3 + (0.1 * float(effective_stats.get("effective_power", race_profile.get("power", 1))))
+    base_power = float(effective_stats.get("base_power", race_profile.get("power", 1)))
+    track_modifier = float(effective_stats.get("track_modifier", 1.0))
+    acceleration = (0.3 + (0.1 * base_power)) * track_modifier
     player["current_max_speed"] = min(speed_cap, float(player.get("current_max_speed", 0)) + acceleration)
 
 
