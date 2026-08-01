@@ -69,8 +69,8 @@ from utils.profile_images import resolve_player_render_image
 
 WEB_ROOM_PREFIX = "web_race_"
 DEFAULT_STAGE_KEY = "Debut"
-CLASSIC_BOT_START_DELAY_SECONDS = 2
-CLASSIC_BOT_RUN_INTERVAL_SECONDS = 2
+CLASSIC_BOT_START_DELAY_SECONDS = 1
+CLASSIC_BOT_RUN_INTERVAL_SECONDS = 1
 
 
 class RaceWebManager:
