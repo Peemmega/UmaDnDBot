@@ -144,6 +144,11 @@ def serialize_player(
         "skills": skills,
         "last_roll": player.get("last_roll_log"),
         "latest_timing_result": player.get("web_latest_timing_result"),
+        # Keep the client-side Gold indicator on the same rules as the race engine.
+        "gold_range_bonus_this_turn": player.get("gold_range_bonus_this_turn", 0),
+        "enemy_gold_range_penalty_next_turn": player.get("enemy_gold_range_penalty_next_turn", 0),
+        "gold_lane_bonus_this_turn": player.get("gold_lane_bonus_this_turn", 0),
+        "enemy_gold_lane_penalty_next_turn": player.get("enemy_gold_lane_penalty_next_turn", 0),
         "buffs": {
             "flat": player.get("next_roll_flat_bonus", 0),
             "dice": player.get("next_roll_add_d", 0),
