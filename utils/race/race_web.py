@@ -69,12 +69,15 @@ from utils.profile_images import resolve_player_render_image
 
 WEB_ROOM_PREFIX = "web_race_"
 DEFAULT_STAGE_KEY = "Debut"
+CLASSIC_BOT_START_DELAY_SECONDS = 2
+CLASSIC_BOT_RUN_INTERVAL_SECONDS = 2
 
 
 class RaceWebManager:
     def __init__(self) -> None:
         self.connections: dict[str, set[WebSocket]] = {}
         self.web_timing_bot_tasks: dict[str, asyncio.Task] = {}
+        self.classic_bot_tasks: dict[str, asyncio.Task] = {}
         self.preview_png_cache: dict[tuple[str, str, int], bytes] = {}
         self.preview_webp_cache: dict[tuple[str, str, int], bytes] = {}
 
@@ -347,8 +350,7 @@ class RaceWebManager:
             self._start_web_timing_bot_loop(room_id)
         self._log(game, "Race started")
         if game["race_mode"] != "web_timing":
-            self._process_mobs(room_id)
-            self._advance_if_ready(room_id, require_confirmation=True)
+            self._start_classic_bot_loop(room_id)
         return serialize_room(self._get_room(room_id), room_id, str(user_id))
 
     def run(self, room_id: str, user_id: str) -> dict:
@@ -637,6 +639,71 @@ class RaceWebManager:
             else:
                 self._log(game, f"Bot turn failed: {payload.get('message', 'unknown error')}")
 
+    def _process_next_mob(self, room_id: str, turn: int) -> bool:
+        game = self._get_room(room_id)
+        if not game.get("started") or game.get("ended") or game.get("turn") != turn:
+            return False
+
+        for player_id, player in list(game.get("players", {}).items()):
+            if not player.get("is_mob") or player.get("last_roll_turn") == turn:
+                continue
+
+            success, payload = process_mob_turn(room_id, player_id)
+            if success:
+                result = payload.get("result", {})
+                self._log(
+                    game,
+                    f"{player.get('display_name') or player.get('username') or player_id} auto ran +{result.get('total', 0)}",
+                    {
+                        "player_id": str(player_id),
+                        "result": result,
+                        "used_skill_ids": payload.get("used_skill_ids", []),
+                        "roll_summary": _roll_summary_payload(payload),
+                    },
+                )
+                player["web_last_roll_result"] = result
+                self._store_roll_preview_context(player, payload)
+            else:
+                self._log(game, f"Bot turn failed: {payload.get('message', 'unknown error')}")
+            return True
+
+        return False
+
+    def _start_classic_bot_loop(self, room_id: str) -> None:
+        game = self._get_room(room_id)
+        if (
+            game.get("race_mode") == "web_timing"
+            or not game.get("started")
+            or game.get("ended")
+            or not any(player.get("is_mob") for player in game.get("players", {}).values())
+        ):
+            return
+        existing_task = self.classic_bot_tasks.get(room_id)
+        if existing_task and not existing_task.done():
+            return
+        self.classic_bot_tasks[room_id] = asyncio.create_task(
+            self._run_classic_bot_loop(room_id, int(game.get("turn", 0)))
+        )
+
+    async def _run_classic_bot_loop(self, room_id: str, turn: int) -> None:
+        try:
+            await asyncio.sleep(CLASSIC_BOT_START_DELAY_SECONDS)
+            while self._process_next_mob(room_id, turn):
+                await self.broadcast(room_id)
+                await asyncio.sleep(CLASSIC_BOT_RUN_INTERVAL_SECONDS)
+
+            game = self._get_room(room_id)
+            if game.get("started") and not game.get("ended") and game.get("turn") == turn:
+                self.classic_bot_tasks.pop(room_id, None)
+                self._advance_if_ready(room_id, require_confirmation=True)
+                await self.broadcast(room_id)
+        except (ValueError, asyncio.CancelledError):
+            return
+        finally:
+            current_task = self.classic_bot_tasks.get(room_id)
+            if current_task is asyncio.current_task():
+                self.classic_bot_tasks.pop(room_id, None)
+
     def _advance_if_ready(self, room_id: str, require_confirmation: bool = True) -> None:
         game = self._get_room(room_id)
         guard = 0
@@ -672,7 +739,9 @@ class RaceWebManager:
 
             next_turn(room_id)
             self._log(game, f"Turn {game.get('turn')} started | {self._build_lane_order_summary(game)}")
-            self._process_mobs(room_id)
+            if any(player.get("is_mob") for player in game.get("players", {}).values()):
+                self._start_classic_bot_loop(room_id)
+                break
             game = self._get_room(room_id)
 
     def _initialize_web_timing_race(self, game: dict) -> None:
