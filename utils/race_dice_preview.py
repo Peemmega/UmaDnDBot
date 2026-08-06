@@ -31,7 +31,7 @@ _REMOTE_IMAGE_CACHE: dict[str, Image.Image] = {}
 
 
 @lru_cache(maxsize=64)
-def _load_local_rgba(path: str) -> Image.Image:
+def _load_local_rgba(path: str, modified_at_ns: int = 0) -> Image.Image:
     return Image.open(path).convert("RGBA")
 
 
@@ -52,11 +52,19 @@ async def load_image_url(path_or_url):
         if cached is not None:
             return cached.copy()
 
-        # local file
+        # Local profile uploads keep a stable filename and are overwritten on
+        # update.  Include the file modification time in the cache key so a
+        # newly uploaded profile is rendered immediately without restarting.
         local_path = Path(path_or_url)
         if local_path.exists():
-            image = _load_local_rgba(str(local_path.resolve()))
-            _REMOTE_IMAGE_CACHE[path_or_url] = image
+            stat = local_path.stat()
+            cache_key = f"{local_path.resolve()}:{stat.st_mtime_ns}"
+            cached = _REMOTE_IMAGE_CACHE.get(cache_key)
+            if cached is not None:
+                return cached.copy()
+
+            image = _load_local_rgba(str(local_path.resolve()), stat.st_mtime_ns)
+            _REMOTE_IMAGE_CACHE[cache_key] = image
             return image.copy()
 
         # URL
