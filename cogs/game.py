@@ -396,6 +396,7 @@ class GameCog(commands.GroupCog, name="game"):
 
                 ranked_players = get_ranked_players(interaction.channel_id)
                 phase = get_phase_from_turn(game["turn"], game["max_turn"])
+                track_preview = build_track_progress_text(game["path"], game["turn"])
 
                 rank_lines = []
                 for index, (user_id, info) in enumerate(ranked_players, start=1):
@@ -420,6 +421,11 @@ class GameCog(commands.GroupCog, name="game"):
                     description=(
                         f"อันดับคะแนน:🏆\n" + "\n".join(rank_lines)
                     )
+                )
+                confirm_embed.add_field(
+                    name="🗺️ เส้นทางทั้งสนาม",
+                    value=track_preview,
+                    inline=False,
                 )
                 confirm_embed.set_footer(text="ทุกคนต้องกดยืนยันก่อนจะไปเทิร์นถัดไป")
                 confirm_embed.add_field(
