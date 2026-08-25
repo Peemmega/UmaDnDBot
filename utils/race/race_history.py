@@ -86,9 +86,28 @@ def _participant_identity(player_id, player: dict) -> dict:
 
 def _participant_snapshot(player: dict) -> dict:
     profile = copy.deepcopy(player.get("race_profile") or {})
+    if not profile:
+        profile = {
+            key: player.get(key)
+            for key in (
+                "speed", "stamina", "power", "gut", "wit",
+                "turf", "dirt", "sprint", "mile", "medium", "long",
+                "front", "pace", "late", "end_style",
+            )
+            if player.get(key) is not None
+        }
     effective = copy.deepcopy(player.get("effective_race_stats") or {})
     skills = player.get("skills") or {}
-    selected_skills = [skill for skill in skills.values() if skill]
+    selected_skills = []
+    for skill in skills.values():
+        if not skill:
+            continue
+        if isinstance(skill, str):
+            selected_skills.append({"id": skill, "name": skill})
+        elif isinstance(skill, dict):
+            selected_skills.append(copy.deepcopy(skill))
+        else:
+            selected_skills.append({"id": str(skill), "name": str(skill)})
     return {
         "display_name": player.get("display_name") or player.get("username"),
         "base_stats": {

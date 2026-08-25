@@ -1069,6 +1069,15 @@ def queue_player_lane_change(channel_id: int, user_id: int, target_lane: int):
     _ensure_lane_state(player)
     lane = clamp_lane(target_lane)
     player["pending_lane"] = lane
+    record_race_action(
+        game,
+        user_id,
+        "lane_change_queued",
+        {
+            "from_lane": player.get("current_lane"),
+            "to_lane": lane,
+        },
+    )
     return True, {
         "current_lane": player["current_lane"],
         "pending_lane": lane,
