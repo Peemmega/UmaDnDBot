@@ -130,9 +130,17 @@ def _skill_snapshot(skill: Any) -> dict:
         supplied = {}
 
     definition = SKILLS.get(skill_id, {})
+    supplied_name = supplied.get("name")
+    # Older snapshots often stored the id again as the name. Prefer the
+    # authoritative preset label in that case so history remains readable.
+    display_name = (
+        definition.get("name")
+        if definition.get("name") and (not supplied_name or supplied_name == skill_id)
+        else supplied_name or skill_id or str(skill)
+    )
     return {
         "id": skill_id or str(supplied.get("name") or skill),
-        "name": supplied.get("name") or definition.get("name") or skill_id or str(skill),
+        "name": display_name,
         "icon": supplied.get("icon") or definition.get("icon"),
     }
 
