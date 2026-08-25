@@ -248,9 +248,8 @@ def init_db():
     ON race_actions (event_id, turn_number, action_id)
     """)
 
-    # Centralized, completed-race history.  This is the authoritative model
-    # for all newly completed races; race_rankings remains only as a legacy
-    # compatibility source while its historical rows are migrated safely.
+    # Centralized, completed-race history. This is the only authoritative
+    # source for completed races and leaderboards.
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS race_history (
         race_id TEXT PRIMARY KEY,
@@ -326,31 +325,34 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_turns_race_participant ON race_participant_turns (race_id, participant_id, turn_number)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_actions_race_participant ON race_participant_actions (race_id, participant_id, turn_number)")
 
-    # The old table has only a personal-best score, stage and user identity.
-    # Import exactly those trustworthy fields once; never invent turns/actions
-    # or build snapshots for legacy records.
-    legacy_rows = cursor.execute(
-        "SELECT stage_key, user_id, best_score, style, updated_at FROM race_rankings"
-    ).fetchall()
-    for legacy in legacy_rows:
-        race_id = f"legacy-ranking:{legacy['stage_key']}:{legacy['user_id']}"
+    # Legacy rankings contain only a name, personal-best score and style, so
+    # they cannot represent a complete race. Remove both the source rows and
+    # any synthetic migrated records so incomplete results are never shown.
+    legacy_race_ids = [
+        row[0] for row in cursor.execute(
+            "SELECT race_id FROM race_history "
+            "WHERE source = 'legacy_race_rankings' OR race_id LIKE 'legacy-ranking:%'"
+        ).fetchall()
+    ]
+    if legacy_race_ids:
+        placeholders = ", ".join("?" for _ in legacy_race_ids)
         cursor.execute(
-            """INSERT OR IGNORE INTO race_history (
-                race_id, stage_key, stage_name, total_turns, race_mode,
-                record_type, source, finished_at, schema_version
-            ) VALUES (?, ?, ?, 0, 'legacy', 'official', 'legacy_race_rankings', ?, 0)""",
-            (race_id, legacy["stage_key"], legacy["stage_key"], legacy["updated_at"]),
+            f"DELETE FROM race_participant_actions WHERE race_id IN ({placeholders})",
+            legacy_race_ids,
         )
         cursor.execute(
-            """INSERT OR IGNORE INTO race_participants (
-                race_id, participant_id, uma_id, uma_name, participant_type,
-                running_style, final_score, snapshot_json
-            ) VALUES (?, ?, ?, ?, 'uma', ?, ?, '{}')""",
-            (
-                race_id, str(legacy["user_id"]), str(legacy["user_id"]),
-                str(legacy["user_id"]), legacy["style"], int(legacy["best_score"]),
-            ),
+            f"DELETE FROM race_participant_turns WHERE race_id IN ({placeholders})",
+            legacy_race_ids,
         )
+        cursor.execute(
+            f"DELETE FROM race_participants WHERE race_id IN ({placeholders})",
+            legacy_race_ids,
+        )
+        cursor.execute(
+            f"DELETE FROM race_history WHERE race_id IN ({placeholders})",
+            legacy_race_ids,
+        )
+    cursor.execute("DELETE FROM race_rankings")
 
     conn.commit()
     conn.close()
@@ -677,46 +679,10 @@ def reset_all_data() -> dict[str, int]:
 
 
 def get_race_rankings(stage_key: str, limit: int = 10) -> list[dict]:
-    # Race History is authoritative for new results. Keep the legacy table as
-    # a read-only fallback until its older, less detailed data is migrated.
+    # Kept for compatibility with the lobby preview. Results must come from
+    # completed Centralized Race History records only.
     from utils.race.race_history import get_course_leaderboard
-    derived = get_course_leaderboard(stage_key, limit=limit)
-    if derived:
-        return derived
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    SELECT
-        r.stage_key,
-        r.user_id,
-        COALESCE(p.username, r.user_id) AS username,
-        r.best_score,
-        r.style,
-        r.updated_at
-    FROM race_rankings r
-    LEFT JOIN players p
-        ON CAST(p.user_id AS TEXT) = r.user_id
-    WHERE r.stage_key = ?
-    ORDER BY r.best_score DESC, r.updated_at ASC
-    LIMIT ?
-    """, (stage_key, limit))
-
-    rows = cursor.fetchall()
-    conn.close()
-
-    return [
-        {
-            "stage_key": row["stage_key"],
-            "user_id": row["user_id"],
-            "username": row["username"],
-            "best_score": row["best_score"],
-            "style": row["style"],
-            "updated_at": row["updated_at"],
-        }
-        for row in rows
-    ]
+    return get_course_leaderboard(stage_key, limit=limit)
 
 def add_mail(conn, user_id, title, message, reward_type, reward_amount):
     cur = conn.cursor()

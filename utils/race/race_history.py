@@ -264,7 +264,7 @@ def get_race_by_id(race_id: str) -> dict | None:
 
 
 def list_race_history(*, stage_key: str | None = None, record_type: str | None = None, limit: int = 20, offset: int = 0) -> list[dict]:
-    clauses, params = [], []
+    clauses, params = ["h.source != 'legacy_race_rankings'"], []
     if stage_key:
         clauses.append("stage_key = ?")
         params.append(stage_key)
@@ -274,7 +274,29 @@ def list_race_history(*, stage_key: str | None = None, record_type: str | None =
     where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
     with database_connection() as conn:
         rows = conn.execute(
-            f"SELECT * FROM race_history {where} ORDER BY finished_at DESC LIMIT ? OFFSET ?",
+            f"""SELECT h.*,
+                       (SELECT p.participant_id FROM race_participants p
+                         WHERE p.race_id = h.race_id
+                         ORDER BY p.final_rank ASC, p.final_score DESC, p.participant_id ASC
+                         LIMIT 1) AS winner_id,
+                       (SELECT p.uma_name FROM race_participants p
+                         WHERE p.race_id = h.race_id
+                         ORDER BY p.final_rank ASC, p.final_score DESC, p.participant_id ASC
+                         LIMIT 1) AS winner_name,
+                       (SELECT p.trainer_name FROM race_participants p
+                         WHERE p.race_id = h.race_id
+                         ORDER BY p.final_rank ASC, p.final_score DESC, p.participant_id ASC
+                         LIMIT 1) AS winner_trainer_name,
+                       (SELECT p.running_style FROM race_participants p
+                         WHERE p.race_id = h.race_id
+                         ORDER BY p.final_rank ASC, p.final_score DESC, p.participant_id ASC
+                         LIMIT 1) AS winner_running_style,
+                       (SELECT p.final_score FROM race_participants p
+                         WHERE p.race_id = h.race_id
+                         ORDER BY p.final_rank ASC, p.final_score DESC, p.participant_id ASC
+                         LIMIT 1) AS winner_score
+                FROM race_history h {where}
+                ORDER BY h.finished_at DESC LIMIT ? OFFSET ?""",
             (*params, max(1, min(int(limit), 100)), max(0, int(offset))),
         ).fetchall()
     return [dict(row) for row in rows]
@@ -283,7 +305,7 @@ def list_race_history(*, stage_key: str | None = None, record_type: str | None =
 def get_participant_history(*, column: str, value: str, record_type: str | None = None, limit: int = 50, offset: int = 0) -> list[dict]:
     if column not in {"uma_id", "trainer_id"}:
         raise ValueError("Unsupported history identity")
-    clauses = [f"p.{column} = ?"]
+    clauses = [f"p.{column} = ?", "h.source != 'legacy_race_rankings'"]
     params: list[Any] = [str(value)]
     if record_type in {OFFICIAL, PRACTICE}:
         clauses.append("h.record_type = ?")

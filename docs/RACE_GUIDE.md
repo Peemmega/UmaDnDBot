@@ -222,8 +222,8 @@ Gut bonus ใน Phase 3–4 คือ `2×Gut` และเพิ่มอี�
 
 Completed races are persisted once in the central Race History model. It is
 the authoritative source for race detail, career history and course
-leaderboards. The legacy `race_rankings` table is retained only for backward
-compatibility and is safely imported with the limited fields it contains.
+leaderboards. Legacy `race_rankings` data is discarded because it lacks the
+race, turn and participant detail required by this system.
 
 - `race_history`: race/course metadata, mode, timestamps and `record_type`
   (`official` or `practice`).
