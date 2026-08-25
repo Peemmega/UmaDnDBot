@@ -9,7 +9,13 @@ from utils.skill.skill_presets import SKILLS, ICON_URL
 from utils.mob.mob_decision import decide_mob_skill_combo, decide_mob_target_lane
 
 from utils.mob.mob_presets import MOB_PRESETS
-from utils.database import ensure_player, get_player, get_player_skill_slots
+from utils.database import (
+    ensure_player,
+    get_player,
+    get_player_skill_slots,
+    record_race_action,
+    record_race_turn_positions,
+)
 from utils.profile_images import resolve_player_avatar_url
 from utils.zone.zone_manager import apply_zone_in_game
 from utils.race.race_presets import (
@@ -517,6 +523,7 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
     stage = RACE_PRESET[stage_key]
 
     games[channel_id] = {
+        "channel_id": channel_id,
         "stage_key": stage_key,
         "stage_name": stage['name'],
         "max_turn": stage["turn"],
@@ -1158,6 +1165,18 @@ def use_block(channel_id: int, user_id: int):
     player["used_block"] = True
     player["action_locked"] = True
 
+    record_race_action(
+        game,
+        user_id,
+        "Block",
+        {
+            "move_back": move_back,
+            "new_score": player["score"],
+            "summary": f"Block moved back {move_back} point(s)",
+        },
+        target_id=target_id,
+    )
+
     return True, {
         "target_id": target_id,
         "target": target_info,
@@ -1205,6 +1224,19 @@ def use_rush(channel_id: int, user_id: int):
     player["no_reroll_this_turn"] = True
     player["used_rush"] = True
     player["action_locked"] = True
+
+    record_race_action(
+        game,
+        user_id,
+        "Rush",
+        {
+            "move_forward": move_forward,
+            "stamina_cost": rush_cost,
+            "stamina_left": player.get("stamina_left", 0),
+            "new_score": player["score"],
+            "summary": f"Rush +{move_forward} (STA -{rush_cost})",
+        },
+    )
 
     return True, {
         "target_id": target_id,
@@ -1267,6 +1299,18 @@ def use_block(channel_id: int, user_id: int):
     player["used_block"] = True
     player["action_locked"] = True
 
+    record_race_action(
+        game,
+        user_id,
+        "Block",
+        {
+            "move_back": move_back,
+            "new_score": player["score"],
+            "summary": f"Block moved back {move_back} point(s)",
+        },
+        target_id=target_id,
+    )
+
     return True, {
         "target_id": target_id,
         "target": target_info,
@@ -1314,6 +1358,19 @@ def use_rush(channel_id: int, user_id: int):
     player["score"] += move_forward
     player["used_rush"] = True
     player["action_locked"] = True
+
+    record_race_action(
+        game,
+        user_id,
+        "Rush",
+        {
+            "move_forward": move_forward,
+            "stamina_cost": rush_cost,
+            "stamina_left": player.get("stamina_left", 0),
+            "new_score": player["score"],
+            "summary": f"Rush +{move_forward} (STA -{rush_cost})",
+        },
+    )
 
     return True, {
         "move_forward": move_forward,
@@ -1540,6 +1597,18 @@ def next_turn(channel_id: int):
     current_turn = game["turn"]
     snapshot_scores = game.get("turn_snapshot_scores", {})
 
+    position_by_player = {
+        player_id: position
+        for position, (player_id, _) in enumerate(
+            sorted(
+                game["players"].items(),
+                key=lambda item: int(item[1].get("score", 0) or 0),
+                reverse=True,
+            ),
+            start=1,
+        )
+    }
+
     game.setdefault("turn_score_logs", [])
 
     for user_id, info in game["players"].items():
@@ -1561,6 +1630,7 @@ def next_turn(channel_id: int):
             "gain": gain,
             "score_before": before_score,
             "score_after": current_score,
+            "position": position_by_player.get(user_id),
             "roll": info.get("last_roll_log"),
             "skills": info.get("used_skills_this_turn", []),
         })
@@ -1579,6 +1649,7 @@ def next_turn(channel_id: int):
                 "gain": 0,
                 "score_before": player.get("score", 0),
                 "score_after": player.get("score", 0),
+                "position": position_by_player.get(player_id),
                 "roll": {
                     "lane_change": {
                         "from": player.get("previous_lane"),
@@ -1587,6 +1658,13 @@ def next_turn(channel_id: int):
                 },
                 "skills": [],
             })
+
+    # Persist after lane changes resolve, so the row reflects the actual
+    # end-of-turn standing and lane. A database issue must not stop a live race.
+    try:
+        record_race_turn_positions(game, current_turn)
+    except Exception as exc:
+        print(f"Race turn log persistence error: {exc}")
 
     game["turn"] += 1
 

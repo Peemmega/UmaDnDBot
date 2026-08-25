@@ -194,6 +194,60 @@ def init_db():
     )
     """)
 
+    # race_rankings retains only a player's best score. These tables preserve
+    # the order at the end of every turn for race history and statistics.
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_events (
+        event_id TEXT PRIMARY KEY,
+        stage_key TEXT NOT NULL,
+        stage_name TEXT NOT NULL,
+        race_mode TEXT NOT NULL DEFAULT 'discord_classic',
+        room_id TEXT,
+        started_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_logged_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_turn_positions (
+        event_id TEXT NOT NULL,
+        turn_number INTEGER NOT NULL,
+        player_id TEXT NOT NULL,
+        player_name TEXT NOT NULL,
+        is_mob INTEGER NOT NULL DEFAULT 0,
+        position INTEGER NOT NULL,
+        score INTEGER NOT NULL,
+        score_gain INTEGER NOT NULL DEFAULT 0,
+        style TEXT,
+        lane INTEGER,
+        recorded_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (event_id, turn_number, player_id),
+        FOREIGN KEY (event_id) REFERENCES race_events(event_id)
+    )
+    """)
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_race_turn_positions_event_turn
+    ON race_turn_positions (event_id, turn_number)
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_actions (
+        action_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id TEXT NOT NULL,
+        turn_number INTEGER NOT NULL,
+        player_id TEXT NOT NULL,
+        player_name TEXT NOT NULL,
+        action_type TEXT NOT NULL,
+        target_id TEXT,
+        target_name TEXT,
+        details_json TEXT NOT NULL DEFAULT '{}',
+        recorded_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (event_id) REFERENCES race_events(event_id)
+    )
+    """)
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_race_actions_event_turn
+    ON race_actions (event_id, turn_number, action_id)
+    """)
+
     conn.commit()
     conn.close()
 
@@ -246,6 +300,217 @@ def record_race_rankings(stage_key: str, ranked_players) -> int:
     return updated_count
 
 
+def record_race_turn_positions(game: dict, turn_number: int) -> str | None:
+    """Store one end-of-turn leaderboard for a race that otherwise lives in memory."""
+    players = game.get("players") or {}
+    stage_key = str(game.get("stage_key") or "unknown")
+    if not players or turn_number < 1:
+        return None
+
+    event_id = game.get("race_event_id")
+    if not event_id:
+        import uuid
+        event_id = uuid.uuid4().hex
+        game["race_event_id"] = event_id
+
+    ranked_players = sorted(
+        players.items(),
+        key=lambda item: int(item[1].get("score", 0) or 0),
+        reverse=True,
+    )
+    previous_scores = game.get("turn_snapshot_scores") or {}
+    room_id = game.get("room_id") or game.get("channel_id")
+
+    with database_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO race_events (event_id, stage_key, stage_name, race_mode, room_id)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(event_id) DO UPDATE SET
+                last_logged_at = CURRENT_TIMESTAMP,
+                race_mode = excluded.race_mode
+            """,
+            (
+                event_id,
+                stage_key,
+                str(game.get("stage_name") or stage_key),
+                str(game.get("race_mode") or "discord_classic"),
+                str(room_id) if room_id is not None else None,
+            ),
+        )
+
+        for position, (player_id, player) in enumerate(ranked_players, start=1):
+            player_key = str(player_id)
+            score = int(player.get("score", 0) or 0)
+            cursor.execute(
+                """
+                INSERT INTO race_turn_positions (
+                    event_id, turn_number, player_id, player_name, is_mob,
+                    position, score, score_gain, style, lane
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(event_id, turn_number, player_id) DO UPDATE SET
+                    player_name = excluded.player_name,
+                    is_mob = excluded.is_mob,
+                    position = excluded.position,
+                    score = excluded.score,
+                    score_gain = excluded.score_gain,
+                    style = excluded.style,
+                    lane = excluded.lane,
+                    recorded_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    event_id,
+                    int(turn_number),
+                    player_key,
+                    str(player.get("display_name") or player.get("username") or player_key),
+                    int(bool(player.get("is_mob"))),
+                    position,
+                    score,
+                    score - int(previous_scores.get(player_id, 0) or 0),
+                    str(player.get("style") or ""),
+                    int(player.get("current_lane", 0) or 0) or None,
+                ),
+            )
+
+    return event_id
+
+
+def record_race_action(
+    game: dict,
+    player_id,
+    action_type: str,
+    details: dict | None = None,
+    target_id=None,
+) -> str | None:
+    """Persist a Zone, Block, or Rush use at the moment it occurs."""
+    player = (game.get("players") or {}).get(player_id)
+    if player is None:
+        return None
+
+    event_id = game.get("race_event_id")
+    if not event_id:
+        import uuid
+        event_id = uuid.uuid4().hex
+        game["race_event_id"] = event_id
+
+    target = (game.get("players") or {}).get(target_id) if target_id is not None else None
+    player_name = str(player.get("display_name") or player.get("username") or player_id)
+    target_name = (
+        str(target.get("display_name") or target.get("username") or target_id)
+        if target is not None else None
+    )
+    action_details = dict(details or {})
+    action_details.setdefault("summary", action_type)
+    action_log = {
+        "turn": int(game.get("turn", 0) or 0),
+        "player_id": str(player_id),
+        "player_name": player_name,
+        "action_type": str(action_type),
+        "target_id": str(target_id) if target_id is not None else None,
+        "target_name": target_name,
+        "details": action_details,
+    }
+
+    with database_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO race_events (event_id, stage_key, stage_name, race_mode, room_id)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(event_id) DO UPDATE SET last_logged_at = CURRENT_TIMESTAMP
+            """,
+            (
+                event_id,
+                str(game.get("stage_key") or "unknown"),
+                str(game.get("stage_name") or game.get("stage_key") or "unknown"),
+                str(game.get("race_mode") or "discord_classic"),
+                str(game.get("room_id") or game.get("channel_id") or "") or None,
+            ),
+        )
+        cursor.execute(
+            """
+            INSERT INTO race_actions (
+                event_id, turn_number, player_id, player_name, action_type,
+                target_id, target_name, details_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                event_id,
+                action_log["turn"],
+                action_log["player_id"],
+                player_name,
+                action_log["action_type"],
+                action_log["target_id"],
+                target_name,
+                json.dumps(action_details, ensure_ascii=False, default=str),
+            ),
+        )
+
+    game.setdefault("race_action_logs", []).append(action_log)
+    return event_id
+
+
+def get_race_event(event_id: str) -> dict | None:
+    with database_connection() as conn:
+        cursor = conn.cursor()
+        event = cursor.execute(
+            """SELECT event_id, stage_key, stage_name, race_mode, room_id,
+                      started_at, last_logged_at
+               FROM race_events WHERE event_id = ?""",
+            (event_id,),
+        ).fetchone()
+        if event is None:
+            return None
+        rows = cursor.execute(
+            """SELECT turn_number, player_id, player_name, is_mob, position,
+                      score, score_gain, style, lane, recorded_at
+               FROM race_turn_positions
+               WHERE event_id = ?
+               ORDER BY turn_number ASC, position ASC""",
+            (event_id,),
+        ).fetchall()
+
+        actions = cursor.execute(
+            """SELECT action_id, turn_number, player_id, player_name, action_type,
+                      target_id, target_name, details_json, recorded_at
+               FROM race_actions WHERE event_id = ?
+               ORDER BY turn_number ASC, action_id ASC""",
+            (event_id,),
+        ).fetchall()
+
+    return {
+        "event": dict(event),
+        "turns": [dict(row) for row in rows],
+        "actions": [
+            {**dict(row), "details": json.loads(row["details_json"] or "{}")}
+            for row in actions
+        ],
+    }
+
+
+def list_race_events(stage_key: str | None = None, limit: int = 20) -> list[dict]:
+    limit = max(1, min(int(limit), 100))
+    with database_connection() as conn:
+        cursor = conn.cursor()
+        if stage_key:
+            rows = cursor.execute(
+                """SELECT event_id, stage_key, stage_name, race_mode, room_id,
+                          started_at, last_logged_at
+                   FROM race_events WHERE stage_key = ?
+                   ORDER BY last_logged_at DESC LIMIT ?""",
+                (stage_key, limit),
+            ).fetchall()
+        else:
+            rows = cursor.execute(
+                """SELECT event_id, stage_key, stage_name, race_mode, room_id,
+                          started_at, last_logged_at
+                   FROM race_events ORDER BY last_logged_at DESC LIMIT ?""",
+                (limit,),
+            ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def clear_race_rankings(stage_key: str | None = None) -> int:
     conn = get_connection()
     cursor = conn.cursor()
@@ -285,6 +550,9 @@ def reset_all_data() -> dict[str, int]:
         "trainer_teams",
         "profile_presets",
         "team_invitations",
+        "race_actions",
+        "race_turn_positions",
+        "race_events",
         "race_rankings",
         "account_roles",
         "players",

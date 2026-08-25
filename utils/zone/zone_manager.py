@@ -7,7 +7,7 @@ from utils.zone.zone_preset import (
     ZONE_VALUE,
     normalize_zone_build,
 )
-from utils.database import set_player_zone_build, get_player
+from utils.database import get_player, record_race_action, set_player_zone_build
 from utils.in_game_manager import incrase_speed_by_acceleration
 from utils.race.runtime_stamina import (
     runtime_stamina_effect_units,
@@ -166,6 +166,28 @@ def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
     player["zone_left"] = zone_left - 1
 
     zone_effect = get_zone_effect(zone)
+
+    actor_id = next(
+        (
+            player_id
+            for player_id, candidate in (game.get("players") or {}).items()
+            if candidate is player
+        ),
+        None,
+    )
+    if actor_id is not None:
+        record_race_action(
+            game,
+            actor_id,
+            "Zone",
+            {
+                "zone_name": zone.get("name") or zone.get("zone_name"),
+                "effects": effects,
+                "stamina_heal": heal_value,
+                "speed_increase": modify_current_speed,
+                "summary": zone_effect,
+            },
+        )
 
     return True, zone_effect
     

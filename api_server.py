@@ -30,6 +30,8 @@ from utils.database import (
     list_uploaded_profile_summaries,
     get_account_role,
     select_account_role,
+    get_race_event,
+    list_race_events,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -464,6 +466,21 @@ def api_get_all_races(distance: str = "all"):
         })
 
     return result
+
+
+@app.get("/race-events")
+def api_list_race_events(stage_key: str | None = None, limit: int = 20):
+    """Recent persisted race logs; filter by a preset key when needed."""
+    return {"events": list_race_events(stage_key=stage_key, limit=limit)}
+
+
+@app.get("/race-events/{event_id}")
+def api_get_race_event(event_id: str):
+    """Return every player's final standing for each completed turn."""
+    event = get_race_event(event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Race event not found")
+    return event
 
 
 RACE_ROOM_CHANNEL_IDS = [

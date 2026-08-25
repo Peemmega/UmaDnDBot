@@ -62,9 +62,22 @@ def build_race_log_text(game: dict, ranked_players, markdown: bool = True) -> st
                 detail_parts.append(f"skills: {skill_ids}")
 
             detail = f" | {' | '.join(detail_parts)}" if detail_parts else ""
+            position = item.get("position")
+            position_text = f" | Position: #{position}" if position else ""
             log_lines.append(
-                f"{item['turn']} {item['score_after']} (+{item['gain']}){detail}"
+                f"{item['turn']} {item['score_after']} (+{item['gain']}){position_text}{detail}"
             )
+
+    action_lines = []
+    for action in game.get("race_action_logs", []):
+        target = f" -> {action['target_name']}" if action.get("target_name") else ""
+        details = action.get("details") or {}
+        summary = details.get("summary")
+        summary_text = f" | {summary}" if summary else ""
+        action_lines.append(
+            f"Turn {action.get('turn', 0)}: {action.get('player_name')} used "
+            f"{action.get('action_type')}{target}{summary_text}"
+        )
 
     if markdown:
         description = (
@@ -82,6 +95,10 @@ def build_race_log_text(game: dict, ranked_players, markdown: bool = True) -> st
             + "\n\nTurn Score Log\n"
             + "\n".join(log_lines)
         )
+
+    if action_lines:
+        action_label = "\n\nâš¡ **Race Actions**\n" if markdown else "\n\nRace Actions\n"
+        description += action_label + "\n".join(action_lines)
 
     if markdown and len(description) > 3900:
         description = description[:3900] + "\n...log ยาวเกินไป ถูกตัดบางส่วน"
