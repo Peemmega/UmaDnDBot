@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from utils.database import database_connection, get_trainee_trainer
+from utils.skill.skill_presets import SKILLS
 
 
 OFFICIAL = "official"
@@ -98,16 +99,7 @@ def _participant_snapshot(player: dict) -> dict:
         }
     effective = copy.deepcopy(player.get("effective_race_stats") or {})
     skills = player.get("skills") or {}
-    selected_skills = []
-    for skill in skills.values():
-        if not skill:
-            continue
-        if isinstance(skill, str):
-            selected_skills.append({"id": skill, "name": skill})
-        elif isinstance(skill, dict):
-            selected_skills.append(copy.deepcopy(skill))
-        else:
-            selected_skills.append({"id": str(skill), "name": str(skill)})
+    selected_skills = [_skill_snapshot(skill) for skill in skills.values() if skill]
     return {
         "display_name": player.get("display_name") or player.get("username"),
         "base_stats": {
@@ -123,6 +115,35 @@ def _participant_snapshot(player: dict) -> dict:
         "zone": copy.deepcopy(player.get("zone") or {}),
         "effective_race_stats": effective,
     }
+
+
+def _skill_snapshot(skill: Any) -> dict:
+    """Keep a display-ready skill reference even when the game stores only its id."""
+    if isinstance(skill, str):
+        skill_id = skill
+        supplied = {}
+    elif isinstance(skill, dict):
+        supplied = copy.deepcopy(skill)
+        skill_id = str(supplied.get("id") or supplied.get("skill_id") or "")
+    else:
+        skill_id = str(skill)
+        supplied = {}
+
+    definition = SKILLS.get(skill_id, {})
+    return {
+        "id": skill_id or str(supplied.get("name") or skill),
+        "name": supplied.get("name") or definition.get("name") or skill_id or str(skill),
+        "icon": supplied.get("icon") or definition.get("icon"),
+    }
+
+
+def _hydrate_participant_snapshot(snapshot: Any) -> dict:
+    if not isinstance(snapshot, dict):
+        return {}
+    skills = snapshot.get("skills")
+    if isinstance(skills, list):
+        snapshot["skills"] = [_skill_snapshot(skill) for skill in skills if skill]
+    return snapshot
 
 
 def _turn_rows(game: dict) -> list[dict]:
@@ -275,6 +296,7 @@ def get_race_by_id(race_id: str) -> dict | None:
         ).fetchall()]
     for row in participants:
         _decode(row, "snapshot_json")
+        row["snapshot"] = _hydrate_participant_snapshot(row.get("snapshot"))
     for row in turns:
         _decode(row, "turn_data_json")
     for row in actions:
