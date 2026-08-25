@@ -3,6 +3,7 @@ import uuid
 import math
 import discord
 import random
+from datetime import datetime, timezone
 
 from utils.race.race_presets import RACE_PRESET
 from utils.skill.skill_presets import SKILLS, ICON_URL
@@ -13,9 +14,8 @@ from utils.database import (
     ensure_player,
     get_player,
     get_player_skill_slots,
-    record_race_action,
-    record_race_turn_positions,
 )
+from utils.race.race_history import ensure_race_history_id, record_race_action, record_turn_snapshot
 from utils.profile_images import resolve_player_avatar_url
 from utils.zone.zone_manager import apply_zone_in_game
 from utils.race.race_presets import (
@@ -420,6 +420,13 @@ def execute_roll_core(
         "blocking_penalty": result.get("blocking_penalty", 0.0),
         "drafting_active": result.get("drafting_active", False),
     }
+    if result.get("blocked_count", 0):
+        record_race_action(
+            game, user_id, "blocked",
+            {"blocked_count": result.get("blocked_count"), "penalty": result.get("blocking_penalty", 0.0)},
+        )
+    if result.get("drafting_active"):
+        record_race_action(game, user_id, "draft", {"summary": "Drafting bonus applied"})
 
     game_player["lastedBuff"] = merged_stats
 
@@ -536,6 +543,10 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
         "players": {},
         "turn_snapshot_scores": {},
         "turn_score_logs": [],
+        "race_action_logs": [],
+        # Results stay out of the official leaderboard unless the room owner
+        # explicitly confirms the race as Official before starting it.
+        "record_type": "practice",
 
         "turn_confirmations": set(),
         "awaiting_turn_confirm": False,
@@ -631,6 +642,22 @@ def is_owner(channel_id: int, user_id: int):
     return game["owner_id"] == user_id
 
 
+def set_race_record_type(channel_id: int, record_type: str):
+    """Set race classification while the lobby has not started yet."""
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+    if game.get("started"):
+        return False, "เปลี่ยนประเภทการแข่งขันไม่ได้หลังเริ่มเกมแล้ว"
+
+    normalized_type = str(record_type).strip().lower()
+    if normalized_type not in {"official", "practice"}:
+        return False, "ประเภทการแข่งขันต้องเป็น official หรือ practice"
+
+    game["record_type"] = normalized_type
+    return True, normalized_type
+
+
 def is_game_started(channel_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -664,6 +691,8 @@ def start_game(channel_id: int):
     game["started"] = True
     game["phase"] = "running"
     game["turn"] = 1
+    ensure_race_history_id(game)
+    game.setdefault("race_started_at", datetime.now(timezone.utc).isoformat())
 
     shuffled_players = _randomize_starting_positions(game)
 
@@ -1525,6 +1554,7 @@ def use_reroll(channel_id: int, user_id: int):
         return False, "คุณไม่มี reroll เหลือแล้ว"
 
     player["reroll_left"] -= 1
+    record_race_action(game, user_id, "reroll", {"rerolls_left": player["reroll_left"]})
     return True, player["reroll_left"]
 
 def build_single_wit_regen_text(game_player: dict) -> str:
@@ -1658,13 +1688,17 @@ def next_turn(channel_id: int):
                 },
                 "skills": [],
             })
+            record_race_action(
+                game,
+                player_id,
+                "lane_change",
+                {
+                    "from_lane": player.get("previous_lane"),
+                    "to_lane": player.get("current_lane"),
+                },
+            )
 
-    # Persist after lane changes resolve, so the row reflects the actual
-    # end-of-turn standing and lane. A database issue must not stop a live race.
-    try:
-        record_race_turn_positions(game, current_turn)
-    except Exception as exc:
-        print(f"Race turn log persistence error: {exc}")
+    record_turn_snapshot(game, current_turn)
 
     game["turn"] += 1
 
@@ -2797,6 +2831,12 @@ def execute_skill_core(
         "id": skill_id,
         "name": skill.get("name", skill_id),
     })
+    record_race_action(
+        game,
+        user_id,
+        "skill",
+        {"skill_id": skill_id, "skill_name": skill.get("name", skill_id), "cost": cost},
+    )
 
     # =====================================
     # Cooldown

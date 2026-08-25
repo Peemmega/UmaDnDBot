@@ -65,6 +65,7 @@ from utils.race.web_timing_balance import (
     roll_web_timing_distance_gain,
 )
 from utils.profile_images import resolve_player_render_image
+from utils.race.race_history import record_race_action, save_completed_race
 
 
 WEB_ROOM_PREFIX = "web_race_"
@@ -244,11 +245,14 @@ class RaceWebManager:
         stage_key: str = DEFAULT_STAGE_KEY,
         style: str = "Pace",
         gameplay_mode: str = "timing",
+        record_type: str = "practice",
     ) -> dict:
         if stage_key not in RACE_PRESET:
             raise ValueError("Race stage not found")
         if gameplay_mode not in {"timing", "manual"}:
             raise ValueError("Race gameplay mode must be timing or manual")
+        if record_type not in {"official", "practice"}:
+            raise ValueError("Race record type must be official or practice")
 
         room_id = self._new_room_id()
         ensure_player(owner_id, username)
@@ -261,6 +265,7 @@ class RaceWebManager:
         game["phase"] = "waiting"
         game["web_gameplay_mode"] = gameplay_mode
         game["race_mode"] = "web_timing" if gameplay_mode == "timing" else "discord_classic"
+        game["record_type"] = record_type
         game["web_action_logs"] = []
         self._log(game, f"{username} created {game.get('stage_name')}")
         success, message = add_player(room_id, str(owner_id), username, avatar_url, style)
@@ -372,6 +377,13 @@ class RaceWebManager:
 
         player = payload["game_player"]
         result = payload["result"]
+        if use_wit:
+            record_race_action(
+                game,
+                str(user_id),
+                "wit_reroll",
+                {"minimum_total": old_total, "rerolls_left": player.get("wit_reroll_left", 0)},
+            )
         self._log(
             game,
             f"{player.get('display_name') or player.get('username') or user_id} ran +{result.get('total', 0)}",
@@ -731,6 +743,7 @@ class RaceWebManager:
                         for index, item in enumerate(ranked, start=1)
                     ],
                 }
+                save_completed_race(game, ranked)
                 game["ended"] = True
                 game["started"] = False
                 game["phase"] = "ended"
@@ -901,6 +914,18 @@ class RaceWebManager:
                 "is_bot": is_bot,
             },
         )
+        record_race_action(
+            game,
+            user_id,
+            "timing",
+            {
+                "cycle_id": cycle_id,
+                "timing_tier": result["timing_tier"],
+                "timing_score": result["timing_score"],
+                "distance_gain": distance_gain,
+                "distance_total": distance,
+            },
+        )
         if distance >= finish_distance:
             self._finish_web_timing_race(game, str(user_id))
 
@@ -915,6 +940,7 @@ class RaceWebManager:
             "winner": _serialize_winner(next(item for item in ranked if str(item[0]) == winner_id)),
             "rankings": [_serialize_winner(item, index) for index, item in enumerate(ranked, start=1)],
         }
+        save_completed_race(game, ranked)
         game["ended"] = True
         game["started"] = False
         game["phase"] = "ended"

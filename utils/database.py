@@ -248,6 +248,110 @@ def init_db():
     ON race_actions (event_id, turn_number, action_id)
     """)
 
+    # Centralized, completed-race history.  This is the authoritative model
+    # for all newly completed races; race_rankings remains only as a legacy
+    # compatibility source while its historical rows are migrated safely.
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_history (
+        race_id TEXT PRIMARY KEY,
+        stage_key TEXT NOT NULL,
+        stage_name TEXT NOT NULL,
+        track TEXT,
+        distance TEXT,
+        total_turns INTEGER NOT NULL DEFAULT 0,
+        race_mode TEXT NOT NULL DEFAULT 'discord_classic',
+        record_type TEXT NOT NULL CHECK(record_type IN ('official', 'practice')),
+        source TEXT NOT NULL DEFAULT 'race_engine',
+        room_id TEXT,
+        started_at TEXT,
+        finished_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        schema_version INTEGER NOT NULL DEFAULT 1
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_participants (
+        race_id TEXT NOT NULL,
+        participant_id TEXT NOT NULL,
+        uma_id TEXT,
+        uma_name TEXT NOT NULL,
+        trainer_id TEXT,
+        trainer_name TEXT,
+        participant_type TEXT NOT NULL,
+        mob_id TEXT,
+        running_style TEXT,
+        entry_number INTEGER,
+        final_rank INTEGER,
+        final_score INTEGER NOT NULL DEFAULT 0,
+        snapshot_json TEXT NOT NULL DEFAULT '{}',
+        PRIMARY KEY (race_id, participant_id),
+        FOREIGN KEY (race_id) REFERENCES race_history(race_id)
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_participant_turns (
+        race_id TEXT NOT NULL,
+        participant_id TEXT NOT NULL,
+        turn_number INTEGER NOT NULL,
+        run_score INTEGER,
+        score_before INTEGER NOT NULL DEFAULT 0,
+        score_after INTEGER NOT NULL DEFAULT 0,
+        stamina_before INTEGER,
+        stamina_after INTEGER,
+        lane INTEGER,
+        position INTEGER,
+        turn_data_json TEXT NOT NULL DEFAULT '{}',
+        PRIMARY KEY (race_id, participant_id, turn_number),
+        FOREIGN KEY (race_id, participant_id)
+          REFERENCES race_participants(race_id, participant_id)
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_participant_actions (
+        action_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        race_id TEXT NOT NULL,
+        participant_id TEXT NOT NULL,
+        turn_number INTEGER NOT NULL,
+        action_type TEXT NOT NULL,
+        target_participant_id TEXT,
+        action_data_json TEXT NOT NULL DEFAULT '{}',
+        recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (race_id, participant_id)
+          REFERENCES race_participants(race_id, participant_id)
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_history_stage_type ON race_history (stage_key, record_type, finished_at)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_participants_uma ON race_participants (uma_id, race_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_participants_trainer ON race_participants (trainer_id, race_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_turns_race_participant ON race_participant_turns (race_id, participant_id, turn_number)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_actions_race_participant ON race_participant_actions (race_id, participant_id, turn_number)")
+
+    # The old table has only a personal-best score, stage and user identity.
+    # Import exactly those trustworthy fields once; never invent turns/actions
+    # or build snapshots for legacy records.
+    legacy_rows = cursor.execute(
+        "SELECT stage_key, user_id, best_score, style, updated_at FROM race_rankings"
+    ).fetchall()
+    for legacy in legacy_rows:
+        race_id = f"legacy-ranking:{legacy['stage_key']}:{legacy['user_id']}"
+        cursor.execute(
+            """INSERT OR IGNORE INTO race_history (
+                race_id, stage_key, stage_name, total_turns, race_mode,
+                record_type, source, finished_at, schema_version
+            ) VALUES (?, ?, ?, 0, 'legacy', 'official', 'legacy_race_rankings', ?, 0)""",
+            (race_id, legacy["stage_key"], legacy["stage_key"], legacy["updated_at"]),
+        )
+        cursor.execute(
+            """INSERT OR IGNORE INTO race_participants (
+                race_id, participant_id, uma_id, uma_name, participant_type,
+                running_style, final_score, snapshot_json
+            ) VALUES (?, ?, ?, ?, 'uma', ?, ?, '{}')""",
+            (
+                race_id, str(legacy["user_id"]), str(legacy["user_id"]),
+                str(legacy["user_id"]), legacy["style"], int(legacy["best_score"]),
+            ),
+        )
+
     conn.commit()
     conn.close()
 
@@ -550,6 +654,10 @@ def reset_all_data() -> dict[str, int]:
         "trainer_teams",
         "profile_presets",
         "team_invitations",
+        "race_participant_actions",
+        "race_participant_turns",
+        "race_participants",
+        "race_history",
         "race_actions",
         "race_turn_positions",
         "race_events",
@@ -569,6 +677,13 @@ def reset_all_data() -> dict[str, int]:
 
 
 def get_race_rankings(stage_key: str, limit: int = 10) -> list[dict]:
+    # Race History is authoritative for new results. Keep the legacy table as
+    # a read-only fallback until its older, less detailed data is migrated.
+    from utils.race.race_history import get_course_leaderboard
+    derived = get_course_leaderboard(stage_key, limit=limit)
+    if derived:
+        return derived
+
     conn = get_connection()
     cursor = conn.cursor()
 

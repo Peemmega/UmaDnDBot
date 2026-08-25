@@ -6,6 +6,7 @@ from utils.game_manager import (
     can_use_wit_reroll,
 )
 from utils.dice.reroll_service import can_execute_reroll, execute_reroll
+from utils.race.race_history import record_race_action
 
 class RunRerollView(discord.ui.View):
     def __init__(self, owner_id: int, channel_id: int, old_total: int, base_total: int, wit_reroll_ok: bool):
@@ -125,6 +126,13 @@ class RunRerollView(discord.ui.View):
             game_player["wit_reroll_left"] += 1
             await interaction.response.send_message(payload["message"], ephemeral=True)
             return
+
+        record_race_action(
+            game,
+            self.owner_id,
+            "wit_reroll",
+            {"rerolls_left": game_player.get("wit_reroll_left", 0), "minimum_total": self.old_total},
+        )
 
         self.old_total = payload["result"]["total"]
         self.base_total = payload["result"]["base_total"]

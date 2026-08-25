@@ -30,8 +30,6 @@ from utils.database import (
     list_uploaded_profile_summaries,
     get_account_role,
     select_account_role,
-    get_race_event,
-    list_race_events,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,6 +42,15 @@ from utils.game_manager import get_game, create_game, delete_game, run_bot_race_
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
 from utils.channel_config import RACE_LOG_CHANNEL_ID
 from utils.race.race_web import race_web_manager
+from utils.race.race_history import (
+    OFFICIAL,
+    PRACTICE,
+    get_course_leaderboard,
+    get_participant_history,
+    get_race_by_id,
+    list_race_history,
+    save_completed_race,
+)
 from utils.profile_images import (
     ALLOWED_IMAGE_CONTENT_TYPES,
     MAX_PROFILE_IMAGE_BYTES,
@@ -111,6 +118,34 @@ def api_get_player(user_id: str, username: str = "Unknown"):
         player = get_player(user_id)
 
     return player
+
+
+@app.get("/player/{user_id}/race-history")
+def api_get_player_race_history(
+    user_id: str,
+    record_type: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    return {
+        "races": get_participant_history(
+            column="uma_id", value=user_id, record_type=record_type, limit=limit, offset=offset,
+        )
+    }
+
+
+@app.get("/trainer/{user_id}/race-history")
+def api_get_trainer_race_history(
+    user_id: str,
+    record_type: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    return {
+        "races": get_participant_history(
+            column="trainer_id", value=user_id, record_type=record_type, limit=limit, offset=offset,
+        )
+    }
 
 
 class AccountRolePayload(BaseModel):
@@ -468,19 +503,39 @@ def api_get_all_races(distance: str = "all"):
     return result
 
 
+@app.get("/race-history")
+def api_list_race_history(
+    stage_key: str | None = None,
+    record_type: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+):
+    return {"races": list_race_history(stage_key=stage_key, record_type=record_type, limit=limit, offset=offset)}
+
+
 @app.get("/race-events")
-def api_list_race_events(stage_key: str | None = None, limit: int = 20):
-    """Recent persisted race logs; filter by a preset key when needed."""
-    return {"events": list_race_events(stage_key=stage_key, limit=limit)}
+def api_list_race_events(stage_key: str | None = None, limit: int = 20, offset: int = 0):
+    """Compatibility alias for the centralized completed Race History list."""
+    return {"events": list_race_history(stage_key=stage_key, limit=limit, offset=offset)}
 
 
-@app.get("/race-events/{event_id}")
-def api_get_race_event(event_id: str):
-    """Return every player's final standing for each completed turn."""
-    event = get_race_event(event_id)
-    if event is None:
-        raise HTTPException(status_code=404, detail="Race event not found")
-    return event
+@app.get("/race-history/{race_id}")
+@app.get("/race-events/{race_id}")
+def api_get_race_history_detail(race_id: str):
+    race = get_race_by_id(race_id)
+    if race is None:
+        raise HTTPException(status_code=404, detail="Race history not found")
+    return race
+
+
+@app.get("/races/{stage_key}/leaderboard")
+def api_get_course_leaderboard(stage_key: str, limit: int = 10, include_practice: bool = False):
+    record_type = None if include_practice else OFFICIAL
+    if record_type is None:
+        official = get_course_leaderboard(stage_key, limit=limit, record_type=OFFICIAL)
+        practice = get_course_leaderboard(stage_key, limit=limit, record_type=PRACTICE)
+        return {"stage_key": stage_key, "rankings": official + practice}
+    return {"stage_key": stage_key, "rankings": get_course_leaderboard(stage_key, limit=limit, record_type=record_type)}
 
 
 RACE_ROOM_CHANNEL_IDS = [
@@ -506,6 +561,7 @@ class WebRacePlayerPayload(BaseModel):
     mob_preset: str | None = None
     level: int = 1
     gameplay_mode: str = "timing"
+    record_type: str = "practice"
 
 
 class WebRaceSkillPayload(BaseModel):
@@ -578,6 +634,11 @@ async def run_api_test_bot_race(bot, channel_id: int):
 
     game = payload["game"]
     ranked_players = payload["ranked_players"]
+    game["record_type"] = PRACTICE
+    try:
+        save_completed_race(game, ranked_players)
+    except Exception as exc:
+        print(f"Practice Race History save error: {exc}")
 
     log_embed = build_race_log_embed(game, ranked_players)
     log_file = build_race_log_file(game, ranked_players)
@@ -667,6 +728,7 @@ async def api_web_race_create_room(payload: WebRacePlayerPayload):
             stage_key=payload.stage_key,
             style=payload.style,
             gameplay_mode=payload.gameplay_mode,
+            record_type=payload.record_type,
         )
         await race_web_manager.broadcast(room["room_id"])
         return room

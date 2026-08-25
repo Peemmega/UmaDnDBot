@@ -218,6 +218,32 @@ Gut bonus ใน Phase 3–4 คือ `2×Gut` และเพิ่มอี�
 - Final after Blocked = `round(pre-lane total × (1 − final penalty))`
 - Block move-back = `gap to nearest eligible trailing runner − Gold range`
 
+## Centralized Race History
+
+Completed races are persisted once in the central Race History model. It is
+the authoritative source for race detail, career history and course
+leaderboards. The legacy `race_rankings` table is retained only for backward
+compatibility and is safely imported with the limited fields it contains.
+
+- `race_history`: race/course metadata, mode, timestamps and `record_type`
+  (`official` or `practice`).
+- `race_participants`: race-time Uma/Mob/Trainer identity, finishing result
+  and a snapshot of mutable race stats, aptitudes, skills and Zone build.
+- `race_participant_turns`: completed classic-race turn scores, lane and
+  position. `run_score` remains separate from cumulative score.
+- `race_participant_actions`: structured Skill, Zone, lane change, Block,
+  Blocked, Rush, reroll, Draft and timing events.
+
+Official leaderboards derive one Personal Best per persistent Uma from Race
+History and exclude Practice by default. Practice races are saved in full and
+remain queryable, but never affect official leaderboards. Historical Uma,
+Trainer and build data is always read from the snapshot saved at race time.
+
+All newly created races default to `practice`, regardless of the selected
+course. Before starting a Discord race, only the room owner can use
+`/game official` to mark that lobby as an Official race. The classification is
+locked once the race starts.
+
 ### Phase
 
 `Phase = min(4, max(1, ceil(turn ÷ (max turns ÷ 4))))`

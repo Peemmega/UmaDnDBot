@@ -7,7 +7,8 @@ from utils.zone.zone_preset import (
     ZONE_VALUE,
     normalize_zone_build,
 )
-from utils.database import get_player, record_race_action, set_player_zone_build
+from utils.database import get_player, set_player_zone_build
+from utils.race.race_history import record_race_action
 from utils.in_game_manager import incrase_speed_by_acceleration
 from utils.race.runtime_stamina import (
     runtime_stamina_effect_units,

@@ -51,7 +51,8 @@ async def build_turn_result_discord_file(game: dict, ranked_players):
     return discord.File(buffer, filename="turn_result.png")
 
 
-from utils.database import ensure_player, record_race_rankings
+from utils.database import ensure_player
+from utils.race.race_history import save_completed_race
 from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
 from utils.race.race_presets import (
     get_current_path_type, 
@@ -84,6 +85,7 @@ from utils.game_manager import (
     run_bot_race_test,
     refresh_player_profile_snapshot,
     format_player_reference,
+    set_race_record_type,
 )
 
 def build_race_log_embed(game: dict, ranked_players):
@@ -313,6 +315,11 @@ class GameCog(commands.GroupCog, name="game"):
 
         game = payload["game"]
         ranked_players = payload["ranked_players"]
+        game["record_type"] = "practice"
+        try:
+            save_completed_race(game, ranked_players)
+        except Exception as exc:
+            print(f"Practice Race History save error: {exc}")
 
         log_channel_id = RACE_LOG_CHANNEL_ID
         log_channel = interaction.guild.get_channel(log_channel_id)
@@ -484,6 +491,37 @@ class GameCog(commands.GroupCog, name="game"):
         )
 
     @app_commands.command(
+        name="official",
+        description="ตั้งการแข่งขันในห้องนี้เป็น Official ก่อนเริ่มเกม"
+    )
+    async def official(self, interaction: discord.Interaction):
+        game = get_game(interaction.channel_id)
+
+        if game is None:
+            await interaction.response.send_message(
+                "ยังไม่มีเกมในห้องนี้",
+                ephemeral=True,
+            )
+            return
+
+        if not is_owner(interaction.channel_id, interaction.user.id):
+            await interaction.response.send_message(
+                "เฉพาะเจ้าของห้องเท่านั้นที่ตั้งการแข่งขันเป็น Official ได้",
+                ephemeral=True,
+            )
+            return
+
+        success, message = set_race_record_type(interaction.channel_id, "official")
+        if not success:
+            await interaction.response.send_message(message, ephemeral=True)
+            return
+
+        await interaction.response.send_message(
+            "✅ ห้องนี้ถูกตั้งเป็น **Official** แล้ว ผลการแข่งขันจะถูกนับใน Leaderboard เมื่อแข่งจบ",
+            ephemeral=False,
+        )
+
+    @app_commands.command(
         name="test_bot_race",
         description="ทดสอบให้บอทวิ่งจนจบ ส่ง log ไปห้อง log และปิดเกม"
     )
@@ -648,12 +686,11 @@ class GameCog(commands.GroupCog, name="game"):
 
         if new_turn > game["max_turn"]:
             ranked_players = get_ranked_players(channel_id)
-            saved_rankings = 0
-            if game.get("stage_key"):
-                saved_rankings = record_race_rankings(
-                    game["stage_key"],
-                    ranked_players,
-                )
+            race_history_id = None
+            try:
+                race_history_id = save_completed_race(game, ranked_players)
+            except Exception as exc:
+                print(f"Race History save error: {exc}")
 
             commentary_text = None
             try:
@@ -669,10 +706,10 @@ class GameCog(commands.GroupCog, name="game"):
                 ranked_players,
                 commentary_text=commentary_text
             )
-            if saved_rankings:
+            if race_history_id:
                 embed.add_field(
-                    name="Race Ranking",
-                    value=f"Saved {saved_rankings} real player result(s).",
+                    name="Race History",
+                    value=f"Saved completed race `{race_history_id[:8]}`.",
                     inline=False,
                 )
             await send_func(embed=embed)
