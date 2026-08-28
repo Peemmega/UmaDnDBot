@@ -153,6 +153,9 @@ def roll_by_rule(
             flat_velocity_bonus += value
         elif effect_type == "modify_roll_cap":
             roll_cap_increase += value
+        elif effect_type in {"modify_roll_cap_floor", "cap_floor"}:
+            roll_cap_increase += effect.get("cap", value)
+            extra_floor += effect.get("floor", value)
         elif effect_type == "modify_total_percent":
             total_percent_modifier += value
 

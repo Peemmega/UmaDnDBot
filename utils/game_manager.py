@@ -1258,6 +1258,10 @@ def apply_next_roll_effects_to_player(player: dict, effects: list[dict]):
             
         elif effect_type == "modify_roll_cap":
             player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + value
+
+        elif effect_type in {"modify_roll_cap_floor", "cap_floor"}:
+            player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + effect.get("cap", value)
+            player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + effect.get("floor", value)
             
 def use_block(channel_id: int, user_id: int):
     game = get_game(channel_id)
@@ -2868,6 +2872,8 @@ def execute_skill_core(
                 "modify_velocity",
                 "modify_roll_floor",
                 "modify_roll_cap",
+                "modify_roll_cap_floor",
+                "cap_floor",
                 "add_d",
                 "add_kh",
                 "add_dkh",

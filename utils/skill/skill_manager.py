@@ -235,6 +235,10 @@ def describe_effect(effect: dict) -> str:
     if effect_type == "modify_roll_cap":
         sign = "+" if value >= 0 else ""
         return f"ปรับแต้มสูงสุดลูกเต๋า {sign}{value}" + (f" ({dur})" if dur else "")
+    if effect_type in {"modify_roll_cap_floor", "cap_floor"}:
+        cap = effect.get("cap", value)
+        floor = effect.get("floor", value)
+        return f"Cap +{cap}, Floor +{floor}" + (f" ({dur})" if dur else "")
     if effect_type == "add_dkh":
         return f"เพิ่มจำนวนลูกเต๋าและจำนวนลูกที่เลือก +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "add_d":

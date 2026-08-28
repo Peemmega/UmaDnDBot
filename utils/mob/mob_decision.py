@@ -397,6 +397,9 @@ def _simulate_combo_gain(game, user_id, combo, samples: int) -> float:
                 floor += value
             elif effect_type == "modify_roll_cap":
                 cap += value
+            elif effect_type in {"modify_roll_cap_floor", "cap_floor"}:
+                cap += effect.get("cap", value)
+                floor += effect.get("floor", value)
             elif effect_type == "modify_velocity":
                 flat += value
 
@@ -622,6 +625,13 @@ def analyze_skill_effects(skill: dict) -> dict:
         elif effect_type == "modify_roll_floor":
             result["floor"] += value
             result["roll_scaling"] += value * 1.0
+
+        elif effect_type in {"modify_roll_cap_floor", "cap_floor"}:
+            cap = effect.get("cap", value)
+            floor = effect.get("floor", value)
+            result["cap"] += cap
+            result["floor"] += floor
+            result["roll_scaling"] += cap * 1.2 + floor * 1.0
 
         elif effect_type == "modify_selected_die":
             result["selected_die"] += value
@@ -918,6 +928,9 @@ def evaluate_skill_combo_score(game, user_id, combo):
                 total_cap += value
             elif effect_type == "modify_roll_floor":
                 total_floor += value
+            elif effect_type in {"modify_roll_cap_floor", "cap_floor"}:
+                total_cap += effect.get("cap", value)
+                total_floor += effect.get("floor", value)
             elif effect_type == "add_dkh":
                 total_dkh += value
             elif effect_type == "add_d":
