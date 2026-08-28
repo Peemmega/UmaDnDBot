@@ -487,11 +487,11 @@ MOB_PRESETS = {
         "thumnail": thumnails["NaritaTopRoad"],
         "style": "Pace",
         "race_profile": {
-            "speed": 5,
-            "stamina": 6,
-            "power": 4,
+            "speed": 6,
+            "stamina": 4,
+            "power": 6,
             "gut": 3,
-            "wit": 2,
+            "wit": 1,
             "turf": 7,
             "dirt": 1,
             "sprint": 1,
@@ -506,7 +506,7 @@ MOB_PRESETS = {
         "skills": {
             1: "s015",  # Beeline Burst
             2: "s032",  # Neck and Neck
-            3: "s035",  # Radiant Star
+            3: "s012",  # Speed Star
             4: "s022",  # Breath of Fresh Air
         },
         "zone": {
@@ -690,10 +690,10 @@ MOB_PRESETS = {
         "thumnail": thumnails["Orfevre"],
         "style": "End",
         "race_profile": {
-            "speed": 5,
+            "speed": 7,
             "stamina": 4,
             "power": 6,
-            "gut": 3,
+            "gut": 1,
             "wit": 2,
             "turf": 7,
             "dirt": 1,
@@ -710,7 +710,7 @@ MOB_PRESETS = {
             1: "s036",  # Sturm und Drang
             2: "s015",  # Beeline Burst
             3: "s037",  # In Body and Mind
-            4: "s035",  # Radiant Star
+            4: "s002",  # Encroaching Shadow
         },
         "zone": {
             "name": "None Shall Object My Rule",
@@ -730,11 +730,11 @@ MOB_PRESETS = {
         "thumnail": thumnails["Gentildonna"],
         "style": "Pace",
         "race_profile": {
-            "speed": 5,
+            "speed": 7,
             "stamina": 4,
             "power": 5,
             "gut": 2,
-            "wit": 4,
+            "wit": 2,
             "turf": 7,
             "dirt": 1,
             "sprint": 1,

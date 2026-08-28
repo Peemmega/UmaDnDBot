@@ -1,6 +1,5 @@
 from utils.icon_presets import SKILL_ICONS
 
-
 # Selected at startup using BOT_EMOJI_SET (main or test).
 ICON = dict(SKILL_ICONS)
 
@@ -19,22 +18,22 @@ ICON_URL = {
 }
 
 EFFECT_TYPES = {
-    "modify_velocity",          # เพิ่มผลรวมตอนวิ่งครั้งนี้
-    "modify_roll_floor",        # เพิ่มแต้มต่ำสุดลูกเต๋า
-    "modify_roll_cap",          # เพิ่ม/ลดแต้มสูงสุดลูกเต๋า
-    "add_dkh",                  # เพิ่ม d และ kh พร้อมกัน
-    "add_d",                    # เพิ่มจำนวนลูกเต๋า
-    "add_kh",                   # เพิ่มจำนวนลูกที่เลือก
-    "recover_stamina",          # เพิ่ม STA
-    "reduce_stamina",           # ลด STA เป้าหมาย
-    "flat_total",        # เพิ่ม/ลด score ทันที
-    "modify_gold_range",        # เพิ่มระยะนับ Gold
+    "modify_velocity",  # เพิ่มผลรวมตอนวิ่งครั้งนี้
+    "modify_roll_floor",  # เพิ่มแต้มต่ำสุดลูกเต๋า
+    "modify_roll_cap",  # เพิ่ม/ลดแต้มสูงสุดลูกเต๋า
+    "add_dkh",  # เพิ่ม d และ kh พร้อมกัน
+    "add_d",  # เพิ่มจำนวนลูกเต๋า
+    "add_kh",  # เพิ่มจำนวนลูกที่เลือก
+    "recover_stamina",  # เพิ่ม STA
+    "reduce_stamina",  # ลด STA เป้าหมาย
+    "flat_total",  # เพิ่ม/ลด score ทันที
+    "modify_gold_range",  # เพิ่มระยะนับ Gold
     "modify_enemy_gold_range",  # ลดระยะนับ Gold ของศัตรู
-    "apply_debuff_next_turn",   # debuff เทิร์นหน้า
-    "apply_buff_next_turn",     # buff เทิร์นหน้า
-    "block_reroll",             # ห้าม reroll
-    "force_path_bonus",         # เปลี่ยนผลของ path
-    "modify_current_speed",   # เพิ่ม current speed โดยตรง
+    "apply_debuff_next_turn",  # debuff เทิร์นหน้า
+    "apply_buff_next_turn",  # buff เทิร์นหน้า
+    "block_reroll",  # ห้าม reroll
+    "force_path_bonus",  # เปลี่ยนผลของ path
+    "modify_current_speed",  # เพิ่ม current speed โดยตรง
     "resolve_pending_lane_now",
 }
 
@@ -74,13 +73,13 @@ TRIGGER_SCHEMA = {
     "surface": None,
     "target_distance_min": None,
     "target_distance_max": None,
-    "front_blocked": None, 
+    "front_blocked": None,
     "nearby_uma_count": None,
 }
 
 TARGET_SCHEMA = {
-    "scope": "self",   # self / nearest_front / nearest_back / all_front / all_back / random_enemy
-    "limit": 1
+    "scope": "self",  # self / nearest_front / nearest_back / all_front / all_back / random_enemy
+    "limit": 1,
 }
 
 SKILLS = {
@@ -101,14 +100,12 @@ SKILLS = {
                 "type": "modify_velocity",
                 "mode": "flat_total",
                 "value": 30,
-                "duration": "this_roll"
+                "duration": "this_roll",
             },
             {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
-
         "tags": ["corner", "velocity"],
     },
-
     "s002": {
         "name": "Encroaching Shadow",
         "icon": "Acceleration",
@@ -126,10 +123,8 @@ SKILLS = {
         "effects": [
             {"type": "modify_current_speed", "value": 1.5},
         ],
-
         "tags": ["straight", "lastspurt", "end", "acceleration"],
     },
-
     "s003": {
         "name": "Concentration",
         "icon": "Concentration",
@@ -144,12 +139,10 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_floor","value": 15,"duration": "this_roll"},
+            {"type": "modify_roll_floor", "value": 15, "duration": "this_roll"},
         ],
-
         "tags": ["start", "concentration"],
     },
-
     "s004": {
         "name": "Swinging Maestro",
         "icon": "Recovery",
@@ -162,16 +155,9 @@ SKILLS = {
             "scope": "self",
             "limit": 1,
         },
-        "effects": [
-            {
-                "type": "recover_stamina",
-                "value": 2
-            }
-        ],
-
+        "effects": [{"type": "recover_stamina", "value": 2}],
         "tags": ["corner", "recovery"],
     },
-
     "s005": {
         "name": "Go-Home Specialist",
         "icon": "Recovery",
@@ -185,16 +171,9 @@ SKILLS = {
             "scope": "self",
             "limit": 1,
         },
-        "effects": [
-            {
-                "type": "recover_stamina",
-                "value": 2
-            }
-        ],
-
+        "effects": [{"type": "recover_stamina", "value": 2}],
         "tags": ["downhill", "recovery", "end"],
     },
-
     "s006": {
         "name": "Keen Eye",
         "icon": "DecreaseVelocity",
@@ -212,13 +191,11 @@ SKILLS = {
             "limit": 3,
         },
         "effects": [
-            {"type": "recover_stamina","value": 1},
+            {"type": "recover_stamina", "value": 1},
             {"type": "modify_roll_cap", "value": -10, "duration": "this_roll"},
         ],
-
         "tags": ["recovery", "debuff", "front_target"],
     },
-
     "s007": {
         "name": "Technician",
         "icon": "Velocity",
@@ -229,17 +206,9 @@ SKILLS = {
             "path_type": 2,
         },
         "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {
-                "type": "modify_roll_cap",
-                "value": 15,
-                "duration": "this_roll"
-            }
-        ],
-
+        "effects": [{"type": "modify_roll_cap", "value": 15, "duration": "this_roll"}],
         "tags": ["corner", "pace", "stability"],
     },
-
     "s008": {
         "name": "Lightning Step",
         "icon": "Velocity",
@@ -256,10 +225,8 @@ SKILLS = {
             {"type": "modify_gold_range", "value": 50, "duration": "this_turn"},
             {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
         ],
-
         "tags": ["medium", "positioning", "back"],
     },
-
     "s009": {
         "name": "Vanguard Spirit",
         "icon": "Velocity",
@@ -274,12 +241,15 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 60,
+                "duration": "this_roll",
+            },
         ],
-
         "tags": ["velocity", "long", "lead"],
     },
-
     "s010": {
         "name": "The Coast Is Clear!",
         "icon": "LookUp",
@@ -296,10 +266,8 @@ SKILLS = {
             {"type": "modify_gold_lane_range", "value": 1, "duration": "this_turn"},
             {"type": "modify_roll_floor", "value": 5, "duration": "this_roll"},
         ],
-
         "tags": ["vision", "end", "positioning"],
     },
-
     "s011": {
         "name": "Killer Tunes",
         "icon": "Velocity",
@@ -314,30 +282,33 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 60,
+                "duration": "this_roll",
+            },
         ],
-
         "tags": ["medium", "lead", "velocity"],
     },
-
     "s012": {
         "name": "Speed Star",
         "icon": "Velocity",
         "cooldown": 8,
         "cost": 80,
-        "trigger": {
-            "style": "Pace",
-            "last_corner": True
-        },
+        "trigger": {"style": "Pace", "last_corner": True},
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 30, "duration": "this_roll"}
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 30,
+                "duration": "this_roll",
+            },
         ],
-
         "tags": ["pace", "final_corner", "velocity"],
     },
-
     "s013": {
         "name": "Determined Descent",
         "icon": "Acceleration",
@@ -350,12 +321,15 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_current_speed", "value": 1},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 25, "duration": "this_roll"}
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 25,
+                "duration": "this_roll",
+            },
         ],
-
         "tags": ["pace", "downhill", "acceleration"],
     },
-
     "s014": {
         "name": "On Your Left!",
         "icon": "Acceleration",
@@ -370,10 +344,8 @@ SKILLS = {
         "effects": [
             {"type": "modify_current_speed", "value": 1.5},
         ],
-
         "tags": ["late", "acceleration", "late_race"],
     },
-
     "s015": {
         "name": "Beeline Burst",
         "icon": "Velocity",
@@ -385,12 +357,15 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 50, "duration": "this_roll"}
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 50,
+                "duration": "this_roll",
+            },
         ],
-
         "tags": ["straight", "velocity"],
     },
-
     "s016": {
         "name": "Turbo Sprint",
         "icon": "Acceleration",
@@ -404,10 +379,8 @@ SKILLS = {
         "effects": [
             {"type": "add_dkh", "value": 3, "duration": "this_roll"},
         ],
-
         "tags": ["sprint", "straight", "acceleration"],
     },
-
     "s017": {
         "name": "Flash Forward",
         "icon": "Velocity",
@@ -420,12 +393,15 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 60,
+                "duration": "this_roll",
+            },
         ],
-
         "tags": ["medium", "straight", "velocity"],
     },
-
     "s018": {
         "name": "Blast Forward",
         "icon": "Velocity",
@@ -438,12 +414,15 @@ SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
-            {"type": "modify_velocity", "mode": "flat_total", "value": 60, "duration": "this_roll"}
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 60,
+                "duration": "this_roll",
+            },
         ],
-
         "tags": ["long", "straight", "velocity"],
     },
-
     "s019": {
         "name": "Battle Formation",
         "icon": "DecreaseVelocity",
@@ -461,10 +440,8 @@ SKILLS = {
         "effects": [
             {"type": "modify_roll_cap", "value": -10, "duration": "this_roll"},
         ],
-
         "tags": ["debuff", "mile", "early_race"],
     },
-
     "s020": {
         "name": "Stamina Siphon",
         "icon": "ReduceSTA",
@@ -481,12 +458,10 @@ SKILLS = {
         "target": {"scope": "nearest_front", "limit": 4},
         "effects": [
             {"type": "reduce_stamina", "value": 1},  # ศัตรู
-            {"type": "self_heal_stamina", "value": 1}     # ตัวเอง
+            {"type": "self_heal_stamina", "value": 1},  # ตัวเอง
         ],
-
         "tags": ["debuff", "long", "stamina"],
     },
-
     # ---------- RECOVERY ----------
     "s021": {
         "name": "Calm and Collected",
@@ -499,13 +474,9 @@ SKILLS = {
             "phase_max": 2,
         },
         "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {"type": "recover_stamina", "value": 2}
-        ],
-
+        "effects": [{"type": "recover_stamina", "value": 2}],
         "tags": ["pace", "recovery", "mid_race"],
     },
-
     "s022": {
         "name": "Breath of Fresh Air",
         "icon": "Recovery",
@@ -515,13 +486,9 @@ SKILLS = {
             "path_type": 1,
         },
         "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {"type": "recover_stamina", "value": 2}
-        ],
-
+        "effects": [{"type": "recover_stamina", "value": 2}],
         "tags": ["straight", "recovery"],
     },
-
     "s023": {
         "name": "Cooldown",
         "icon": "Recovery",
@@ -532,13 +499,9 @@ SKILLS = {
             "distance_type": "Long",
         },
         "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {"type": "recover_stamina", "value": 2}
-        ],
-
+        "effects": [{"type": "recover_stamina", "value": 2}],
         "tags": ["long", "straight", "recovery"],
     },
-
     "s024": {
         "name": "Trackblazer",
         "icon": "Recovery",
@@ -551,13 +514,9 @@ SKILLS = {
             "distance_type": "Medium",
         },
         "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {"type": "recover_stamina", "value": 2}
-        ],
-
+        "effects": [{"type": "recover_stamina", "value": 2}],
         "tags": ["medium", "lead", "recovery"],
     },
-
     "s025": {
         "name": "Restless",
         "icon": "Recovery",
@@ -568,13 +527,9 @@ SKILLS = {
             "path_type": 3,
         },
         "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {"type": "recover_stamina", "value": 2}
-        ],
-
+        "effects": [{"type": "recover_stamina", "value": 2}],
         "tags": ["front", "uphill", "recovery"],
     },
-
     "s026": {
         "name": "Relax",
         "icon": "Recovery",
@@ -586,13 +541,9 @@ SKILLS = {
             "phase_max": 4,
         },
         "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {"type": "recover_stamina", "value": 2}
-        ],
-
+        "effects": [{"type": "recover_stamina", "value": 2}],
         "tags": ["late", "recovery", "late_race"],
     },
-
     # ---------- DEBUFF ----------
     "s027": {
         "name": "Dominator",
@@ -611,10 +562,8 @@ SKILLS = {
         "effects": [
             {"type": "modify_roll_cap", "value": -12, "duration": "this_roll"},
         ],
-
         "tags": ["debuff", "medium", "late_race"],
     },
-
     "s028": {
         "name": "Dazzling Disorientation",
         "icon": "Blind",
@@ -631,12 +580,14 @@ SKILLS = {
         "target": {"scope": "all_back", "limit": 3},
         "effects": [
             {"type": "modify_enemy_gold_range", "value": -15, "duration": "next_turn"},
-            {"type": "modify_enemy_gold_lane_range", "value": -1, "duration": "next_turn"}
+            {
+                "type": "modify_enemy_gold_lane_range",
+                "value": -1,
+                "duration": "next_turn",
+            },
         ],
-
         "tags": ["blind", "pace", "debuff", "lead"],
     },
-
     "s029": {
         "name": "Illusionist",
         "icon": "Blind",
@@ -652,12 +603,14 @@ SKILLS = {
         "target": {"scope": "all_front", "limit": 5},
         "effects": [
             {"type": "modify_enemy_gold_range", "value": -12, "duration": "next_turn"},
-            {"type": "modify_enemy_gold_lane_range", "value": -1, "duration": "next_turn"}
+            {
+                "type": "modify_enemy_gold_lane_range",
+                "value": -1,
+                "duration": "next_turn",
+            },
         ],
-
         "tags": ["blind", "long", "debuff"],
     },
-
     "s030": {
         "name": "Groundwork",
         "icon": "Acceleration",
@@ -671,10 +624,8 @@ SKILLS = {
         "effects": [
             {"type": "modify_current_speed", "value": 1},
         ],
-
         "tags": ["start", "acceleration"],
     },
-
     "s031": {
         "name": "No Stopping Me!",
         "icon": "Acceleration",
@@ -692,10 +643,8 @@ SKILLS = {
             {"type": "modify_current_speed", "value": 1.25},
             {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
-
         "tags": ["lastspurt", "blocked", "acceleration"],
     },
-
     "s032": {
         "name": "Neck and Neck",
         "icon": "Acceleration",
@@ -714,10 +663,8 @@ SKILLS = {
             {"type": "modify_current_speed", "value": 1},
             {"type": "add_dkh", "value": 1},
         ],
-
         "tags": ["pace", "late_race", "acceleration", "burst"],
     },
-
     "s033": {
         "name": "Runaway",
         "icon": "Acceleration",
@@ -729,7 +676,7 @@ SKILLS = {
             "turn_max": 1,
         },
         "target": {
-            "scope": "self", 
+            "scope": "self",
             "limit": 1,
         },
         "effects": [
@@ -737,16 +684,10 @@ SKILLS = {
                 "type": "modify_current_speed",
                 "value": 1.5,
             },
-         
-            {
-                "type": "reduce_stamina", 
-                "value": 1
-            }
+            {"type": "reduce_stamina", "value": 1},
         ],
-
         "tags": ["front", "start", "acceleration", "stamina_cost"],
     },
-
     "s034": {
         "name": "Unrestrained",
         "icon": "Acceleration",
@@ -762,14 +703,7 @@ SKILLS = {
             "scope": "self",
             "limit": 1,
         },
-        "effects": [
-            {
-                "type": "add_dkh",
-                "value": 3,
-                "duration": "this_roll"
-            }
-        ],
-
+        "effects": [{"type": "add_dkh", "value": 3, "duration": "this_roll"}],
         "tags": ["front", "final_corner", "acceleration", "burst"],
     },
     "s035": {
@@ -790,25 +724,12 @@ SKILLS = {
                 "type": "modify_current_speed",
                 "value": 1,
             },
-            {
-                "type": "modify_roll_cap",
-                "value": 5,
-                "duration": "this_roll"
-            },
-            {
-                "type": "add_dkh",
-                "value": 1,
-                "duration": "this_roll"
-            },
-            {
-                "type": "recover_stamina",
-                "value": 1
-            }
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "add_dkh", "value": 1, "duration": "this_roll"},
+            {"type": "recover_stamina", "value": 1},
         ],
-
         "tags": ["mid_late", "acceleration", "sustain"],
     },
-
     "s036": {
         "name": "Sturm und Drang",
         "icon": "Velocity",
@@ -824,21 +745,11 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {
-                "type": "modify_velocity",
-                "value": 60,
-                "duration": "this_roll"
-            },
-            {
-            "type": "modify_roll_cap",
-            "value": 5,
-            "duration": "this_roll"
-            }
+            {"type": "modify_velocity", "value": 60, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
         ],
-
         "tags": ["late_race", "back", "velocity"],
     },
-
     "s037": {
         "name": "In Body and Mind",
         "icon": "Velocity",
@@ -852,22 +763,11 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {
-                "type": "modify_velocity",
-                 "value": 60,
-                "duration": "this_roll"
-            },
-            {
-            "type": "modify_roll_cap",
-            "value": 5,
-            "duration": "this_roll"
-            }
+            {"type": "modify_velocity", "value": 60, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
         ],
-
         "tags": ["last_spurt", "velocity", "stability"],
     },
-
-
     "s038": {
         "name": "All-Seeing Eyes",
         "icon": "ReduceSTA",
@@ -884,16 +784,9 @@ SKILLS = {
             "scope": "all_front",
             "limit": 10,
         },
-        "effects": [
-            {
-                "type": "reduce_stamina",
-                "value": 1
-            }
-        ],
-
+        "effects": [{"type": "reduce_stamina", "value": 1}],
         "tags": ["late", "debuff", "stamina", "all_front"],
     },
-
     "s039": {
         "name": "Rising Dragon",
         "icon": "Velocity",
@@ -910,22 +803,16 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {
-                "type": "modify_roll_cap",
-                "value": 10,
-                "duration": "this_roll"
-            },
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
                 "value": 30,
-                "duration": "this_roll"
-            }
+                "duration": "this_roll",
+            },
         ],
-
         "tags": ["late", "corner", "burst", "stability"],
     },
-
     "s040": {
         "name": "Tail Nine",
         "icon": "Velocity",
@@ -939,17 +826,9 @@ SKILLS = {
             "scope": "self",
             "limit": 1,
         },
-        "effects": [
-            {
-                "type": "modify_roll_cap",
-                "value": 10,
-                "duration": "this_roll"
-            }
-        ],
-
+        "effects": [{"type": "modify_roll_cap", "value": 10, "duration": "this_roll"}],
         "tags": ["mid_race", "velocity", "cap_boost"],
     },
-
     "s041": {
         "name": "Tantalizing Trick",
         "icon": "ReduceSTA",
@@ -965,12 +844,10 @@ SKILLS = {
         },
         "effects": [
             {"type": "reduce_stamina", "value": 1},
-            {"type": "force_rush", "value": 1}
+            {"type": "force_rush", "value": 1},
         ],
-
         "tags": ["debuff", "mindgame"],
     },
-
     "s042": {
         "name": "Let's Pump Some Iron",
         "icon": "UniqueAcceleration",
@@ -985,13 +862,11 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_current_speed","value": 2},
-            {"type": "modify_roll_cap","value": 15,"duration": "this_roll"}
+            {"type": "modify_current_speed", "value": 2},
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
-
         "tags": ["corner", "late_race", "acceleration", "unique"],
     },
-    
     "s043": {
         "name": "Red Shift/LP1211-M",
         "icon": "UniqueAcceleration",
@@ -1007,17 +882,11 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {
-                "type": "add_dkh",
-                "value": 2,
-                "duration": "this_roll"
-            },
-            {"type": "modify_roll_cap","value": 15,"duration": "this_roll"},
+            {"type": "add_dkh", "value": 2, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
-
         "tags": ["corner", "late_race", "lead", "acceleration", "unique"],
     },
-
     "s044": {
         "name": "Triumphant Pulse",
         "icon": "UniqueVelocity",
@@ -1035,13 +904,11 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_cap","value": 15,"duration": "this_roll"},
-            {"type": "modify_roll_floor","value": 10,"duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 20, "duration": "this_roll"},
+            {"type": "modify_roll_floor", "value": 10, "duration": "this_roll"},
         ],
-
         "tags": ["late_race", "lead", "velocity", "positioning", "unique"],
     },
-
     "s045": {
         "name": "Moving Past, and Beyond",
         "icon": "UniqueAcceleration",
@@ -1057,13 +924,11 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "add_dkh","value": 3,"duration": "this_roll"},
-            {"type": "modify_current_speed","value": 2}
+            {"type": "add_dkh", "value": 3, "duration": "this_roll"},
+            {"type": "modify_current_speed", "value": 2},
         ],
-
         "tags": ["mid_race", "late_race", "acceleration", "unique"],
     },
-
     "s046": {
         "name": "Angling and Scheming",
         "icon": "UniqueAcceleration",
@@ -1078,21 +943,11 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {
-                "type": "add_dkh",
-                "value": 3,
-                "duration": "this_roll"
-            },
-            {
-                "type": "modify_roll_cap",
-                "value": 10,
-                "duration": "this_roll"
-            },
+            {"type": "add_dkh", "value": 3, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
-
         "tags": ["corner", "late_race", "lead", "acceleration", "unique"],
     },
-
     "s047": {
         "name": "Ramp Up",
         "icon": "Velocity",
@@ -1113,14 +968,11 @@ SKILLS = {
                 "type": "modify_velocity",
                 "mode": "flat_total",
                 "value": 40,
-                "duration": "this_roll"
+                "duration": "this_roll",
             }
         ],
-
         "tags": ["mid_race", "velocity", "positioning"],
     },
-
-    
     "s048": {
         "name": "Uma Stan",
         "icon": "Velocity",
@@ -1134,12 +986,10 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_cap","value": 10,"duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
-
         "tags": ["velocity"],
     },
-
     "s049": {
         "name": "Homestretch Haste",
         "icon": "Velocity",
@@ -1153,106 +1003,78 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_cap","value": 10,"duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
         ],
-
         "tags": ["velocity"],
     },
-
     "s050": {
         "name": "Daring Strike",
         "icon": "Velocity",
         "cooldown": 8,
         "cost": 60,
-
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
             "position_group": "back",
         },
-
         "target": {
             "scope": "self",
             "limit": 1,
         },
-
         "effects": [
-            {
-                "type": "modify_roll_cap",
-                "value": 7,
-                "duration": "this_roll"
-            },
+            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
                 "value": 60,
-                "duration": "this_roll"
-            }
+                "duration": "this_roll",
+            },
         ],
-
         "tags": ["velocity", "mid_race", "back"],
     },
-
     "s051": {
         "name": "Escape Artist",
         "icon": "Velocity",
         "cooldown": 10,
         "cost": 50,
-
         "trigger": {
             "style": "Front",
             "phase_min": 2,
             "phase_max": 3,
         },
-
         "target": {
             "scope": "self",
             "limit": 1,
         },
-
         "effects": [
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
                 "value": 40,
-                "duration": "this_roll"
+                "duration": "this_roll",
             },
-
-            {
-                "type": "modify_roll_cap",
-                "value": 5,
-                "duration": "this_roll"
-            },
-
-            {
-                "type": "reduce_stamina",
-                "value": 1
-            }
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "reduce_stamina", "value": 1},
         ],
-
         "tags": [
             "front",
             "mid_race",
             "velocity",
         ],
     },
-
     "s052": {
         "name": "15,000,000 CC",
         "icon": "Velocity",
         "cooldown": 8,
         "cost": 80,
-
         "trigger": {
             "style": "Late",
             "path_type": 4,
         },
-
         "target": {
             "scope": "self",
             "limit": 1,
         },
-
         "effects": [
             {
                 "type": "modify_roll_cap",
@@ -1265,7 +1087,6 @@ SKILLS = {
                 "duration": "this_roll",
             },
         ],
-
         "tags": [
             "late",
             "downhill",
@@ -1273,7 +1094,6 @@ SKILLS = {
             "stability",
         ],
     },
-
     # "s099": {
     #     "name": "March Licking",
     #     "icon": "LookUp",
@@ -1291,7 +1111,6 @@ SKILLS = {
     #     ],
     #     "tags": ["vision", "end", "positioning"],
     # },
-
     "s053": {
         "name": "Go with the Flow",
         "icon": "Navigation",
@@ -1299,94 +1118,55 @@ SKILLS = {
         "cost": 40,
         "trigger": {},
         "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {"type": "resolve_pending_lane_now"}
-        ],
+        "effects": [{"type": "resolve_pending_lane_now"}],
         "tags": ["positioning"],
     },
-
     "s054": {
         "name": "Cacao Operation Cacao",
         "icon": "UniqueVelocity",
         "cooldown": 8,
         "cost": 120,
-
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
             "position_group": "front",
             "path_type": 2,
         },
-
         "target": {
             "scope": "self",
             "limit": 1,
         },
-
         "effects": [
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
                 "value": 40,
-                "duration": "this_roll"
+                "duration": "this_roll",
             },
-            {
-                "type": "modify_roll_cap",
-                "value": 10,
-                "duration": "this_roll"
-            },
-            {
-                "type": "recover_stamina",
-                "value": 1
-            }
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
+            {"type": "recover_stamina", "value": 1},
         ],
-
-        "tags": [
-            "corner",
-            "mid_race",
-            "lead",
-            "velocity",
-            "recovery",
-            "unique"
-        ],
+        "tags": ["corner", "mid_race", "lead", "velocity", "recovery", "unique"],
     },
     "s055": {
         "name": "U=ma2",
         "icon": "UniqueAcceleration",
         "cooldown": 8,
         "cost": 100,
-
         "trigger": {
             "phase_min": 3,
             "phase_max": 4,
             "position_group": "middle",
             "path_type": 2,
         },
-
         "target": {
             "scope": "self",
             "limit": 1,
         },
-
         "effects": [
-            {
-                "type": "modify_roll_cap",
-                "value": 10,
-                "duration": "this_roll"
-            },
-            {
-                "type": "recover_stamina",
-                "value": 3
-            }
+            {"type": "modify_roll_cap", "value": 10, "duration": "this_roll"},
+            {"type": "recover_stamina", "value": 3},
         ],
-
-        "tags": [
-            "corner",
-            "late_race",
-            "middle",
-            "acceleration",
-            "recovery",
-            "unique"
-        ],
-    }
+        "tags": ["corner", "late_race", "middle", "acceleration", "recovery", "unique"],
+    },
 }
