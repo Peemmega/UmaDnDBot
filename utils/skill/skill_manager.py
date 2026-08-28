@@ -29,6 +29,7 @@ TARGET_TEXT = {
 
 from utils.skill.skill_presets import SKILLS, ICON
 
+
 def get_skill_display(skill_id: str) -> str:
     skill = SKILLS.get(skill_id)
     if not skill:
@@ -38,6 +39,7 @@ def get_skill_display(skill_id: str) -> str:
     emoji = ICON.get(icon_key, "❓")
 
     return f"{emoji} `{skill_id}` - **{skill['name']}**"
+
 
 def get_skill_short(skill_id: str) -> str:
     skill = SKILLS.get(skill_id)
@@ -51,6 +53,7 @@ def get_skill_short(skill_id: str) -> str:
 def get_all_skills() -> dict:
     return SKILLS
 
+
 def normalize_duration(duration: str | None) -> str:
     if duration == "this_roll":
         return "รอบนี้"
@@ -60,6 +63,7 @@ def normalize_duration(duration: str | None) -> str:
         return "เทิร์นหน้า"
     return ""
 
+
 def get_skill(skill_key: str) -> Optional[dict]:
     return SKILLS.get(skill_key)
 
@@ -68,7 +72,7 @@ def find_skill_by_name(name: str) -> Optional[tuple[str, dict]]:
     name_lower = name.strip().lower()
 
     for key, skill in SKILLS.items():
-        if key.lower() == name_lower or skill['name'].lower() == name_lower:
+        if key.lower() == name_lower or skill["name"].lower() == name_lower:
             return key, skill
 
     return None
@@ -76,9 +80,7 @@ def find_skill_by_name(name: str) -> Optional[tuple[str, dict]]:
 
 def get_skills_by_icon(icon_type: str) -> dict:
     return {
-        key: skill
-        for key, skill in SKILLS.items()
-        if skill.get("icon") == icon_type
+        key: skill for key, skill in SKILLS.items() if skill.get("icon") == icon_type
     }
 
 
@@ -98,21 +100,21 @@ def get_skill_emoji(skill_id: str) -> str:
     return ICON.get(skill.get("icon"), "❓")
 
 
-def build_skill_list_embed(skills: dict, title: str = "📘 รายชื่อสกิลทั้งหมด") -> discord.Embed:
+def build_skill_list_embed(
+    skills: dict, title: str = "📘 รายชื่อสกิลทั้งหมด"
+) -> discord.Embed:
     embed = discord.Embed(
         title=title,
         description=build_skill_list_text(skills),
-        color=discord.Color.blurple()
+        color=discord.Color.blurple(),
     )
     return embed
+
 
 def build_skill_tag_embed(tag_value: str):
     skills = get_skills_by_tag(tag_value)
 
-    embed = discord.Embed(
-        title=f"🏷️ สกิล tag: {tag_value}",
-        color=discord.Color.teal()
-    )
+    embed = discord.Embed(title=f"🏷️ สกิล tag: {tag_value}", color=discord.Color.teal())
 
     if not skills:
         embed.description = "ไม่พบสกิล"
@@ -124,11 +126,7 @@ def build_skill_tag_embed(tag_value: str):
         if len(desc) > 1024:
             desc = desc[:1000] + "..."
 
-        embed.add_field(
-            name="",
-            value=desc,
-            inline=False
-        )
+        embed.add_field(name="", value=desc, inline=False)
 
         count += 1
         if count >= 25:
@@ -136,6 +134,7 @@ def build_skill_tag_embed(tag_value: str):
             break
 
     return embed
+
 
 def build_skill_card_text(skill_id: str | None) -> str:
     if not skill_id:
@@ -146,7 +145,7 @@ def build_skill_card_text(skill_id: str | None) -> str:
         return f"❓ `{skill_id}` ไม่พบข้อมูล"
 
     emoji = ICON.get(skill.get("icon"), "❓")
-    name = skill['name']
+    name = skill["name"]
     cooldown = skill.get("cooldown", 0)
     cost = skill.get("cost", 0)
 
@@ -164,11 +163,13 @@ def build_skill_card_text(skill_id: str | None) -> str:
         f"--------------------------------------"
     )
 
+
 POSITION_GROUP_TEXT = {
     "front": "กลุ่มหน้า",
     "middle": "กลุ่มกลาง",
     "back": "กลุ่มท้าย",
 }
+
 
 def describe_trigger(trigger: dict) -> str:
     parts = []
@@ -198,7 +199,7 @@ def describe_trigger(trigger: dict) -> str:
         parts.append("ในช่วง Last Spurt")
 
     if trigger.get("last_corner") is True:
-            parts.append("ในโค้งสุดท้าย")
+        parts.append("ในโค้งสุดท้าย")
 
     if trigger.get("front_blocked") is True:
         parts.append("มีคู่แข่งในระยะ 20 ช่องด้านหน้า")
@@ -215,11 +216,13 @@ def describe_trigger(trigger: dict) -> str:
         parts.append(
             f"เมื่ออยู่ใน{POSITION_GROUP_TEXT.get(trigger['position_group'], trigger['position_group'])}"
         )
-        
+
     return " • ".join(parts) if parts else "ไม่มีเงื่อนไขพิเศษ"
+
 
 def describe_target(target: dict) -> str:
     return TARGET_TEXT.get(target.get("scope", "self"), target.get("scope", "self"))
+
 
 def describe_effect(effect: dict) -> str:
     effect_type = effect["type"]
@@ -238,20 +241,24 @@ def describe_effect(effect: dict) -> str:
     if effect_type in {"modify_roll_cap_floor", "cap_floor"}:
         cap = effect.get("cap", value)
         floor = effect.get("floor", value)
-        return f"Cap +{cap}, Floor +{floor}" + (f" ({dur})" if dur else "")
+        return f"ปรับแต้มสูงสุดลูกเต๋า {cap}, เพิ่มแต้มขั้นต่ำของลูกเต๋า {floor}" + (
+            f" ({dur})" if dur else ""
+        )
     if effect_type == "add_dkh":
-        return f"เพิ่มจำนวนลูกเต๋าและจำนวนลูกที่เลือก +{value}" + (f" ({dur})" if dur else "")
+        return f"เพิ่มจำนวนลูกเต๋าและจำนวนลูกที่เลือก +{value}" + (
+            f" ({dur})" if dur else ""
+        )
     if effect_type == "add_d":
         return f"เพิ่มจำนวนลูกเต๋า +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "add_kh":
         return f"เพิ่มจำนวนลูกที่เลือก +{value}" + (f" ({dur})" if dur else "")
-    
+
     if effect_type in ["recover_stamina"]:
         return f"ฟื้นฟู {Status_Icon_Type['STA']} +{value}"
-    
+
     if effect_type in ["modify_current_speed"]:
         return f"เร่งความเร็วปัจจุบัน {value} ระดับ"
-    
+
     if effect_type == "resolve_pending_lane_now":
         return "ย้ายไป Lane ที่ตั้งรอไว้ทันที"
     if effect_type == "self_heal_stamina":
@@ -269,7 +276,9 @@ def describe_effect(effect: dict) -> str:
         return f"ลดระยะตรวจ Gold ของศัตรู {value}"
     if effect_type == "modify_gold_lane_range":
         sign = "+" if value >= 0 else ""
-        return f"ปรับช่วง Gold Lane ของตัวเอง {sign}{value}" + (f" ({dur})" if dur else "")
+        return f"ปรับช่วง Gold Lane ของตัวเอง {sign}{value}" + (
+            f" ({dur})" if dur else ""
+        )
     if effect_type == "modify_enemy_gold_lane_range":
         return f"ลดช่วง Gold Lane ของศัตรู {abs(value)}" + (f" ({dur})" if dur else "")
     if effect_type == "apply_debuff_next_turn":
@@ -287,6 +296,7 @@ def describe_effect(effect: dict) -> str:
 
     return str(effect)
 
+
 def build_skill_description(skill_id: str) -> str:
     skill = SKILLS.get(skill_id)
     if not skill:
@@ -296,8 +306,7 @@ def build_skill_description(skill_id: str) -> str:
     trigger_text = describe_trigger(skill.get("trigger", {}))
     target_text = describe_target(skill.get("target", {}))
     effects = "\n".join(
-        f"• {describe_effect(effect)}"
-        for effect in skill.get("effects", [])
+        f"• {describe_effect(effect)}" for effect in skill.get("effects", [])
     )
 
     return (
@@ -308,12 +317,14 @@ def build_skill_description(skill_id: str) -> str:
         f"ผล:\n{effects}"
     )
 
+
 def build_skill_embed_from_dict(skills: dict, title: str):
     return discord.Embed(
         title=title,
         description=build_skill_list_text(skills) or "ไม่พบสกิล",
-        color=discord.Color.blurple()
+        color=discord.Color.blurple(),
     )
+
 
 def filter_skills(skills: dict, *, style=None, distance=None) -> dict:
     result = {}
@@ -343,6 +354,7 @@ def filter_skills(skills: dict, *, style=None, distance=None) -> dict:
 
     return result
 
+
 def build_skill_list_text(skills: dict) -> str:
     if not skills:
         return "ไม่พบสกิล"
@@ -354,11 +366,9 @@ def build_skill_list_text(skills: dict) -> str:
 
     return "\n".join(lines)
 
+
 def build_skill_detail_embed(skills: dict, title: str) -> discord.Embed:
-    embed = discord.Embed(
-        title=title,
-        color=discord.Color.gold()
-    )
+    embed = discord.Embed(title=title, color=discord.Color.gold())
 
     if not skills:
         embed.description = "ไม่พบสกิล"
@@ -371,11 +381,7 @@ def build_skill_detail_embed(skills: dict, title: str) -> discord.Embed:
         if len(desc) > 1024:
             desc = desc[:1000] + "..."
 
-        embed.add_field(
-            name="",
-            value=desc,
-            inline=False
-        )
+        embed.add_field(name="", value=desc, inline=False)
 
         count += 1
         if count >= 25:
