@@ -35,11 +35,35 @@ RACETRACKS = {
 # ``track`` means the surface (turf/dirt).  Keep the venue separately so
 # consumers can present a proper racecourse filter.
 RACE_VENUE_BY_ID = {
-    "Hanshin": {"OkaSho", "AsahiHaiFuturityStakes", "HanshinJuvenileFillies", "TakarazukaKinen", "OsakaHai"},
-    "Tokyo": {"NHK", "JapaneseOaks", "JapaneseDerby", "TennoShoAutumn", "JapanCup", "YasudaKinen", "FebruaryStakes", "VictoriaMileTokyo", "SaudiArabiaRoyalCup"},
+    "Hanshin": {
+        "OkaSho",
+        "AsahiHaiFuturityStakes",
+        "HanshinJuvenileFillies",
+        "TakarazukaKinen",
+        "OsakaHai",
+    },
+    "Tokyo": {
+        "NHK",
+        "JapaneseOaks",
+        "JapaneseDerby",
+        "TennoShoAutumn",
+        "JapanCup",
+        "YasudaKinen",
+        "FebruaryStakes",
+        "VictoriaMileTokyo",
+        "SaudiArabiaRoyalCup",
+    },
     "Nakayama": {"SatsukiSho", "HopefulStakes", "SprintersStakes", "ArimaKinen"},
     "Chukyo": {"ChampionsCup", "TakamatsunomiyaKinen", "ChunichiShimbunHai"},
-    "Kyoto": {"KikukaSho", "ShukaSho", "QueenElizabethIICup", "MileChampionship", "TennoShoSpring", "KyotoJuniorStakes", "Aoi Stakes"},
+    "Kyoto": {
+        "KikukaSho",
+        "ShukaSho",
+        "QueenElizabethIICup",
+        "MileChampionship",
+        "TennoShoSpring",
+        "KyotoJuniorStakes",
+        "Aoi Stakes",
+    },
     "Ooi": {"JapanDirtDerby", "TokyoDaishoten", "TeioSho"},
     "Kawasaki": {"ZenNipponJuniorYushun", "KawasakiKinen"},
     "Funabashi": {"KashiwaKinen"},
@@ -57,6 +81,7 @@ def get_race_venue(race_id: str) -> str:
         if race_id in race_ids:
             return venue
     return "Other"
+
 
 RACE_PRESET = {
     # HANSHIN RACE
@@ -125,7 +150,7 @@ RACE_PRESET = {
         "path": RACETRACKS["TOKYO_2400"],
     },
     "JapaneseDerby": {
-        "name": "Tokyo Yushun (Japanese Derby) 2400m",
+        "name": "Tokyo Yushun (Japanese Derby)",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1494731127385100428/thum_race_rt_000_1010_00.png?ex=69e45517&is=69e30397&hm=c31d08d5c4f4b6abf6a4d31e4331ff2459a9903aff29d6eadefdd553f78eff5e&=&format=webp&quality=lossless&width=192&height=96",
         "image": "https://media.discordapp.net/attachments/1494730857259471030/1494731127682760825/10606.png?ex=69e45517&is=69e30397&hm=f33351514052039ff0bf65d941f40771384d694427afe961be403fe0fa84b4e4&=&format=webp&quality=lossless&width=1607&height=927",
         "track": "turf",
