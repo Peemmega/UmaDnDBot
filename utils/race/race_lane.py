@@ -80,7 +80,9 @@ def calculate_lane_block_penalty(
             if player_id is not None:
                 blocked_runner_ids.append(str(player_id))
 
-    raw_blocking_penalty = min(LANE_BLOCK_PENALTY_CAP, blocked_count * LANE_BLOCK_PENALTY_STEP)
+    raw_blocking_penalty = min(
+        LANE_BLOCK_PENALTY_CAP, blocked_count * LANE_BLOCK_PENALTY_STEP
+    )
     power_reduction = max(0.0, float(power_stat) / 100.0)
     blocking_penalty = max(0.0, raw_blocking_penalty - power_reduction)
     final_score = int(round(int(base_score or 0) * (1 - blocking_penalty)))
@@ -102,7 +104,9 @@ def has_drafting_bonus(player: dict, players: dict | Iterable[dict]) -> bool:
             continue
         if get_player_lane(target) != my_lane:
             continue
-        if int(target.get("score", 0) or 0) > my_position and is_in_gold_range_against(player, target):
+        if int(target.get("score", 0) or 0) > my_position and is_in_gold_range_against(
+            player, target
+        ):
             return True
     return False
 

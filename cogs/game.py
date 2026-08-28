@@ -67,6 +67,7 @@ from utils.mob.mob_presets import (MOB_PRESETS)
 from utils.game_manager import (
     get_game,
     is_owner,
+    claim_turn_advance,
     next_turn,
     get_player_in_game,
     get_players,
@@ -547,7 +548,11 @@ class GameCog(commands.GroupCog, name="game"):
 
         await interaction.response.defer()
         await interaction.followup.send(f"⏭️ <@{interaction.user.id}> ข้ามเทิร์น {game['turn']}")
-        await self.process_next_turn(interaction)
+        await self.process_next_turn(
+            interaction,
+            require_all_confirmations=False,
+            require_all_rolls=False,
+        )
 
     @app_commands.command(name="add_mob", description="เพิ่ม mob preset")
     @app_commands.autocomplete(preset=mob_preset_autocomplete)
@@ -671,10 +676,24 @@ class GameCog(commands.GroupCog, name="game"):
         send_func,
         guild,
         title_suffix: str = "",
+        expected_turn: int | None = None,
+        confirmation_token: int | None = None,
+        require_all_confirmations: bool = True,
+        require_all_rolls: bool = True,
     ):
         game = get_game(channel_id)
         if game is None:
-            return
+            return False
+
+        claimed, _reason = claim_turn_advance(
+            channel_id,
+            expected_turn=expected_turn,
+            confirmation_token=confirmation_token,
+            require_all_confirmations=require_all_confirmations,
+            require_all_rolls=require_all_rolls,
+        )
+        if not claimed:
+            return False
 
         previous_ranked_players = get_ranked_players(channel_id)
         previous_players = build_narrator_players_from_ranked(
@@ -685,6 +704,11 @@ class GameCog(commands.GroupCog, name="game"):
         new_turn = next_turn(channel_id)
 
         if new_turn > game["max_turn"]:
+            # Block late interactions while rendering/saving the final result.
+            # Without this, a second callback can enter the end path too.
+            game["ended"] = True
+            game["started"] = False
+            game["phase"] = "ending"
             ranked_players = get_ranked_players(channel_id)
             race_history_id = None
             try:
@@ -727,7 +751,7 @@ class GameCog(commands.GroupCog, name="game"):
             ok, msg = stop_bgm(guild)
 
             delete_game(channel_id)
-            return
+            return True
 
         game = get_game(channel_id)
 
@@ -811,6 +835,9 @@ class GameCog(commands.GroupCog, name="game"):
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(channel_id, user_id)
+                if not success:
+                    print(f"Mob turn failed for {user_id}: {payload.get('message', payload)}")
+                    continue
                 if success and payload.get("zone_preview"):
                     await send_func(embed=payload["zone_preview"])
 
@@ -844,33 +871,57 @@ class GameCog(commands.GroupCog, name="game"):
                 channel_id=channel_id,
                 send_func=send_func,
                 guild=guild,
-                title_suffix="(Auto Mob)"
+                title_suffix="(Auto Mob)",
+                require_all_confirmations=False,
             )
 
-    async def process_next_turn(self, interaction: discord.Interaction):
+        return True
+
+    async def process_next_turn(
+        self,
+        interaction: discord.Interaction,
+        *,
+        expected_turn: int | None = None,
+        confirmation_token: int | None = None,
+        require_all_confirmations: bool = True,
+        require_all_rolls: bool = True,
+    ):
         game = get_game(interaction.channel_id)
         if game is None:
             await interaction.followup.send("เกมยังไม่เข้าร่วม race", ephemeral=True)
             return
 
-        await self._process_next_turn_core(
+        return await self._process_next_turn_core(
             channel_id=interaction.channel_id,
             send_func=interaction.followup.send,
             guild=interaction.guild,
-            title_suffix=""
+            title_suffix="",
+            expected_turn=expected_turn,
+            confirmation_token=confirmation_token,
+            require_all_confirmations=require_all_confirmations,
+            require_all_rolls=require_all_rolls,
         )
 
-    async def process_next_turn_from_timeout(self, channel: discord.TextChannel):
+    async def process_next_turn_from_timeout(
+        self,
+        channel: discord.TextChannel,
+        *,
+        expected_turn: int,
+        confirmation_token: int,
+    ):
         game = get_game(channel.id)
         if game is None:
             return
 
-        await self._process_next_turn_core(
+        return await self._process_next_turn_core(
             channel_id=channel.id,
             send_func=channel.send,
             guild=channel.guild,
-            title_suffix="(Auto)"
-    )
+            title_suffix="(Auto)",
+            expected_turn=expected_turn,
+            confirmation_token=confirmation_token,
+            require_all_confirmations=False,
+        )
 
     # @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
     # async def myinfo(self, interaction: discord.Interaction):

@@ -24,7 +24,9 @@ def get_web_timing_phase(distance: float, finish_distance: int) -> int:
 
 
 def get_tempo(style: str, phase: int) -> dict:
-    level = WEB_TIMING_TEMPO_TABLE.get(style, WEB_TIMING_TEMPO_TABLE["Pace"]).get(phase, "N")
+    level = WEB_TIMING_TEMPO_TABLE.get(style, WEB_TIMING_TEMPO_TABLE["Pace"]).get(
+        phase, "N"
+    )
     return {"tempo_level": level, **WEB_TIMING_TEMPO_CONFIG[level]}
 
 
@@ -44,7 +46,9 @@ def get_timing_tier(score: float) -> str:
     return "Miss"
 
 
-def initialize_web_timing_player(player: dict, finish_distance: int, now: float | None = None) -> bool:
+def initialize_web_timing_player(
+    player: dict, finish_distance: int, now: float | None = None
+) -> bool:
     now = time.time() if now is None else now
     style = player.get("style") or "Pace"
     style_rule = MAX_SPEED_PHASE.get(style, MAX_SPEED_PHASE["Pace"])
@@ -53,10 +57,13 @@ def initialize_web_timing_player(player: dict, finish_distance: int, now: float 
     race_profile = player.get("race_profile") or {}
     base_power = float(effective_stats.get("base_power", race_profile.get("power", 1)))
     track_modifier = float(effective_stats.get("track_modifier", 1.0))
-    player["web_timing_current_speed"] = max(0.0, float(style_rule["start"]) * speed_modifier)
+    player["web_timing_current_speed"] = max(
+        0.0, float(style_rule["start"]) * speed_modifier
+    )
     player["web_timing_base_acceleration"] = max(
         MIN_WEB_TIMING_ACCELERATION,
-        WEB_TIMING_BASE_ACCELERATION + (WEB_TIMING_POWER_ACCELERATION_PER_POINT * base_power),
+        WEB_TIMING_BASE_ACCELERATION
+        + (WEB_TIMING_POWER_ACCELERATION_PER_POINT * base_power),
     )
     player["web_timing_power_acceleration_multiplier"] = max(
         0.0,
@@ -64,7 +71,9 @@ def initialize_web_timing_player(player: dict, finish_distance: int, now: float 
     )
     player["web_timing_speed_cap"] = max(0.0, MAX_WEB_TIMING_SPEED * speed_modifier)
     player["web_timing_speed_updated_at"] = now
-    player["web_timing_phase"] = get_web_timing_phase(player.get("web_distance", 0), finish_distance)
+    player["web_timing_phase"] = get_web_timing_phase(
+        player.get("web_distance", 0), finish_distance
+    )
     player["zone_active"] = False
     player["zone_started_at"] = None
     player["zone_ends_at"] = None
@@ -90,7 +99,10 @@ def refresh_web_timing_player(
         elapsed = min(MAX_ACCELERATION_ELAPSED_SECONDS, max(0.0, now - previous_update))
         current_speed = max(0.0, float(player.get("web_timing_current_speed", 0.0)))
         current_speed += _effective_acceleration(player) * elapsed
-        player["web_timing_current_speed"] = min(float(player.get("web_timing_speed_cap", MAX_WEB_TIMING_SPEED)), current_speed)
+        player["web_timing_current_speed"] = min(
+            float(player.get("web_timing_speed_cap", MAX_WEB_TIMING_SPEED)),
+            current_speed,
+        )
     player["web_timing_speed_updated_at"] = now
 
     old_phase = int(player.get("web_timing_phase", 1))
@@ -101,10 +113,14 @@ def refresh_web_timing_player(
     return activated
 
 
-def get_web_timing_snapshot(player: dict, finish_distance: int, now: float | None = None) -> dict:
+def get_web_timing_snapshot(
+    player: dict, finish_distance: int, now: float | None = None
+) -> dict:
     now = time.time() if now is None else now
     _expire_zone(player, now)
-    player["web_timing_phase"] = get_web_timing_phase(player.get("web_distance", 0), finish_distance)
+    player["web_timing_phase"] = get_web_timing_phase(
+        player.get("web_distance", 0), finish_distance
+    )
     _sync_public_state(player, now)
     return {
         "phase": player.get("web_timing_phase", 1),
@@ -126,7 +142,9 @@ def get_web_timing_snapshot(player: dict, finish_distance: int, now: float | Non
     }
 
 
-def roll_web_timing_distance_gain(player: dict, timing_score: float) -> tuple[float, float, str]:
+def roll_web_timing_distance_gain(
+    player: dict, timing_score: float
+) -> tuple[float, float, str]:
     current_speed = max(0.0, float(player.get("current_speed", 0.0)))
     base_gain = base_gain = random.uniform(current_speed * 0.8, current_speed)
     tier = get_timing_tier(timing_score)
@@ -135,7 +153,9 @@ def roll_web_timing_distance_gain(player: dict, timing_score: float) -> tuple[fl
 
 def _activate_zone_if_ready(player: dict, now: float) -> bool:
     style = player.get("style") or "Pace"
-    if player.get("zone_used") or int(player.get("web_timing_phase", 1)) != get_zone_trigger_phase(style):
+    if player.get("zone_used") or int(
+        player.get("web_timing_phase", 1)
+    ) != get_zone_trigger_phase(style):
         return False
     ends_at = now + WEB_TIMING_ZONE_EFFECT["duration_seconds"]
     player["zone_active"] = True
@@ -156,13 +176,21 @@ def _expire_zone(player: dict, now: float) -> None:
 def _effective_acceleration(player: dict) -> float:
     phase = int(player.get("web_timing_phase", 1))
     tempo = get_tempo(player.get("style") or "Pace", phase)
-    zone_multiplier = WEB_TIMING_ZONE_EFFECT["acceleration_multiplier"] if player.get("zone_active") else 1.0
+    zone_multiplier = (
+        WEB_TIMING_ZONE_EFFECT["acceleration_multiplier"]
+        if player.get("zone_active")
+        else 1.0
+    )
     return round(
         min(
             MAX_WEB_TIMING_ACCELERATION,
             max(
                 MIN_WEB_TIMING_ACCELERATION,
-                float(player.get("web_timing_base_acceleration", WEB_TIMING_BASE_ACCELERATION))
+                float(
+                    player.get(
+                        "web_timing_base_acceleration", WEB_TIMING_BASE_ACCELERATION
+                    )
+                )
                 * float(player.get("web_timing_power_acceleration_multiplier", 1.0))
                 * tempo["acceleration_multiplier"]
                 * zone_multiplier,
@@ -173,7 +201,9 @@ def _effective_acceleration(player: dict) -> float:
 
 
 def _sync_public_state(player: dict, now: float) -> None:
-    tempo = get_tempo(player.get("style") or "Pace", int(player.get("web_timing_phase", 1)))
+    tempo = get_tempo(
+        player.get("style") or "Pace", int(player.get("web_timing_phase", 1))
+    )
     zone_active = bool(player.get("zone_active"))
     speed_bonus = WEB_TIMING_ZONE_EFFECT["speed_bonus"] if zone_active else 1.0
     gauge_bonus = WEB_TIMING_ZONE_EFFECT["gauge_speed_bonus"] if zone_active else 1.0
@@ -186,16 +216,27 @@ def _sync_public_state(player: dict, now: float) -> None:
         * (WEB_TIMING_ZONE_EFFECT["acceleration_multiplier"] if zone_active else 1.0),
         3,
     )
-    player["gauge_speed_multiplier"] = round(tempo["gauge_speed_multiplier"] * gauge_bonus, 3)
+    player["gauge_speed_multiplier"] = round(
+        tempo["gauge_speed_multiplier"] * gauge_bonus, 3
+    )
     player["current_speed"] = round(
         min(
             float(player.get("web_timing_speed_cap", MAX_WEB_TIMING_SPEED)),
-            max(0.0, float(player.get("web_timing_current_speed", 0.0)) * tempo["speed_multiplier"] * speed_bonus),
+            max(
+                0.0,
+                float(player.get("web_timing_current_speed", 0.0))
+                * tempo["speed_multiplier"]
+                * speed_bonus,
+            ),
         ),
         2,
     )
     player["acceleration"] = round(_effective_acceleration(player), 2)
     player["zone_remaining_seconds"] = round(
-        max(0.0, float(player.get("zone_ends_at") or 0.0) - now) if zone_active else 0.0,
+        (
+            max(0.0, float(player.get("zone_ends_at") or 0.0) - now)
+            if zone_active
+            else 0.0
+        ),
         1,
     )

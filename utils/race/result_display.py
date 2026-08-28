@@ -17,7 +17,9 @@ def format_bonus_display(bonus_display: str, *, block_label: str = "BLOCK") -> s
     return formatted.replace("BLOCK", block_label)
 
 
-def format_stamina_line(stamina_note: str, *, drafting_active: bool = False, draft_label: str = "DRAFT") -> str:
+def format_stamina_line(
+    stamina_note: str, *, drafting_active: bool = False, draft_label: str = "DRAFT"
+) -> str:
     text = str(stamina_note or "").strip()
     if drafting_active:
         return f"{text} {draft_label}".strip()

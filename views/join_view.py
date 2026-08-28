@@ -225,6 +225,9 @@ class LobbyView(discord.ui.View):
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(self.channel_id, user_id)
+                if not success:
+                    print(f"Mob turn failed for {user_id}: {payload.get('message', payload)}")
+                    continue
                 if success and payload.get("zone_preview"):
                     await interaction.followup.send(embed=payload["zone_preview"])
 
@@ -272,5 +275,6 @@ class LobbyView(discord.ui.View):
                     channel_id=self.channel_id,
                     send_func=interaction.followup.send,
                     guild=interaction.guild,
-                    title_suffix="(Auto Mob)"
+                    title_suffix="(Auto Mob)",
+                    require_all_confirmations=False,
                 )

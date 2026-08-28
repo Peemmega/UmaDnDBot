@@ -1,44 +1,129 @@
+RACETRACKS = {
+    # HANSHIN RACE
+    "HANSHIN_1600": [1, 1, 2, 2, 4, 1, 3, 1],
+    "HANSHIN_2000": [3, 1, 2, 2, 1, 1, 2, 2, 4, 3, 1, 1],
+    "HANSHIN_2200": [4, 3, 1, 2, 2, 1, 4, 2, 2, 1, 3, 1],
+    # TOKYO RACE
+    "TOKYO_1600": [1, 3, 4, 2, 2, 3, 1, 1],
+    "TOKYO_2000": [1, 3, 2, 2, 4, 1, 3, 1, 1, 2, 2, 1],
+    "TOKYO_2400": [1, 2, 2, 2, 3, 4, 2, 2, 2, 3, 3, 1],
+    # NAKAYAMA RACE
+    "NAKAYAMA_1200": [4, 1, 2, 1, 2, 2, 3, 1],
+    "NAKAYAMA_2000": [3, 1, 3, 2, 4, 2, 1, 1, 2, 2, 3, 1],
+    "NAKAYAMA_2500": [1, 2, 2, 1, 3, 1, 3, 2, 4, 2, 1, 1, 2, 2, 3, 1],
+    # CHUKYO RACE
+    "CHUKYO_1200": [4, 1, 2, 2, 2, 3, 1, 1],
+    "CHUKYO_1800": [1, 2, 4, 2, 2, 3, 3, 1],
+    # KYOTO RACE
+    "KYOTO_1600": [1, 3, 3, 4, 2, 2, 1, 1],
+    "KYOTO_2000": [1, 1, 2, 2, 1, 3, 1, 4, 2, 2, 1, 1],
+    "KYOTO_2200": [1, 1, 2, 2, 3, 3, 4, 2, 2, 2, 1, 1],
+    "KYOTO_3000": [3, 3, 4, 2, 2, 1, 1, 2, 2, 3, 3, 4, 2, 2, 1, 1],
+    "KYOTO_3200": [1, 3, 3, 4, 2, 2, 1, 1, 2, 3, 3, 4, 2, 2, 1, 1],
+    # OOI RACE
+    "OOI_2000": [1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1],
+    # KAWASAKI RACE
+    "KAWASAKI_1600": [1, 1, 1, 2, 1, 1, 2, 1],
+    "KAWASAKI_2100": [1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1],
+    # FUNABASHI RACE
+    "FUNABASHI_1600": [1, 2, 1, 1, 2, 2, 1, 1],
+    # MORIOKA RACE
+    "MORIOKA_1600": [1, 1, 4, 2, 2, 3, 1, 1],
+}
+
+
+# ``track`` means the surface (turf/dirt).  Keep the venue separately so
+# consumers can present a proper racecourse filter.
+RACE_VENUE_BY_ID = {
+    "Hanshin": {"OkaSho", "AsahiHaiFuturityStakes", "HanshinJuvenileFillies", "TakarazukaKinen", "OsakaHai"},
+    "Tokyo": {"NHK", "JapaneseOaks", "JapaneseDerby", "TennoShoAutumn", "JapanCup", "YasudaKinen", "FebruaryStakes", "VictoriaMileTokyo", "SaudiArabiaRoyalCup"},
+    "Nakayama": {"SatsukiSho", "HopefulStakes", "SprintersStakes", "ArimaKinen"},
+    "Chukyo": {"ChampionsCup", "TakamatsunomiyaKinen", "ChunichiShimbunHai"},
+    "Kyoto": {"KikukaSho", "ShukaSho", "QueenElizabethIICup", "MileChampionship", "TennoShoSpring", "KyotoJuniorStakes", "Aoi Stakes"},
+    "Ooi": {"JapanDirtDerby", "TokyoDaishoten", "TeioSho"},
+    "Kawasaki": {"ZenNipponJuniorYushun", "KawasakiKinen"},
+    "Funabashi": {"KashiwaKinen"},
+    "Morioka": {"MCNambuHai"},
+    "Hakodate": {"HakodateJuniorStakes"},
+    "Niigata": {"NiigataJuniorStakes"},
+    "Tokyo (Steeplechase)": {"DiamondStakes"},
+    "Special": {"Debut", "Test Mile", "Test Med", "Test Long", "SteelBallRun"},
+}
+
+
+def get_race_venue(race_id: str) -> str:
+    """Return the racecourse name used to group stages in the web catalogue."""
+    for venue, race_ids in RACE_VENUE_BY_ID.items():
+        if race_id in race_ids:
+            return venue
+    return "Other"
+
 RACE_PRESET = {
-    "NHK": {
-        "name": "NHK Mile Cup 1600m",
-        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219182676512858/thum_race_rt_000_1007_00.png?ex=69e1cf8e&is=69e07e0e&hm=b343ae355428ebe48951cadbae8cd18e5870346e5efb6eef401f613faa449997&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1493695524812095489/1494219216809627789/10602.png?ex=69e1cf96&is=69e07e16&hm=579e4e375f156ce70ee13c5cb16687e279c952a42776c9df1273960d85bb9c76&=&format=webp&quality=lossless&width=1440&height=929",
+    # HANSHIN RACE
+    "OkaSho": {
+        "name": "Oka Sho",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495054919999291593/thum_race_rt_000_1004_00.png?ex=69e4d9e5&is=69e38865&hm=43e097df171288de94a09c609093567b36f63d96492082d1912cb59068534280&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1495054920347422842/10903.png?ex=69e4d9e5&is=69e38865&hm=3896e24d0545c6aa3b3c7e288cdb72c8a42bda905ed39dd8b605ecf65daeebaf&=&format=webp&quality=lossless&width=1479&height=995",
         "track": "turf",
         "distance": "mile",
         "turn": 8,
-        "path": [1, 3, 4, 2, 2, 3, 1, 1]
+        "path": RACETRACKS["HANSHIN_1600"],
     },
-
+    "AsahiHaiFuturityStakes": {
+        "name": "Asahi Hai Futurity Stakes",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495054919999291593/thum_race_rt_000_1004_00.png?ex=69e4d9e5&is=69e38865&hm=43e097df171288de94a09c609093567b36f63d96492082d1912cb59068534280&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542823759117815849/1022.png?ex=6a92a218&is=6a915098&hm=b3307bae901053346fb5c1122fc665caf4eb9edbbe45e07b292d0a01c8222970&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["HANSHIN_1600"],
+    },
+    "HanshinJuvenileFillies": {
+        "name": "Hanshin Juvenile Fillies",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495054919999291593/thum_race_rt_000_1004_00.png?ex=69e4d9e5&is=69e38865&hm=43e097df171288de94a09c609093567b36f63d96492082d1912cb59068534280&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542823759419932673/1021.png?ex=6a92a218&is=6a915098&hm=135cb90f0f3b95cb65d6e03680107d473a4bb32e022d703996827208d4acc1a7&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["HANSHIN_1600"],
+    },
     "TakarazukaKinen": {
-        "name": "Takarazuka Kinen 2200m",
+        "name": "Takarazuka Kinen",
         "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219500743163954/thum_race_rt_000_1012_00.png?ex=69e1cfda&is=69e07e5a&hm=9aaa79075889b9f8a5fad33f09a31c72c252e586b3f753d472bff3ea15422de2&=&format=webp&quality=lossless&width=192&height=96",
         "image": "https://media.discordapp.net/attachments/1493695524812095489/1494219501019992196/10906.png?ex=69e1cfda&is=69e07e5a&hm=89bf0bdf5173efa05fe2a6f91ac19dae5dee0499b0f4296f6a4fa24c50c5073c&=&format=webp&quality=lossless&width=1359&height=984",
         "track": "turf",
         "distance": "medium",
         "turn": 12,
-        "path": [4, 3, 1, 2, 2, 1, 4, 2, 2, 1, 3, 1]
+        "path": RACETRACKS["HANSHIN_2200"],
     },
-
-    "TennoShoSpring": {
-        "name": "Tenno Sho (Spring) 3200m",
-        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219631861432391/thum_race_rt_000_1006_00.png?ex=69e1cff9&is=69e07e79&hm=c8eb47ad4d7d54d2369332b321100cd08b37b014505a00f27b2f046e6f3be98e&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1493695524812095489/1494219666858704996/10811.png?ex=69e1d001&is=69e07e81&hm=2753992d6a484e9b83f1311b9e0c6488fa1108828c537d6ec3e1156d3beee76d&=&format=webp&quality=lossless&width=1532&height=890",
-        "track": "turf",
-        "distance": "long",
-        "turn": 16,
-        "path": [1, 3, 3, 4, 2, 2, 1, 1, 2, 3, 3, 4, 2, 2, 1, 1]
-    },
-
-    "SatsukiSho": {
-        "name": "Satsuki Sho 2000m",
-        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1494730962477519049/thum_race_rt_000_1005_00.png?ex=69e454f0&is=69e30370&hm=7e84d8f95186e443c0e78149ac3dcee1be20600fb14f672bf37e781a94bbb9fa&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1494730857259471030/1494730963538804886/10504.png?ex=69e454f0&is=69e30370&hm=1534a1ad5575876856ca045835669f89bb38a510e064c5ab028c3697d3fb46d2&=&format=webp&quality=lossless&width=1433&height=812",
+    "OsakaHai": {
+        "name": "Osaka Hai",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495036503619797082/thum_race_rt_000_1003_00.png?ex=69e4c8be&is=69e3773e&hm=ad4fa8db3cd21e0e73c01cacb03d76c77d8faa4f5cca48dd68b274a762b9b569&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1495036503917723739/10905.png?ex=69e4c8be&is=69e3773e&hm=42d5d562d0ff0c090347a983d78de62e5f108732ed3331d8dc09ad6b25f26b74&=&format=webp&quality=lossless&width=1359&height=932",
         "track": "turf",
         "distance": "medium",
         "turn": 12,
-        "path": [3, 1, 3, 2, 4, 2, 1, 1, 2, 2, 3, 1]
+        "path": RACETRACKS["HANSHIN_2000"],
     },
-
+    # TOKYO RACE
+    "NHK": {
+        "name": "NHK Mile Cup",
+        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219182676512858/thum_race_rt_000_1007_00.png?ex=69e1cf8e&is=69e07e0e&hm=b343ae355428ebe48951cadbae8cd18e5870346e5efb6eef401f613faa449997&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1493695524812095489/1494219216809627789/10602.png?ex=69e1cf96&is=69e07e16&hm=579e4e375f156ce70ee13c5cb16687e279c952a42776c9df1273960d85bb9c76&=&format=webp&quality=lossless&width=1440&height=929",
+        "track": "turf",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["TOKYO_1600"],
+    },
+    "JapaneseOaks": {
+        "name": "Japanese Oaks",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1494731127385100428/thum_race_rt_000_1010_00.png?ex=69e45517&is=69e30397&hm=c31d08d5c4f4b6abf6a4d31e4331ff2459a9903aff29d6eadefdd553f78eff5e&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542831170813698078/1009.png?ex=6a92a8ff&is=6a91577f&hm=307af9ecda833bfd5baf4f7dd10afa79d379f84e67b5c6ae11f15cf78c195c1a&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["TOKYO_2400"],
+    },
     "JapaneseDerby": {
         "name": "Tokyo Yushun (Japanese Derby) 2400m",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1494731127385100428/thum_race_rt_000_1010_00.png?ex=69e45517&is=69e30397&hm=c31d08d5c4f4b6abf6a4d31e4331ff2459a9903aff29d6eadefdd553f78eff5e&=&format=webp&quality=lossless&width=192&height=96",
@@ -46,81 +131,232 @@ RACE_PRESET = {
         "track": "turf",
         "distance": "medium",
         "turn": 12,
-        "path": [3, 3, 2, 2, 2, 4, 1, 3, 1, 2, 2, 2]
+        "path": RACETRACKS["TOKYO_2400"],
     },
-
-    "ArimaKinen": {
-        "name": "Arima Kinen 2500m",
-        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1494752842714710156/thum_race_rt_000_1023_00.png?ex=69e46950&is=69e317d0&hm=039c53a2ecceb4dadd4503f9ef11694182db84d3d7a514566fd5875cb11f2a24&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1494730857259471030/1494752843184209930/10506.png?ex=69e46950&is=69e317d0&hm=e1434749606b63deb19bbd9f520fb7eb4e7b9ec09a236e0805f822e1de5eb1aa&=&format=webp&quality=lossless&width=1433&height=875",
-        "track": "turf",
-        "distance": "long",
-        "turn": 16,
-        "path": [1, 2, 2, 1, 3, 1, 3, 2, 4, 2, 1, 1, 2, 2, 3, 1]
-    },
-
-    "JapanCup": {
-        "name": "Japan Cup 2400m",
-        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495036145363320903/thum_race_rt_000_1019_00.png?ex=69e4c869&is=69e376e9&hm=f940df4979f39cbe2532b6170ad84b0562f72193fbd0fac4aec78fa498f9048f&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1494730857259471030/1495036145900195930/10606.png?ex=69e4c869&is=69e376e9&hm=2fea0f4fba9309b9b9374e873a8fa581847e7a86f2c69d56bebfdea9a20ea8e6&=&format=webp&quality=lossless&width=1607&height=927",
-        "track": "turf",
-        "distance": "medium",
-        "turn": 12,
-        "path": [3, 3, 2, 2, 2, 4, 1, 3, 1, 2, 2, 2]
-    },
-
-    "OsakaHai": {
-        "name": "Osaka Hai 2000m",
-        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495036503619797082/thum_race_rt_000_1003_00.png?ex=69e4c8be&is=69e3773e&hm=ad4fa8db3cd21e0e73c01cacb03d76c77d8faa4f5cca48dd68b274a762b9b569&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1494730857259471030/1495036503917723739/10905.png?ex=69e4c8be&is=69e3773e&hm=42d5d562d0ff0c090347a983d78de62e5f108732ed3331d8dc09ad6b25f26b74&=&format=webp&quality=lossless&width=1359&height=932",
-        "track": "turf",
-        "distance": "medium",
-        "turn": 12,
-        "path": [3, 1, 2, 2, 1, 1, 2, 2, 4, 3, 1, 1]
-    },
-
-    
     "TennoShoAutumn": {
-        "name": "Tenno Sho (Autumn) 2000m",
+        "name": "Tenno Sho (Autumn)",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495035900818751598/thum_race_rt_000_1016_00.png?ex=69e4c82f&is=69e376af&hm=9dfb903aa4a2ca5c03acf2d67c32ee70d04ef389eeb251ff7ddb64596ad2b796&=&format=webp&quality=lossless&width=192&height=96",
         "image": "https://media.discordapp.net/attachments/1494730857259471030/1495035901087318036/10604.png?ex=69e4c82f&is=69e376af&hm=89286fb782c955579e4cedc8c44c0b4ab54afed16ff6b88bd6ec8967b05eb7e6&=&format=webp&quality=lossless&width=1745&height=930",
         "track": "turf",
         "distance": "medium",
         "turn": 12,
-        "path": [1, 3, 2, 2, 4, 1, 3, 1, 1, 2, 2, 1]
+        "path": RACETRACKS["TOKYO_2000"],
     },
-
-    "OkaSho": {
-        "name": "Oka Sho 1600m",
-        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495054919999291593/thum_race_rt_000_1004_00.png?ex=69e4d9e5&is=69e38865&hm=43e097df171288de94a09c609093567b36f63d96492082d1912cb59068534280&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1494730857259471030/1495054920347422842/10903.png?ex=69e4d9e5&is=69e38865&hm=3896e24d0545c6aa3b3c7e288cdb72c8a42bda905ed39dd8b605ecf65daeebaf&=&format=webp&quality=lossless&width=1479&height=995",
+    "JapanCup": {
+        "name": "Japan Cup",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495036145363320903/thum_race_rt_000_1019_00.png?ex=69e4c869&is=69e376e9&hm=f940df4979f39cbe2532b6170ad84b0562f72193fbd0fac4aec78fa498f9048f&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1495036145900195930/10606.png?ex=69e4c869&is=69e376e9&hm=2fea0f4fba9309b9b9374e873a8fa581847e7a86f2c69d56bebfdea9a20ea8e6&=&format=webp&quality=lossless&width=1607&height=927",
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["TOKYO_2400"],
+    },
+    "YasudaKinen": {
+        "name": "Yasuda Kinen",
+        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219182676512858/thum_race_rt_000_1007_00.png?ex=69e1cf8e&is=69e07e0e&hm=b343ae355428ebe48951cadbae8cd18e5870346e5efb6eef401f613faa449997&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542831632053182595/1011.png?ex=6a92a96d&is=6a9157ed&hm=729281b3e638493908077aad006f061ddff4005b3f4090e434b6b08f7941dc43&=&format=webp&quality=lossless",
         "track": "turf",
         "distance": "mile",
         "turn": 8,
-        "path": [1, 1, 2, 2, 4, 1, 3, 1]
+        "path": RACETRACKS["TOKYO_1600"],
     },
-
+    "FebruaryStakes": {
+        "name": "February Stakes",
+        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219182676512858/thum_race_rt_000_1007_00.png?ex=69e1cf8e&is=69e07e0e&hm=b343ae355428ebe48951cadbae8cd18e5870346e5efb6eef401f613faa449997&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542832798941843517/1001.png?ex=6a92aa83&is=6a915903&hm=c9778de409038dab6b005889bb069ee05dac2936510579e0de819e444fd6ffc5&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["TOKYO_1600"],
+    },
+    "VictoriaMileTokyo": {
+        "name": "Victoria Mile Tokyo",
+        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219182676512858/thum_race_rt_000_1007_00.png?ex=69e1cf8e&is=69e07e0e&hm=b343ae355428ebe48951cadbae8cd18e5870346e5efb6eef401f613faa449997&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542833275863834704/1008.png?ex=6a92aaf5&is=6a915975&hm=d9cedaae9a2dd439067e038338467f88b064d611210f025344e0e25a7b1e404f&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["TOKYO_1600"],
+    },
+    # NAKAYAMA RACE
+    "SatsukiSho": {
+        "name": "Satsuki Sho",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1494730962477519049/thum_race_rt_000_1005_00.png?ex=69e454f0&is=69e30370&hm=7e84d8f95186e443c0e78149ac3dcee1be20600fb14f672bf37e781a94bbb9fa&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1494730963538804886/10504.png?ex=69e454f0&is=69e30370&hm=1534a1ad5575876856ca045835669f89bb38a510e064c5ab028c3697d3fb46d2&=&format=webp&quality=lossless&width=1433&height=812",
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["NAKAYAMA_2000"],
+    },
+    "HopefulStakes": {
+        "name": "Hopeful Stakes",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1494730962477519049/thum_race_rt_000_1005_00.png?ex=69e454f0&is=69e30370&hm=7e84d8f95186e443c0e78149ac3dcee1be20600fb14f672bf37e781a94bbb9fa&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542838972458336316/1024.png?ex=6a92b043&is=6a915ec3&hm=c1068a136aced734793690ce2bf11139a5181ea377f25ef6696e1171f2c4f425&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["NAKAYAMA_2000"],
+    },
+    "SprintersStakes": {
+        "name": "Sprinters Stakes",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542839396556873778/10501.png?ex=6a92b0a8&is=6a915f28&hm=0e6aa72b609f66d4efb06d95000b3c62aceadb6839f3000248b892ae50470817&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542839096001560607/1013.png?ex=6a92b061&is=6a915ee1&hm=1a0f4d3afa65591f711254f9e4391485a8ae410d69948db4f89c9ff501d8d589&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "sprint",
+        "turn": 8,
+        "path": RACETRACKS["NAKAYAMA_1200"],
+    },
+    "ArimaKinen": {
+        "name": "Arima Kinen",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1494752842714710156/thum_race_rt_000_1023_00.png?ex=69e46950&is=69e317d0&hm=039c53a2ecceb4dadd4503f9ef11694182db84d3d7a514566fd5875cb11f2a24&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1494752843184209930/10506.png?ex=69e46950&is=69e317d0&hm=e1434749606b63deb19bbd9f520fb7eb4e7b9ec09a236e0805f822e1de5eb1aa&=&format=webp&quality=lossless&width=1433&height=875",
+        "track": "turf",
+        "distance": "long",
+        "turn": 16,
+        "path": RACETRACKS["NAKAYAMA_2500"],
+    },
+    # CHUKYO RACE
+    "ChampionsCup": {
+        "name": "Champions Cup",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542844413523402752/10708.png?ex=6a92b554&is=6a9163d4&hm=d774373d77c48556794947a016d6564dad67e394fac94d27dc07699d162446d0&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542844413187854346/1020.png?ex=6a92b554&is=6a9163d4&hm=3831fded3b4cf3f0f174bf4a35e103ef7ac74fbf50b255693f170935b51fbd63&=&format=webp&quality=lossless",
+        "track": "dirt",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["CHUKYO_1800"],
+    },
+    "TakamatsunomiyaKinen": {
+        "name": "Takamatsunomiya Kinen",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542844671049466047/10701.png?ex=6a92b592&is=6a916412&hm=61ed77d7552681b42d3e2819007abff9d8e78a7b15247c1a9f769b8a650a4521&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542844624056361001/1002.png?ex=6a92b587&is=6a916407&hm=c791ef3f5f215b1d3e096c70535774e7f21c5e18ff4229e6bda83b8340d4c996&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "sprint",
+        "turn": 8,
+        "path": RACETRACKS["CHUKYO_1200"],
+    },
+    # KYOTO RACE
+    "KikukaSho": {
+        "name": "Kikuka Sho",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542847069192982568/10810.png?ex=6a92b7ce&is=6a91664e&hm=428e52dc08c70de0f664036b5aa71302ab6700e29938a58f295506cbc71cb172&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542847068824014919/1015.png?ex=6a92b7cd&is=6a91664d&hm=b8cff58a7f357c393d38349a98f57ed6de00599b4c5c031389b58eb8cb9b2d0a&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "long",
+        "turn": 16,
+        "path": RACETRACKS["KYOTO_3000"],
+    },
+    "ShukaSho": {
+        "name": "Shuka Sho",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542847180253958144/10807.png?ex=6a92b7e8&is=6a916668&hm=5454d86691b9e9131dea4f0c41f9e789b309eb1f42437c2139bd251a4b1d91cd&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542847179444715570/1014.png?ex=6a92b7e8&is=6a916668&hm=a96a455f618630acaa665a4af2dcb438271dd8eaea067fee700d065b760f54f7&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["KYOTO_2000"],
+    },
+    "QueenElizabethIICup": {
+        "name": "Queen Elizabeth II Cup",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542847180253958144/10807.png?ex=6a92b7e8&is=6a916668&hm=5454d86691b9e9131dea4f0c41f9e789b309eb1f42437c2139bd251a4b1d91cd&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542847179444715570/1014.png?ex=6a92b7e8&is=6a916668&hm=a96a455f618630acaa665a4af2dcb438271dd8eaea067fee700d065b760f54f7&=&format=webp&quality=lossless",
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["KYOTO_2200"],
+    },
     "MileChampionship": {
-        "name": "Mile Championship 1600m",
+        "name": "Mile Championship",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495055108503769119/thum_race_rt_000_1018_00.png?ex=69e4da12&is=69e38892&hm=9759f8c8444de9fdd8a4b4caefdb30ab909e4df33d7e66dae61f97e4b444912d&=&format=webp&quality=lossless&width=192&height=96",
         "image": "https://media.discordapp.net/attachments/1494730857259471030/1495055108877189201/10805.png?ex=69e4da12&is=69e38892&hm=a6887c5def45a878eccb079f4aaaa57b027538a8161909939e488a87e0a3651a&=&format=webp&quality=lossless&width=1700&height=890",
         "track": "turf",
         "distance": "mile",
         "turn": 8,
-        "path": [1, 3, 3, 4, 2, 2, 1, 1]
+        "path": RACETRACKS["KYOTO_1600"],
     },
-
-    # GIII
+    "TennoShoSpring": {
+        "name": "Tenno Sho (Spring)",
+        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219631861432391/thum_race_rt_000_1006_00.png?ex=69e1cff9&is=69e07e79&hm=c8eb47ad4d7d54d2369332b321100cd08b37b014505a00f27b2f046e6f3be98e&=&format=webp&quality=lossless&width=192&height=96",
+        "image": "https://media.discordapp.net/attachments/1493695524812095489/1494219666858704996/10811.png?ex=69e1d001&is=69e07e81&hm=2753992d6a484e9b83f1311b9e0c6488fa1108828c537d6ec3e1156d3beee76d&=&format=webp&quality=lossless&width=1532&height=890",
+        "track": "turf",
+        "distance": "long",
+        "turn": 16,
+        "path": RACETRACKS["KYOTO_3200"],
+    },
+    # OOI RACE
+    "JapanDirtDerby": {
+        "name": "Japan Dirt Derby",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542851351405666304/11103.png?ex=6a92bbca&is=6a916a4a&hm=cd7e27f6c05ef85a51c87646182fd7f87ff63d481ed85b6d3841e2dd759975ba&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542851350952550431/1102.png?ex=6a92bbca&is=6a916a4a&hm=74cd50ffddf2f561f3cc7cb78c3688ff47f9d2f1f2650223f43454fa4ef6eda4&=&format=webp&quality=lossless",
+        "track": "dirt",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["OOI_2000"],
+    },
+    "TokyoDaishoten": {
+        "name": "Tokyo Daishoten",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542851351405666304/11103.png?ex=6a92bbca&is=6a916a4a&hm=cd7e27f6c05ef85a51c87646182fd7f87ff63d481ed85b6d3841e2dd759975ba&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542851772328972299/1106.png?ex=6a92bc2f&is=6a916aaf&hm=037193dfc721e8d021415c47566cbb5e1f7daae304637d7189a983ff1648dc95&=&format=webp&quality=lossless",
+        "track": "dirt",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["OOI_2000"],
+    },
+    "TeioSho": {
+        "name": "Teio Sho",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542851351405666304/11103.png?ex=6a92bbca&is=6a916a4a&hm=cd7e27f6c05ef85a51c87646182fd7f87ff63d481ed85b6d3841e2dd759975ba&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542851857108443167/1101.png?ex=6a92bc43&is=6a916ac3&hm=ff6e569752fcb8c9083ad82f4fb4df3a896901a0579046c9b058a75ac2f64003&=&format=webp&quality=lossless",
+        "track": "dirt",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["OOI_2000"],
+    },
+    # KAWASAKI RACE
+    "ZenNipponJuniorYushun": {
+        "name": "Zen-Nippon Junior Yushun",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542852081600434329/11302.png?ex=6a92bc79&is=6a916af9&hm=795ce3d95c6123b6e9c229c0e4b37aa0044ead8af8258f9a59e2d940446331cb&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542851857108443167/1101.png?ex=6a92bc43&is=6a916ac3&hm=ff6e569752fcb8c9083ad82f4fb4df3a896901a0579046c9b058a75ac2f64003&=&format=webp&quality=lossless",
+        "track": "dirt",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["KAWASAKI_1600"],
+    },
+    "KawasakiKinen": {
+        "name": "Kawasaki Kinen",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542852203637645343/11303.png?ex=6a92bc96&is=6a916b16&hm=f2965a405df3fd8c596d4f83839feb6bdce2702171d2b4ad4cc20de5aa3af6af&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542852203264348222/1107.png?ex=6a92bc96&is=6a916b16&hm=b86c41bbac734be28f3f930bed0444d13ed9a102a3a78ebf87c5e5f4dfcfd54c&=&format=webp&quality=lossless",
+        "track": "dirt",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["KAWASAKI_2100"],
+    },
+    # FUNABASHI RACE
+    "KashiwaKinen": {
+        "name": "Kashiwa Kinen",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542853078884155423/11402.png?ex=6a92bd66&is=6a916be6&hm=efd7d2bf7b2c22ab4efc428b2e317882b7f65d1a5ba1fb8d7a789c6cd8e23075&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542853078452277308/1109.png?ex=6a92bd66&is=6a916be6&hm=897157db4da181e5a92eb346db12b8401cc123b9dc1a61f81c2e31a0de582829&=&format=webp&quality=lossless",
+        "track": "dirt",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["FUNABASHI_1600"],
+    },
+    # MORIOKA RACE
+    "MCNambuHai": {
+        "name": "M.C. Nambu Hai",
+        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1542862288254537768/10611.png?ex=6a92c5fa&is=6a91747a&hm=907feb0422a55f40ccefcd726036c937aa689f240661b9e31f73648fc21d2abc&=&format=webp&quality=lossless",
+        "image": "https://media.discordapp.net/attachments/1494730857259471030/1542862287910608958/1110.png?ex=6a92c5fa&is=6a91747a&hm=ed2e278859208eb2b6280220df32bdd27825f766b6d52b0bc6d0c57724f1f1be&=&format=webp&quality=lossless",
+        "track": "dirt",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["MORIOKA_1600"],
+    },
+    # Other
     "HakodateJuniorStakes": {
-        "name": "Hakodate Junior Stakes 1200m",
+        "name": "Hakodate Junior Stakes",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502922265438982276/3041.png?ex=6a0178ef&is=6a00276f&hm=0aa4939ffb5743a57eb7ccbaf22e6b56b22176378f776ff8e68da546dda0dd8f&=&format=webp&quality=lossless&width=192&height=96",
         "image": "https://media.discordapp.net/attachments/1494730857259471030/1502922265770070056/10202.png?ex=6a0178ef&is=6a00276f&hm=939624812ce640e97d8fc466c9bec8d96c99aea83d9680d4d4e86cdc534d519a&=&format=webp&quality=lossless&width=1370&height=755",
         "track": "turf",
         "distance": "sprint",
         "turn": 8,
-        "path": [3, 1, 1, 2, 2, 2, 1, 1]
+        "path": [3, 1, 1, 2, 2, 2, 1, 1],
     },
-
     "NiigataJuniorStakes": {
         "name": "Niigata Junior Stakes 1600m",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921936135786667/3049.png?ex=6a0178a0&is=6a002720&hm=4e510374253a640fd0bb7ac4163a1d1dae6c1c9585d374f12f25a528f6beeb45&=&format=webp&quality=lossless&width=192&height=96",
@@ -128,9 +364,8 @@ RACE_PRESET = {
         "track": "turf",
         "distance": "mile",
         "turn": 8,
-        "path": [1, 3, 4, 2, 2, 1, 1, 1]
+        "path": [1, 3, 4, 2, 2, 1, 1, 1],
     },
-
     "DiamondStakes": {
         "name": "Diamond Stakes 3400m",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921936135786667/3049.png?ex=6a0178a0&is=6a002720&hm=4e510374253a640fd0bb7ac4163a1d1dae6c1c9585d374f12f25a528f6beeb45&=&format=webp&quality=lossless&width=192&height=96",
@@ -138,9 +373,8 @@ RACE_PRESET = {
         "track": "turf",
         "distance": "long",
         "turn": 16,
-        "path": [1, 3, 4, 2, 2, 1, 1, 1, 1, 3, 4, 2, 2, 1, 1, 1]
+        "path": [1, 3, 4, 2, 2, 1, 1, 1, 1, 3, 4, 2, 2, 1, 1, 1],
     },
-
     "ChunichiShimbunHai": {
         "name": "Chunichi Shimbun Hai 2000m",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921349977342082/3068.png?ex=6a0766d4&is=6a061554&hm=326878f63ddf32726b4642f20ef0d9f2d0af20e0664605bc4cc746b69dc7fd82&=&format=webp&quality=lossless&width=192&height=96",
@@ -148,10 +382,8 @@ RACE_PRESET = {
         "track": "turf",
         "distance": "medium",
         "turn": 12,
-        "path": [3, 1, 2, 2, 2, 2, 1, 1, 4, 4, 2, 2]
+        "path": [3, 1, 2, 2, 2, 2, 1, 1, 4, 4, 2, 2],
     },
-
-
     "KyotoJuniorStakes": {
         "name": "Kyoto Junior Stakes 2000m",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921212677062717/3065.png?ex=6a0766b4&is=6a061534&hm=34cf86e94076cd66c9f4ec94bc8f1bf01d115a490ccc216ba7326b27ca158dee&=&format=webp&quality=lossless&width=192&height=96",
@@ -159,9 +391,8 @@ RACE_PRESET = {
         "track": "turf",
         "distance": "medium",
         "turn": 12,
-        "path": [1, 1, 1, 2, 2, 1, 3, 1, 4, 2, 2, 2]
+        "path": [1, 1, 1, 2, 2, 1, 3, 1, 4, 2, 2, 2],
     },
-
     "SaudiArabiaRoyalCup": {
         "name": "Saudi Arabia Royal Cup 1600",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921212677062717/3065.png?ex=6a0766b4&is=6a061534&hm=34cf86e94076cd66c9f4ec94bc8f1bf01d115a490ccc216ba7326b27ca158dee&=&format=webp&quality=lossless&width=192&height=96",
@@ -169,9 +400,8 @@ RACE_PRESET = {
         "track": "turf",
         "distance": "mile",
         "turn": 8,
-        "path": [1, 3, 4, 2, 2, 3, 1, 1]
+        "path": [1, 3, 4, 2, 2, 3, 1, 1],
     },
-
     "Aoi Stakes": {
         "name": "Aoi Stakes 1200m",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1504720667415941170/4050.png?ex=6a0803d3&is=6a06b253&hm=61aeef1b4de5725735bda0bb8cb1e8bdc264018b80fd409a321531bda9598f00&=&format=webp&quality=lossless&width=192&height=96",
@@ -179,9 +409,8 @@ RACE_PRESET = {
         "track": "turf",
         "distance": "sprint",
         "turn": 8,
-        "path": [3, 1, 4, 2, 2, 2, 1, 1]
+        "path": [3, 1, 4, 2, 2, 2, 1, 1],
     },
-
     #  debut race
     "Debut": {
         "name": "Debut",
@@ -196,9 +425,8 @@ RACE_PRESET = {
             "rookie_pace",
             "rookie_late",
             "rookie_end",
-        ]
+        ],
     },
-    
     # Test
     "Test Mile": {
         "name": "Test Mile",
@@ -217,9 +445,8 @@ RACE_PRESET = {
             "rookie_alt_pace",
             "rookie_alt_late",
             "rookie_alt_end",
-        ]
+        ],
     },
-
     "Test Med": {
         "name": "Test Med",
         "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219500743163954/thum_race_rt_000_1012_00.png?ex=69e1cfda&is=69e07e5a&hm=9aaa79075889b9f8a5fad33f09a31c72c252e586b3f753d472bff3ea15422de2&=&format=webp&quality=lossless&width=192&height=96",
@@ -237,10 +464,8 @@ RACE_PRESET = {
             "rookie_alt_pace",
             "rookie_alt_late",
             "rookie_alt_end",
-        ]
+        ],
     },
-
-
     "Test Long": {
         "name": "Test Long",
         "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219500743163954/thum_race_rt_000_1012_00.png?ex=69e1cfda&is=69e07e5a&hm=9aaa79075889b9f8a5fad33f09a31c72c252e586b3f753d472bff3ea15422de2&=&format=webp&quality=lossless&width=192&height=96",
@@ -258,9 +483,8 @@ RACE_PRESET = {
             "rookie_alt_pace",
             "rookie_alt_late",
             "rookie_alt_end",
-        ]
+        ],
     },
-
     "SteelBallRun": {
         "name": "Steel Ball Run 4000000m",
         "thumnail": "https://media.discordapp.net/attachments/697810514448744448/1496124802065371156/2026-04-21_192453.png?ex=69e8be4d&is=69e76ccd&hm=5b70ed31363207dd1453202f3657a698a98f8842aaf382b3360c0fa4ec3f4517&=&format=webp&quality=lossless&width=884&height=479",
@@ -268,8 +492,47 @@ RACE_PRESET = {
         "track": "dirt",
         "distance": "long",
         "turn": 40,
-        "path": [1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1,1, 3, 3, 4, 2, 2, 1, 1]
+        "path": [
+            1,
+            3,
+            3,
+            4,
+            2,
+            2,
+            1,
+            1,
+            1,
+            3,
+            3,
+            4,
+            2,
+            2,
+            1,
+            1,
+            1,
+            3,
+            3,
+            4,
+            2,
+            2,
+            1,
+            1,
+            1,
+            3,
+            3,
+            4,
+            2,
+            2,
+            1,
+            1,
+            1,
+            3,
+            3,
+            4,
+            2,
+            2,
+            1,
+            1,
+        ],
     },
-
-
 }

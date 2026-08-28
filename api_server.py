@@ -36,6 +36,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
 from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
+from utils.race.race_preset_data import get_race_venue
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
@@ -494,6 +495,7 @@ def api_get_all_races(distance: str = "all"):
             "image": race.get("image"),
             "thumbnail": race.get("thumnail"),
             "track": race.get("track"),
+            "venue": get_race_venue(race_id),
             "distance": race_distance,
             "turn": race.get("turn"),
             "path": race.get("path", []),

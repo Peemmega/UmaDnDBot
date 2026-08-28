@@ -16,7 +16,6 @@ from typing import Any
 from utils.database import database_connection, get_trainee_trainer
 from utils.skill.skill_presets import SKILLS
 
-
 OFFICIAL = "official"
 PRACTICE = "practice"
 
@@ -49,14 +48,18 @@ def record_race_action(
     player = (game.get("players") or {}).get(player_id)
     if player is None:
         return
-    game.setdefault("race_action_logs", []).append({
-        "turn": int(game.get("turn", 0) or 0),
-        "player_id": str(player_id),
-        "player_name": str(player.get("display_name") or player.get("username") or player_id),
-        "action_type": str(action_type).lower(),
-        "target_id": str(target_id) if target_id is not None else None,
-        "details": copy.deepcopy(details or {}),
-    })
+    game.setdefault("race_action_logs", []).append(
+        {
+            "turn": int(game.get("turn", 0) or 0),
+            "player_id": str(player_id),
+            "player_name": str(
+                player.get("display_name") or player.get("username") or player_id
+            ),
+            "action_type": str(action_type).lower(),
+            "target_id": str(target_id) if target_id is not None else None,
+            "details": copy.deepcopy(details or {}),
+        }
+    )
 
 
 def record_turn_snapshot(game: dict, turn_number: int) -> None:
@@ -72,12 +75,16 @@ def _json(value: Any) -> str:
 def _participant_identity(player_id, player: dict) -> dict:
     is_mob = bool(player.get("is_mob")) or str(player_id).startswith("mob_")
     persistent_uma = not is_mob and not player.get("using_mob_preset")
-    participant_type = "mob" if is_mob else ("npc" if player.get("using_mob_preset") else "uma")
+    participant_type = (
+        "mob" if is_mob else ("npc" if player.get("using_mob_preset") else "uma")
+    )
     trainer = get_trainee_trainer(str(player_id)) if persistent_uma else None
     return {
         "participant_id": str(player_id),
         "uma_id": str(player_id) if persistent_uma else None,
-        "uma_name": str(player.get("display_name") or player.get("username") or player_id),
+        "uma_name": str(
+            player.get("display_name") or player.get("username") or player_id
+        ),
         "trainer_id": str(trainer["user_id"]) if trainer else None,
         "trainer_name": trainer.get("name") if trainer else None,
         "participant_type": participant_type,
@@ -91,9 +98,21 @@ def _participant_snapshot(player: dict) -> dict:
         profile = {
             key: player.get(key)
             for key in (
-                "speed", "stamina", "power", "gut", "wit",
-                "turf", "dirt", "sprint", "mile", "medium", "long",
-                "front", "pace", "late", "end_style",
+                "speed",
+                "stamina",
+                "power",
+                "gut",
+                "wit",
+                "turf",
+                "dirt",
+                "sprint",
+                "mile",
+                "medium",
+                "long",
+                "front",
+                "pace",
+                "late",
+                "end_style",
             )
             if player.get(key) is not None
         }
@@ -103,12 +122,22 @@ def _participant_snapshot(player: dict) -> dict:
     return {
         "display_name": player.get("display_name") or player.get("username"),
         "base_stats": {
-            key: profile.get(key)
-            for key in ("speed", "stamina", "power", "gut", "wit")
+            key: profile.get(key) for key in ("speed", "stamina", "power", "gut", "wit")
         },
         "aptitudes": {
             key: profile.get(key)
-            for key in ("turf", "dirt", "sprint", "mile", "medium", "long", "front", "pace", "late", "end_style")
+            for key in (
+                "turf",
+                "dirt",
+                "sprint",
+                "mile",
+                "medium",
+                "long",
+                "front",
+                "pace",
+                "late",
+                "end_style",
+            )
         },
         "running_style": player.get("style"),
         "skills": selected_skills,
@@ -176,7 +205,10 @@ def _turn_rows(game: dict) -> list[dict]:
                 "stamina_after": (roll.get("stamina") or {}).get("current_stamina"),
                 "lane": roll.get("current_lane"),
                 "position": log.get("position"),
-                "data": {"roll": roll, "skills": copy.deepcopy(log.get("skills") or [])},
+                "data": {
+                    "roll": roll,
+                    "skills": copy.deepcopy(log.get("skills") or []),
+                },
             }
         elif lane_change:
             existing["lane"] = lane_change.get("to", existing.get("lane"))
@@ -191,17 +223,22 @@ def save_completed_race(game: dict, ranked_players) -> str:
         return race_id
 
     participants = []
-    rank_by_id = {str(player_id): index for index, (player_id, _) in enumerate(ranked_players, start=1)}
+    rank_by_id = {
+        str(player_id): index
+        for index, (player_id, _) in enumerate(ranked_players, start=1)
+    }
     for player_id, player in game.get("players", {}).items():
         identity = _participant_identity(player_id, player)
         final_score = int(player.get("web_distance", player.get("score", 0)) or 0)
-        identity.update({
-            "running_style": str(player.get("style") or ""),
-            "entry_number": int(player.get("entry_number", 0) or 0) or None,
-            "final_rank": rank_by_id.get(str(player_id)),
-            "final_score": final_score,
-            "snapshot_json": _json(_participant_snapshot(player)),
-        })
+        identity.update(
+            {
+                "running_style": str(player.get("style") or ""),
+                "entry_number": int(player.get("entry_number", 0) or 0) or None,
+                "final_rank": rank_by_id.get(str(player_id)),
+                "final_score": final_score,
+                "snapshot_json": _json(_participant_snapshot(player)),
+            }
+        )
         participants.append(identity)
 
     if not participants:
@@ -226,16 +263,25 @@ def save_completed_race(game: dict, ranked_players) -> str:
                 finished_at=excluded.finished_at
             """,
             (
-                race_id, str(game.get("stage_key") or "unknown"),
-                str(game.get("stage_name") or "Unknown"), game.get("track"),
-                game.get("distance"), int(game.get("max_turn", 0) or 0),
-                str(game.get("race_mode") or "discord_classic"), classify_record_type(game),
+                race_id,
+                str(game.get("stage_key") or "unknown"),
+                str(game.get("stage_name") or "Unknown"),
+                game.get("track"),
+                game.get("distance"),
+                int(game.get("max_turn", 0) or 0),
+                str(game.get("race_mode") or "discord_classic"),
+                classify_record_type(game),
                 str(game.get("room_id") or game.get("channel_id") or "") or None,
-                game.get("race_started_at"), now,
+                game.get("race_started_at"),
+                now,
             ),
         )
-        cursor.execute("DELETE FROM race_participant_actions WHERE race_id = ?", (race_id,))
-        cursor.execute("DELETE FROM race_participant_turns WHERE race_id = ?", (race_id,))
+        cursor.execute(
+            "DELETE FROM race_participant_actions WHERE race_id = ?", (race_id,)
+        )
+        cursor.execute(
+            "DELETE FROM race_participant_turns WHERE race_id = ?", (race_id,)
+        )
         cursor.execute("DELETE FROM race_participants WHERE race_id = ?", (race_id,))
         for participant in participants:
             cursor.execute(
@@ -244,13 +290,30 @@ def save_completed_race(game: dict, ranked_players) -> str:
                     participant_type, mob_id, running_style, entry_number, final_rank,
                     final_score, snapshot_json
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (race_id, *[participant[key] for key in (
-                    "participant_id", "uma_id", "uma_name", "trainer_id", "trainer_name",
-                    "participant_type", "mob_id", "running_style", "entry_number", "final_rank",
-                    "final_score", "snapshot_json",
-                )]),
+                (
+                    race_id,
+                    *[
+                        participant[key]
+                        for key in (
+                            "participant_id",
+                            "uma_id",
+                            "uma_name",
+                            "trainer_id",
+                            "trainer_name",
+                            "participant_type",
+                            "mob_id",
+                            "running_style",
+                            "entry_number",
+                            "final_rank",
+                            "final_score",
+                            "snapshot_json",
+                        )
+                    ],
+                ),
             )
-        participant_ids = {participant["participant_id"] for participant in participants}
+        participant_ids = {
+            participant["participant_id"] for participant in participants
+        }
         for turn in turn_rows:
             if turn["participant_id"] not in participant_ids:
                 continue
@@ -259,9 +322,19 @@ def save_completed_race(game: dict, ranked_players) -> str:
                     race_id, participant_id, turn_number, run_score, score_before, score_after,
                     stamina_before, stamina_after, lane, position, turn_data_json
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (race_id, turn["participant_id"], turn["turn_number"], turn["run_score"],
-                 turn["score_before"], turn["score_after"], turn["stamina_before"],
-                 turn["stamina_after"], turn["lane"], turn["position"], _json(turn["data"])),
+                (
+                    race_id,
+                    turn["participant_id"],
+                    turn["turn_number"],
+                    turn["run_score"],
+                    turn["score_before"],
+                    turn["score_after"],
+                    turn["stamina_before"],
+                    turn["stamina_after"],
+                    turn["lane"],
+                    turn["position"],
+                    _json(turn["data"]),
+                ),
             )
         for action in actions:
             participant_id = str(action.get("player_id") or "")
@@ -272,9 +345,14 @@ def save_completed_race(game: dict, ranked_players) -> str:
                     race_id, participant_id, turn_number, action_type,
                     target_participant_id, action_data_json
                 ) VALUES (?, ?, ?, ?, ?, ?)""",
-                (race_id, participant_id, int(action.get("turn", 0) or 0),
-                 str(action.get("action_type") or "other"), action.get("target_id"),
-                 _json(action.get("details") or {})),
+                (
+                    race_id,
+                    participant_id,
+                    int(action.get("turn", 0) or 0),
+                    str(action.get("action_type") or "other"),
+                    action.get("target_id"),
+                    _json(action.get("details") or {}),
+                ),
             )
 
     game["race_history_saved"] = True
@@ -290,18 +368,32 @@ def _decode(row: dict, key: str) -> dict:
 def get_race_by_id(race_id: str) -> dict | None:
     with database_connection() as conn:
         cursor = conn.cursor()
-        race = cursor.execute("SELECT * FROM race_history WHERE race_id = ?", (race_id,)).fetchone()
+        race = cursor.execute(
+            "SELECT * FROM race_history WHERE race_id = ?", (race_id,)
+        ).fetchone()
         if race is None:
             return None
-        participants = [dict(row) for row in cursor.execute(
-            "SELECT * FROM race_participants WHERE race_id = ? ORDER BY final_rank ASC, participant_id ASC", (race_id,)
-        ).fetchall()]
-        turns = [dict(row) for row in cursor.execute(
-            "SELECT * FROM race_participant_turns WHERE race_id = ? ORDER BY turn_number, position, participant_id", (race_id,)
-        ).fetchall()]
-        actions = [dict(row) for row in cursor.execute(
-            "SELECT * FROM race_participant_actions WHERE race_id = ? ORDER BY turn_number, action_id", (race_id,)
-        ).fetchall()]
+        participants = [
+            dict(row)
+            for row in cursor.execute(
+                "SELECT * FROM race_participants WHERE race_id = ? ORDER BY final_rank ASC, participant_id ASC",
+                (race_id,),
+            ).fetchall()
+        ]
+        turns = [
+            dict(row)
+            for row in cursor.execute(
+                "SELECT * FROM race_participant_turns WHERE race_id = ? ORDER BY turn_number, position, participant_id",
+                (race_id,),
+            ).fetchall()
+        ]
+        actions = [
+            dict(row)
+            for row in cursor.execute(
+                "SELECT * FROM race_participant_actions WHERE race_id = ? ORDER BY turn_number, action_id",
+                (race_id,),
+            ).fetchall()
+        ]
     for row in participants:
         _decode(row, "snapshot_json")
         row["snapshot"] = _hydrate_participant_snapshot(row.get("snapshot"))
@@ -309,10 +401,21 @@ def get_race_by_id(race_id: str) -> dict | None:
         _decode(row, "turn_data_json")
     for row in actions:
         _decode(row, "action_data_json")
-    return {"race": dict(race), "participants": participants, "turns": turns, "actions": actions}
+    return {
+        "race": dict(race),
+        "participants": participants,
+        "turns": turns,
+        "actions": actions,
+    }
 
 
-def list_race_history(*, stage_key: str | None = None, record_type: str | None = None, limit: int = 20, offset: int = 0) -> list[dict]:
+def list_race_history(
+    *,
+    stage_key: str | None = None,
+    record_type: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[dict]:
     clauses, params = ["h.source != 'legacy_race_rankings'"], []
     if stage_key:
         clauses.append("stage_key = ?")
@@ -351,7 +454,14 @@ def list_race_history(*, stage_key: str | None = None, record_type: str | None =
     return [dict(row) for row in rows]
 
 
-def get_participant_history(*, column: str, value: str, record_type: str | None = None, limit: int = 50, offset: int = 0) -> list[dict]:
+def get_participant_history(
+    *,
+    column: str,
+    value: str,
+    record_type: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[dict]:
     if column not in {"uma_id", "trainer_id"}:
         raise ValueError("Unsupported history identity")
     clauses = [f"p.{column} = ?", "h.source != 'legacy_race_rankings'"]
@@ -372,7 +482,9 @@ def get_participant_history(*, column: str, value: str, record_type: str | None 
     return [dict(row) for row in rows]
 
 
-def get_course_leaderboard(stage_key: str, limit: int = 10, record_type: str = OFFICIAL) -> list[dict]:
+def get_course_leaderboard(
+    stage_key: str, limit: int = 10, record_type: str = OFFICIAL
+) -> list[dict]:
     """One best official score per persistent Uma for the course."""
     with database_connection() as conn:
         rows = conn.execute(

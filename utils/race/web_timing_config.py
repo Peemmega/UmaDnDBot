@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 # UI countdown. Keep the backend bot delay derived from these values so bots and
 # players begin moving after the same countdown.
 WEB_TIMING_COUNTDOWN_STEPS = ("3", "2", "1", "GO!")

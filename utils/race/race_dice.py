@@ -4,9 +4,16 @@ from utils.dice.dice_presets import DICE_PRESET
 from utils.skill.skill_presets import ICON
 from utils.dice.dice_table import format_rule
 from utils.display_helpers import get_stat_icon
-from utils.race.rank_display import get_gold_lane_tolerance, get_gold_range_value, get_player_lane
+from utils.race.rank_display import (
+    get_gold_lane_tolerance,
+    get_gold_range_value,
+    get_player_lane,
+)
 
-def _lane_match(player_id, other_id, player_map: dict | None, tolerance: int = 1) -> bool:
+
+def _lane_match(
+    player_id, other_id, player_map: dict | None, tolerance: int = 1
+) -> bool:
     if not player_map:
         return True
     player = player_map.get(player_id)
@@ -33,10 +40,13 @@ def count_nearby_players(
         if uid == player_id:
             continue
 
-        if abs(player_score - score) <= radius and _lane_match(player_id, uid, player_map, tolerance=lane_tolerance):
+        if abs(player_score - score) <= radius and _lane_match(
+            player_id, uid, player_map, tolerance=lane_tolerance
+        ):
             count += 1
 
     return count
+
 
 def get_phase_from_turn(turn: int, max_turn: int) -> int:
     """
@@ -53,6 +63,7 @@ def get_phase_from_turn(turn: int, max_turn: int) -> int:
     phase = math.ceil(turn / phase_size)
     return min(max(phase, 1), 4)
 
+
 def get_distance_color(
     player_id: int,
     score_map: dict[int, int],
@@ -67,17 +78,14 @@ def get_distance_color(
     """
 
     if player_id not in score_map:
-        return "Gold",0
+        return "Gold", 0
 
     player_score = score_map[player_id]
 
-    other_scores = [
-        score for uid, score in score_map.items()
-        if uid != player_id
-    ]
+    other_scores = [score for uid, score in score_map.items() if uid != player_id]
 
     if not other_scores:
-        return "Gold",0
+        return "Gold", 0
 
     skill_effects = skill_effects or []
 
@@ -115,7 +123,10 @@ def get_distance_color(
 def get_dice_rule(style: str, distance_color: str, phase: int) -> dict:
     return DICE_PRESET[style][distance_color][phase]
 
-def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dict) -> dict:
+
+def roll_by_rule(
+    rule: dict, player_stats: dict, game_player: dict, context: dict
+) -> dict:
     d = rule["d"]
     kh = rule.get("kh")
 
@@ -144,13 +155,11 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
             roll_cap_increase += value
         elif effect_type == "modify_total_percent":
             total_percent_modifier += value
-            
 
     d += extra_d
 
     path_effect = context.get("path_effect", {})
 
-   
     # Roll Dice --------------------------------------
     current_max_speed = math.floor(game_player.get("current_max_speed", 0))
 
@@ -160,10 +169,14 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         + path_effect.get("extra_max_from_wit", 0)
         - path_effect.get("reduce_dice_value", 0)
     )
-    
+
     max_dice_value
-    roll_min = math.floor(max_dice_value * 0.25) + path_effect.get("extra_floor_from_wit", 0) + extra_floor
-    
+    roll_min = (
+        math.floor(max_dice_value * 0.25)
+        + path_effect.get("extra_floor_from_wit", 0)
+        + extra_floor
+    )
+
     max_dice_value = max(max_dice_value, roll_min)
 
     rolls = [random.randint(roll_min, max_dice_value) for _ in range(d)]
@@ -191,9 +204,13 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     gut_base_bonus = 0
     gut_bonus = 0
 
-    if (context.get("phase", 1) >= 3):
+    if context.get("phase", 1) >= 3:
         gut_base_bonus = gut_scale * 2
-        gut_bonus = nearby_count * gut_scale * 2 if context.get("distance_color") == "Gold" else 0
+        gut_bonus = (
+            nearby_count * gut_scale * 2
+            if context.get("distance_color") == "Gold"
+            else 0
+        )
 
     total_selected_die_bonus = 0
 
@@ -219,10 +236,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         + stamina_bonus
     )
     distance_roll_bonus = int(round(subtotal * (distance_percent / 100)))
-    total = (
-        subtotal
-        + distance_roll_bonus
-    )
+    total = subtotal + distance_roll_bonus
     total_percent_adjustment = int(round(total * (total_percent_modifier / 100)))
     total += total_percent_adjustment
 
@@ -235,7 +249,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
     if final_power_bonus > 0:
         bonus_parts.append(f"+{final_power_bonus}{get_stat_icon('POW')}")
     if stamina_bonus > 0:
-        bonus_parts.append(f"+{stamina_bonus}{get_stat_icon('STA')}")   
+        bonus_parts.append(f"+{stamina_bonus}{get_stat_icon('STA')}")
     if distance_roll_bonus != 0:
         bonus_parts.append(f"{distance_percent:+d}%")
     if total_percent_modifier != 0:
@@ -244,7 +258,6 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
     if total_selected_die_bonus > 0:
         bonus_parts.append(f"+{total_selected_die_bonus}{ICON['Velocity']}")
-
 
     bonus_display = "".join(bonus_parts) if bonus_parts else "-"
     total_display = str(total)
@@ -270,6 +283,7 @@ def roll_by_rule(rule: dict, player_stats: dict, game_player: dict, context: dic
         "bonus_display": bonus_display,
     }
 
+
 def roll_race_dice(
     game_player: dict,
     player_stats: dict,
@@ -283,7 +297,9 @@ def roll_race_dice(
     player_map: dict | None = None,
 ) -> dict:
     phase = get_phase_from_turn(turn, max_turn)
-    distance_color,nearby_count = get_distance_color(player_id, score_map, skill_effects or [], player_map)
+    distance_color, nearby_count = get_distance_color(
+        player_id, score_map, skill_effects or [], player_map
+    )
     rule = get_dice_rule(game_player["style"], distance_color, phase)
     roll_context = {
         "distance_color": distance_color,
@@ -323,13 +339,14 @@ def roll_race_dice(
         "rolls": dice_result["rolls"],
         "selected": dice_result["selected"],
         "modified_selected": dice_result["modified_selected"],
-        "display": dice_result['display'],
+        "display": dice_result["display"],
         "base_total": dice_result["base_total"],
         "total": dice_result["total"],
         "total_display": dice_result["total_display"],
-        "bonus_display": dice_result['bonus_display'],
+        "bonus_display": dice_result["bonus_display"],
         "wit_guarantee_bonus": wit_guarantee_bonus,
     }
+
 
 def build_dice_table_grid(dice_preset: dict, color: str) -> str:
     styles = ["Front", "Pace", "Late", "End"]
@@ -351,6 +368,7 @@ def build_dice_table_grid(dice_preset: dict, color: str) -> str:
         lines.append(" ".join(row))
 
     return "\n".join(lines)
+
 
 def build_dice_table_text(dice_preset: dict) -> tuple[str, str]:
     styles = ["Front", "Pace", "Late", "End"]

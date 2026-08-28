@@ -48,8 +48,16 @@ from utils.race_dice_preview import create_race_dice_preview
 from utils.mob.mob_presets import MOB_PRESETS
 from utils.race.race_dice import roll_race_dice
 from utils.race.race_presets import PATH_TYPE_TEXT, RACE_PRESET
-from utils.race.race_presets import get_current_path_type, get_path_effect, get_web_race_finish_distance
-from utils.race.race_visibility import build_timing_gauge_config, serialize_room, serialize_room_summary
+from utils.race.race_presets import (
+    get_current_path_type,
+    get_path_effect,
+    get_web_race_finish_distance,
+)
+from utils.race.race_visibility import (
+    build_timing_gauge_config,
+    serialize_room,
+    serialize_room_summary,
+)
 from utils.race.web_timing_config import (
     BOT_TIMING_POLL_INTERVAL_SECONDS,
     DEFAULT_GAUGE_HALF_CYCLE_MS,
@@ -66,7 +74,6 @@ from utils.race.web_timing_balance import (
 )
 from utils.profile_images import resolve_player_render_image
 from utils.race.race_history import record_race_action, save_completed_race
-
 
 WEB_ROOM_PREFIX = "web_race_"
 DEFAULT_STAGE_KEY = "Debut"
@@ -106,15 +113,19 @@ class RaceWebManager:
         self._touch(game)
         log_payload = dict(payload or {})
         log_payload.setdefault("updated_at", game.get("updated_at"))
-        game.setdefault("web_action_logs", []).append({
-            "id": uuid.uuid4().hex[:8],
-            "turn": game.get("turn", 0),
-            "message": message,
-            "payload": log_payload,
-        })
+        game.setdefault("web_action_logs", []).append(
+            {
+                "id": uuid.uuid4().hex[:8],
+                "turn": game.get("turn", 0),
+                "message": message,
+                "payload": log_payload,
+            }
+        )
         game["web_action_logs"] = game["web_action_logs"][-120:]
         safe_message = str(message).encode("ascii", "backslashreplace").decode("ascii")
-        print(f"[race-web] {game.get('room_id')} turn={game.get('turn')} {safe_message}")
+        print(
+            f"[race-web] {game.get('room_id')} turn={game.get('turn')} {safe_message}"
+        )
 
     def _player_label(self, player_id, player: dict | None) -> str:
         if not player:
@@ -137,7 +148,9 @@ class RaceWebManager:
             parts.append(f"{index}. {self._player_label(player_id, player)} L{lane}")
         return " | ".join(parts)
 
-    def _find_player_entry(self, game: dict, user_id: str) -> tuple[Any, dict] | tuple[None, None]:
+    def _find_player_entry(
+        self, game: dict, user_id: str
+    ) -> tuple[Any, dict] | tuple[None, None]:
         for player_id, player in game.get("players", {}).items():
             if str(player_id) == str(user_id):
                 return player_id, player
@@ -150,16 +163,24 @@ class RaceWebManager:
             "path_label": path_effect.get("label") or "Straight",
         }
 
-    def _prune_preview_cache(self, room_id: str, user_id: str, keep_version: int) -> None:
+    def _prune_preview_cache(
+        self, room_id: str, user_id: str, keep_version: int
+    ) -> None:
         stale_keys = [
-            key for key in self.preview_png_cache
-            if key[0] == str(room_id) and key[1] == str(user_id) and key[2] != int(keep_version)
+            key
+            for key in self.preview_png_cache
+            if key[0] == str(room_id)
+            and key[1] == str(user_id)
+            and key[2] != int(keep_version)
         ]
         for key in stale_keys:
             self.preview_png_cache.pop(key, None)
         stale_webp_keys = [
-            key for key in self.preview_webp_cache
-            if key[0] == str(room_id) and key[1] == str(user_id) and key[2] != int(keep_version)
+            key
+            for key in self.preview_webp_cache
+            if key[0] == str(room_id)
+            and key[1] == str(user_id)
+            and key[2] != int(keep_version)
         ]
         for key in stale_webp_keys:
             self.preview_webp_cache.pop(key, None)
@@ -183,7 +204,9 @@ class RaceWebManager:
         return buffer.getvalue()
 
     async def build_player_preview_png(self, room_id: str, user_id: str) -> bytes:
-        card, room_id, user_id, preview_version = await self._build_player_preview_card(room_id, user_id)
+        card, room_id, user_id, preview_version = await self._build_player_preview_card(
+            room_id, user_id
+        )
         cache_key = (str(room_id), str(user_id), preview_version)
         cached = self.preview_png_cache.get(cache_key)
         if cached is not None:
@@ -194,7 +217,9 @@ class RaceWebManager:
         return png_bytes
 
     async def build_player_preview_webp(self, room_id: str, user_id: str) -> bytes:
-        card, room_id, user_id, preview_version = await self._build_player_preview_card(room_id, user_id)
+        card, room_id, user_id, preview_version = await self._build_player_preview_card(
+            room_id, user_id
+        )
         cache_key = (str(room_id), str(user_id), preview_version)
         cached = self.preview_webp_cache.get(cache_key)
         if cached is not None:
@@ -222,7 +247,8 @@ class RaceWebManager:
             payload={
                 "new_score": preview.get("new_score", player.get("score", 0)),
             },
-            path_label=preview.get("path_label") or PATH_TYPE_TEXT.get(get_current_path_type(game), "Straight"),
+            path_label=preview.get("path_label")
+            or PATH_TYPE_TEXT.get(get_current_path_type(game), "Straight"),
             character_image_url=resolve_player_render_image(player),
         )
         return card, str(room_id), str(user_id), preview_version
@@ -264,11 +290,15 @@ class RaceWebManager:
         game["room_id"] = room_id
         game["phase"] = "waiting"
         game["web_gameplay_mode"] = gameplay_mode
-        game["race_mode"] = "web_timing" if gameplay_mode == "timing" else "discord_classic"
+        game["race_mode"] = (
+            "web_timing" if gameplay_mode == "timing" else "discord_classic"
+        )
         game["record_type"] = record_type
         game["web_action_logs"] = []
         self._log(game, f"{username} created {game.get('stage_name')}")
-        success, message = add_player(room_id, str(owner_id), username, avatar_url, style)
+        success, message = add_player(
+            room_id, str(owner_id), username, avatar_url, style
+        )
         if not success:
             raise ValueError(message)
         self._log(game, f"{username} joined as {style}")
@@ -288,18 +318,27 @@ class RaceWebManager:
         existing_player_id, existing_player = self._find_player_entry(game, user_id)
         if existing_player and not mob_preset:
             refresh_player_profile_snapshot(existing_player_id, existing_player)
-            existing_player["display_name"] = username or existing_player.get("display_name")
+            existing_player["display_name"] = username or existing_player.get(
+                "display_name"
+            )
             existing_player["username"] = username or existing_player.get("username")
             if avatar_url:
                 existing_player["avatar"] = avatar_url
-            self._log(game, f"{self._player_label(existing_player_id, existing_player)} rejoined")
+            self._log(
+                game,
+                f"{self._player_label(existing_player_id, existing_player)} rejoined",
+            )
             return serialize_room(game, room_id, str(existing_player_id))
 
         if mob_preset:
-            success, message = add_player_as_web_mob(room_id, str(user_id), username, mob_preset)
+            success, message = add_player_as_web_mob(
+                room_id, str(user_id), username, mob_preset
+            )
         else:
             ensure_player(user_id, username)
-            success, message = add_player(room_id, str(user_id), username, avatar_url, style)
+            success, message = add_player(
+                room_id, str(user_id), username, avatar_url, style
+            )
 
         if not success:
             raise ValueError(message)
@@ -313,7 +352,10 @@ class RaceWebManager:
         if player is None:
             raise ValueError("Player is not in this race room")
 
-        self._log(game, f"{player.get('display_name') or player.get('username') or user_id} left")
+        self._log(
+            game,
+            f"{player.get('display_name') or player.get('username') or user_id} left",
+        )
 
         if not game["players"]:
             games.pop(room_id, None)
@@ -330,7 +372,13 @@ class RaceWebManager:
 
         return serialize_room(game, room_id, str(user_id))
 
-    def add_bot(self, room_id: str, user_id: str, preset_key: str = "rookie_pace", level: int = 1) -> dict:
+    def add_bot(
+        self,
+        room_id: str,
+        user_id: str,
+        preset_key: str = "rookie_pace",
+        level: int = 1,
+    ) -> dict:
         game = self._get_room(room_id)
         success, message = add_mob_from_preset(room_id, preset_key, level)
         if not success:
@@ -349,7 +397,14 @@ class RaceWebManager:
 
         game = self._get_room(room_id)
         game.setdefault("web_gameplay_mode", "timing")
-        game.setdefault("race_mode", "web_timing" if game["web_gameplay_mode"] == "timing" else "discord_classic")
+        game.setdefault(
+            "race_mode",
+            (
+                "web_timing"
+                if game["web_gameplay_mode"] == "timing"
+                else "discord_classic"
+            ),
+        )
         if game["race_mode"] == "web_timing":
             self._initialize_web_timing_race(game)
             self._start_web_timing_bot_loop(room_id)
@@ -382,7 +437,10 @@ class RaceWebManager:
                 game,
                 str(user_id),
                 "wit_reroll",
-                {"minimum_total": old_total, "rerolls_left": player.get("wit_reroll_left", 0)},
+                {
+                    "minimum_total": old_total,
+                    "rerolls_left": player.get("wit_reroll_left", 0),
+                },
             )
         self._log(
             game,
@@ -463,16 +521,24 @@ class RaceWebManager:
             raise ValueError("Reroll is blocked this turn")
 
         old_result = player.get("web_last_roll_result") or {}
-        old_total = int(old_result.get("total") or player.get("last_roll_log", {}).get("total") or 0)
+        old_total = int(
+            old_result.get("total") or player.get("last_roll_log", {}).get("total") or 0
+        )
         if old_total <= 0:
             raise ValueError("No roll result available to reroll")
 
         spent_normal_reroll = False
         if use_wit:
-            base_total = int(old_result.get("base_total") or player.get("last_roll_log", {}).get("base_total") or 0)
+            base_total = int(
+                old_result.get("base_total")
+                or player.get("last_roll_log", {}).get("base_total")
+                or 0
+            )
             if not can_use_wit_reroll(player, base_total):
                 raise ValueError("WIT reroll is not available for this roll")
-            player["wit_reroll_left"] = max(0, int(player.get("wit_reroll_left", 0)) - 1)
+            player["wit_reroll_left"] = max(
+                0, int(player.get("wit_reroll_left", 0)) - 1
+            )
         else:
             success, result = use_reroll(room_id, str(user_id))
             if not success:
@@ -524,7 +590,13 @@ class RaceWebManager:
 
         return serialize_room(self._get_room(room_id), room_id, str(user_id))
 
-    def skill(self, room_id: str, user_id: str, skill_id: str | None = None, slot: int | None = None) -> dict:
+    def skill(
+        self,
+        room_id: str,
+        user_id: str,
+        skill_id: str | None = None,
+        slot: int | None = None,
+    ) -> dict:
         game = self._get_room(room_id)
         player = game.get("players", {}).get(str(user_id))
         if player is None:
@@ -537,7 +609,9 @@ class RaceWebManager:
         if not skill_id:
             return serialize_room(game, room_id, str(user_id))
 
-        success, payload = execute_skill_core(room_id, str(user_id), skill_id, consume_cost=True)
+        success, payload = execute_skill_core(
+            room_id, str(user_id), skill_id, consume_cost=True
+        )
         if not success:
             raise ValueError(payload.get("message", "Skill failed"))
 
@@ -649,7 +723,9 @@ class RaceWebManager:
                 player["web_last_roll_result"] = result
                 self._store_roll_preview_context(player, payload)
             else:
-                self._log(game, f"Bot turn failed: {payload.get('message', 'unknown error')}")
+                self._log(
+                    game, f"Bot turn failed: {payload.get('message', 'unknown error')}"
+                )
 
     def _process_next_mob(self, room_id: str, turn: int) -> bool:
         game = self._get_room(room_id)
@@ -676,7 +752,9 @@ class RaceWebManager:
                 player["web_last_roll_result"] = result
                 self._store_roll_preview_context(player, payload)
             else:
-                self._log(game, f"Bot turn failed: {payload.get('message', 'unknown error')}")
+                self._log(
+                    game, f"Bot turn failed: {payload.get('message', 'unknown error')}"
+                )
             return True
 
         return False
@@ -687,7 +765,9 @@ class RaceWebManager:
             game.get("race_mode") == "web_timing"
             or not game.get("started")
             or game.get("ended")
-            or not any(player.get("is_mob") for player in game.get("players", {}).values())
+            or not any(
+                player.get("is_mob") for player in game.get("players", {}).values()
+            )
         ):
             return
         existing_task = self.classic_bot_tasks.get(room_id)
@@ -705,7 +785,11 @@ class RaceWebManager:
                 await asyncio.sleep(CLASSIC_BOT_RUN_INTERVAL_SECONDS)
 
             game = self._get_room(room_id)
-            if game.get("started") and not game.get("ended") and game.get("turn") == turn:
+            if (
+                game.get("started")
+                and not game.get("ended")
+                and game.get("turn") == turn
+            ):
                 self.classic_bot_tasks.pop(room_id, None)
                 self._advance_if_ready(room_id, require_confirmation=True)
                 await self.broadcast(room_id)
@@ -716,15 +800,23 @@ class RaceWebManager:
             if current_task is asyncio.current_task():
                 self.classic_bot_tasks.pop(room_id, None)
 
-    def _advance_if_ready(self, room_id: str, require_confirmation: bool = True) -> None:
+    def _advance_if_ready(
+        self, room_id: str, require_confirmation: bool = True
+    ) -> None:
         game = self._get_room(room_id)
         guard = 0
-        while game.get("started") and not game.get("ended") and have_all_players_rolled(room_id):
+        while (
+            game.get("started")
+            and not game.get("ended")
+            and have_all_players_rolled(room_id)
+        ):
             guard += 1
             if guard > 80:
                 raise ValueError("Race auto-advance guard tripped")
 
-            has_human = any(not player.get("is_mob") for player in game.get("players", {}).values())
+            has_human = any(
+                not player.get("is_mob") for player in game.get("players", {}).values()
+            )
             if require_confirmation and has_human:
                 if not game.get("awaiting_turn_confirm"):
                     start_turn_confirmation(room_id)
@@ -751,7 +843,10 @@ class RaceWebManager:
                 break
 
             next_turn(room_id)
-            self._log(game, f"Turn {game.get('turn')} started | {self._build_lane_order_summary(game)}")
+            self._log(
+                game,
+                f"Turn {game.get('turn')} started | {self._build_lane_order_summary(game)}",
+            )
             if any(player.get("is_mob") for player in game.get("players", {}).values()):
                 self._start_classic_bot_loop(room_id)
                 break
@@ -773,8 +868,12 @@ class RaceWebManager:
             player["web_latest_timing_result"] = None
             player["web_last_distance_gain"] = 0
             player["last_distance_gain"] = 0
-            if initialize_web_timing_player(player, game["finish_distance"], timing_now + start_delay_seconds):
-                self._log(game, f"{self._player_label(player_id, player)} entered Zone!")
+            if initialize_web_timing_player(
+                player, game["finish_distance"], timing_now + start_delay_seconds
+            ):
+                self._log(
+                    game, f"{self._player_label(player_id, player)} entered Zone!"
+                )
             if player.get("is_mob"):
                 player["web_timing_next_auto_submit_at"] = (
                     schedule_now
@@ -795,9 +894,15 @@ class RaceWebManager:
             return
         task = loop.create_task(self._run_web_timing_bot_loop(room_id))
         self.web_timing_bot_tasks[room_id] = task
-        task.add_done_callback(lambda finished_task: self._clear_web_timing_bot_task(room_id, finished_task))
+        task.add_done_callback(
+            lambda finished_task: self._clear_web_timing_bot_task(
+                room_id, finished_task
+            )
+        )
 
-    def _clear_web_timing_bot_task(self, room_id: str, finished_task: asyncio.Task) -> None:
+    def _clear_web_timing_bot_task(
+        self, room_id: str, finished_task: asyncio.Task
+    ) -> None:
         if self.web_timing_bot_tasks.get(room_id) is finished_task:
             self.web_timing_bot_tasks.pop(room_id, None)
 
@@ -807,7 +912,11 @@ class RaceWebManager:
                 game = self._get_room(room_id)
             except ValueError:
                 return
-            if game.get("race_mode") != "web_timing" or not game.get("started") or game.get("ended"):
+            if (
+                game.get("race_mode") != "web_timing"
+                or not game.get("started")
+                or game.get("ended")
+            ):
                 return
             if self._process_due_web_timing_mobs(room_id):
                 await self.broadcast(room_id)
@@ -815,10 +924,13 @@ class RaceWebManager:
 
     def _get_bot_timing_half_cycle_seconds(self, game: dict, player: dict) -> float:
         gauge = build_timing_gauge_config(game, player)
-        return max(
-            WEB_TIMING_MIN_HALF_CYCLE_MS,
-            float(gauge.get("half_cycle_ms") or DEFAULT_GAUGE_HALF_CYCLE_MS),
-        ) / 1000.0
+        return (
+            max(
+                WEB_TIMING_MIN_HALF_CYCLE_MS,
+                float(gauge.get("half_cycle_ms") or DEFAULT_GAUGE_HALF_CYCLE_MS),
+            )
+            / 1000.0
+        )
 
     def _process_due_web_timing_mobs(self, room_id: str) -> bool:
         game = self._get_room(room_id)
@@ -831,7 +943,9 @@ class RaceWebManager:
                 continue
             next_submit_at = float(player.get("web_timing_next_auto_submit_at") or 0.0)
             if not next_submit_at:
-                player["web_timing_next_auto_submit_at"] = now + self._get_bot_timing_half_cycle_seconds(game, player)
+                player["web_timing_next_auto_submit_at"] = (
+                    now + self._get_bot_timing_half_cycle_seconds(game, player)
+                )
                 continue
             if now < next_submit_at:
                 continue
@@ -843,13 +957,17 @@ class RaceWebManager:
                 str(player_id),
                 cycle_id=cycle_id,
                 timing_score=timing_score,
-                timing_offset=round(random.uniform(-1.0, 1.0) * (1.0 - timing_score), 3),
+                timing_offset=round(
+                    random.uniform(-1.0, 1.0) * (1.0 - timing_score), 3
+                ),
                 client_phase=None,
                 is_bot=True,
             )
             player["web_timing_last_cycle"] = cycle_id
             submitted_cycles.add(cycle_id)
-            player["web_timing_next_auto_submit_at"] = now + self._get_bot_timing_half_cycle_seconds(game, player)
+            player["web_timing_next_auto_submit_at"] = (
+                now + self._get_bot_timing_half_cycle_seconds(game, player)
+            )
             changed = True
         return changed
 
@@ -872,10 +990,14 @@ class RaceWebManager:
         finish_distance = int(game.get("finish_distance") or 2000)
         if refresh_web_timing_player(player, finish_distance):
             self._log(game, f"{self._player_label(user_id, player)} entered Zone!")
-        base_gain, raw_distance_gain, timing_tier = roll_web_timing_distance_gain(player, timing_score)
+        base_gain, raw_distance_gain, timing_tier = roll_web_timing_distance_gain(
+            player, timing_score
+        )
         multiplier = raw_distance_gain / base_gain if base_gain else 0.0
         distance_gain = max(1, round(raw_distance_gain))
-        distance = min(finish_distance, int(player.get("web_distance", 0)) + distance_gain)
+        distance = min(
+            finish_distance, int(player.get("web_distance", 0)) + distance_gain
+        )
         player["web_distance"] = distance
         player["score"] = distance
         player["web_last_distance_gain"] = distance_gain
@@ -937,8 +1059,13 @@ class RaceWebManager:
         )
         game["winner_id"] = winner_id
         game["result"] = {
-            "winner": _serialize_winner(next(item for item in ranked if str(item[0]) == winner_id)),
-            "rankings": [_serialize_winner(item, index) for index, item in enumerate(ranked, start=1)],
+            "winner": _serialize_winner(
+                next(item for item in ranked if str(item[0]) == winner_id)
+            ),
+            "rankings": [
+                _serialize_winner(item, index)
+                for index, item in enumerate(ranked, start=1)
+            ],
         }
         save_completed_race(game, ranked)
         game["ended"] = True
@@ -969,11 +1096,13 @@ class RaceWebManager:
 
         pending_effects, merged_stats = build_pending_effects_from_player(player)
         if player.get("takeStaminaDebuff", False):
-            pending_effects.append({
-                "type": "modify_total_percent",
-                "value": -get_stamina_debuff_percent(player),
-                "duration": "this_roll",
-            })
+            pending_effects.append(
+                {
+                    "type": "modify_total_percent",
+                    "value": -get_stamina_debuff_percent(player),
+                    "duration": "this_roll",
+                }
+            )
         path_type = get_current_path_type(game)
         path_effect = get_path_effect(path_type, player, race_player)
         result = roll_race_dice(
@@ -1163,11 +1292,15 @@ def _increase_web_timing_speed(player: dict, finish_distance: int) -> None:
     }.get(phase, "mid")
     race_profile = player.get("race_profile") or {}
     effective_stats = player.get("effective_race_stats") or {}
-    speed_cap = float(style_rule[phase_cap_key]) + float(effective_stats.get("effective_speed", race_profile.get("speed", 0)))
+    speed_cap = float(style_rule[phase_cap_key]) + float(
+        effective_stats.get("effective_speed", race_profile.get("speed", 0))
+    )
     base_power = float(effective_stats.get("base_power", race_profile.get("power", 1)))
     track_modifier = float(effective_stats.get("track_modifier", 1.0))
     acceleration = (0.3 + (0.1 * base_power)) * track_modifier
-    player["current_max_speed"] = min(speed_cap, float(player.get("current_max_speed", 0)) + acceleration)
+    player["current_max_speed"] = min(
+        speed_cap, float(player.get("current_max_speed", 0)) + acceleration
+    )
 
 
 def roll_bot_timing_result() -> tuple[str, float]:
@@ -1223,11 +1356,19 @@ def _roll_summary_payload(payload: dict) -> dict:
         "stamina_stat": stamina_snapshot["stamina_stat"],
         "stamina_percent": stamina_snapshot["stamina_percent"],
         "current_lane": int(player.get("current_lane", 1) or 1),
-        "previous_lane": int(player.get("previous_lane", player.get("current_lane", 1)) or 1),
+        "previous_lane": int(
+            player.get("previous_lane", player.get("current_lane", 1)) or 1
+        ),
         "lane_changed": bool(player.get("lane_changed")),
-        "blocked_count": int(result.get("blocked_count", player.get("blocked_count", 0)) or 0),
-        "blocking_penalty": float(result.get("blocking_penalty", player.get("blocking_penalty", 0.0)) or 0.0),
-        "drafting_active": bool(result.get("drafting_active", player.get("drafting_active", False))),
+        "blocked_count": int(
+            result.get("blocked_count", player.get("blocked_count", 0)) or 0
+        ),
+        "blocking_penalty": float(
+            result.get("blocking_penalty", player.get("blocking_penalty", 0.0)) or 0.0
+        ),
+        "drafting_active": bool(
+            result.get("drafting_active", player.get("drafting_active", False))
+        ),
         "current_max_speed": player.get("current_max_speed", 0),
         "stats": {
             "speed": race_profile.get("speed", 0),
@@ -1240,7 +1381,9 @@ def _roll_summary_payload(payload: dict) -> dict:
             "effective_speed": effective_stats.get("effective_speed"),
             "effective_power": effective_stats.get("effective_power"),
             "effective_wit_gain": effective_stats.get("effective_wit_gain"),
-            "effective_wit_requirement": effective_stats.get("effective_wit_requirement"),
+            "effective_wit_requirement": effective_stats.get(
+                "effective_wit_requirement"
+            ),
             "distance_percent": effective_stats.get("distance_percent"),
         },
         "aptitude_bonus": aptitude_bonus,

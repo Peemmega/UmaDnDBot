@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 APTITUDE_MODIFIER = {
     "G": 1.00,
     "F": 1.05,
@@ -54,7 +53,9 @@ def format_aptitude_percent(rank: Any) -> str:
     return f"{percent:+d}%"
 
 
-def get_aptitude_values(source: dict | None, surface: str | None, distance: str | None, style: str | None) -> dict:
+def get_aptitude_values(
+    source: dict | None, surface: str | None, distance: str | None, style: str | None
+) -> dict:
     source = source or {}
     surface_key = "dirt" if str(surface or "").lower() == "dirt" else "turf"
     distance_key = str(distance or "medium").lower()
@@ -99,7 +100,9 @@ def calculate_effective_race_stats(player: dict, race: dict | None) -> dict:
     effective_speed = int(round(base_speed * aptitude["distance_modifier"]))
     effective_power = int(round(base_power * aptitude["track_modifier"]))
     effective_wit_gain = int(round(base_wit_gain * aptitude["style_modifier"]))
-    effective_wit_requirement = int(round(base_wit_requirement * aptitude["style_modifier"]))
+    effective_wit_requirement = int(
+        round(base_wit_requirement * aptitude["style_modifier"])
+    )
     return {
         "track_rank": aptitude["track_rank"],
         "distance_rank": aptitude["distance_rank"],
@@ -143,5 +146,7 @@ def build_aptitude_debug_lines(effective_stats: dict | None) -> list[str]:
 def get_roll_race_stats(player: dict) -> dict:
     race_profile = ((player or {}).get("race_profile") or {}).copy()
     effective_stats = (player or {}).get("effective_race_stats") or {}
-    race_profile["power"] = int(effective_stats.get("effective_power", race_profile.get("power", 0)))
+    race_profile["power"] = int(
+        effective_stats.get("effective_power", race_profile.get("power", 0))
+    )
     return race_profile

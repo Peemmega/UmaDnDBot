@@ -2,12 +2,7 @@
 
 from utils.icon_presets import Status_Icon_Type
 
-PATH_TYPE = {
-    1: "STRAIGHT",
-    2: "CURVE",
-    3: "UPHILL",
-    4: "DOWNHILL"
-}
+PATH_TYPE = {1: "STRAIGHT", 2: "CURVE", 3: "UPHILL", 4: "DOWNHILL"}
 
 PATH_TYPE_TEXT = {
     1: "ทางตรง",
@@ -37,7 +32,9 @@ def get_web_race_finish_distance(stage: dict | None) -> int:
     if custom_distance is not None:
         return max(1, int(custom_distance))
 
-    distance_type = stage.get("category") or stage.get("distance_type") or stage.get("distance")
+    distance_type = (
+        stage.get("category") or stage.get("distance_type") or stage.get("distance")
+    )
     return WEB_RACE_FINISH_DISTANCE_BY_TYPE.get(str(distance_type or "").lower(), 2000)
 
 
@@ -130,16 +127,8 @@ def render_path(path: list[int]) -> str:
 
 
 RACE_SCHEDULE = [
-    {
-        "race_id": "Debut",
-        "date": "2026-04-07",
-        "time": "20:00"
-    },
-    {
-        "race_id": "MileChampionship",
-        "date": "2026-04-26",
-        "time": "20:00"
-    }
+    {"race_id": "Debut", "date": "2026-04-07", "time": "20:00"},
+    {"race_id": "MileChampionship", "date": "2026-04-26", "time": "20:00"},
 ]
 
 # Race definitions are intentionally stored separately from path behaviour.

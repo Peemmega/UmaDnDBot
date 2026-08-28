@@ -9,11 +9,7 @@ def build_race_log_text(game: dict, ranked_players, markdown: bool = True) -> st
     rank_lines = []
 
     for index, (user_id, info) in enumerate(ranked_players, start=1):
-        name = (
-            info.get("display_name")
-            or info.get("username")
-            or str(user_id)
-        )
+        name = info.get("display_name") or info.get("username") or str(user_id)
 
         marker = gold_range_marker(user_id, info, ranked_players)
         if markdown:
@@ -32,10 +28,7 @@ def build_race_log_text(game: dict, ranked_players, markdown: bool = True) -> st
         player_name = log["name"]
 
         if player_name not in player_logs:
-            player_logs[player_name] = {
-                "style": log.get("style"),
-                "logs": []
-            }
+            player_logs[player_name] = {"style": log.get("style"), "logs": []}
 
         player_logs[player_name]["logs"].append(log)
 
@@ -43,7 +36,11 @@ def build_race_log_text(game: dict, ranked_players, markdown: bool = True) -> st
 
     for player_name, data in player_logs.items():
         style = data["style"]
-        header = f"\n**{player_name}** ({style})" if markdown else f"\n{player_name} ({style})"
+        header = (
+            f"\n**{player_name}** ({style})"
+            if markdown
+            else f"\n{player_name} ({style})"
+        )
         log_lines.append(header)
 
         for item in data["logs"]:
@@ -97,7 +94,9 @@ def build_race_log_text(game: dict, ranked_players, markdown: bool = True) -> st
         )
 
     if action_lines:
-        action_label = "\n\nâš¡ **Race Actions**\n" if markdown else "\n\nRace Actions\n"
+        action_label = (
+            "\n\nâš¡ **Race Actions**\n" if markdown else "\n\nRace Actions\n"
+        )
         description += action_label + "\n".join(action_lines)
 
     if markdown and len(description) > 3900:
@@ -114,7 +113,9 @@ def build_race_log_embed(game: dict, ranked_players):
     )
 
 
-def build_race_log_file(game: dict, ranked_players, filename: str = "race_result_log.txt"):
+def build_race_log_file(
+    game: dict, ranked_players, filename: str = "race_result_log.txt"
+):
     content = build_race_log_text(game, ranked_players, markdown=False)
     buffer = io.BytesIO(content.encode("utf-8"))
     return discord.File(buffer, filename=filename)

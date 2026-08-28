@@ -550,6 +550,9 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
 
         "turn_confirmations": set(),
         "awaiting_turn_confirm": False,
+        "turn_confirmation_turn": None,
+        "turn_confirmation_token": 0,
+        "turn_transition_in_progress": False,
     }
 
     for preset_key in stage.get("auto_mobs", []):
@@ -564,18 +567,28 @@ def reset_turn_confirmations(channel_id: int):
 
     game["turn_confirmations"] = set()
     game["awaiting_turn_confirm"] = False
+    game["turn_confirmation_turn"] = None
+    game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
     return True
 
 def start_turn_confirmation(channel_id: int):
     game = get_game(channel_id)
-    if game is None:
+    if game is None or game.get("turn_transition_in_progress"):
         return False
 
     game["turn_confirmations"] = set()
     game["awaiting_turn_confirm"] = True
+    game["turn_confirmation_turn"] = game["turn"]
+    game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
     return True
 
-def confirm_turn(channel_id: int, user_id: int):
+def confirm_turn(
+    channel_id: int,
+    user_id: int,
+    *,
+    expected_turn: int | None = None,
+    confirmation_token: int | None = None,
+):
     game = get_game(channel_id)
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
@@ -583,25 +596,97 @@ def confirm_turn(channel_id: int, user_id: int):
     if not game["awaiting_turn_confirm"]:
         return False, "ตอนนี้ยังไม่อยู่ในช่วงยืนยันจบเทิร์น"
 
+    current_turn = game.get("turn")
+    if game.get("turn_confirmation_turn") != current_turn:
+        return False, "ช่วงยืนยันนี้หมดอายุแล้ว"
+    if expected_turn is not None and expected_turn != current_turn:
+        return False, "ปุ่มยืนยันนี้เป็นของเทิร์นก่อนหน้า"
+    if (
+        confirmation_token is not None
+        and confirmation_token != game.get("turn_confirmation_token")
+    ):
+        return False, "ปุ่มยืนยันนี้หมดอายุแล้ว"
+
     if user_id not in game["players"]:
         return False, "คุณไม่ได้อยู่ในเกมนี้"
 
+    player = game["players"][user_id]
+    if player.get("is_mob"):
+        return False, "Mob ยืนยันเทิร์นอัตโนมัติ"
+    if player.get("last_roll_turn") != current_turn:
+        return False, "ต้องทอยก่อนยืนยัน"
+
     game["turn_confirmations"].add(user_id)
 
-    confirmed_count = len(game["turn_confirmations"])
-    total_players = len(game["players"])
-
-    for user_id, player in game["players"].items():
-        if player.get("is_mob"):
-            confirmed_count += 1
-
-    all_confirmed = confirmed_count >= total_players
+    required_confirmations = {
+        player_id
+        for player_id, info in game["players"].items()
+        if not info.get("is_mob")
+    }
+    confirmed_count = len(game["turn_confirmations"] & required_confirmations)
+    total_players = len(required_confirmations)
+    all_confirmed = confirmed_count == total_players
 
     return True, {
         "confirmed_count": confirmed_count,
         "total_players": total_players,
         "all_confirmed": all_confirmed,
     }
+
+def claim_turn_advance(
+    channel_id: int,
+    *,
+    expected_turn: int | None = None,
+    confirmation_token: int | None = None,
+    require_all_confirmations: bool = True,
+    require_all_rolls: bool = True,
+):
+    """Atomically reserve a single legal transition to the next turn."""
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ไม่พบเกมนี้แล้ว"
+    if not game.get("started") or game.get("ended"):
+        return False, "เกมไม่อยู่ในสถานะที่เลื่อนเทิร์นได้"
+    if game.get("turn_transition_in_progress"):
+        return False, "ระบบกำลังเลื่อนเทิร์นนี้อยู่"
+
+    current_turn = game.get("turn")
+    if expected_turn is not None and expected_turn != current_turn:
+        return False, "คำสั่งนี้เป็นของเทิร์นก่อนหน้า"
+
+    if confirmation_token is not None:
+        if (
+            not game.get("awaiting_turn_confirm")
+            or game.get("turn_confirmation_turn") != current_turn
+            or game.get("turn_confirmation_token") != confirmation_token
+        ):
+            return False, "ช่วงยืนยันนี้หมดอายุแล้ว"
+
+    if require_all_rolls and not have_all_players_rolled(channel_id):
+        return False, "ยังมีผู้เล่นที่ยังไม่ได้ทอย"
+
+    if require_all_confirmations:
+        required_confirmations = {
+            player_id
+            for player_id, info in game["players"].items()
+            if not info.get("is_mob")
+        }
+        if (
+            not game.get("awaiting_turn_confirm")
+            or game.get("turn_confirmation_turn") != current_turn
+            or not required_confirmations.issubset(game["turn_confirmations"])
+        ):
+            return False, "ยังยืนยันไม่ครบทุกคน"
+
+    # Claim before any Discord await. Concurrent timeout/button callbacks now
+    # see this latch and cannot increment the turn again.
+    game["turn_transition_in_progress"] = True
+    game["awaiting_turn_confirm"] = False
+    game["turn_confirmations"] = set()
+    game["turn_confirmation_turn"] = None
+    game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
+    return True, current_turn
+
 
 def refresh_turn_snapshot(channel_id: int):
     game = get_game(channel_id)
@@ -1710,6 +1795,13 @@ def next_turn(channel_id: int):
     record_turn_snapshot(game, current_turn)
 
     game["turn"] += 1
+    # The transition latch is only released after the turn number has changed.
+    # This invalidates callbacks belonging to the turn just completed.
+    game["turn_transition_in_progress"] = False
+    game["awaiting_turn_confirm"] = False
+    game["turn_confirmations"] = set()
+    game["turn_confirmation_turn"] = None
+    game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
 
     tick_skill_cooldowns(channel_id)
 
