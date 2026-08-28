@@ -32,6 +32,12 @@ AI_LEVEL_CONFIG = {
 
 
 def get_ai_profile(player: dict) -> dict:
+    # Rookie presets retain their configured AI level.  Every other Mob uses
+    # the strongest decision profile regardless of its stat/aptitude level.
+    preset_key = str(player.get("mob_preset_key", "")).strip().lower()
+    if player.get("is_mob") and not preset_key.startswith("rookie_"):
+        return {"level": 8, **AI_LEVEL_CONFIG[8]}
+
     level = max(1, min(int(player.get("ai_level", player.get("mob_level", 1)) or 1), 8))
     return {"level": level, **AI_LEVEL_CONFIG[level]}
 
