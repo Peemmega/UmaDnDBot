@@ -790,7 +790,7 @@ MOB_PRESETS = {
             1: "s033",  # Runaway
             2: "s034",  # Unrestrained
             3: "s043",  # Red Shift/LP1211-M
-            4: "s037",  # In Body and Mind
+            4: "s054",  # Cacao Operation Cacao
         },
         "zone": {
             "name": "Queen's Rebirth",
@@ -810,10 +810,10 @@ MOB_PRESETS = {
         "thumnail": thumnails["StillInLove"],
         "style": "Late",
         "race_profile": {
-            "speed": 4,
+            "speed": 6,
             "stamina": 4,
-            "power": 6,
-            "gut": 3,
+            "power": 5,
+            "gut": 2,
             "wit": 3,
             "turf": 7,
             "dirt": 1,
