@@ -261,6 +261,12 @@ def describe_effect(effect: dict) -> str:
 
     if effect_type == "resolve_pending_lane_now":
         return "ย้ายไป Lane ที่ตั้งรอไว้ทันที"
+    if effect_type == "activate_random_equipped_skills":
+        return (
+            f"สุ่มใช้สกิลติดตั้ง {effect.get('count', 2)} สกิลทันที "
+            f"(Cost ไม่เกิน {effect.get('max_cost', 80)}, ไม่หัก Wit, "
+            "ข้าม CD/เงื่อนไข และไม่รวมสกิลนี้เอง)"
+        )
     if effect_type == "self_heal_stamina":
         return f"ฟื้นฟู {Status_Icon_Type['STA']} ให้ตัวเอง +{value}"
     if effect_type == "reduce_stamina":

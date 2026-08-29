@@ -37,6 +37,7 @@ EFFECT_TYPES = {
     "force_path_bonus",  # เปลี่ยนผลของ path
     "modify_current_speed",  # เพิ่ม current speed โดยตรง
     "resolve_pending_lane_now",
+    "activate_random_equipped_skills",
 }
 
 SKILL_TAG_OPTIONS = [
@@ -82,6 +83,7 @@ TRIGGER_SCHEMA = {
 TARGET_SCHEMA = {
     "scope": "self",  # self / nearest_front / nearest_back / all_front / all_back / random_enemy
     "limit": 1,
+    "same_lane_only": None,
 }
 
 SKILLS = {
@@ -142,7 +144,13 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_floor", "value": 15, "duration": "this_roll"},
+            {"type": "modify_roll_floor", "value": 6, "duration": "this_roll"},
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 20,
+                "duration": "this_roll",
+            },
         ],
         "tags": ["start", "concentration"],
     },
@@ -452,18 +460,18 @@ SKILLS = {
         "name": "Stamina Siphon",
         "icon": "ReduceSTA",
         "cooldown": 10,
-        "cost": 50,
+        "cost": 80,
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
             "position_group": "back",
             "distance_type": "Long",
             "target_distance_min": 1,
-            "target_distance_max": 150,
+            "target_distance_max": 800,
         },
-        "target": {"scope": "nearest_front", "limit": 4},
+        "target": {"scope": "nearest_front", "limit": 5},
         "effects": [
-            {"type": "reduce_stamina", "value": 1},  # ศัตรู
+            {"type": "reduce_stamina", "value": 0.35},  # ศัตรู
             {"type": "self_heal_stamina", "value": 1},  # ตัวเอง
         ],
         "tags": ["debuff", "long", "stamina"],
@@ -555,7 +563,7 @@ SKILLS = {
         "name": "Dominator",
         "icon": "DecreaseVelocity",
         "cooldown": 10,
-        "cost": 80,
+        "cost": 60,
         "trigger": {
             "phase_min": 4,
             "phase_max": 4,
@@ -564,9 +572,9 @@ SKILLS = {
             "target_distance_min": 1,
             "target_distance_max": 200,
         },
-        "target": {"scope": "all_front", "limit": 4},
+        "target": {"scope": "all_front", "limit": 12},
         "effects": [
-            {"type": "modify_roll_cap", "value": -12, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": -9, "duration": "this_roll"},
         ],
         "tags": ["debuff", "medium", "late_race"],
     },
@@ -778,7 +786,7 @@ SKILLS = {
         "name": "All-Seeing Eyes",
         "icon": "ReduceSTA",
         "cooldown": 10,
-        "cost": 60,
+        "cost": 50,
         "trigger": {
             "style": "Late",
             "phase_min": 3,
@@ -788,9 +796,9 @@ SKILLS = {
         },
         "target": {
             "scope": "all_front",
-            "limit": 10,
+            "limit": 20,
         },
-        "effects": [{"type": "reduce_stamina", "value": 0.6}],
+        "effects": [{"type": "reduce_stamina", "value": 0.3}],
         "tags": ["late", "debuff", "stamina", "all_front"],
     },
     "s039": {
@@ -809,7 +817,7 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "cap_floor", "value": 6, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 8, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -1071,10 +1079,10 @@ SKILLS = {
         "name": "15,000,000 CC",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 80,
+        "cost": 70,
         "trigger": {
             "style": "Late",
-            "path_type": 4,
+            "path_type": 3,
         },
         "target": {
             "scope": "self",
@@ -1095,7 +1103,10 @@ SKILLS = {
         "icon": "Navigation",
         "cooldown": 8,
         "cost": 40,
-        "trigger": {},
+        "trigger": {
+            "phase_min": 4,
+            "phase_max": 4,
+        },
         "target": {"scope": "self", "limit": 1},
         "effects": [{"type": "resolve_pending_lane_now"}],
         "tags": ["positioning"],
@@ -1168,5 +1179,178 @@ SKILLS = {
             {"type": "modify_current_speed", "value": 1},
         ],
         "tags": ["corner", "late_race", "middle", "acceleration", "recovery", "unique"],
+    },
+    "s057": {
+        "name": "Top Runner",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {
+            "style": "Front",
+            "front_blocked": True,
+            "phase_min": 1,
+            "phase_max": 1,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 60,
+                "duration": "this_roll",
+            },
+        ],
+        "tags": ["front", "start", "blocked", "velocity"],
+    },
+    "s058": {
+        "name": "Unstoppable",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "style": "Pace",
+            "phase_min": 2,
+            "phase_max": 3,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 50,
+                "duration": "this_roll",
+            },
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+        ],
+        "tags": ["pace", "mid_race", "velocity"],
+    },
+    "s059": {
+        "name": "Fast & Furious",
+        "icon": "Velocity",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "style": "Late",
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "middle",
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 50,
+                "duration": "this_roll",
+            },
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+        ],
+        "tags": ["late", "mid_race", "middle", "velocity"],
+    },
+    "s060": {
+        "name": "Lane Legerdemain",
+        "icon": "Navigation",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "phase_min": 4,
+            "phase_max": 4,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {"type": "resolve_pending_lane_now"},
+            {"type": "cap_floor", "value": 5, "duration": "this_roll"},
+        ],
+        "tags": ["late_race", "positioning"],
+    },
+    "s061": {
+        "name": "Keen Eye",
+        "icon": "DecreaseVelocity",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "back",
+            "distance_type": "Mile",
+        },
+        "target": {
+            "scope": "all_front",
+            "limit": 8,
+            "same_lane_only": False,
+        },
+        "effects": [
+            {"type": "recover_stamina", "value": 1.5},
+            {"type": "modify_roll_cap", "value": -6, "duration": "this_roll"},
+        ],
+        "tags": ["back", "mile", "mid_race", "debuff", "recovery", "all_front"],
+    },
+    "s062": {
+        "name": "Every Rose Has Its Fangs",
+        "icon": "UniqueVelocity",
+        "cooldown": 8,
+        "cost": 120,
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 2,
+            "position_group": "middle",
+        },
+        "target": {
+            "scope": "nearest_front",
+            "limit": 1,
+            "same_lane_only": False,
+        },
+        "effects": [
+            {"type": "reduce_stamina", "value": 0.3},
+            {"type": "self_heal_stamina", "value": 0.5},
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 50,
+                "duration": "this_roll",
+                "target": {"scope": "self", "limit": 1},
+            },
+        ],
+        "tags": ["middle", "mid_race", "velocity", "recovery", "debuff", "unique"],
+    },
+    "s063": {
+        "name": "564 Escapades",
+        "icon": "UniqueVelocity",
+        "cooldown": 10,
+        "cost": 120,
+        "trigger": {
+            "phase_min": 3,
+            "phase_max": 4,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 15,
+                "duration": "this_roll",
+            },
+            {
+                "type": "activate_random_equipped_skills",
+                "count": 2,
+                "max_cost": 80,
+            },
+        ],
+        "tags": ["late_race", "velocity", "unique"],
     },
 }

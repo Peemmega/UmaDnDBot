@@ -261,8 +261,12 @@ def roll_by_rule(
         bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
     if total_selected_die_bonus > 0:
         bonus_parts.append(f"+{total_selected_die_bonus}{ICON['Velocity']}")
+    if roll_cap_increase != 0:
+        bonus_parts.append(f"CAP {roll_cap_increase:+d}")
+    if extra_floor != 0:
+        bonus_parts.append(f"FLOOR {extra_floor:+d}")
 
-    bonus_display = "".join(bonus_parts) if bonus_parts else "-"
+    bonus_display = " ".join(bonus_parts) if bonus_parts else "-"
     total_display = str(total)
 
     display_parts = []

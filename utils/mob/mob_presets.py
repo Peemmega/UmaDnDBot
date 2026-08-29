@@ -1240,7 +1240,7 @@ MOB_PRESETS = {
         "name": "Symboli Rudolf",
         "avatar": CHARACTER_DIR / "symboli_rudolf.png",
         "thumnail": thumnails["SymboliRudolf"],
-        "style": "Pace",
+        "style": "Late",
         "race_profile": {
             "speed": 6,
             "stamina": 6,

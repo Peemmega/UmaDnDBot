@@ -2793,6 +2793,8 @@ def execute_skill_core(
     skill_id: str,
     *,
     consume_cost: bool = True,
+    ignore_cooldown: bool = False,
+    ignore_trigger: bool = False,
 ):
     game = get_game(channel_id)
     if game is None:
@@ -2816,7 +2818,7 @@ def execute_skill_core(
         skill_id
     )
 
-    if on_cd:
+    if on_cd and not ignore_cooldown:
         return False, {
             "message": f"สกิลติด cooldown {cd_left}"
         }
@@ -2840,7 +2842,7 @@ def execute_skill_core(
         phase=phase
     )
 
-    if not ok:
+    if not ok and not ignore_trigger:
         return False, {"message": reason}
 
     # =====================================
@@ -2912,10 +2914,19 @@ def execute_skill_core(
     # =====================================
 
     if queued_effects:
-        apply_next_roll_effects_to_player(
-            player,
-            queued_effects
-        )
+        for effect in queued_effects:
+            effect_target = effect.get("target")
+            target_skill = skill
+            if effect_target:
+                target_skill = skill.copy()
+                target_skill["target"] = {
+                    **skill.get("target", {}),
+                    **effect_target,
+                }
+
+            queued_targets = resolve_skill_targets(channel_id, user_id, target_skill)
+            for _, target_player in queued_targets:
+                apply_next_roll_effects_to_player(target_player, [effect])
 
         result_texts.append(
             "บัฟถูกสะสมไว้สำหรับการวิ่งครั้งถัดไป"
@@ -3060,6 +3071,53 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
             else:
                 applied_texts.append(f"ยืนยัน Lane {current_lane} ทันที")
 
+        elif effect_type == "activate_random_equipped_skills":
+            max_cost = effect.get("max_cost", 80)
+            count = effect.get("count", 2)
+            equipped_skill_ids = list(dict.fromkeys(
+                skill_id
+                for skill_id in player.get("skills", {}).values()
+                if skill_id
+            ))
+            eligible_skill_ids = [
+                skill_id
+                for skill_id in equipped_skill_ids
+                if skill_id in SKILLS
+                and SKILLS[skill_id].get("cost", 0) <= max_cost
+                and not any(
+                    candidate_effect.get("type") == "activate_random_equipped_skills"
+                    for candidate_effect in SKILLS[skill_id].get("effects", [])
+                )
+            ]
+            selected_skill_ids = random.sample(
+                eligible_skill_ids,
+                min(count, len(eligible_skill_ids)),
+            )
+
+            if not selected_skill_ids:
+                applied_texts.append(
+                    f"ไม่มีสกิลติดตั้งที่ใช้สุ่มได้ (Cost ไม่เกิน {max_cost})"
+                )
+                continue
+
+            activated_names = []
+            for selected_skill_id in selected_skill_ids:
+                activated, payload = execute_skill_core(
+                    channel_id,
+                    user_id,
+                    selected_skill_id,
+                    consume_cost=False,
+                    ignore_cooldown=True,
+                    ignore_trigger=True,
+                )
+                if activated:
+                    activated_names.append(payload["skill_name"])
+
+            if activated_names:
+                applied_texts.append(
+                    "สุ่มใช้สกิลทันที: " + ", ".join(activated_names)
+                )
+
         elif effect_type == "apply_debuff_next_turn":
             if not targets:
                 continue
@@ -3198,7 +3256,9 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
             if clamp_lane(item[2].get("current_lane")) == my_lane
         ]
 
-    restrict_same_lane = "debuff" in set(skill.get("tags", []))
+    restrict_same_lane = target_cfg.get(
+        "same_lane_only", "debuff" in set(skill.get("tags", []))
+    )
     if restrict_same_lane:
         front = _same_lane_only(front)
         back = _same_lane_only(back)
