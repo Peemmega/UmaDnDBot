@@ -187,7 +187,7 @@ SKILLS = {
     },
     "s006": {
         "name": "Keen Eye",
-        "icon": "DecreaseVelocity",
+        "icon": "Recovery",
         "cooldown": 10,
         "cost": 60,
         "trigger": {
@@ -202,8 +202,8 @@ SKILLS = {
             "limit": 3,
         },
         "effects": [
-            {"type": "recover_stamina", "value": 1},
-            {"type": "modify_roll_cap", "value": -10, "duration": "this_roll"},
+            {"type": "recover_stamina", "value": 1.5},
+            {"type": "modify_roll_cap", "value": -3, "duration": "this_roll"},
         ],
         "tags": ["recovery", "debuff", "front_target"],
     },
@@ -448,11 +448,11 @@ SKILLS = {
             "distance_type": "Mile",
             "position_group": "back",
             "target_distance_min": 1,
-            "target_distance_max": 200,
+            "target_distance_max": 999,
         },
-        "target": {"scope": "all_front", "limit": 8},
+        "target": {"scope": "all_front", "limit": 12},
         "effects": [
-            {"type": "modify_roll_cap", "value": -10, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": -5, "duration": "this_roll"},
         ],
         "tags": ["debuff", "mile", "early_race"],
     },
@@ -460,14 +460,14 @@ SKILLS = {
         "name": "Stamina Siphon",
         "icon": "ReduceSTA",
         "cooldown": 10,
-        "cost": 80,
+        "cost": 60,
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
             "position_group": "back",
             "distance_type": "Long",
             "target_distance_min": 1,
-            "target_distance_max": 800,
+            "target_distance_max": 999,
         },
         "target": {"scope": "nearest_front", "limit": 5},
         "effects": [
@@ -563,18 +563,18 @@ SKILLS = {
         "name": "Dominator",
         "icon": "DecreaseVelocity",
         "cooldown": 10,
-        "cost": 60,
+        "cost": 50,
         "trigger": {
             "phase_min": 4,
             "phase_max": 4,
             "position_group": "back",
             "distance_type": "Medium",
             "target_distance_min": 1,
-            "target_distance_max": 200,
+            "target_distance_max": 999,
         },
         "target": {"scope": "all_front", "limit": 12},
         "effects": [
-            {"type": "modify_roll_cap", "value": -9, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": -5, "duration": "this_roll"},
         ],
         "tags": ["debuff", "medium", "late_race"],
     },
@@ -1276,28 +1276,6 @@ SKILLS = {
         "tags": ["late_race", "positioning"],
     },
     "s061": {
-        "name": "Keen Eye",
-        "icon": "DecreaseVelocity",
-        "cooldown": 8,
-        "cost": 80,
-        "trigger": {
-            "phase_min": 2,
-            "phase_max": 3,
-            "position_group": "back",
-            "distance_type": "Mile",
-        },
-        "target": {
-            "scope": "all_front",
-            "limit": 8,
-            "same_lane_only": False,
-        },
-        "effects": [
-            {"type": "recover_stamina", "value": 1.5},
-            {"type": "modify_roll_cap", "value": -6, "duration": "this_roll"},
-        ],
-        "tags": ["back", "mile", "mid_race", "debuff", "recovery", "all_front"],
-    },
-    "s062": {
         "name": "Every Rose Has Its Fangs",
         "icon": "UniqueVelocity",
         "cooldown": 8,
@@ -1325,7 +1303,7 @@ SKILLS = {
         ],
         "tags": ["middle", "mid_race", "velocity", "recovery", "debuff", "unique"],
     },
-    "s063": {
+    "s062": {
         "name": "564 Escapades",
         "icon": "UniqueVelocity",
         "cooldown": 10,
