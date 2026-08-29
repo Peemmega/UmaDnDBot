@@ -16,7 +16,7 @@ from utils.database import (
     get_player_skill_slots,
 )
 from utils.race.race_history import ensure_race_history_id, record_race_action, record_turn_snapshot
-from utils.profile_images import resolve_player_avatar_url
+from utils.profile_images import resolve_player_avatar_url, resolve_public_url
 from utils.zone.zone_manager import apply_zone_in_game
 from utils.race.race_presets import (
     get_path_effect,
@@ -991,7 +991,7 @@ def build_mob_join_embed(game: dict, mob: dict):
     return build_join_embed(
         game=game,
         display_name=mob_name,
-        display_image=mob.get("thumnail", ""),
+        display_image=resolve_public_url(mob.get("thumnail", "")),
         style=style,
         aptitude_source=race_profile,
         title="🏇 ผู้เล่นเข้าร่วม!",

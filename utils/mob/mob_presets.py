@@ -14,18 +14,48 @@ thumnails = {
     "BeyondTheLight": "https://media.discordapp.net/attachments/697810514448744448/1499644108577312839/4c0fa686a849947746b5c1a06720c9ab.jpg?ex=69f6dd69&is=69f58be9&hm=4789496a55fa43f4baa21ac13806fda80d06672872a10a9804e61b70b59f7125&=&format=webp&width=1104&height=1104",
     "AlmondEye": "https://media.discordapp.net/attachments/697810514448744448/1499644108292231208/2026-05-01_122211.png",
     "Equinox": "https://media.discordapp.net/attachments/697810514448744448/1499644107398844577/image.png",
-    "Orfevre": "https://media.discordapp.net/attachments/697810514448744448/1501877411736846346/orfevre.png?ex=69fdabd6&is=69fc5a56&hm=b113ec0a768cdfc0a0ada79d9012dcc1746e93e0a542031c16209321671e3dca&=&format=webp&quality=lossless&width=617&height=603",
+    "Orfevre": "https://cdn.discordapp.com/attachments/697810514448744448/1543154073665282128/orfevre.png?ex=6a93d5b9&is=6a928439&hm=4de94acaa7e2b324298ada2a52004028d91563ae00a963b327dd6c34f78e10b0&",
     "Gentildonna": "https://media.discordapp.net/attachments/697810514448744448/1501877412097687592/gentildonna.png?ex=69fdabd6&is=69fc5a56&hm=316cea94428f39b9b75a5389683b48b06fff378618f0765b257ffc1f0ebddca1&=&format=webp&quality=lossless&width=1040&height=1080",
     "Verxina": "https://media.discordapp.net/attachments/697810514448744448/1501877410662977638/verxina.png?ex=69fdabd6&is=69fc5a56&hm=fb13acd113f2a020aac967c8b83d7297188e70552c2943c8ae2f326716bed5c3&=&format=webp&quality=lossless&width=695&height=699",
-    "StillInLove": "https://media.discordapp.net/attachments/697810514448744448/1501877410348400740/still_in_love.png?ex=69fdabd6&is=69fc5a56&hm=1e0ee128672b833bbfb0b743917d19d22063850714ad15b122862ec9b41641a5&=&format=webp&quality=lossless&width=1289&height=1265",
+    "StillInLove": "https://cdn.discordapp.com/attachments/697810514448744448/1543154074973900800/still_in_love.png?ex=6a93d5b9&is=6a928439&hm=d10e58dc96467422475038481a00f533ab82dff21b6e504491cd097856a5150a&",
     "SpecialWeek": "https://media.discordapp.net/attachments/697810514448744448/1501877410948186222/special_week_2.png?ex=69fdabd6&is=69fc5a56&hm=80e639767f44a85c7855d9a6fa30dd7954b17198dd986e7f111803e5f8c3a163&=&format=webp&quality=lossless&width=560&height=545",
     "SilecneSusuka": "https://media.discordapp.net/attachments/697810514448744448/1501877411267219559/silent_susuka.png?ex=69fdabd6&is=69fc5a56&hm=ea687d3b478824505cf91f4ed30b6ef8cabbcfc702766f355f6986843fb54555&=&format=webp&quality=lossless&width=734&height=749",
     "NaritaTopRoad": "https://media.discordapp.net/attachments/697810514448744448/1522305958670499941/narita_top_road.png?ex=6a47fd67&is=6a46abe7&hm=3cb1f25e33a3dc24998ca890082f5f318316f014592df62b6b0222c310468426&=&format=webp&quality=lossless&width=681&height=681",
     "TMOperaO": "https://media.discordapp.net/attachments/697810514448744448/1522305957273796691/tm_opera_o.png?ex=6a47fd67&is=6a46abe7&hm=c3b17823dad2baf8e02bfc83648ca009c751ce38649d589791057618cbcb1c75&=&format=webp&quality=lossless&width=492&height=515",
     "AdmireVega": "https://media.discordapp.net/attachments/697810514448744448/1522305957722325244/admire_vega.png?ex=6a47fd67&is=6a46abe7&hm=d4e64cde381980479b1391603f6dc1f9cdf5b3c93da1c68e7121d23278e0d813&=&format=webp&quality=lossless&width=690&height=707",
     "JunglePocket": "https://media.discordapp.net/attachments/697810514448744448/1522305958297075852/jungle_pocket.png?ex=6a47fd67&is=6a46abe7&hm=e41dcb29a8cf4cabdf9f3cdcb399a251958d699d0e61731de29319efdbf8c3ec&=&format=webp&quality=lossless&width=837&height=870",
+    "SakuraBakushinO": "/app/assets/characters/sakura_bakushin_o.png",
+    "SymboliRudolf": "/app/assets/characters/symboli_rudolf.png",
+    "NaritaBrian": "/app/assets/characters/narita_brain.png",
+    "KitasanBlack": "/app/assets/characters/kitasan_black.png",
+    "Duramente": "/app/assets/characters/duramente.png",
+    "ChevalGrand": "/app/assets/characters/cheval_grand.png",
+    "CalstoneLightO": "/app/assets/characters/calstone_light_o.png",
     "aaa": "",
 }
+
+LOW_LEVEL_ZONE = {
+    "name": "Default Zone",
+    "image_url": "",
+    "points": 0,
+    "build": {
+        "flat": 1,
+        "add_dkh": 0,
+        "cap_floor": 0,
+        "self_heal_stamina": 0,
+        "modify_current_speed": 1,
+    },
+}
+
+
+def named_low_level_zone(name: str) -> dict:
+    """Create a non-effect Zone label for low-stat character presets."""
+    return {
+        **LOW_LEVEL_ZONE,
+        "name": name,
+        "build": LOW_LEVEL_ZONE["build"].copy(),
+    }
+
 
 MOB_PRESETS = {
     # Rookie
@@ -683,94 +713,134 @@ MOB_PRESETS = {
         },
     },
     # LEVEL 6
-    # LEVEL 7
-    "orfevre": {
-        "name": "Orfevre",
-        "avatar": CHARACTER_DIR / "orfevre.png",
-        "thumnail": thumnails["Orfevre"],
-        "style": "End",
+    "sakura_bakushin_o": {
+        "name": "Sakura Bakushin O",
+        "avatar": CHARACTER_DIR / "sakura_bakushin_o.png",
+        "thumnail": thumnails["SakuraBakushinO"],
+        "style": "Front",
         "race_profile": {
-            "speed": 7,
-            "stamina": 4,
-            "power": 6,
+            "speed": 8,
+            "stamina": 3,
+            "power": 5,
             "gut": 1,
-            "wit": 2,
+            "wit": 4,
             "turf": 7,
             "dirt": 1,
-            "sprint": 1,
-            "mile": 5,
-            "medium": 7,
-            "long": 7,
-            "front": 1,
-            "pace": 2,
-            "late": 7,
-            "end_style": 7,
+            "sprint": 7,
+            "mile": 6,
+            "medium": 1,
+            "long": 1,
+            "front": 7,
+            "pace": 7,
+            "late": 2,
+            "end_style": 1,
         },
         "skills": {
-            1: "s036",  # Sturm und Drang
-            2: "s015",  # Beeline Burst
-            3: "s037",  # In Body and Mind
-            4: "s002",  # Encroaching Shadow
+            1: "s033",  # Runaway
+            2: "s043",  # Red Shift/LP1211-M
+            3: "s054",  # Cacao Operation Cacao
+            4: "s015",  # Beeline Burst
         },
         "zone": {
-            "name": "None Shall Object My Rule",
-            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1501860045405818880/orfevre-umamusume.gif",
+            "name": "Class President + Speed = Bakushin",
+            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153379054723094/bakushinOZone.gif?ex=6a93d513&is=6a928393&hm=26d2b2df750c8c9a01c620f9a38bac709454f2102a0b3789714da2370836d6b8&",
             "build": {
-                "flat": 0,
+                "flat": 3,
                 "add_dkh": 0,
-                "cap_floor": 3,
+                "cap_floor": 0,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             },
         },
     },
-    "gentildonna": {
-        "name": "Gentildonna",
-        "avatar": CHARACTER_DIR / "gentildonna.png",
-        "thumnail": thumnails["Gentildonna"],
+    "cheval_grand": {
+        "name": "Cheval Grand",
+        "avatar": CHARACTER_DIR / "cheval_grand.png",
+        "thumnail": thumnails["ChevalGrand"],
         "style": "Pace",
         "race_profile": {
-            "speed": 7,
-            "stamina": 4,
-            "power": 5,
+            "speed": 6,
+            "stamina": 6,
+            "power": 4,
             "gut": 2,
             "wit": 2,
             "turf": 7,
             "dirt": 1,
             "sprint": 1,
-            "mile": 7,
+            "mile": 1,
             "medium": 7,
             "long": 7,
-            "front": 3,
+            "front": 1,
             "pace": 7,
-            "late": 7,
-            "end_style": 4,
+            "late": 6,
+            "end_style": 2,
         },
         "skills": {
             1: "s032",  # Neck and Neck
-            2: "s047",  # Ramp Up
-            3: "s043",  # Red Shift/LP1211-M
-            4: "s015",  # Beeline Burst
+            3: "s035",  # Radiant Star
+            3: "s015",  # Beeline Burst
+            4: "s037",  # In Body and Mind
         },
         "zone": {
-            "name": "Rose Conquest",
-            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1501860043153215488/gentildonna-uma.gif",
+            "name": "Celeste Oath",
+            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153379826466917/-.gif?ex=6a93d514&is=6a928394&hm=d24be27aff08d9b69c39696afa5d7da31a5079be3040ee7c7df7e017f2a8eca7&",
             "build": {
                 "flat": 0,
-                "add_dkh": 5,
-                "cap_floor": 0,
+                "add_dkh": 3,
+                "cap_floor": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
             },
         },
     },
+    "calstone_light_o": {
+        "name": "Calstone Light O",
+        "avatar": CHARACTER_DIR / "calstone_light_o.png",
+        "thumnail": thumnails["CalstoneLightO"],
+        "style": "Front",
+        "race_profile": {
+            "speed": 8,
+            "stamina": 2,
+            "power": 8,
+            "gut": 1,
+            "wit": 1,
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 7,
+            "mile": 4,
+            "medium": 1,
+            "long": 1,
+            "front": 7,
+            "pace": 5,
+            "late": 1,
+            "end_style": 1,
+        },
+        "skills": {
+            1: "s033",  # Runaway
+            2: "s030",  # Groundwork
+            3: "s043",  # Red Shift/LP1211-M
+            4: "s015",  # Beeline Burst
+        },
+        "zone": {
+            "name": "Path of Singular Focus",
+            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153380799676426/uma-musume_3.gif?ex=6a93d514&is=6a928394&hm=e0134834412fa613aa7ad3085c44b215c973775b012fcdab14f36629fc386cae&",
+            "build": {
+                "flat": 4,
+                "add_dkh": 0,
+                "cap_floor": 0,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 1,
+            },
+        },
+    },
+    # LEVEL 7 21
     "verxina": {
         "name": "Verxina",
         "avatar": CHARACTER_DIR / "verxina.png",
         "thumnail": thumnails["Verxina"],
         "style": "Front",
         "race_profile": {
-            "speed": 6,
+            "speed": 7,
             "stamina": 5,
             "power": 5,
             "gut": 1,
@@ -804,53 +874,13 @@ MOB_PRESETS = {
             },
         },
     },
-    "still_in_love": {
-        "name": "Still In Love",
-        "avatar": CHARACTER_DIR / "still_in_love.png",
-        "thumnail": thumnails["StillInLove"],
-        "style": "Late",
-        "race_profile": {
-            "speed": 6,
-            "stamina": 4,
-            "power": 5,
-            "gut": 2,
-            "wit": 3,
-            "turf": 7,
-            "dirt": 1,
-            "sprint": 5,
-            "mile": 7,
-            "medium": 7,
-            "long": 1,
-            "front": 1,
-            "pace": 7,
-            "late": 7,
-            "end_style": 2,
-        },
-        "skills": {
-            1: "s045",  # Moving Past, and Beyond
-            2: "s038",  # All-Seeing Eyes
-            3: "s037",  # In Body and Mind
-            4: "s015",  # Beeline Burst
-        },
-        "zone": {
-            "name": "Scarlet Lily's Elation",
-            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1501860044105322657/still-in-love-umamusume.gif?ex=69fd9ba9&is=69fc4a29&hm=55cc976721949bfe47c4c5caa70a4100a65148fd4ccc034d0fc949573268140e&=&width=747&height=422",
-            "build": {
-                "flat": 0,
-                "add_dkh": 4,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 1,
-            },
-        },
-    },
     "special_week": {
         "name": "Special Week",
         "avatar": CHARACTER_DIR / "special_week.png",
         "thumnail": thumnails["SpecialWeek"],
         "style": "Pace",
         "race_profile": {
-            "speed": 5,
+            "speed": 6,
             "stamina": 5,
             "power": 4,
             "gut": 3,
@@ -894,7 +924,7 @@ MOB_PRESETS = {
             "stamina": 5,
             "power": 5,
             "gut": 1,
-            "wit": 1,
+            "wit": 2,
             "turf": 7,
             "dirt": 1,
             "sprint": 4,
@@ -919,12 +949,132 @@ MOB_PRESETS = {
                 "flat": 2,
                 "add_dkh": 0,
                 "cap_floor": 0,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 3,
+                "self_heal_stamina": 1,
+                "modify_current_speed": 2,
             },
         },
     },
-    # LEVEL 7.5
+    "duramente": {
+        "name": "Duramente",
+        "avatar": CHARACTER_DIR / "duramente.png",
+        "thumnail": thumnails["Duramente"],
+        "style": "End",
+        "race_profile": {
+            "speed": 6,
+            "stamina": 5,
+            "power": 5,
+            "gut": 2,
+            "wit": 3,
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 1,
+            "mile": 7,
+            "medium": 7,
+            "long": 5,
+            "front": 1,
+            "pace": 5,
+            "late": 7,
+            "end_style": 7,
+        },
+        "skills": {
+            1: "s002",  # Encroaching Shadow
+            2: "s036",  # Sturm und Drang
+            3: "s037",  # In Body and Mind
+            4: "s035",  # Radiant Star
+        },
+        "zone": {
+            "name": "Scarlet Ascension of the Rakshasa",
+            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153380220735538/duramente-ultimate.gif?ex=6a93d514&is=6a928394&hm=5eb54f3087ae92077ef4d4003dbc9b893f551ae79bc7e1ad8f04b3e63cb9c06c&",
+            "build": {
+                "flat": 0,
+                "add_dkh": 3,
+                "cap_floor": 1,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 1,
+            },
+        },
+    },
+    # LEVEL 7.5 22
+    "kitasan_black": {
+        "name": "Kitasan Black",
+        "avatar": CHARACTER_DIR / "kitasan_black.png",
+        "thumnail": thumnails["KitasanBlack"],
+        "style": "Front",
+        "race_profile": {
+            "speed": 7,
+            "stamina": 6,
+            "power": 5,
+            "gut": 1,
+            "wit": 3,
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 3,
+            "mile": 5,
+            "medium": 7,
+            "long": 7,
+            "front": 7,
+            "pace": 6,
+            "late": 5,
+            "end_style": 1,
+        },
+        "skills": {
+            1: "s033",  # Runaway
+            2: "s034",  # Unrestrained
+            3: "s046",  # Angling and Scheming
+            4: "s035",  # Radiant Star
+        },
+        "zone": {
+            "name": "Shout of Victory",
+            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153378656387072/-dia-chan.gif?ex=6a93d513&is=6a928393&hm=0a37aba196469c656bee6196becec84749c779051135cf905ac69125ea10a76b&",
+            "build": {
+                "flat": 2,
+                "add_dkh": 0,
+                "cap_floor": 0,
+                "self_heal_stamina": 1,
+                "modify_current_speed": 2,
+            },
+        },
+    },
+    "still_in_love": {
+        "name": "Still In Love",
+        "avatar": CHARACTER_DIR / "still_in_love.png",
+        "thumnail": thumnails["StillInLove"],
+        "style": "Late",
+        "race_profile": {
+            "speed": 6,
+            "stamina": 4,
+            "power": 6,
+            "gut": 2,
+            "wit": 4,
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 5,
+            "mile": 7,
+            "medium": 7,
+            "long": 1,
+            "front": 1,
+            "pace": 7,
+            "late": 7,
+            "end_style": 2,
+        },
+        "skills": {
+            1: "s045",  # Moving Past, and Beyond
+            2: "s038",  # All-Seeing Eyes
+            3: "s037",  # In Body and Mind
+            4: "s015",  # Beeline Burst
+        },
+        "zone": {
+            "name": "Scarlet Lily's Elation",
+            "image_url": "https://media.discordapp.net/attachments/697810514448744448/1501860044105322657/still-in-love-umamusume.gif?ex=69fd9ba9&is=69fc4a29&hm=55cc976721949bfe47c4c5caa70a4100a65148fd4ccc034d0fc949573268140e&=&width=747&height=422",
+            "build": {
+                "flat": 0,
+                "add_dkh": 4,
+                "cap_floor": 0,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 1,
+            },
+        },
+    },
     "almond_eye": {
         "name": "Almond Eye",
         "avatar": CHARACTER_DIR / "almond_eye.png",
@@ -965,7 +1115,168 @@ MOB_PRESETS = {
             },
         },
     },
-    # LEVEL 8
+    "orfevre": {
+        "name": "Orfevre",
+        "avatar": CHARACTER_DIR / "orfevre.png",
+        "thumnail": thumnails["Orfevre"],
+        "style": "End",
+        "race_profile": {
+            "speed": 7,
+            "stamina": 4,
+            "power": 8,
+            "gut": 1,
+            "wit": 2,
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 1,
+            "mile": 5,
+            "medium": 7,
+            "long": 7,
+            "front": 1,
+            "pace": 2,
+            "late": 7,
+            "end_style": 7,
+        },
+        "skills": {
+            1: "s036",  # Sturm und Drang
+            2: "s015",  # Beeline Burst
+            3: "s037",  # In Body and Mind
+            4: "s002",  # Encroaching Shadow
+        },
+        "zone": {
+            "name": "None Shall Object My Rule",
+            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1501860045405818880/orfevre-umamusume.gif",
+            "build": {
+                "flat": 0,
+                "add_dkh": 2,
+                "cap_floor": 2,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 1,
+            },
+        },
+    },
+    "gentildonna": {
+        "name": "Gentildonna",
+        "avatar": CHARACTER_DIR / "gentildonna.png",
+        "thumnail": thumnails["Gentildonna"],
+        "style": "Pace",
+        "race_profile": {
+            "speed": 7,
+            "stamina": 5,
+            "power": 6,
+            "gut": 2,
+            "wit": 2,
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 1,
+            "mile": 7,
+            "medium": 7,
+            "long": 7,
+            "front": 3,
+            "pace": 7,
+            "late": 7,
+            "end_style": 4,
+        },
+        "skills": {
+            1: "s032",  # Neck and Neck
+            2: "s047",  # Ramp Up
+            3: "s043",  # Red Shift/LP1211-M
+            4: "s015",  # Beeline Burst
+        },
+        "zone": {
+            "name": "Rose Conquest",
+            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1501860043153215488/gentildonna-uma.gif",
+            "build": {
+                "flat": 0,
+                "add_dkh": 5,
+                "cap_floor": 0,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 0,
+            },
+        },
+    },
+    "narita_brain": {
+        "name": "Narita Brian",
+        "avatar": CHARACTER_DIR / "narita_brain.png",
+        "thumnail": thumnails["NaritaBrian"],
+        "style": "Pace",
+        "race_profile": {
+            "speed": 6,
+            "stamina": 6,
+            "power": 6,
+            "gut": 2,
+            "wit": 2,
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 2,
+            "mile": 6,
+            "medium": 7,
+            "long": 7,
+            "front": 1,
+            "pace": 7,
+            "late": 7,
+            "end_style": 4,
+        },
+        "skills": {
+            1: "s032",  # Neck and Neck
+            3: "s035",  # Radiant Star
+            3: "s015",  # Beeline Burst
+            4: "s054",  # Cacao Operation Cacao
+        },
+        "zone": {
+            "name": "Shadow Break",
+            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153379503640591/narita-brian-narita-brian.gif?ex=6a93d514&is=6a928394&hm=d81ce6b48a342c6fcf0b4601542c7077bf1e5018d95fc18008f0c95b2bb1a864&",
+            "build": {
+                "flat": 0,
+                "add_dkh": 3,
+                "cap_floor": 2,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 0,
+            },
+        },
+    },
+    # LEVEL 8 23
+    "symboli_rudolf": {
+        "name": "Symboli Rudolf",
+        "avatar": CHARACTER_DIR / "symboli_rudolf.png",
+        "thumnail": thumnails["SymboliRudolf"],
+        "style": "Pace",
+        "race_profile": {
+            "speed": 6,
+            "stamina": 6,
+            "power": 6,
+            "gut": 3,
+            "wit": 2,
+            "turf": 7,
+            "dirt": 1,
+            "sprint": 3,
+            "mile": 5,
+            "medium": 7,
+            "long": 7,
+            "front": 6,
+            "pace": 7,
+            "late": 7,
+            "end_style": 5,
+        },
+        "skills": {
+            1: "s043",  # Red Shift/LP1211-M
+            2: "s032",  # Neck and Neck
+            3: "s035",  # Radiant Star
+            4: "s015",  # Beeline Burst
+        },
+        "zone": {
+            "name": "Thou, Witness the Heavenly Might of the Emperor",
+            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153381181362278/symboli-rudolf-uma-musume.gif?ex=6a93d514&is=6a928394&hm=19964a3db3e6bb0c84d31f6562efe2ccd9dd1f06df414db94d651deb7e4ed86f&",
+            "build": {
+                "flat": 0,
+                "add_dkh": 3,
+                "cap_floor": 2,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 0,
+            },
+        },
+    },
+    # LEVEL 99
     "equinox": {
         "name": "Equinox",
         "avatar": CHARACTER_DIR / "equinox.png",
