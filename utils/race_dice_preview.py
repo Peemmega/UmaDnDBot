@@ -328,7 +328,10 @@ async def create_race_dice_preview(
 
     # dice breakdown
     display = result.get("display", "")
-    bonus = format_bonus_display(result.get("bonus_display", ""), block_label="Block")
+    bonus = format_bonus_display(
+        result.get("dice_preview_bonus_display", result.get("bonus_display", "")),
+        block_label="Block",
+    )
 
 
     draw_rich_text(

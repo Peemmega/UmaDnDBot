@@ -1245,8 +1245,8 @@ MOB_PRESETS = {
             "speed": 6,
             "stamina": 6,
             "power": 6,
-            "gut": 3,
-            "wit": 2,
+            "gut": 2,
+            "wit": 3,
             "turf": 7,
             "dirt": 1,
             "sprint": 3,
@@ -1259,8 +1259,8 @@ MOB_PRESETS = {
             "end_style": 5,
         },
         "skills": {
-            1: "s043",  # Red Shift/LP1211-M
-            2: "s032",  # Neck and Neck
+            1: "s042",  # Let's Pump Some Iron
+            2: "s038",  # All-Seeing Eyes
             3: "s035",  # Radiant Star
             4: "s015",  # Beeline Burst
         },

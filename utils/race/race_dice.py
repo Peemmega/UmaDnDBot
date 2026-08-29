@@ -261,6 +261,9 @@ def roll_by_rule(
         bonus_parts.append(f"+{flat_velocity_bonus}{ICON['Velocity']}")
     if total_selected_die_bonus > 0:
         bonus_parts.append(f"+{total_selected_die_bonus}{ICON['Velocity']}")
+
+    dice_preview_bonus_display = " ".join(bonus_parts) if bonus_parts else "-"
+
     if roll_cap_increase != 0:
         bonus_parts.append(f"CAP {roll_cap_increase:+d}")
     if extra_floor != 0:
@@ -288,6 +291,7 @@ def roll_by_rule(
         "total": total,
         "total_display": total_display,
         "bonus_display": bonus_display,
+        "dice_preview_bonus_display": dice_preview_bonus_display,
     }
 
 
@@ -333,10 +337,11 @@ def roll_race_dice(
         dice_result["total"] += wit_guarantee_bonus
         dice_result["total_display"] = str(dice_result["total"])
         wit_bonus_display = f"+{wit_guarantee_bonus}WIT"
-        if dice_result["bonus_display"] == "-":
-            dice_result["bonus_display"] = wit_bonus_display
-        else:
-            dice_result["bonus_display"] += wit_bonus_display
+        for bonus_key in ("bonus_display", "dice_preview_bonus_display"):
+            if dice_result[bonus_key] == "-":
+                dice_result[bonus_key] = wit_bonus_display
+            else:
+                dice_result[bonus_key] += f" {wit_bonus_display}"
 
     return {
         "phase": phase,
@@ -351,6 +356,7 @@ def roll_race_dice(
         "total": dice_result["total"],
         "total_display": dice_result["total_display"],
         "bonus_display": dice_result["bonus_display"],
+        "dice_preview_bonus_display": dice_result["dice_preview_bonus_display"],
         "wit_guarantee_bonus": wit_guarantee_bonus,
     }
 
