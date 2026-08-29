@@ -2863,6 +2863,7 @@ def execute_skill_core(
 
     instant_effects = []
     queued_effects = []
+    random_activations = []
 
     for effect in skill.get("effects", []):
 
@@ -2908,6 +2909,7 @@ def execute_skill_core(
             return False, {"message": result_text}
 
         result_texts.append(result_text)
+        random_activations.extend(temp_skill.pop("_random_activations", []))
 
     # =====================================
     # Queued
@@ -2972,6 +2974,7 @@ def execute_skill_core(
         "skill_name": skill["name"],
         "skill": skill,
         "result_texts": result_texts,
+        "random_activations": random_activations,
         "cost": cost,
         "show_lane_preview": any(
             effect.get("type") == "resolve_pending_lane_now"
@@ -3100,7 +3103,7 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                 )
                 continue
 
-            activated_names = []
+            activated_skills = []
             for selected_skill_id in selected_skill_ids:
                 activated, payload = execute_skill_core(
                     channel_id,
@@ -3111,12 +3114,19 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                     ignore_trigger=True,
                 )
                 if activated:
-                    activated_names.append(payload["skill_name"])
+                    activated_skills.append({
+                        "skill_id": selected_skill_id,
+                        "name": payload["skill_name"],
+                        "result_texts": payload.get("result_texts", []),
+                    })
 
-            if activated_names:
-                applied_texts.append(
-                    "สุ่มใช้สกิลทันที: " + ", ".join(activated_names)
-                )
+            if activated_skills:
+                skill.setdefault("_random_activations", []).extend(activated_skills)
+                applied_texts.append("สุ่มใช้สกิลทันที:")
+                for activated_skill in activated_skills:
+                    applied_texts.append(f"• {activated_skill['name']}")
+                    for result_text in activated_skill["result_texts"]:
+                        applied_texts.append(f"  └ {result_text}")
 
         elif effect_type == "apply_debuff_next_turn":
             if not targets:

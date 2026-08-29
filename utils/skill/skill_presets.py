@@ -798,7 +798,7 @@ SKILLS = {
             "scope": "all_front",
             "limit": 20,
         },
-        "effects": [{"type": "reduce_stamina", "value": 0.3}],
+        "effects": [{"type": "reduce_stamina", "value": 0.5}],
         "tags": ["late", "debuff", "stamina", "all_front"],
     },
     "s039": {
@@ -1284,10 +1284,12 @@ SKILLS = {
             "phase_min": 2,
             "phase_max": 2,
             "position_group": "middle",
+            "target_distance_min": 1,
+            "target_distance_max": 999,
         },
         "target": {
-            "scope": "nearest_front",
-            "limit": 1,
+            "scope": "all_front",
+            "limit": 20,
             "same_lane_only": False,
         },
         "effects": [
@@ -1320,12 +1322,12 @@ SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 15,
+                "value": 40,
                 "duration": "this_roll",
             },
             {
                 "type": "activate_random_equipped_skills",
-                "count": 2,
+                "count": 1,
                 "max_cost": 80,
             },
         ],
