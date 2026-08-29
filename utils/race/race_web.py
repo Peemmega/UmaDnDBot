@@ -655,10 +655,18 @@ class RaceWebManager:
             raise ValueError(result)
 
         target = game.get("players", {}).get(result.get("target_id"))
+        player_name = self._player_label(user_id, player)
+        target_name = self._player_label(result.get("target_id"), target)
         self._log(
             game,
-            f"{self._player_label(user_id, player)} used Block on {self._player_label(result.get('target_id'), target)}",
-            result,
+            f"{player_name} used Block on {target_name}",
+            {
+                **result,
+                "action_type": "block",
+                "player_id": str(user_id),
+                "player_name": player_name,
+                "target_name": target_name,
+            },
         )
         return serialize_room(game, room_id, str(user_id))
 
@@ -669,10 +677,16 @@ class RaceWebManager:
         if not success:
             raise ValueError(result)
 
+        player_name = self._player_label(user_id, player)
         self._log(
             game,
-            f"{self._player_label(user_id, player)} used Rush +{result.get('move_forward', 0)}",
-            result,
+            f"{player_name} used Rush +{result.get('move_forward', 0)}",
+            {
+                **result,
+                "action_type": "rush",
+                "player_id": str(user_id),
+                "player_name": player_name,
+            },
         )
         return serialize_room(game, room_id, str(user_id))
 

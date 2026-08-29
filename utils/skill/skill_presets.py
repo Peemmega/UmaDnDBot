@@ -778,7 +778,7 @@ SKILLS = {
         "name": "All-Seeing Eyes",
         "icon": "ReduceSTA",
         "cooldown": 10,
-        "cost": 80,
+        "cost": 60,
         "trigger": {
             "style": "Late",
             "phase_min": 3,
@@ -790,7 +790,7 @@ SKILLS = {
             "scope": "all_front",
             "limit": 10,
         },
-        "effects": [{"type": "reduce_stamina", "value": 1}],
+        "effects": [{"type": "reduce_stamina", "value": 0.6}],
         "tags": ["late", "debuff", "stamina", "all_front"],
     },
     "s039": {
