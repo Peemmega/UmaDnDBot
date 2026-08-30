@@ -475,7 +475,7 @@ SKILLS = {
         },
         "target": {"scope": "nearest_front", "limit": 5},
         "effects": [
-            {"type": "reduce_stamina", "value": 0.35},  # ศัตรู
+            {"type": "reduce_stamina", "value": 0.5},  # ศัตรู
             {"type": "self_heal_stamina", "value": 1},  # ตัวเอง
         ],
         "tags": ["debuff", "long", "stamina"],
@@ -802,7 +802,7 @@ SKILLS = {
             "scope": "all_front",
             "limit": 20,
         },
-        "effects": [{"type": "reduce_stamina", "value": 0.5}],
+        "effects": [{"type": "reduce_stamina", "value": 0.75}],
         "tags": ["late", "debuff", "stamina", "all_front"],
     },
     "s039": {

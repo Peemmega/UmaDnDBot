@@ -1010,9 +1010,9 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 5,
             "stamina": 5,
-            "power": 5,
+            "power": 6,
             "gut": 2,
-            "wit": 5,
+            "wit": 4,
             "turf": 7,
             "dirt": 1,
             "sprint": 2,
@@ -1028,7 +1028,7 @@ MOB_PRESETS = {
             1: "s015",  # Beeline Burst
             2: "s067",  # Singularity
             3: "s032",  # Neck and Neck
-            4: "s043",  # Red Shift/LP1211-M
+            4: "s035",  # Radiant Star
         },
         "zone": {
             "name": "Peerless Heroine",
@@ -1157,10 +1157,10 @@ MOB_PRESETS = {
         "style": "Late",
         "race_profile": {
             "speed": 6,
-            "stamina": 6,
+            "stamina": 5,
             "power": 6,
             "gut": 2,
-            "wit": 3,
+            "wit": 4,
             "turf": 7,
             "dirt": 1,
             "sprint": 3,
@@ -1173,7 +1173,7 @@ MOB_PRESETS = {
             "end_style": 5,
         },
         "skills": {
-            1: "s042",  # Let's Pump Some Iron
+            1: "s045",  # Moving Past, and Beyond
             2: "s038",  # All-Seeing Eyes
             3: "s035",  # Radiant Star
             4: "s015",  # Beeline Burst
