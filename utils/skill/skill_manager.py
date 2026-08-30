@@ -294,7 +294,7 @@ def describe_effect(effect: dict) -> str:
         return (
             f"สุ่มใช้สกิลติดตั้ง {effect.get('count', 2)} สกิลทันที "
             f"(Cost ไม่เกิน {effect.get('max_cost', 80)}, ไม่หัก Wit, "
-            "ข้าม CD/เงื่อนไข และไม่รวมสกิลนี้เอง)"
+            "ข้ามและไม่ทำให้ติด CD, ข้ามเงื่อนไข และไม่รวมสกิลนี้เอง)"
         )
     if effect_type == "self_heal_stamina":
         return f"ฟื้นฟู {Status_Icon_Type['STA']} ให้ตัวเอง +{value}"

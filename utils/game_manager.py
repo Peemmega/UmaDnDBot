@@ -2806,9 +2806,14 @@ def run_bot_race_test(channel_id: int):
     }
 
 
-def should_mob_use_late_phase_zone(game: dict, user_id, player: dict, phase: int) -> bool:
-    """Let Pace/Late Mobs spend a valuable Zone opportunistically in Phase 4."""
-    if phase != 4 or player.get("style") not in {"Pace", "Late"}:
+def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int) -> bool:
+    """Let Pace/Late Mobs spend a valuable Zone during their endgame windows."""
+    style = player.get("style")
+    eligible_phase = (
+        (style == "Late" and phase in {3, 4})
+        or (style == "Pace" and phase == 4)
+    )
+    if not eligible_phase:
         return False
     if player.get("zone_left", 0) <= 0:
         return False
@@ -2838,8 +2843,8 @@ def should_mob_use_late_phase_zone(game: dict, user_id, player: dict, phase: int
     turns_remaining = max(1, int(game.get("max_turn", 1) or 1) - int(game.get("turn", 1) or 1))
     chance = min(0.85, 0.18 + min(0.42, value / 180) + (0.15 if turns_remaining <= 1 else 0))
 
-    # Keep the chance stable for this Mob and turn, while giving each Phase-4
-    # turn a distinct opportunity to use the Zone.
+    # Keep the chance stable for this Mob and turn, while giving each eligible
+    # endgame turn a distinct opportunity to use the Zone.
     seed = f"zone:{game.get('channel_id', '')}:{user_id}:{game.get('turn', 0)}"
     return random.Random(seed).random() < chance
 
@@ -2886,7 +2891,7 @@ def process_mob_turn(channel_id: int, user_id: str):
             phase == 4
             and player.get("style") == "End"
         )
-        or should_mob_use_late_phase_zone(game, user_id, player, phase)
+        or should_mob_use_endgame_zone(game, user_id, player, phase)
     )
 
     if turn_trigger and player.get("zone_left", 0) > 0:
@@ -2964,6 +2969,7 @@ def execute_skill_core(
     consume_cost: bool = True,
     ignore_cooldown: bool = False,
     ignore_trigger: bool = False,
+    apply_cooldown: bool = True,
 ):
     game = get_game(channel_id)
     if game is None:
@@ -3153,12 +3159,13 @@ def execute_skill_core(
     # Cooldown
     # =====================================
 
-    set_player_skill_cd(
-        channel_id,
-        user_id,
-        skill_id,
-        skill.get("cooldown", 0)
-    )
+    if apply_cooldown:
+        set_player_skill_cd(
+            channel_id,
+            user_id,
+            skill_id,
+            skill.get("cooldown", 0)
+        )
 
     return True, {
         "skill_id": skill_id,
@@ -3408,6 +3415,7 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
                     consume_cost=False,
                     ignore_cooldown=True,
                     ignore_trigger=True,
+                    apply_cooldown=False,
                 )
                 if activated:
                     activated_skills.append({
