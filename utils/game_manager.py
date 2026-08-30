@@ -17,7 +17,7 @@ from utils.database import (
 )
 from utils.race.race_history import ensure_race_history_id, record_race_action, record_turn_snapshot
 from utils.profile_images import resolve_player_avatar_url, resolve_public_url
-from utils.zone.zone_manager import apply_zone_in_game
+from utils.zone.zone_manager import apply_zone_in_game, get_zone_effects_from_build
 from utils.zone.zone_preset import normalize_zone_build
 from utils.race.race_presets import (
     get_path_effect,
@@ -214,21 +214,23 @@ def apply_lane_tactics_to_result(
     if stamina_penalty_active:
         final_total = int(round(final_total * ((100 - stamina_debuff_percent) / 100)))
 
-    def append_bonus(label: str) -> None:
+    def append_bonus(label: str, *, include_in_preview: bool = True) -> None:
         current = result.get("bonus_display", "-")
         result["bonus_display"] = label if current == "-" else f"{current} {label}"
+
+        if include_in_preview:
+            preview_current = result.get("dice_preview_bonus_display", "-")
+            result["dice_preview_bonus_display"] = (
+                label
+                if preview_current == "-"
+                else f"{preview_current} {label}"
+            )
 
     if blocking_penalty > 0:
         block_bonus = f"-{int(blocking_penalty * 100)}%BLOCK"
         append_bonus(block_bonus)
-        preview_bonus = result.get("dice_preview_bonus_display", "-")
-        result["dice_preview_bonus_display"] = (
-            block_bonus
-            if preview_bonus == "-"
-            else f"{preview_bonus} {block_bonus}"
-        )
     if drafting_active:
-        append_bonus("DRAFT")
+        append_bonus("DRAFT", include_in_preview=False)
     if stamina_penalty_active and stamina_debuff_percent > 0:
         append_bonus(f"-{stamina_debuff_percent}%STA")
 
@@ -2803,6 +2805,44 @@ def run_bot_race_test(channel_id: int):
         "turn_score_logs": game.get("turn_score_logs", []),
     }
 
+
+def should_mob_use_late_phase_zone(game: dict, user_id, player: dict, phase: int) -> bool:
+    """Let Pace/Late Mobs spend a valuable Zone opportunistically in Phase 4."""
+    if phase != 4 or player.get("style") not in {"Pace", "Late"}:
+        return False
+    if player.get("zone_left", 0) <= 0:
+        return False
+
+    zone = player.get("zone") or {}
+    effects = get_zone_effects_from_build(zone.get("build", {}))
+    snapshot = get_runtime_stamina_snapshot(player)
+    max_stamina = max(1, int(snapshot.get("max_stamina", 0) or 0))
+    stamina_ratio = int(snapshot.get("current_stamina", 0) or 0) / max_stamina
+
+    # Values approximate the immediate impact of the one-use Zone.  Healing is
+    # valuable only when the runner actually needs Stamina, so a full-Stamina
+    # Mob does not spend a recovery-only Zone early in the final phase.
+    value = (
+        int(effects.get("flat", 0) or 0)
+        + int(effects.get("add_dkh", 0) or 0) * 40
+        + (int(effects.get("floor", 0) or 0) + int(effects.get("cap", 0) or 0)) * 5
+        + int(effects.get("modify_current_speed", 0) or 0) * 24
+        + int(effects.get("race_speed", 0) or 0) * 20
+    )
+    if stamina_ratio < 0.65:
+        value += int(effects.get("self_heal_stamina", 0) or 0) * 30
+
+    if value < 20:
+        return False
+
+    turns_remaining = max(1, int(game.get("max_turn", 1) or 1) - int(game.get("turn", 1) or 1))
+    chance = min(0.85, 0.18 + min(0.42, value / 180) + (0.15 if turns_remaining <= 1 else 0))
+
+    # Keep the chance stable for this Mob and turn, while giving each Phase-4
+    # turn a distinct opportunity to use the Zone.
+    seed = f"zone:{game.get('channel_id', '')}:{user_id}:{game.get('turn', 0)}"
+    return random.Random(seed).random() < chance
+
 def process_mob_turn(channel_id: int, user_id: str):
     game = get_game(channel_id)
     if game is None:
@@ -2841,14 +2881,12 @@ def process_mob_turn(channel_id: int, user_id: str):
         or (
             game["turn"] == 1
             and player.get("style", "Front") == "Front"
-        ) or (
-            phase == 3
-            and player.get("style") == "Late"
         )
         or (
             phase == 4
             and player.get("style") == "End"
         )
+        or should_mob_use_late_phase_zone(game, user_id, player, phase)
     )
 
     if turn_trigger and player.get("zone_left", 0) > 0:

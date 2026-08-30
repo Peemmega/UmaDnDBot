@@ -16,7 +16,10 @@ from utils.race.rank_display import get_gold_range_value
 FUTURE_LOOKAHEAD_TURNS = 4
 MIN_FUTURE_GAIN_TO_HOLD = 40
 BIG_FUTURE_GAIN_TO_HOLD = 80
-MOB_LANE_CROWDING_PENALTY = 72
+# Applied only to a lane that has no opponent ahead.  It breaks up a pack of
+# otherwise identical Mobs without making them abandon a Draft or ignore a
+# blocking risk just to spread out.
+MOB_LANE_NON_TACTICAL_CROWDING_PENALTY = 42
 
 # AI level is intentionally separate from race stats.  A higher level makes
 # better choices, while the existing mob level still controls aptitude growth.
@@ -157,22 +160,18 @@ def decide_mob_target_lane(game, user_id) -> int | None:
         elif target_lane == 2:
             score += 10
 
-        # Mob turns are planned one at a time.  Include already queued moves
-        # so later high-level Mobs do not select the same "best" lane based on
-        # stale positions.  This outweighs the default lane-1 preference once
-        # a lane is occupied, while still allowing a crowded lane if its
-        # tactical benefit is genuinely large.
-        score -= planned_occupancy * MOB_LANE_CROWDING_PENALTY
-        score -= max(0, planned_occupancy - 1) * 36
-        if planned_occupancy == 0:
-            score += 4
-
         # Only move out when there is a concrete payoff.
         score += blocker_relief * 34
         score += gold_count * 10
         score += same_lane_front_in_gold * 18
         score -= likely_blockers * 24
         score -= max(0, same_lane_front - likely_blockers) * 7
+
+        # Keep anti-clumping as a tie-breaker.  A lane with a runner ahead is
+        # strategically meaningful: it can provide Draft or must be assessed
+        # for a Block.  Do not let population alone override those calculations.
+        if planned_occupancy and same_lane_front == 0:
+            score -= planned_occupancy * MOB_LANE_NON_TACTICAL_CROWDING_PENALTY
 
         if same_lane_front == 0:
             score += 14 if phase >= 3 else 6
