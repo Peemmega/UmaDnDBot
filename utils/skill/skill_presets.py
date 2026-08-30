@@ -1398,7 +1398,7 @@ SKILLS = {
         "icon": "Passive",
         "activation": "passive",
         "cooldown": 99,
-        "cost": 120,
+        "cost": 100,
         "trigger": {
             "style": "Late",
             "surface": "turf",
