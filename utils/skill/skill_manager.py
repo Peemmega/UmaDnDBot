@@ -182,8 +182,8 @@ def describe_trigger(trigger: dict) -> str:
     if "distance_type" in trigger:
         parts.append(f"เมื่ออยู่ในสนามระยะ {trigger['distance_type']}")
 
-    if "surface" in trigger:
-        parts.append(f"เมื่ออยู่บนสนาม {str(trigger['surface']).title()}")
+    if "track" in trigger:
+        parts.append(f"เมื่ออยู่บนสนาม {str(trigger['track']).title()}")
 
     if "style" in trigger:
         parts.append(f"สำหรับสาย {STYLE_TEXT.get(trigger['style'], trigger['style'])}")

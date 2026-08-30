@@ -32,7 +32,7 @@ RACETRACKS = {
 }
 
 
-# ``track`` means the surface (turf/dirt).  Keep the venue separately so
+# ``track`` stores the turf/dirt value. Keep the venue separately so
 # consumers can present a proper racecourse filter.
 RACE_VENUE_BY_ID = {
     "Hanshin": {

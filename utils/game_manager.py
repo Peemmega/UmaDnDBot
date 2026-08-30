@@ -1002,7 +1002,7 @@ def build_join_embed(
     name_field: str = "ผู้เล่น",
     name_value: str,
 ) -> discord.Embed:
-    surface = game.get("track") or game.get("surface", "turf")
+    track = game.get("track", "turf")
     distance = game.get("distance", "medium")
     effective_stats = calculate_effective_race_stats(
         {
@@ -1010,7 +1010,7 @@ def build_join_embed(
             "race_profile": aptitude_source,
         },
         {
-            "track": surface,
+            "track": track,
             "distance": distance,
         },
     )
@@ -2609,11 +2609,11 @@ def check_skill_trigger(
         if str(distance_type).lower() != str(required_distance_type).lower():
             return False, "ประเภทระยะไม่ตรงเงื่อนไข"
 
-    # surface
-    required_surface = trigger.get("surface")
-    if required_surface is not None:
-        surface = game.get("surface")
-        if surface != required_surface:
+    # track
+    required_track = trigger.get("track")
+    if required_track is not None:
+        track = game.get("track")
+        if str(track or "").lower() != str(required_track).lower():
             return False, "พื้นสนามไม่ตรงเงื่อนไข"
 
     # target distance
