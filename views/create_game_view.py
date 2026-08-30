@@ -10,6 +10,12 @@ from utils.game_manager import (
     create_game,get_game
 )
 
+TRAINING_TRACK_STAGE_KEYS = (
+    "Training Track Short",
+    "Training Track Mediem",
+    "Training Track Long",
+)
+
 
 def get_preview_rankings(stage_key: str) -> list[dict]:
     try:
@@ -151,6 +157,21 @@ def build_create_menu_embed() -> discord.Embed:
     embed.set_footer(text="เลือกระยะเพื่อดูรายชื่อสนาม")
     return embed
 
+
+def build_training_track_menu_embed() -> discord.Embed:
+    embed = discord.Embed(
+        title="🏟️ Create Training Track",
+        description=(
+            "เลือกสนาม Training Track ที่ต้องการสร้าง\n\n"
+            "• Training Track Short\n"
+            "• Training Track Mediem\n"
+            "• Training Track Long"
+        ),
+        color=discord.Color.blurple(),
+    )
+    embed.set_footer(text="เลือก Training Track จากรายการด้านล่าง")
+    return embed
+
 class StageSelectView(discord.ui.View):
     def __init__(self, channel_id, owner_id, distance):
         super().__init__(timeout=300)
@@ -161,11 +182,12 @@ class StageSelectView(discord.ui.View):
         self.add_item(StageDropdown(distance))
 
 class ConfirmCreateView(discord.ui.View):
-    def __init__(self, channel_id, owner_id, stage_key):
+    def __init__(self, channel_id, owner_id, stage_key, *, training_tracks_only=False):
         super().__init__(timeout=300)
         self.channel_id = channel_id
         self.owner_id = owner_id
         self.stage_key = stage_key
+        self.training_tracks_only = training_tracks_only
 
     @discord.ui.button(label="สร้าง", style=discord.ButtonStyle.success)
     async def create(self, interaction: discord.Interaction, button):
@@ -203,6 +225,13 @@ class ConfirmCreateView(discord.ui.View):
 
     @discord.ui.button(label="ย้อนกลับ", style=discord.ButtonStyle.secondary)
     async def back(self, interaction: discord.Interaction, button):
+        if self.training_tracks_only:
+            await interaction.response.edit_message(
+                embed=build_training_track_menu_embed(),
+                view=TrainingTrackSelectView(self.channel_id, self.owner_id),
+            )
+            return
+
         await interaction.response.edit_message(
             embed=build_create_menu_embed(),
             view=CreateGameView(self.channel_id, self.owner_id)
@@ -251,6 +280,41 @@ class StageDropdown(discord.ui.Select):
         )
 
         await interaction.response.edit_message(embed=embed, view=view)
+
+
+class TrainingTrackDropdown(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label=stage_key, value=stage_key)
+            for stage_key in TRAINING_TRACK_STAGE_KEYS
+            if stage_key in RACE_PRESET
+        ]
+        super().__init__(
+            placeholder="เลือก Training Track",
+            options=options,
+            disabled=not options,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        stage_key = self.values[0]
+        stage = RACE_PRESET[stage_key]
+        await interaction.response.edit_message(
+            embed=build_stage_preview_embed(stage),
+            view=ConfirmCreateView(
+                interaction.channel_id,
+                interaction.user.id,
+                stage_key,
+                training_tracks_only=True,
+            ),
+        )
+
+
+class TrainingTrackSelectView(discord.ui.View):
+    def __init__(self, channel_id: int, owner_id: int):
+        super().__init__(timeout=300)
+        self.channel_id = channel_id
+        self.owner_id = owner_id
+        self.add_item(TrainingTrackDropdown())
 
 
 class CreateGameView(discord.ui.View):

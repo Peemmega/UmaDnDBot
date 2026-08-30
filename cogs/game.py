@@ -10,7 +10,11 @@ from utils.mob.mob_fast_output import build_mob_fast_roll_text
 
 from views.confirmDeleteGameView import ConfirmDeleteView
 from views.use_skill_view import UseSkillView
-from views.create_game_view import CreateGameView
+from views.create_game_view import (
+    CreateGameView,
+    TrainingTrackSelectView,
+    build_training_track_menu_embed,
+)
 
 from utils.icon_presets import Status_Icon_Type
 from utils.channel_config import RACE_LOG_CHANNEL_ID
@@ -88,6 +92,8 @@ from utils.game_manager import (
     refresh_player_profile_snapshot,
     format_player_reference,
     set_race_record_type,
+    set_game_rule,
+    get_game_rule,
 )
 
 def build_race_log_embed(game: dict, ranked_players):
@@ -493,6 +499,27 @@ class GameCog(commands.GroupCog, name="game"):
         )
 
     @app_commands.command(
+        name="create_training_track",
+        description="สร้างเกมด้วยสนาม Training Track",
+    )
+    async def create_training_track(self, interaction: discord.Interaction):
+        channel_id = interaction.channel_id
+        owner_id = interaction.user.id
+
+        if get_game(channel_id) is not None:
+            await interaction.response.send_message(
+                "ห้องนี้มีเกมอยู่แล้ว",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.send_message(
+            embed=build_training_track_menu_embed(),
+            view=TrainingTrackSelectView(channel_id, owner_id),
+            ephemeral=True,
+        )
+
+    @app_commands.command(
         name="official",
         description="ตั้งการแข่งขันในห้องนี้เป็น Official ก่อนเริ่มเกม"
     )
@@ -520,6 +547,57 @@ class GameCog(commands.GroupCog, name="game"):
 
         await interaction.response.send_message(
             "✅ ห้องนี้ถูกตั้งเป็น **Official** แล้ว ผลการแข่งขันจะถูกนับใน Leaderboard เมื่อแข่งจบ",
+            ephemeral=False,
+        )
+
+    @app_commands.command(
+        name="set_rule",
+        description="ตั้งค่า Game Rule ของห้องก่อนเริ่มเกม",
+    )
+    @app_commands.describe(rule="กฎที่ต้องการตั้งค่า", enabled="true หรือ false")
+    @app_commands.choices(rule=[
+        app_commands.Choice(name="AllowSkill — อนุญาต Skill / Zone", value="AllowSkill"),
+        app_commands.Choice(name="DreamMode — ค่าสเตตัสพื้นฐาน 8", value="DreamMode"),
+        app_commands.Choice(name="NoDebuff — ห้ามใช้สกิล Debuff", value="NoDebuff"),
+    ])
+    async def set_rule(
+        self,
+        interaction: discord.Interaction,
+        rule: app_commands.Choice[str],
+        enabled: bool,
+    ):
+        game = get_game(interaction.channel_id)
+        if game is None:
+            await interaction.response.send_message(
+                "ต้องสร้างห้องด้วย `/game create` ก่อนตั้งค่า Game Rule",
+                ephemeral=True,
+            )
+            return
+
+        if not is_owner(interaction.channel_id, interaction.user.id):
+            await interaction.response.send_message(
+                "เฉพาะเจ้าของห้องเท่านั้นที่ตั้งค่า Game Rule ได้",
+                ephemeral=True,
+            )
+            return
+
+        success, result = set_game_rule(
+            interaction.channel_id,
+            rule.value,
+            enabled,
+        )
+        if not success:
+            await interaction.response.send_message(result, ephemeral=True)
+            return
+
+        status = "เปิด" if result else "ปิด"
+        descriptions = {
+            "AllowSkill": "อนุญาตให้ใช้ Skill และ Zone",
+            "DreamMode": "กำหนด Speed / Stamina / Power / Gut / Wit เป็น 8 ตอนเริ่มแข่ง",
+            "NoDebuff": "ห้ามใช้สกิลที่มีประเภท Debuff",
+        }
+        await interaction.response.send_message(
+            f"✅ ตั้งค่า **{rule.value}** เป็น **{enabled}** ({status})\n{descriptions[rule.value]}",
             ephemeral=False,
         )
 
@@ -1109,6 +1187,14 @@ class GameCog(commands.GroupCog, name="game"):
 
     @discord.app_commands.command(name="skill", description="เปิดเมนูใช้สกิล")
     async def skill(self, interaction: discord.Interaction):
+        game = get_game(interaction.channel_id)
+        if game is not None and not get_game_rule(game, "AllowSkill"):
+            await interaction.response.send_message(
+                "ห้องนี้ปิดการใช้ Skill และ Zone",
+                ephemeral=True,
+            )
+            return
+
         playerInGame = get_player_in_game(
             interaction.channel_id,
             interaction.user.id

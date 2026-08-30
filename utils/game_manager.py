@@ -63,6 +63,11 @@ from utils.icon_presets import Status_Icon_Type, ICONS
 
 VALID_STYLES = {"Front", "Pace", "Late", "End"}
 RACE_STAT_FIELDS = ("speed", "stamina", "power", "gut", "wit")
+GAME_RULE_DEFAULTS = {
+    "AllowSkill": True,
+    "DreamMode": False,
+    "NoDebuff": False,
+}
 games = {}
 
 
@@ -70,6 +75,32 @@ def _supports_lane_system(game: dict | None) -> bool:
     if not game:
         return False
     return game.get("race_mode", "discord_classic") != "web_timing"
+
+
+def get_game_rules(game: dict) -> dict[str, bool]:
+    """Return a room's rules, filling in defaults for rooms created earlier."""
+    rules = game.setdefault("game_rules", {})
+    for rule_name, default_value in GAME_RULE_DEFAULTS.items():
+        rules.setdefault(rule_name, default_value)
+    return rules
+
+
+def get_game_rule(game: dict, rule_name: str) -> bool:
+    return bool(get_game_rules(game).get(rule_name, GAME_RULE_DEFAULTS[rule_name]))
+
+
+def set_game_rule(channel_id: int, rule_name: str, enabled: bool):
+    """Change a lobby rule before the race begins."""
+    game = get_game(channel_id)
+    if game is None:
+        return False, "ยังไม่มีเกมในห้องนี้"
+    if game.get("started"):
+        return False, "ตั้งค่า Game Rule ไม่ได้หลังเริ่มเกมแล้ว"
+    if rule_name not in GAME_RULE_DEFAULTS:
+        return False, "ไม่พบ Game Rule นี้"
+
+    get_game_rules(game)[rule_name] = bool(enabled)
+    return True, bool(enabled)
 
 
 def _entry_order_lane(channel_id: int) -> int:
@@ -603,6 +634,7 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
         # Results stay out of the official leaderboard unless the room owner
         # explicitly confirms the race as Official before starting it.
         "record_type": "practice",
+        "game_rules": GAME_RULE_DEFAULTS.copy(),
 
         "turn_confirmations": set(),
         "awaiting_turn_confirm": False,
@@ -959,6 +991,14 @@ def start_game(channel_id: int):
                     "points": db_player["zone"]["points"],
                     "build": db_player["zone"]["build"],
                 }
+
+        # DreamMode standardizes the five core race stats for this race only.
+        # Aptitudes remain unchanged, so track/distance/style still matter.
+        if get_game_rule(game, "DreamMode"):
+            race_profile = player.setdefault("race_profile", {})
+            for stat in RACE_STAT_FIELDS:
+                race_profile[stat] = 8
+            set_runtime_stamina(player, race_profile["stamina"])
 
         # reset กลางเกม ใช้ร่วมกันทั้ง player จริงและ mob
         player["base_race_stats"] = {
@@ -2898,6 +2938,12 @@ def execute_skill_core(
     skill = SKILLS.get(skill_id)
     if not skill:
         return False, {"message": "ไม่พบข้อมูลสกิล"}
+
+    if not get_game_rule(game, "AllowSkill"):
+        return False, {"message": "ห้องนี้ปิดการใช้ Skill และ Zone"}
+
+    if get_game_rule(game, "NoDebuff") and "debuff" in skill.get("tags", []):
+        return False, {"message": "ห้องนี้ห้ามใช้สกิล Debuff"}
 
     # =====================================
     # Cooldown

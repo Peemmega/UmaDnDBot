@@ -456,16 +456,35 @@ RACE_PRESET = {
             "rookie_alt_end",
         ],
     },
-    # Test
-    "Training Track": {
-        "name": "Test Mile",
+    # Training
+    "Training Track Short": {
+        "name": "Test Mile Short",
         "turn": 8,
         "track": "Turf",
         "distance": "mile",
-        "path": [1, 3, 1, 2, 1, 4, 1, 1],
-        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1496520361968406598/thum_race_rt_000_9002_00.png?ex=69ed7a72&is=69ec28f2&hm=8306829b74f79dcfd3a6f7b65cef14fdd6c96dfa0f5d614b106e4ba11efa8c39&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
+        "path": [1, 1, 2, 2, 1, 1, 1, 1],
+        "thumnail": "https://cdn.discordapp.com/attachments/1494730857259471030/1543618724521840690/Bg_0070_00110.jpg?ex=6a958676&is=6a9434f6&hm=7c27d23282db75d651809f2c533c68b3357039c18a494f925716ac21ca015a1a",
+        "image": "https://cdn.discordapp.com/attachments/1494730857259471030/1543612932724629546/IMG_20260830_200719.jpg?ex=6a958112&is=6a942f92&hm=2e4c0e3f1d7203e59ebf1df07d486f1b816d774b7a4a5bcea7193b1371f713b4",
     },
+    "Training Track Mediem": {
+        "name": "Training Track Mediem",
+        "thumnail": "https://cdn.discordapp.com/attachments/1494730857259471030/1543618724521840690/Bg_0070_00110.jpg?ex=6a958676&is=6a9434f6&hm=7c27d23282db75d651809f2c533c68b3357039c18a494f925716ac21ca015a1a",
+        "image": "https://cdn.discordapp.com/attachments/1494730857259471030/1543613505607831692/261_20260830173536.jpg?ex=6a95819a&is=6a94301a&hm=4835eacf66fc1010e86ef493d7b664146f3ac456034bc97cbfbb0ab4e091918e",
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": [1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1],
+    },
+    "Training Track Long": {
+        "name": "Training Track Long",
+        "thumnail": "https://cdn.discordapp.com/attachments/1494730857259471030/1543618724521840690/Bg_0070_00110.jpg?ex=6a958676&is=6a9434f6&hm=7c27d23282db75d651809f2c533c68b3357039c18a494f925716ac21ca015a1a",
+        "image": "https://cdn.discordapp.com/attachments/1494730857259471030/1543613904138018886/261_20260830200253.jpg?ex=6a9581f9&is=6a943079&hm=a437747bae7f49b81d9b9636620d518cf2c35d9a146ddcd127a411cd5bb2e7b1",
+        "track": "turf",
+        "distance": "long",
+        "turn": 16,
+        "path": [1, 1, 3, 3, 2, 2, 4, 4, 1, 1, 1, 2, 2, 1, 1, 1],
+    },
+    # Test
     "Test Mile": {
         "name": "Test Mile",
         "turn": 8,

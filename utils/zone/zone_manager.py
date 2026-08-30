@@ -139,6 +139,9 @@ def get_zone_effect(zone: dict) -> tuple[bool, str]:
     return "\n".join(lines)
 
 def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
+    if not (game.get("game_rules") or {}).get("AllowSkill", True):
+        return False, "ห้องนี้ปิดการใช้ Skill และ Zone"
+
     zone = player.get("zone")
     if not zone:
         return False, "ไม่พบข้อมูล Zone"

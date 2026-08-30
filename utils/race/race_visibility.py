@@ -276,6 +276,11 @@ def serialize_room(
         "stage_key": stage_key,
         "race_history_id": game.get("race_history_id"),
         "record_type": game.get("record_type", "practice"),
+        "game_rules": {
+            "AllowSkill": (game.get("game_rules") or {}).get("AllowSkill", True),
+            "DreamMode": (game.get("game_rules") or {}).get("DreamMode", False),
+            "NoDebuff": (game.get("game_rules") or {}).get("NoDebuff", False),
+        },
         "race_name": game.get("stage_name"),
         "track": game.get("track"),
         "distance": game.get("distance"),
@@ -361,6 +366,11 @@ def serialize_room_summary(game: dict, room_id: str) -> dict:
         "stage_key": game.get("stage_key"),
         "race_history_id": game.get("race_history_id"),
         "record_type": game.get("record_type", "practice"),
+        "game_rules": {
+            "AllowSkill": (game.get("game_rules") or {}).get("AllowSkill", True),
+            "DreamMode": (game.get("game_rules") or {}).get("DreamMode", False),
+            "NoDebuff": (game.get("game_rules") or {}).get("NoDebuff", False),
+        },
         "thumbnail": stage.get("thumnail"),
         "turn": game.get("turn", 0),
         "max_turn": game.get("max_turn", 0),
