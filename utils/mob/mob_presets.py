@@ -1173,9 +1173,9 @@ MOB_PRESETS = {
             "end_style": 5,
         },
         "skills": {
-            1: "s045",  # Moving Past, and Beyond
-            2: "s038",  # All-Seeing Eyes
-            3: "s035",  # Radiant Star
+            1: "s062",  # 564 Escapades
+            2: "s027",  # Dominator
+            3: "s014",  # On Your Left!
             4: "s015",  # Beeline Burst
         },
         "zone": {

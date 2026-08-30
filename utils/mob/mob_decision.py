@@ -16,6 +16,7 @@ from utils.race.rank_display import get_gold_range_value
 FUTURE_LOOKAHEAD_TURNS = 4
 MIN_FUTURE_GAIN_TO_HOLD = 40
 BIG_FUTURE_GAIN_TO_HOLD = 80
+MOB_LANE_CROWDING_PENALTY = 72
 
 # AI level is intentionally separate from race stats.  A higher level makes
 # better choices, while the existing mob level still controls aptitude growth.
@@ -52,6 +53,25 @@ def _player_lane(player: dict) -> int:
         return 1
 
 
+def _planned_lane(player: dict) -> int:
+    """Use queued lane changes when predicting where competitors will be."""
+    try:
+        pending_lane = player.get("pending_lane")
+        if pending_lane is not None:
+            return int(pending_lane)
+    except (TypeError, ValueError):
+        pass
+    return _player_lane(player)
+
+
+def _planned_lane_occupancy(players: dict, target_lane: int, *, user_id) -> int:
+    return sum(
+        1
+        for other_id, other in players.items()
+        if other_id != user_id and _planned_lane(other) == target_lane
+    )
+
+
 def _gold_count_for_lane(player: dict, players: dict, target_lane: int, *, user_id) -> int:
     my_score = int(player.get("score", 0) or 0)
     gold_range = get_gold_range_value(player)
@@ -61,7 +81,7 @@ def _gold_count_for_lane(player: dict, players: dict, target_lane: int, *, user_
             continue
         if abs(int(other.get("score", 0) or 0) - my_score) > gold_range:
             continue
-        if abs(_player_lane(other) - target_lane) > 1:
+        if abs(_planned_lane(other) - target_lane) > 1:
             continue
         count += 1
     return count
@@ -73,7 +93,7 @@ def _front_gaps_for_lane(player: dict, players: dict, target_lane: int, *, user_
     for other_id, other in players.items():
         if other_id == user_id:
             continue
-        if _player_lane(other) != target_lane:
+        if _planned_lane(other) != target_lane:
             continue
         other_score = int(other.get("score", 0) or 0)
         if other_score > my_score:
@@ -117,6 +137,11 @@ def decide_mob_target_lane(game, user_id) -> int | None:
         same_lane_front = len(front_gaps)
         same_lane_front_in_gold = sum(1 for gap in front_gaps if gap <= gold_range)
         likely_blockers = sum(1 for gap in front_gaps if gap <= estimated_gain)
+        planned_occupancy = _planned_lane_occupancy(
+            players,
+            target_lane,
+            user_id=user_id,
+        )
         nearest_front_gap = front_gaps[0] if front_gaps else None
 
         score = 0
@@ -131,6 +156,16 @@ def decide_mob_target_lane(game, user_id) -> int | None:
             score += 26
         elif target_lane == 2:
             score += 10
+
+        # Mob turns are planned one at a time.  Include already queued moves
+        # so later high-level Mobs do not select the same "best" lane based on
+        # stale positions.  This outweighs the default lane-1 preference once
+        # a lane is occupied, while still allowing a crowded lane if its
+        # tactical benefit is genuinely large.
+        score -= planned_occupancy * MOB_LANE_CROWDING_PENALTY
+        score -= max(0, planned_occupancy - 1) * 36
+        if planned_occupancy == 0:
+            score += 4
 
         # Only move out when there is a concrete payoff.
         score += blocker_relief * 34
