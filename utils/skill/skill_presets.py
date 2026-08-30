@@ -36,6 +36,7 @@ EFFECT_TYPES = {
     "block_reroll",  # ห้าม reroll
     "force_path_bonus",  # เปลี่ยนผลของ path
     "modify_current_speed",  # เพิ่ม current speed โดยตรง
+    "modify_race_stats",  # ปรับ stat เฉพาะการแข่งขันนี้
     "resolve_pending_lane_now",
     "activate_random_equipped_skills",
 }
@@ -78,6 +79,8 @@ TRIGGER_SCHEMA = {
     "target_distance_max": None,
     "front_blocked": None,
     "nearby_uma_count": None,
+    "skill_use_count_min": None,
+    "base_stats_min": None,
 }
 
 TARGET_SCHEMA = {
@@ -1332,5 +1335,128 @@ SKILLS = {
             },
         ],
         "tags": ["late_race", "velocity", "unique"],
+    },
+    "s063": {
+        "name": "Blossoming World",
+        "icon": "UniqueVelocity",
+        "cooldown": 8,
+        "cost": 120,
+        "trigger": {
+            "phase_min": 3,
+            "phase_max": 3,
+            "position_group": "middle",
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 40,
+                "duration": "this_roll",
+            },
+            {"type": "cap_floor", "value": 9, "duration": "this_roll"},
+            {
+                "type": "recover_stamina",
+                "value": 0.75,
+                "condition": {"distance_type": "Long"},
+            },
+        ],
+        "tags": ["middle", "mid_race", "velocity", "recovery", "long", "unique"],
+    },
+    "s064": {
+        "name": "Ad Astra",
+        "icon": "UniqueVelocity",
+        "cooldown": 8,
+        "cost": 100,
+        "trigger": {
+            "phase_min": 3,
+            "phase_max": 3,
+            "position_group": "middle",
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {"type": "cap_floor", "value": 12, "duration": "this_roll"},
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 50,
+                "duration": "this_roll",
+                "condition": {"skill_use_count_min": 4},
+            },
+        ],
+        "tags": ["middle", "mid_race", "velocity", "unique"],
+    },
+    "s065": {
+        "name": "Impulse",
+        "icon": "Passive",
+        "cooldown": 99,
+        "cost": 120,
+        "trigger": {
+            "style": "Late",
+            "surface": "turf",
+            "turn_min": 1,
+            "turn_max": 1,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {"type": "modify_race_stats", "stats": "all", "value": 1},
+        ],
+        "tags": ["late", "turf", "passive"],
+    },
+    "s066": {
+        "name": "Track Demon",
+        "icon": "Passive",
+        "cooldown": 99,
+        "cost": 80,
+        "trigger": {
+            "turn_min": 1,
+            "turn_max": 1,
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {
+                "type": "modify_race_stats",
+                "stats": {"power": 2, "speed": 1},
+            },
+        ],
+        "tags": ["start", "power", "velocity"],
+    },
+    "s067": {
+        "name": "Singularity",
+        "icon": "Passive",
+        "cooldown": 99,
+        "cost": 80,
+        "trigger": {
+            "turn_min": 1,
+            "turn_max": 1,
+            "style": "Pace",
+            "distance_type": "Medium",
+        },
+        "target": {
+            "scope": "self",
+            "limit": 1,
+        },
+        "effects": [
+            {"type": "modify_race_stats", "stat": "speed", "value": 3},
+            {
+                "type": "modify_race_stats",
+                "stat": "speed",
+                "value": 1,
+                "condition": {"base_stats_min": {"wit": 4}},
+            },
+        ],
+        "tags": ["start", "pace", "medium", "velocity"],
     },
 }

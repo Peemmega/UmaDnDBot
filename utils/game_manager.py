@@ -39,6 +39,7 @@ from utils.race.runtime_stamina import (
     format_runtime_stamina,
     get_runtime_stamina_snapshot,
     runtime_stamina_effect_units,
+    runtime_stamina_from_stat,
     set_runtime_stamina,
     sync_runtime_stamina,
 )
@@ -60,6 +61,7 @@ from utils.in_game_manager import incrase_speed_by_acceleration
 from utils.icon_presets import Status_Icon_Type, ICONS
 
 VALID_STYLES = {"Front", "Pace", "Late", "End"}
+RACE_STAT_FIELDS = ("speed", "stamina", "power", "gut", "wit")
 games = {}
 
 
@@ -313,6 +315,52 @@ def refresh_player_race_aptitudes(player: dict, race: dict | None) -> dict:
         "lines": build_aptitude_debug_lines(effective_stats),
     }
     return effective_stats
+
+
+def _race_stat_changes(effect: dict) -> dict[str, int]:
+    """Read a race-stat effect while accepting concise and per-stat configs."""
+    stats = effect.get("stats", effect.get("stat", "all"))
+    if isinstance(stats, dict):
+        return {
+            stat: int(delta or 0)
+            for stat, delta in stats.items()
+            if stat in RACE_STAT_FIELDS and int(delta or 0)
+        }
+
+    if stats == "all":
+        return {stat: int(effect.get("value", 0) or 0) for stat in RACE_STAT_FIELDS}
+
+    if stats in RACE_STAT_FIELDS:
+        return {stats: int(effect.get("value", 0) or 0)}
+
+    return {}
+
+
+def apply_race_stat_changes(player: dict, game: dict, effect: dict) -> dict[str, int]:
+    """Apply temporary stat changes to the in-memory race profile only."""
+    changes = _race_stat_changes(effect)
+    if not changes:
+        return {}
+
+    stamina_before = get_runtime_stamina_snapshot(player)
+    old_stamina_percent = stamina_before["stamina_percent"]
+    race_profile = player.setdefault("race_profile", {})
+
+    for stat, delta in changes.items():
+        race_profile[stat] = max(1, int(race_profile.get(stat, 1) or 1) + delta)
+
+    # Keep the same percentage, then grant +100 current Stamina per positive
+    # temporary Stamina stat gained.
+    new_stamina_stat = int(race_profile.get("stamina", 1) or 1)
+    new_stamina_max = runtime_stamina_from_stat(new_stamina_stat)
+    stamina_increase = max(0, int(changes.get("stamina", 0) or 0))
+    new_stamina_current = (
+        round(new_stamina_max * old_stamina_percent / 100)
+        + runtime_stamina_effect_units(stamina_increase)
+    )
+    set_runtime_stamina(player, new_stamina_stat, new_stamina_current)
+    refresh_player_race_aptitudes(player, game)
+    return changes
 
 
 def apply_web_timing_player_defaults(player: dict) -> dict:
@@ -905,7 +953,13 @@ def start_game(channel_id: int):
                 }
 
         # reset กลางเกม ใช้ร่วมกันทั้ง player จริงและ mob
+        player["base_race_stats"] = {
+            stat: int((player.get("race_profile") or {}).get(stat, 0) or 0)
+            for stat in RACE_STAT_FIELDS
+        }
         player["skill_cooldowns"] = {}
+        player["skill_use_count"] = 0
+        player["activated_passive_skills"] = set()
         player["used_rush"] = False
         player["used_block"] = False
         player["action_locked"] = False
@@ -931,6 +985,7 @@ def start_game(channel_id: int):
         player["current_max_speed"] = MAX_SPEED_PHASE[player["style"]]["start"]
         player["wit_mana"] = 100 + (player["race_profile"]["wit"] * 10)
 
+    activate_passive_skills(channel_id)
     return True, "เริ่มเกมเรียบร้อยแล้ว"
 
 
@@ -1835,6 +1890,7 @@ def next_turn(channel_id: int):
 
     apply_wit_regen(channel_id)
     incrase_speed_by_acceleration_turn(channel_id)
+    activate_passive_skills(channel_id)
 
     return game["turn"]
 
@@ -2469,6 +2525,15 @@ def check_skill_trigger(
         if player.get("style") != required_style:
             return False, "แผนวิ่งไม่ตรงเงื่อนไข"
 
+    base_stat_requirements = trigger.get("base_stats_min") or {}
+    if base_stat_requirements:
+        base_stats = player.get("base_race_stats") or player.get("race_profile") or {}
+        for stat, minimum in base_stat_requirements.items():
+            if stat not in RACE_STAT_FIELDS:
+                continue
+            if int(base_stats.get(stat, 0) or 0) < int(minimum):
+                return False, f"ต้องมี {stat.title()} พื้นฐานอย่างน้อย {minimum}"
+
     # turn min/max
     turn_min = trigger.get("turn_min")
     if turn_min is not None and game["turn"] < turn_min:
@@ -2486,6 +2551,16 @@ def check_skill_trigger(
     phase_max = trigger.get("phase_max")
     if phase_max is not None and phase > phase_max:
         return False, f"ใช้ได้ไม่เกิน Phase {phase_max}"
+
+    # This is intentionally checked before execute_skill_core increments the
+    # counter, so a threshold of 4 means four previous successful skill uses.
+    skill_use_count_min = trigger.get("skill_use_count_min")
+    if skill_use_count_min is not None:
+        skill_use_count = int(player.get("skill_use_count", 0) or 0)
+        if skill_use_count < skill_use_count_min:
+            return False, (
+                f"ต้องใช้สกิลแล้วอย่างน้อย {skill_use_count_min} ครั้งในการแข่งขันนี้"
+            )
 
     # last spurt
     required_lastspurt = trigger.get("lastspurt")
@@ -2864,8 +2939,22 @@ def execute_skill_core(
     instant_effects = []
     queued_effects = []
     random_activations = []
+    race_stat_changes = []
 
     for effect in skill.get("effects", []):
+
+        effect_condition = effect.get("condition")
+        if effect_condition:
+            condition_skill = {"trigger": effect_condition}
+            condition_met, _ = check_skill_trigger(
+                channel_id,
+                user_id,
+                condition_skill,
+                path_type=path_type,
+                phase=phase,
+            )
+            if not condition_met:
+                continue
 
         effect_type = effect.get("type")
         duration = effect.get("duration")
@@ -2910,6 +2999,7 @@ def execute_skill_core(
 
         result_texts.append(result_text)
         random_activations.extend(temp_skill.pop("_random_activations", []))
+        race_stat_changes.extend(temp_skill.pop("_race_stat_changes", []))
 
     # =====================================
     # Queued
@@ -2951,6 +3041,7 @@ def execute_skill_core(
         "id": skill_id,
         "name": skill.get("name", skill_id),
     })
+    player["skill_use_count"] = int(player.get("skill_use_count", 0) or 0) + 1
     record_race_action(
         game,
         user_id,
@@ -2975,12 +3066,48 @@ def execute_skill_core(
         "skill": skill,
         "result_texts": result_texts,
         "random_activations": random_activations,
+        "race_stat_changes": race_stat_changes,
         "cost": cost,
         "show_lane_preview": any(
             effect.get("type") == "resolve_pending_lane_now"
             for effect in instant_effects
         ),
     }
+
+
+def activate_passive_skills(channel_id: int) -> list[dict]:
+    """Activate each equipped passive once, at the first turn that matches it."""
+    game = get_game(channel_id)
+    if game is None or not game.get("started"):
+        return []
+
+    activations = []
+    for user_id, player in game.get("players", {}).items():
+        activated_ids = player.setdefault("activated_passive_skills", set())
+        for skill_id in set((player.get("skills") or {}).values()):
+            skill = SKILLS.get(skill_id)
+            if (
+                not skill_id
+                or not skill
+                or skill.get("activation") != "passive"
+                or skill_id in activated_ids
+            ):
+                continue
+
+            success, payload = execute_skill_core(
+                channel_id,
+                user_id,
+                skill_id,
+                consume_cost=False,
+            )
+            if success:
+                activated_ids.add(skill_id)
+                payload["user_id"] = str(user_id)
+                activations.append(payload)
+
+    if activations:
+        game.setdefault("pending_passive_skill_activations", []).extend(activations)
+    return activations
 
 def apply_skill(channel_id: int, user_id: int, skill: dict):
     game = get_game(channel_id)
@@ -3019,6 +3146,41 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
 
             incrase_speed_by_acceleration(game, player, effect["value"])
             applied_texts.append(f"เร่งความเร็วขึ้น {value} ระดับ")
+
+        elif effect_type == "modify_race_stats":
+            if not targets:
+                targets = [(user_id, player)]
+
+            for target_id, target_info in targets:
+                stamina_before = get_runtime_stamina_snapshot(target_info)
+                changes = apply_race_stat_changes(target_info, game, effect)
+                if not changes:
+                    continue
+                stamina_after = get_runtime_stamina_snapshot(target_info)
+                change_text = ", ".join(
+                    f"{stat.title()} {delta:+}" for stat, delta in changes.items()
+                )
+                target_name = (
+                    "ตัวเอง"
+                    if target_id == user_id
+                    else format_player_reference(target_id, target_info)
+                )
+                stamina_text = ""
+                if "stamina" in changes:
+                    stamina_text = (
+                        f" | Stamina {stamina_before['current_stamina']}/"
+                        f"{stamina_before['max_stamina']} → "
+                        f"{stamina_after['current_stamina']}/"
+                        f"{stamina_after['max_stamina']}"
+                    )
+                applied_texts.append(f"ปรับ Stats ของ{target_name}: {change_text}{stamina_text}")
+                skill.setdefault("_race_stat_changes", []).append({
+                    "target_id": str(target_id),
+                    "target_name": target_name,
+                    "changes": changes,
+                    "stamina_before": stamina_before,
+                    "stamina_after": stamina_after,
+                })
 
         elif effect_type == "self_heal_stamina":
             sync_runtime_stamina(player)

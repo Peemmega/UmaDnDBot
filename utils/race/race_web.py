@@ -396,6 +396,7 @@ class RaceWebManager:
             raise ValueError(message)
 
         game = self._get_room(room_id)
+        self._log_pending_passive_skill_activations(game)
         game.setdefault("web_gameplay_mode", "timing")
         game.setdefault(
             "race_mode",
@@ -640,6 +641,7 @@ class RaceWebManager:
             {
                 "zone": player.get("zone"),
                 "result_text": result_text,
+                "race_stat_changes": player.pop("_last_zone_race_stat_changes", []),
                 "buffs": _current_buff_payload(player),
                 "stamina": get_runtime_stamina_snapshot(player),
                 "current_max_speed": player.get("current_max_speed", 0),
@@ -857,6 +859,7 @@ class RaceWebManager:
                 break
 
             next_turn(room_id)
+            self._log_pending_passive_skill_activations(game)
             self._log(
                 game,
                 f"Turn {game.get('turn')} started | {self._build_lane_order_summary(game)}",
@@ -865,6 +868,16 @@ class RaceWebManager:
                 self._start_classic_bot_loop(room_id)
                 break
             game = self._get_room(room_id)
+
+    def _log_pending_passive_skill_activations(self, game: dict) -> None:
+        for payload in game.pop("pending_passive_skill_activations", []):
+            user_id = str(payload.get("user_id", ""))
+            player = game.get("players", {}).get(user_id, {})
+            self._log(
+                game,
+                f"{self._player_label(user_id, player)} used {payload.get('skill_name', 'Passive skill')}",
+                payload,
+            )
 
     def _initialize_web_timing_race(self, game: dict) -> None:
         stage = RACE_PRESET.get(game.get("stage_key"), {})

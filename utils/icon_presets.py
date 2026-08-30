@@ -29,7 +29,7 @@ STAT_EMOJIS = {
     5: "<:C_Rank:1493694926029062234>",
     6: "<:B_Rank:1493694964188581899>",
     7: "<:A_Rank:1493695074356166816>",
-    8: "<:S_Rank:1493694983574655168>"
+    8: "<:S_Rank:1493694983574655168>",
 }
 
 TEST_STATUS_ICONS = {
@@ -60,6 +60,7 @@ TEST_SKILL_ICONS = {
     "Blind": "<:Blind:1494389451114151939>",
     "UniqueVelocity": "<:UniqueSkillVelocity:1499064862888824923>",
     "UniqueAcceleration": "<:UniqueSkillVelocity:1499064862888824923>",
+    "Passive": "<:Passive:1543562569074081925> ",
 }
 
 MAIN_SKILL_ICONS = {
@@ -74,6 +75,7 @@ MAIN_SKILL_ICONS = {
     "UniqueAcceleration": "<:UniqueSkillAcceleration:1526294117968117871>",
     "UniqueVelocity": "<:UniqueSkillVelocity:1526294132996308992>",
     "Velocity": "<:Velocity:1526294150130172045>",
+    "Passive": "<:Passive:1543562805280637108>",
 }
 
 TEST_ICONS = {

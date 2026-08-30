@@ -62,6 +62,7 @@ def serialize_player(
                 "name": skill.get("name") if skill else None,
                 "icon": skill.get("icon") if skill else None,
                 "cost": skill.get("cost", 0) if skill else 0,
+                "activation": skill.get("activation", "active") if skill else None,
                 "cooldown": cooldowns.get(skill_id, 0) if skill_id else 0,
             }
         )
@@ -151,12 +152,17 @@ def serialize_player(
         "drafting_active": bool(player.get("drafting_active")),
         "last_stamina_drain": int(player.get("last_stamina_drain", 0) or 0),
         "wit_mana": player.get("wit_mana", 0),
+        "skill_use_count": int(player.get("skill_use_count", 0) or 0),
         "current_max_speed": player.get("current_max_speed", 0),
         "zone_left": player.get("zone_left", 0),
         "reroll_left": player.get("reroll_left", 0),
         "wit_reroll_left": player.get("wit_reroll_left", 0),
         "aptitude_bonus": player.get("aptitude_bonus"),
         "effective_race_stats": player.get("effective_race_stats"),
+        "race_stats": {
+            stat: int((player.get("race_profile") or {}).get(stat, 0) or 0)
+            for stat in ("speed", "stamina", "power", "gut", "wit")
+        },
         "no_reroll_this_turn": bool(player.get("no_reroll_this_turn")),
         "used_block": bool(player.get("used_block")),
         "used_rush": bool(player.get("used_rush")),

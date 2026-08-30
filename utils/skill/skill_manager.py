@@ -148,6 +148,7 @@ def build_skill_card_text(skill_id: str | None) -> str:
     name = skill["name"]
     cooldown = skill.get("cooldown", 0)
     cost = skill.get("cost", 0)
+    activation_text = "🟣 Passive: ทำงานอัตโนมัติ\n" if skill.get("activation") == "passive" else ""
 
     trigger_text = describe_trigger(skill.get("trigger", {}))
     target_text = describe_target(skill.get("target", {}))
@@ -156,6 +157,7 @@ def build_skill_card_text(skill_id: str | None) -> str:
 
     return (
         f"{emoji} `{skill_id}` **{name}**\n"
+        f"{activation_text}"
         f"⏱️ {cooldown} | {Status_Icon_Type['WIT']} {cost}\n"
         f"**เป้าหมาย:** {target_text}\n"
         f"**เงื่อนไข:** {trigger_text}\n"
@@ -179,6 +181,9 @@ def describe_trigger(trigger: dict) -> str:
 
     if "distance_type" in trigger:
         parts.append(f"เมื่ออยู่ในสนามระยะ {trigger['distance_type']}")
+
+    if "surface" in trigger:
+        parts.append(f"เมื่ออยู่บนสนาม {str(trigger['surface']).title()}")
 
     if "style" in trigger:
         parts.append(f"สำหรับสาย {STYLE_TEXT.get(trigger['style'], trigger['style'])}")
@@ -207,6 +212,18 @@ def describe_trigger(trigger: dict) -> str:
     if trigger.get("nearby_uma_count") is not None:
         parts.append(f"มีคู่แข่ง {trigger['nearby_uma_count']} คนหรือมากกว่าในกลุ่ม")
 
+    if trigger.get("skill_use_count_min") is not None:
+        parts.append(
+            f"ใช้สกิลแล้วอย่างน้อย {trigger['skill_use_count_min']} ครั้งในการแข่งขันนี้"
+        )
+
+    if trigger.get("base_stats_min"):
+        stat_text = ", ".join(
+            f"{stat.title()} ≥ {value}"
+            for stat, value in trigger["base_stats_min"].items()
+        )
+        parts.append(f"Stats พื้นฐาน: {stat_text}")
+
     if "target_distance_min" in trigger and "target_distance_max" in trigger:
         parts.append(
             f"เมื่อมีเป้าหมายอยู่ในระยะ {trigger['target_distance_min']} ถึง {trigger['target_distance_max']}"
@@ -228,11 +245,23 @@ def describe_effect(effect: dict) -> str:
     effect_type = effect["type"]
     value = effect.get("value")
     duration = effect.get("duration")
+    condition = effect.get("condition")
+    condition_text = (
+        f" (เฉพาะเมื่อ {describe_trigger(condition)})" if condition else ""
+    )
 
     dur = normalize_duration(duration)
 
     if effect_type == "modify_velocity":
-        return f"เพิ่มผลรวมการวิ่ง +{value}" + (f" ({dur})" if dur else "")
+        return f"เพิ่มผลรวมการวิ่ง +{value}" + (f" ({dur})" if dur else "") + condition_text
+    if effect_type == "modify_race_stats":
+        stats = effect.get("stats", effect.get("stat", "all"))
+        if stats == "all":
+            return f"เพิ่มทุก Stats +{value} เฉพาะการแข่งขันนี้" + condition_text
+        if isinstance(stats, dict):
+            stat_text = ", ".join(f"{stat.title()} {delta:+}" for stat, delta in stats.items())
+            return f"ปรับ Stats ({stat_text}) เฉพาะการแข่งขันนี้" + condition_text
+        return f"เพิ่ม {str(stats).title()} +{value} เฉพาะการแข่งขันนี้" + condition_text
     if effect_type == "modify_roll_floor":
         return f"เพิ่มแต้มขั้นต่ำของลูกเต๋า +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "modify_roll_cap":
@@ -243,7 +272,7 @@ def describe_effect(effect: dict) -> str:
         floor = effect.get("floor", value)
         return f"ปรับแต้มสูงสุดลูกเต๋า {cap}, เพิ่มแต้มขั้นต่ำของลูกเต๋า {floor}" + (
             f" ({dur})" if dur else ""
-        )
+        ) + condition_text
     if effect_type == "add_dkh":
         return f"เพิ่มจำนวนลูกเต๋าและจำนวนลูกที่เลือก +{value}" + (
             f" ({dur})" if dur else ""
@@ -254,7 +283,7 @@ def describe_effect(effect: dict) -> str:
         return f"เพิ่มจำนวนลูกที่เลือก +{value}" + (f" ({dur})" if dur else "")
 
     if effect_type in ["recover_stamina"]:
-        return f"ฟื้นฟู {Status_Icon_Type['STA']} +{value}"
+        return f"ฟื้นฟู {Status_Icon_Type['STA']} +{value}{condition_text}"
 
     if effect_type in ["modify_current_speed"]:
         return f"เร่งความเร็วปัจจุบัน {value} ระดับ"
@@ -309,6 +338,7 @@ def build_skill_description(skill_id: str) -> str:
         return f"❓ `{skill_id}`"
 
     emoji = get_skill_emoji(skill_id)
+    activation_text = "🟣 Passive: ทำงานอัตโนมัติ\n" if skill.get("activation") == "passive" else ""
     trigger_text = describe_trigger(skill.get("trigger", {}))
     target_text = describe_target(skill.get("target", {}))
     effects = "\n".join(
@@ -317,6 +347,7 @@ def build_skill_description(skill_id: str) -> str:
 
     return (
         f"{emoji} `{skill_id}` **{skill['name']}**\n"
+        f"{activation_text}"
         f"⏱️: {skill.get('cooldown', 0)} | {Status_Icon_Type['WIT']}: {skill.get('cost', 0)}\n"
         f"เป้าหมาย: {target_text}\n"
         f"เงื่อนไข: {trigger_text}\n"

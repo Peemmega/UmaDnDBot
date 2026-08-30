@@ -17,6 +17,7 @@ ZONE_LABELS = {
     "cap_floor": "Cap/Floor",
     "self_heal_stamina": "Self Heal STA",
     "modify_current_speed": "Acceleration",
+    "race_speed": "Race Speed",
 }
 
 
@@ -51,6 +52,7 @@ def build_zone_manage_embed_from_zone(
         "cap_floor": f"{ICONS['Aoharu']} เพิ่มแต้มลูกเต๋าขั้นต่ำ/สูงสุด",
         "self_heal_stamina": f"{ICONS['Aoharu']} ฟื้นฟู Stamina",
         "modify_current_speed": f"{ICONS['Aoharu']} เพิ่มความเร่ง",
+        "race_speed": f"{ICONS['Aoharu']} เพิ่ม Speed ในรัน",
     }
 
     for key, label in zone_labels.items():
@@ -69,6 +71,8 @@ def build_zone_manage_embed_from_zone(
         preview_lines.append(f"{Status_Icon_Type['STA']} ฟื้นฟู STA ตัวเอง +{preview['self_heal_stamina']}")
     if preview["modify_current_speed"]:
         preview_lines.append(f"👟 เพิ่มความเร่งขึ้น {preview['modify_current_speed']} ระดับ")
+    if preview["race_speed"]:
+        preview_lines.append(f"🏇 เพิ่ม Speed ในรัน +{preview['race_speed']}")
 
     if not preview_lines:
         preview_lines.append("ยังไม่มีการอัป Zone")

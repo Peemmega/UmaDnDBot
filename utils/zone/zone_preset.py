@@ -3,7 +3,8 @@ ZONE_FIELDS = {
     "add_dkh", 
     "cap_floor", 
     "self_heal_stamina",
-    "modify_current_speed"
+    "modify_current_speed",
+    "race_speed",
 }
 
 DEFAULT_ZONE_IMAGE = "https://media.discordapp.net/attachments/697810514448744448/1495378081085657162/tm_zone.gif"
@@ -24,6 +25,7 @@ ZONE_POINT_COST = {
     "cap_floor": 1,
     "self_heal_stamina": 1,
     "modify_current_speed": 1,
+    "race_speed": 1,
 }
 
 ZONE_VALUE = {
@@ -32,6 +34,7 @@ ZONE_VALUE = {
     "cap_floor": 3,
     "self_heal_stamina": 1,
     "modify_current_speed": 1,
+    "race_speed": 1,
 }
 
 DEFAULT_ZONE = {
@@ -44,6 +47,7 @@ DEFAULT_ZONE = {
         "cap_floor": 0,
         "self_heal_stamina": 0,
         "modify_current_speed": 0,
+        "race_speed": 0,
     }
 }
 
@@ -60,4 +64,5 @@ def normalize_zone_build(build: dict | None) -> dict:
         "cap_floor": shared_cap_floor + legacy_floor + legacy_cap,
         "self_heal_stamina": int(build.get("self_heal_stamina", 0)),
         "modify_current_speed": int(build.get("modify_current_speed", 0)),
+        "race_speed": int(build.get("race_speed", 0)),
     }
