@@ -1027,15 +1027,15 @@ MOB_PRESETS = {
         "skills": {
             1: "s015",  # Beeline Burst
             2: "s067",  # Singularity
-            3: "s058",  # Unstoppable
-            4: "s035",  # Radiant Star
+            3: "s037",  # In Body and Mind
+            4: "s043",  # Red Shift/LP1211-M
         },
         "zone": {
             "name": "Peerless Heroine",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1521266934841348117/almond-eye-umamusume.gif?ex=6a4435bd&is=6a42e43d&hm=c58f901c38d17e9078c8fbdd0c8cf357432814b33ddd2aeedc3bc47545ed27e6&=&width=747&height=422",
             "build": {
                 "add_dkh": 4,
-                "modify_current_speed": 1,
+                "modify_current_speed": 2,
             },
         },
     },
