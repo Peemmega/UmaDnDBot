@@ -972,10 +972,10 @@ MOB_PRESETS = {
         "style": "Late",
         "race_profile": {
             "speed": 6,
-            "stamina": 4,
-            "power": 6,
+            "stamina": 5,
+            "power": 7,
             "gut": 1,
-            "wit": 5,
+            "wit": 3,
             "turf": 7,
             "dirt": 1,
             "sprint": 5,
@@ -1174,7 +1174,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "s062",  # 564 Escapades
-            2: "s027",  # Dominator
+            2: "s037",  # In Body and Mind
             3: "s014",  # On Your Left!
             4: "s015",  # Beeline Burst
         },
