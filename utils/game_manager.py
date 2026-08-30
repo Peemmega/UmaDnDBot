@@ -2679,6 +2679,10 @@ def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
         if not skill:
             continue
 
+        # Passive skills are activated by activate_passive_skills(), not by AI.
+        if skill.get("activation") == "passive":
+            continue
+
         if cooldowns.get(skill_id, 0) > 0:
             continue
 
@@ -3103,7 +3107,7 @@ def activate_passive_skills(channel_id: int) -> list[dict]:
                 channel_id,
                 user_id,
                 skill_id,
-                consume_cost=False,
+                consume_cost=True,
             )
             if success:
                 activated_ids.add(skill_id)
@@ -3113,6 +3117,40 @@ def activate_passive_skills(channel_id: int) -> list[dict]:
     if activations:
         game.setdefault("pending_passive_skill_activations", []).extend(activations)
     return activations
+
+
+def drain_pending_passive_skill_embeds(channel_id: int) -> list[discord.Embed]:
+    """Build normal skill-use embeds for automatic Passive activations."""
+    game = get_game(channel_id)
+    if game is None:
+        return []
+
+    embeds = []
+    players = game.get("players", {})
+    for payload in game.pop("pending_passive_skill_activations", []):
+        user_id = payload.get("user_id")
+        player = next(
+            (
+                candidate
+                for candidate_id, candidate in players.items()
+                if str(candidate_id) == str(user_id)
+            ),
+            None,
+        )
+        skill = payload.get("skill") or SKILLS.get(payload.get("skill_id"))
+        if not player or not skill:
+            continue
+
+        embeds.append(
+            build_skill_use_embed(
+                player_name=player.get("display_name") or player.get("username") or "Player",
+                player=player,
+                skill=skill,
+                payload=payload,
+            )
+        )
+
+    return embeds
 
 def apply_skill(channel_id: int, user_id: int, skill: dict):
     game = get_game(channel_id)
@@ -3474,8 +3512,9 @@ def build_skill_use_embed(
 ):
     icon_url = ICON_URL.get(skill.get("icon"))
 
+    activation_suffix = " (Passive)" if skill.get("activation") == "passive" else ""
     embed = discord.Embed(
-        title=f"{player_name} ใช้สกิล {skill['name']}",
+        title=f"{player_name} ใช้สกิล {skill['name']}{activation_suffix}",
         description="\n".join(
             payload.get("result_texts", [])
         ),

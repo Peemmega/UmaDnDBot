@@ -7,6 +7,7 @@ ICON_URL = {
     "Concentration": "https://media.discordapp.net/attachments/697810514448744448/1526292466570100956/Concentration.png?ex=6a567e21&is=6a552ca1&hm=ba72a3078b0e0cd3cc9ba5128a8280d78bfb14de88c696fe40855a455a597a97&=&format=webp&quality=lossless&width=240&height=240",
     "Acceleration": "https://media.discordapp.net/attachments/697810514448744448/1526292465185722469/Acceleration.png?ex=6a567e20&is=6a552ca0&hm=5887f9dfc6348323c2e75c277470052d38bf9d8f15d50b9e84182107fdf32f67&=&format=webp&quality=lossless&width=240&height=240",
     "Velocity": "https://media.discordapp.net/attachments/697810514448744448/1526292464552640652/Velocity.png?ex=6a567e20&is=6a552ca0&hm=cdec2ebfd23657a87bdcecbfd11d1c8dfd528917561d628b792825a64d017add&=&format=webp&quality=lossless&width=240&height=240",
+    "Passive": "https://cdn.discordapp.com/attachments/697810514448744448/1543574020023128115/Passive.png?ex=6a955cd4&is=6a940b54&hm=b50e5dd13c0a5e306d9faa48953d051cdf73d6bb89838d87b3b4baca5ce73766",
     "Navigation": "https://media.discordapp.net/attachments/697810514448744448/1526292468520321267/Navigation.png?ex=6a567e21&is=6a552ca1&hm=bd100dd98982668b999927406c724fdc5cc8d68c2e366286ee9446d03a85b545&=&format=webp&quality=lossless&width=240&height=240",
     "Recovery": "https://media.discordapp.net/attachments/697810514448744448/1526292463436693565/Recovery.png?ex=6a567e20&is=6a552ca0&hm=a8f676d62e27898fcfe21a282a019de5585a298635afa011ec96b472c97f56e1&=&format=webp&quality=lossless&width=240&height=240",
     "DecreaseVelocity": "https://media.discordapp.net/attachments/697810514448744448/1526292466993467513/DecreaseVelocity.png?ex=6a567e21&is=6a552ca1&hm=a12f7f4f7803e42dded5b924be383355dc1bd0861067e8018cd67822bce2f9d7&=&format=webp&quality=lossless&width=240&height=240",
@@ -1395,6 +1396,7 @@ SKILLS = {
     "s065": {
         "name": "Impulse",
         "icon": "Passive",
+        "activation": "passive",
         "cooldown": 99,
         "cost": 120,
         "trigger": {
@@ -1415,6 +1417,7 @@ SKILLS = {
     "s066": {
         "name": "Track Demon",
         "icon": "Passive",
+        "activation": "passive",
         "cooldown": 99,
         "cost": 80,
         "trigger": {
@@ -1436,6 +1439,7 @@ SKILLS = {
     "s067": {
         "name": "Singularity",
         "icon": "Passive",
+        "activation": "passive",
         "cooldown": 99,
         "cost": 80,
         "trigger": {

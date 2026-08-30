@@ -76,6 +76,7 @@ from utils.game_manager import (
     get_ranked_players,
     have_all_players_rolled,
     start_turn_confirmation,
+    drain_pending_passive_skill_embeds,
     is_skill_on_cooldown,
     add_mob_from_preset,
     add_player_as_mob_preset,
@@ -830,6 +831,9 @@ class GameCog(commands.GroupCog, name="game"):
             print("Next turn result image error:", exc)
 
         await send_func(**send_kwargs)
+
+        for passive_embed in drain_pending_passive_skill_embeds(channel_id):
+            await send_func(embed=passive_embed)
 
         game = get_game(channel_id)
         for user_id, player in game["players"].items():

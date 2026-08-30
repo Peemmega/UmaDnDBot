@@ -7,6 +7,7 @@ from utils.game_manager import (
     get_game,
     is_owner,
     start_game,
+    drain_pending_passive_skill_embeds,
     get_player,
     build_join_embed,
     process_mob_turn,
@@ -221,6 +222,9 @@ class LobbyView(discord.ui.View):
         
         embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1495728671300780083/uma-musume-running.gif?ex=69e74d60&is=69e5fbe0&hm=958b07dacfcb4c4b2bb82049ac1863c8d1b4ecc2122514250b3b18104b9ce09a&=&width=747&height=422")
         await interaction.followup.send(embed=embed)
+
+        for passive_embed in drain_pending_passive_skill_embeds(self.channel_id):
+            await interaction.followup.send(embed=passive_embed)
 
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
