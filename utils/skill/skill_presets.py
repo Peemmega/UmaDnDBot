@@ -1398,7 +1398,7 @@ SKILLS = {
         "icon": "Passive",
         "activation": "passive",
         "cooldown": 99,
-        "cost": 120,
+        "cost": 150,
         "trigger": {
             "style": "Late",
             "track": "turf",
@@ -1419,7 +1419,7 @@ SKILLS = {
         "icon": "Passive",
         "activation": "passive",
         "cooldown": 99,
-        "cost": 80,
+        "cost": 100,
         "trigger": {
             "turn_min": 1,
             "turn_max": 1,
@@ -1441,7 +1441,7 @@ SKILLS = {
         "icon": "Passive",
         "activation": "passive",
         "cooldown": 99,
-        "cost": 80,
+        "cost": 100,
         "trigger": {
             "turn_min": 1,
             "turn_max": 1,
