@@ -1183,7 +1183,7 @@ MOB_PRESETS = {
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153381181362278/symboli-rudolf-uma-musume.gif?ex=6a93d514&is=6a928394&hm=19964a3db3e6bb0c84d31f6562efe2ccd9dd1f06df414db94d651deb7e4ed86f&",
             "build": {
                 "add_dkh": 3,
-                "cap_floor": 2,
+                "modify_current_speed": 2,
             },
         },
     },
