@@ -116,8 +116,9 @@ def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dic
 
     elif path_type == 4:  # เนินลง
         effect["stamina_cost"] = 0
-        effect["extra_max_from_wit"] = player_stat.get("wit", 0) * 3
-        effect["extra_floor_from_wit"] = player_stat.get("wit", 0) * 3
+        downhill_wit_bonus = int(float(player_stat.get("wit", 0) or 0) * 1.5)
+        effect["extra_max_from_wit"] = downhill_wit_bonus
+        effect["extra_floor_from_wit"] = downhill_wit_bonus
 
     return effect
 
