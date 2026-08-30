@@ -1,11 +1,11 @@
-ZONE_FIELDS = {
-    "flat", 
-    "add_dkh", 
-    "cap_floor", 
+ZONE_FIELDS = (
+    "flat",
+    "add_dkh",
+    "cap_floor",
     "self_heal_stamina",
     "modify_current_speed",
     "race_speed",
-}
+)
 
 DEFAULT_ZONE_IMAGE = "https://media.discordapp.net/attachments/697810514448744448/1495378081085657162/tm_zone.gif"
 
@@ -53,16 +53,11 @@ DEFAULT_ZONE = {
 
 
 def normalize_zone_build(build: dict | None) -> dict:
+    """Auto-correct missing Zone fields to zero, including future additions."""
     build = build or {}
     shared_cap_floor = int(build.get("cap_floor", 0))
     legacy_floor = int(build.get("floor", 0))
     legacy_cap = int(build.get("cap", 0))
-
-    return {
-        "flat": int(build.get("flat", 0)),
-        "add_dkh": int(build.get("add_dkh", 0)),
-        "cap_floor": shared_cap_floor + legacy_floor + legacy_cap,
-        "self_heal_stamina": int(build.get("self_heal_stamina", 0)),
-        "modify_current_speed": int(build.get("modify_current_speed", 0)),
-        "race_speed": int(build.get("race_speed", 0)),
-    }
+    normalized = {field: int(build.get(field, 0)) for field in ZONE_FIELDS}
+    normalized["cap_floor"] = shared_cap_floor + legacy_floor + legacy_cap
+    return normalized

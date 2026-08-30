@@ -40,9 +40,6 @@ LOW_LEVEL_ZONE = {
     "points": 0,
     "build": {
         "flat": 1,
-        "add_dkh": 0,
-        "cap_floor": 0,
-        "self_heal_stamina": 0,
         "modify_current_speed": 1,
     },
 }
@@ -93,9 +90,6 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 3,
-                "add_dkh": 0,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             },
         },
@@ -135,9 +129,6 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 3,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -175,9 +166,6 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 2,
-                "add_dkh": 0,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 3,
             },
         },
@@ -215,11 +203,8 @@ MOB_PRESETS = {
             "image_url": "",
             "points": 0,
             "build": {
-                "flat": 0,
                 "add_dkh": 3,
                 "cap_floor": 2,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -257,9 +242,7 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 2,
-                "add_dkh": 0,
                 "cap_floor": 1,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             },
         },
@@ -299,9 +282,6 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 3,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -339,9 +319,6 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 2,
-                "add_dkh": 0,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 3,
             },
         },
@@ -380,9 +357,6 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 3,
-                "add_dkh": 0,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             },
         },
@@ -421,11 +395,8 @@ MOB_PRESETS = {
             "image_url": "https://media.discordapp.net/attachments/1494733536656097340/1496112663816573059/fujimasa-march-cinderella-gray.gif?ex=69e8b2ff&is=69e7617f&hm=4b9847c6807ca04264aa0ea40a6bfac752465cd8ef4c96ec8ac962045b2cdb68&=&width=561&height=317",
             "points": 0,
             "build": {
-                "flat": 0,
                 "add_dkh": 3,
                 "cap_floor": 1,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -462,11 +433,8 @@ MOB_PRESETS = {
             "name": "Champion Zone",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910874370543746/agnes-tachyon-watch-me-run.gif?ex=69e7f711&is=69e6a591&hm=2cf187ac55166488c0e95a9e598dc6cfda93ec3a3a6df21e393cfb3ec8631179&=&width=561&height=317",
             "build": {
-                "flat": 0,
                 "add_dkh": 3,
                 "cap_floor": 2,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -503,10 +471,7 @@ MOB_PRESETS = {
             "name": "Grey Phantom",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495910813691809813/umamusume-cinderella-gray.gif?ex=69e7f702&is=69e6a582&hm=79435ae723a1e2952da81083223166a29644bfccc6e26dc43f7d952fbe424707&=&width=561&height=317",
             "build": {
-                "flat": 0,
                 "add_dkh": 3,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             },
         },
@@ -536,18 +501,15 @@ MOB_PRESETS = {
         "skills": {
             1: "s015",  # Beeline Burst
             2: "s032",  # Neck and Neck
-            3: "s012",  # Speed Star
+            3: "s066",  # Track Demon
             4: "s022",  # Breath of Fresh Air
         },
         "zone": {
             "name": "Road to Glory",
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1522307526694011030/umamusume-uma-musume_1.gif?ex=6a47fedd&is=6a46ad5d&hm=4ca9d411409282d4476bc5806fe9b80e350e1e878940e996bb7306b5e3670eff&",
             "build": {
-                "flat": 0,
                 "add_dkh": 3,
                 "cap_floor": 2,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -585,9 +547,6 @@ MOB_PRESETS = {
             "build": {
                 "flat": 3,
                 "add_dkh": 2,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -623,11 +582,7 @@ MOB_PRESETS = {
             "name": "Dance for Vittoria",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1495378081085657162/tm_zone.gif",
             "build": {
-                "flat": 0,
                 "add_dkh": 5,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -665,8 +620,6 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 2,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 1,
             },
         },
@@ -706,9 +659,6 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 3,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -746,9 +696,6 @@ MOB_PRESETS = {
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153379054723094/bakushinOZone.gif?ex=6a93d513&is=6a928393&hm=26d2b2df750c8c9a01c620f9a38bac709454f2102a0b3789714da2370836d6b8&",
             "build": {
                 "flat": 3,
-                "add_dkh": 0,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 2,
             },
         },
@@ -785,11 +732,8 @@ MOB_PRESETS = {
             "name": "Celeste Oath",
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153379826466917/-.gif?ex=6a93d514&is=6a928394&hm=d24be27aff08d9b69c39696afa5d7da31a5079be3040ee7c7df7e017f2a8eca7&",
             "build": {
-                "flat": 0,
                 "add_dkh": 3,
                 "cap_floor": 2,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -826,9 +770,6 @@ MOB_PRESETS = {
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153380799676426/uma-musume_3.gif?ex=6a93d514&is=6a928394&hm=e0134834412fa613aa7ad3085c44b215c973775b012fcdab14f36629fc386cae&",
             "build": {
                 "flat": 4,
-                "add_dkh": 0,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 1,
             },
         },
@@ -866,10 +807,8 @@ MOB_PRESETS = {
             "name": "Queen's Rebirth",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1501860043618910380/star-rail-seele.gif?ex=69fd9ba9&is=69fc4a29&hm=6340d35338211b603505e6cace56ac47a5ef6a32616f59fb232eea2de0605a43&=&width=747&height=420",
             "build": {
-                "flat": 3,
-                "add_dkh": 0,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
+                "flat": 1,
+                "race_speed": 2,
                 "modify_current_speed": 2,
             },
         },
@@ -908,9 +847,6 @@ MOB_PRESETS = {
             "build": {
                 "flat": 1,
                 "add_dkh": 4,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -947,8 +883,6 @@ MOB_PRESETS = {
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1501860045019680828/umamusume-.gif?ex=69fd9ba9&is=69fc4a29&hm=95851edc8c16f46af7011011ccc5e5b2094f800284a9f0ca0c01937cb175409a&",
             "build": {
                 "flat": 2,
-                "add_dkh": 0,
-                "cap_floor": 0,
                 "self_heal_stamina": 1,
                 "modify_current_speed": 2,
             },
@@ -986,10 +920,8 @@ MOB_PRESETS = {
             "name": "Scarlet Ascension of the Rakshasa",
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153380220735538/duramente-ultimate.gif?ex=6a93d514&is=6a928394&hm=5eb54f3087ae92077ef4d4003dbc9b893f551ae79bc7e1ad8f04b3e63cb9c06c&",
             "build": {
-                "flat": 0,
                 "add_dkh": 3,
                 "cap_floor": 1,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 1,
             },
         },
@@ -1028,8 +960,6 @@ MOB_PRESETS = {
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153378656387072/-dia-chan.gif?ex=6a93d513&is=6a928393&hm=0a37aba196469c656bee6196becec84749c779051135cf905ac69125ea10a76b&",
             "build": {
                 "flat": 2,
-                "add_dkh": 0,
-                "cap_floor": 0,
                 "self_heal_stamina": 1,
                 "modify_current_speed": 2,
             },
@@ -1059,7 +989,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "s045",  # Moving Past, and Beyond
-            2: "s038",  # All-Seeing Eyes
+            2: "s065",  # Impulse
             3: "s037",  # In Body and Mind
             4: "s015",  # Beeline Burst
         },
@@ -1067,10 +997,7 @@ MOB_PRESETS = {
             "name": "Scarlet Lily's Elation",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1501860044105322657/still-in-love-umamusume.gif?ex=69fd9ba9&is=69fc4a29&hm=55cc976721949bfe47c4c5caa70a4100a65148fd4ccc034d0fc949573268140e&=&width=747&height=422",
             "build": {
-                "flat": 0,
                 "add_dkh": 4,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 1,
             },
         },
@@ -1083,9 +1010,9 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 5,
             "stamina": 5,
-            "power": 6,
-            "gut": 3,
-            "wit": 3,
+            "power": 5,
+            "gut": 2,
+            "wit": 5,
             "turf": 7,
             "dirt": 1,
             "sprint": 2,
@@ -1099,7 +1026,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "s015",  # Beeline Burst
-            2: "s012",  # Speed Star
+            2: "s067",  # Singularity
             3: "s032",  # Neck and Neck
             4: "s043",  # Red Shift/LP1211-M
         },
@@ -1107,11 +1034,7 @@ MOB_PRESETS = {
             "name": "Peerless Heroine",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1521266934841348117/almond-eye-umamusume.gif?ex=6a4435bd&is=6a42e43d&hm=c58f901c38d17e9078c8fbdd0c8cf357432814b33ddd2aeedc3bc47545ed27e6&=&width=747&height=422",
             "build": {
-                "flat": 0,
                 "add_dkh": 5,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -1147,10 +1070,8 @@ MOB_PRESETS = {
             "name": "None Shall Object My Rule",
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1501860045405818880/orfevre-umamusume.gif",
             "build": {
-                "flat": 0,
                 "add_dkh": 2,
                 "cap_floor": 2,
-                "self_heal_stamina": 0,
                 "modify_current_speed": 1,
             },
         },
@@ -1187,11 +1108,7 @@ MOB_PRESETS = {
             "name": "Rose Conquest",
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1501860043153215488/gentildonna-uma.gif",
             "build": {
-                "flat": 0,
                 "add_dkh": 5,
-                "cap_floor": 0,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -1227,11 +1144,8 @@ MOB_PRESETS = {
             "name": "Shadow Break",
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153379503640591/narita-brian-narita-brian.gif?ex=6a93d514&is=6a928394&hm=d81ce6b48a342c6fcf0b4601542c7077bf1e5018d95fc18008f0c95b2bb1a864&",
             "build": {
-                "flat": 0,
                 "add_dkh": 3,
                 "cap_floor": 2,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -1268,11 +1182,8 @@ MOB_PRESETS = {
             "name": "Thou, Witness the Heavenly Might of the Emperor",
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1543153381181362278/symboli-rudolf-uma-musume.gif?ex=6a93d514&is=6a928394&hm=19964a3db3e6bb0c84d31f6562efe2ccd9dd1f06df414db94d651deb7e4ed86f&",
             "build": {
-                "flat": 0,
                 "add_dkh": 3,
                 "cap_floor": 2,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },
@@ -1309,11 +1220,8 @@ MOB_PRESETS = {
             "name": "I SHOW SPEED",
             "image_url": "https://media.discordapp.net/attachments/1494733536656097340/1496040976911831142/ishowspeed-speed.gif?ex=69e8703b&is=69e71ebb&hm=2b52dfe8463eb477dc7709da57887a7e790f51f4d57f59cd84d04368f0ec2765&=&width=561&height=374",
             "build": {
-                "flat": 0,
                 "add_dkh": 3,
                 "cap_floor": 2,
-                "self_heal_stamina": 0,
-                "modify_current_speed": 0,
             },
         },
     },

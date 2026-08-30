@@ -18,6 +18,7 @@ from utils.database import (
 from utils.race.race_history import ensure_race_history_id, record_race_action, record_turn_snapshot
 from utils.profile_images import resolve_player_avatar_url, resolve_public_url
 from utils.zone.zone_manager import apply_zone_in_game
+from utils.zone.zone_preset import normalize_zone_build
 from utils.race.race_presets import (
     get_path_effect,
     get_current_path_type, 
@@ -2037,6 +2038,9 @@ def add_player_as_mob_preset(
         game.get("distance"),
     )
 
+    zone = copy.deepcopy(preset["zone"])
+    zone["build"] = normalize_zone_build(zone.get("build"))
+
     game["players"][user_id] = {
         "username": preset['name'],
         "display_name": preset['name'],
@@ -2068,7 +2072,7 @@ def add_player_as_mob_preset(
         "gold_lane_bonus_this_turn": 0,
         "enemy_gold_lane_penalty_next_turn": 0,
         "skills": skills,
-        "zone": copy.deepcopy(preset["zone"]),
+        "zone": zone,
         "zone_left": 1,
         "is_mob": False,
         "using_mob_preset": True,
@@ -2208,6 +2212,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
     race_profile = apply_rookie_distance_stats(preset_key, race_profile, game.get("distance"))
 
     zone = copy.deepcopy(preset["zone"])
+    zone["build"] = normalize_zone_build(zone.get("build"))
     skills = apply_rookie_distance_skills(
         preset_key,
         copy.deepcopy(preset["skills"]),
