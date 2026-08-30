@@ -188,7 +188,14 @@ def apply_lane_tactics_to_result(
         result["bonus_display"] = label if current == "-" else f"{current} {label}"
 
     if blocking_penalty > 0:
-        append_bonus(f"-{int(blocking_penalty * 100)}%BLOCK")
+        block_bonus = f"-{int(blocking_penalty * 100)}%BLOCK"
+        append_bonus(block_bonus)
+        preview_bonus = result.get("dice_preview_bonus_display", "-")
+        result["dice_preview_bonus_display"] = (
+            block_bonus
+            if preview_bonus == "-"
+            else f"{preview_bonus} {block_bonus}"
+        )
     if drafting_active:
         append_bonus("DRAFT")
     if stamina_penalty_active and stamina_debuff_percent > 0:
