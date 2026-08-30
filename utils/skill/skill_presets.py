@@ -1028,7 +1028,7 @@ SKILLS = {
         "name": "Daring Strike",
         "icon": "Velocity",
         "cooldown": 8,
-        "cost": 60,
+        "cost": 80,
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
@@ -1039,11 +1039,11 @@ SKILLS = {
             "limit": 1,
         },
         "effects": [
-            {"type": "modify_roll_cap", "value": 7, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 6, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 60,
+                "value": 40,
                 "duration": "this_roll",
             },
         ],
