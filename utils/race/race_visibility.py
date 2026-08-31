@@ -25,6 +25,7 @@ from utils.race.web_timing_config import (
     WEB_TIMING_GAUGE_HALF_CYCLE_MS,
     get_web_timing_ui_config,
 )
+from utils.race.race_weather import WEATHER_RULE, weather_label
 
 
 def _player_name(user_id, player: dict) -> str:
@@ -280,6 +281,13 @@ def serialize_room(
             "AllowSkill": (game.get("game_rules") or {}).get("AllowSkill", True),
             "DreamMode": (game.get("game_rules") or {}).get("DreamMode", False),
             "NoDebuff": (game.get("game_rules") or {}).get("NoDebuff", False),
+            WEATHER_RULE: (game.get("game_rules") or {}).get(WEATHER_RULE, "none"),
+        },
+        "weather": {
+            "condition": game.get("weather", "none"),
+            "label": weather_label(game),
+            "wet_lanes": list(game.get("wet_lanes") or []),
+            "next_wet_lanes": list(game.get("next_wet_lanes") or []),
         },
         "race_name": game.get("stage_name"),
         "track": game.get("track"),
@@ -370,6 +378,13 @@ def serialize_room_summary(game: dict, room_id: str) -> dict:
             "AllowSkill": (game.get("game_rules") or {}).get("AllowSkill", True),
             "DreamMode": (game.get("game_rules") or {}).get("DreamMode", False),
             "NoDebuff": (game.get("game_rules") or {}).get("NoDebuff", False),
+            WEATHER_RULE: (game.get("game_rules") or {}).get(WEATHER_RULE, "none"),
+        },
+        "weather": {
+            "condition": game.get("weather", "none"),
+            "label": weather_label(game),
+            "wet_lanes": list(game.get("wet_lanes") or []),
+            "next_wet_lanes": list(game.get("next_wet_lanes") or []),
         },
         "thumbnail": stage.get("thumnail"),
         "turn": game.get("turn", 0),

@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
 from utils.profile_images import is_local_filesystem_path, resolve_player_render_image
 from utils.race.race_presets import PATH_TYPE_TEXT, build_path_effect_text, get_current_path_type
 from utils.race.rank_display import is_in_gold_range
+from utils.race.race_weather import display_wet_lanes, is_raining, weather_label
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -286,6 +287,36 @@ def _position_x(score: int, min_score: int, max_score: int) -> int:
     return int(round(TRACK_LEFT + (TRACK_RIGHT - TRACK_LEFT) * ratio))
 
 
+def _draw_weather_lanes(canvas: Image.Image, game: dict) -> None:
+    if not is_raining(game):
+        return
+
+    lanes = display_wet_lanes(game)
+    if not lanes:
+        return
+
+    draw = ImageDraw.Draw(canvas, "RGBA")
+    for lane in lanes:
+        lane_y = LANE_Y.get(int(lane))
+        if lane_y is None:
+            continue
+        draw.rounded_rectangle(
+            (TRACK_LEFT, lane_y - 48, TRACK_RIGHT, lane_y + 48),
+            radius=18,
+            fill=(66, 175, 255, 76),
+            outline=(43, 143, 224, 185),
+            width=3,
+        )
+
+    label = "Wet next turn" if game.get("awaiting_turn_confirm") else "Wet lane"
+    draw.text(
+        (TRACK_LEFT + 14, 166),
+        f"{weather_label(game)}: {label} {', '.join(map(str, lanes))}",
+        font=_font(18, bold=True),
+        fill=(23, 112, 191, 255),
+    )
+
+
 def _apply_lane_offsets(rows: list[dict[str, Any]]) -> None:
     lane_groups: dict[int, list[dict[str, Any]]] = {}
     for row in rows:
@@ -336,6 +367,8 @@ async def create_turn_result_card(game: dict, ranked_players: list[tuple[Any, di
     rows = _build_scoreboard_rows(ranked_players)
     if not rows:
         return canvas
+
+    _draw_weather_lanes(canvas, game)
 
     scores = [row["score"] for row in rows]
     min_score = min(scores)

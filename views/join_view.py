@@ -21,6 +21,7 @@ from utils.mob.mob_fast_output import build_mob_fast_roll_text
 from utils.race.race_dice import (
     build_dice_table_grid
 )
+from utils.race.race_weather import weather_label
 
 import math
 from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
@@ -218,6 +219,7 @@ class LobbyView(discord.ui.View):
             description=f"สนาม: {game['stage_name']} เทิร์นที่ 1",
             color=discord.Color.gold()
         )
+        embed.add_field(name="🌤️ สภาพอากาศ", value=weather_label(game), inline=True)
         embed.add_field(name="📢 วิธีเล่น", value=f"ในแต่ละ turn สามาใช้งาน\n /game run เพื่อวิ่ง\nนอกจากนี้ยังสามารถใช้งานสกิลโดยใช้\n/game skill (แนะนำให้ใช้ก่อน run)", inline=True)
         
         embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1495728671300780083/uma-musume-running.gif?ex=69e74d60&is=69e5fbe0&hm=958b07dacfcb4c4b2bb82049ac1863c8d1b4ecc2122514250b3b18104b9ce09a&=&width=747&height=422")

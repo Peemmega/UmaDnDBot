@@ -54,6 +54,15 @@ from utils.race.race_lane import (
     has_drafting_bonus,
     resolve_pending_lane_changes,
 )
+from utils.race.race_weather import (
+    WEATHER_RULE,
+    WEATHER_RULE_OPTIONS,
+    advance_weather_turn,
+    initialize_race_weather,
+    is_sunny,
+    is_wet_lane,
+    schedule_next_wet_lanes,
+)
 from utils.dice.dice_presets import (
     MAX_SPEED_PHASE
 )
@@ -67,6 +76,7 @@ GAME_RULE_DEFAULTS = {
     "AllowSkill": True,
     "DreamMode": False,
     "NoDebuff": False,
+    WEATHER_RULE: "none",
 }
 games = {}
 
@@ -77,7 +87,7 @@ def _supports_lane_system(game: dict | None) -> bool:
     return game.get("race_mode", "discord_classic") != "web_timing"
 
 
-def get_game_rules(game: dict) -> dict[str, bool]:
+def get_game_rules(game: dict) -> dict[str, bool | str]:
     """Return a room's rules, filling in defaults for rooms created earlier."""
     rules = game.setdefault("game_rules", {})
     for rule_name, default_value in GAME_RULE_DEFAULTS.items():
@@ -89,7 +99,7 @@ def get_game_rule(game: dict, rule_name: str) -> bool:
     return bool(get_game_rules(game).get(rule_name, GAME_RULE_DEFAULTS[rule_name]))
 
 
-def set_game_rule(channel_id: int, rule_name: str, enabled: bool):
+def set_game_rule(channel_id: int, rule_name: str, value: bool | str):
     """Change a lobby rule before the race begins."""
     game = get_game(channel_id)
     if game is None:
@@ -99,8 +109,15 @@ def set_game_rule(channel_id: int, rule_name: str, enabled: bool):
     if rule_name not in GAME_RULE_DEFAULTS:
         return False, "ไม่พบ Game Rule นี้"
 
-    get_game_rules(game)[rule_name] = bool(enabled)
-    return True, bool(enabled)
+    if rule_name == WEATHER_RULE:
+        weather = str(value or "none").strip().lower()
+        if weather not in WEATHER_RULE_OPTIONS:
+            return False, "Weather ต้องเป็น none, random, warm, rainy หรือ sunny"
+        get_game_rules(game)[rule_name] = weather
+        return True, weather
+
+    get_game_rules(game)[rule_name] = bool(value)
+    return True, bool(value)
 
 
 def _entry_order_lane(channel_id: int) -> int:
@@ -177,6 +194,9 @@ def apply_lane_tactics_to_result(
     drafting_active = False
     lane_cost = 0
     stamina_drain = int(path_effect.get("stamina_cost", 0) or 0)
+    weather_stamina_cost = 10 if is_sunny(game) else 0
+    stamina_drain += weather_stamina_cost
+    wet_lane_active = is_wet_lane(game, game_player.get("current_lane"))
 
     working_players = _clone_lane_players_with_scores(game, score_map)
     temp_player = working_players.get(user_id, {"score": 0, "current_lane": game_player.get("current_lane", 1)})
@@ -205,6 +225,9 @@ def apply_lane_tactics_to_result(
         if drafting_active:
             stamina_drain = int(round(stamina_drain * 0.90))
 
+    if wet_lane_active:
+        final_total = int(round(final_total * 0.70))
+
     reference_stamina = int(game_player.get("turn_stamina_before_roll", game_player.get("stamina_left", 0)) or 0)
     stamina_penalty_active = (
         apply_stamina_penalty
@@ -231,6 +254,10 @@ def apply_lane_tactics_to_result(
         append_bonus(block_bonus)
     if drafting_active:
         append_bonus("DRAFT", include_in_preview=False)
+    if weather_stamina_cost:
+        append_bonus("SUN +10STA", include_in_preview=False)
+    if wet_lane_active:
+        append_bonus("-30%WET")
     if stamina_penalty_active and stamina_debuff_percent > 0:
         append_bonus(f"-{stamina_debuff_percent}%STA")
 
@@ -242,6 +269,8 @@ def apply_lane_tactics_to_result(
     result["drafting_active"] = drafting_active
     result["lane_cost"] = lane_cost
     result["stamina_drain"] = stamina_drain
+    result["weather_stamina_cost"] = weather_stamina_cost
+    result["wet_lane_active"] = wet_lane_active
     result["current_lane"] = game_player.get("current_lane")
     result["previous_lane"] = game_player.get("previous_lane")
 
@@ -249,6 +278,7 @@ def apply_lane_tactics_to_result(
     game_player["blocking_penalty"] = blocking_penalty
     game_player["drafting_active"] = drafting_active
     game_player["last_stamina_drain"] = stamina_drain
+    game_player["wet_lane_active"] = wet_lane_active
     game_player["takeStaminaDebuff"] = stamina_penalty_active
 
     stamina_note = build_runtime_stamina_note(
@@ -670,6 +700,7 @@ def start_turn_confirmation(channel_id: int):
     game["awaiting_turn_confirm"] = True
     game["turn_confirmation_turn"] = game["turn"]
     game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
+    schedule_next_wet_lanes(game)
     return True
 
 def confirm_turn(
@@ -866,6 +897,7 @@ def start_game(channel_id: int):
     game["started"] = True
     game["phase"] = "running"
     game["turn"] = 1
+    initialize_race_weather(game)
     ensure_race_history_id(game)
     game.setdefault("race_started_at", datetime.now(timezone.utc).isoformat())
 
@@ -1902,6 +1934,9 @@ def next_turn(channel_id: int):
             )
 
     record_turn_snapshot(game, current_turn)
+    if is_raining(game) and not game.get("next_wet_lanes"):
+        schedule_next_wet_lanes(game)
+    advance_weather_turn(game)
 
     game["turn"] += 1
     # The transition latch is only released after the turn number has changed.

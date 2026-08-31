@@ -554,17 +554,26 @@ class GameCog(commands.GroupCog, name="game"):
         name="set_rule",
         description="ตั้งค่า Game Rule ของห้องก่อนเริ่มเกม",
     )
-    @app_commands.describe(rule="กฎที่ต้องการตั้งค่า", enabled="true หรือ false")
+    @app_commands.describe(rule="กฎที่ต้องการตั้งค่า", value="ค่าของกฎ")
     @app_commands.choices(rule=[
         app_commands.Choice(name="AllowSkill — อนุญาต Skill / Zone", value="AllowSkill"),
         app_commands.Choice(name="DreamMode — ค่าสเตตัสพื้นฐาน 8", value="DreamMode"),
         app_commands.Choice(name="NoDebuff — ห้ามใช้สกิล Debuff", value="NoDebuff"),
+        app_commands.Choice(name="Weather — สภาพอากาศ", value="Weather"),
+    ], value=[
+        app_commands.Choice(name="true", value="true"),
+        app_commands.Choice(name="false", value="false"),
+        app_commands.Choice(name="none — ไม่มีสภาพอากาศ", value="none"),
+        app_commands.Choice(name="random — สุ่ม", value="random"),
+        app_commands.Choice(name="warm — อบอุ่น", value="warm"),
+        app_commands.Choice(name="rainy — ฝนตก", value="rainy"),
+        app_commands.Choice(name="sunny — แดดจัด", value="sunny"),
     ])
     async def set_rule(
         self,
         interaction: discord.Interaction,
         rule: app_commands.Choice[str],
-        enabled: bool,
+        value: app_commands.Choice[str],
     ):
         game = get_game(interaction.channel_id)
         if game is None:
@@ -584,20 +593,21 @@ class GameCog(commands.GroupCog, name="game"):
         success, result = set_game_rule(
             interaction.channel_id,
             rule.value,
-            enabled,
+            value.value if rule.value == "Weather" else value.value == "true",
         )
         if not success:
             await interaction.response.send_message(result, ephemeral=True)
             return
 
-        status = "เปิด" if result else "ปิด"
         descriptions = {
             "AllowSkill": "อนุญาตให้ใช้ Skill และ Zone",
             "DreamMode": "กำหนด Speed / Stamina / Power / Gut / Wit เป็น 8 ตอนเริ่มแข่ง",
             "NoDebuff": "ห้ามใช้สกิลที่มีประเภท Debuff",
+            "Weather": "เลือก none, random, warm, rainy หรือ sunny ก่อนเริ่มการแข่งขัน",
         }
+        status = result if rule.value == "Weather" else ("เปิด" if result else "ปิด")
         await interaction.response.send_message(
-            f"✅ ตั้งค่า **{rule.value}** เป็น **{enabled}** ({status})\n{descriptions[rule.value]}",
+            f"✅ ตั้งค่า **{rule.value}** เป็น **{status}**\n{descriptions[rule.value]}",
             ephemeral=False,
         )
 
