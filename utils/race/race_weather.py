@@ -18,6 +18,7 @@ WEATHER_LABELS = {
     WEATHER_RAIN: "ฝนตก",
 }
 LANE_COUNT = 6
+WET_LANE_COUNT = 2
 
 
 def initialize_race_weather(game: dict) -> str:
@@ -46,13 +47,12 @@ def is_raining(game: dict) -> bool:
 
 
 def schedule_next_wet_lanes(game: dict) -> list[int]:
-    """Pick the lanes that will be wet on the next non-final turn."""
+    """Pick exactly two lanes that will be wet on the next non-final turn."""
     if not is_raining(game) or int(game.get("turn", 0) or 0) >= int(game.get("max_turn", 0) or 0):
         game["next_wet_lanes"] = []
         return []
 
-    lane_count = random.randint(1, 2)
-    lanes = sorted(random.sample(range(1, LANE_COUNT + 1), k=lane_count))
+    lanes = sorted(random.sample(range(1, LANE_COUNT + 1), k=WET_LANE_COUNT))
     game["next_wet_lanes"] = lanes
     return lanes
 

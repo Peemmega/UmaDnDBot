@@ -45,7 +45,7 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
     if is_wet_lane(game, player.get("current_lane")):
         # Wet lanes affect only this turn's acceleration.  They never reduce
         # the dice result or the score that was already gained.
-        increase_speed *= 0.70
+        increase_speed *= 0.50
 
     new_speed = min(max_speed_cap, current_max_speed + increase_speed)
     player["current_max_speed"] = new_speed

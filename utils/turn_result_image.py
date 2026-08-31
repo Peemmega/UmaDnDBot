@@ -353,7 +353,7 @@ def _weather_effect_lines(game: dict) -> list[str]:
     lane_text = ", ".join(map(str, lanes))
     return [
         f"{weather_label(game)} | {timing}: Lane {lane_text} เปียก",
-        "ผล: อัตราเพิ่มความเร็วในเทิร์นนี้ -30%",
+        "ผล: อัตราเพิ่มความเร็วในเทิร์นนี้ -50%",
     ]
 
 
