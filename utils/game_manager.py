@@ -59,6 +59,7 @@ from utils.race.race_weather import (
     WEATHER_RULE_OPTIONS,
     advance_weather_turn,
     initialize_race_weather,
+    is_raining,
     is_sunny,
     is_wet_lane,
     schedule_next_wet_lanes,
@@ -225,9 +226,6 @@ def apply_lane_tactics_to_result(
         if drafting_active:
             stamina_drain = int(round(stamina_drain * 0.90))
 
-    if wet_lane_active:
-        final_total = int(round(final_total * 0.70))
-
     reference_stamina = int(game_player.get("turn_stamina_before_roll", game_player.get("stamina_left", 0)) or 0)
     stamina_penalty_active = (
         apply_stamina_penalty
@@ -256,8 +254,6 @@ def apply_lane_tactics_to_result(
         append_bonus("DRAFT", include_in_preview=False)
     if weather_stamina_cost:
         append_bonus("SUN +10STA", include_in_preview=False)
-    if wet_lane_active:
-        append_bonus("-30%WET")
     if stamina_penalty_active and stamina_debuff_percent > 0:
         append_bonus(f"-{stamina_debuff_percent}%STA")
 

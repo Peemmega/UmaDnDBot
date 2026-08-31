@@ -4,6 +4,7 @@ from utils.race.race_dice import (
 from utils.dice.dice_presets import (
     MAX_SPEED_PHASE
 )
+from utils.race.race_weather import is_wet_lane
 
 def incrase_speed_by_acceleration(game ,player: dict, multiple):
     race_profile = player.get("race_profile", {})
@@ -40,7 +41,11 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
         + effective_stats.get("effective_speed", race_profile.get("speed", 0))
     )
 
-    increase_speed = 0.3 + (scale_up * power_stat * multiple) 
+    increase_speed = 0.3 + (scale_up * power_stat * multiple)
+    if is_wet_lane(game, player.get("current_lane")):
+        # Wet lanes affect only this turn's acceleration.  They never reduce
+        # the dice result or the score that was already gained.
+        increase_speed *= 0.70
 
     new_speed = min(max_speed_cap, current_max_speed + increase_speed)
     player["current_max_speed"] = new_speed
