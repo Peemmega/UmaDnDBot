@@ -1069,7 +1069,6 @@ class EquipSkillPayload(BaseModel):
 class SkillLoadoutPresetPayload(BaseModel):
     name: str = ""
     skill_ids: list[str | None] | None = None
-    zone: dict | None = None
 
 
 @app.post("/player/skill/equip")
@@ -1181,7 +1180,6 @@ def api_save_skill_loadout_preset(
         preset_slot,
         preset_name,
         skill_ids=skill_ids,
-        zone=payload.zone,
     )
     if preset is None:
         raise HTTPException(status_code=404, detail="Player not found")
