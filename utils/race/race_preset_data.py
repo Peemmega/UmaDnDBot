@@ -189,7 +189,7 @@ RACE_PRESET = {
         "name": "February Stakes",
         "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219182676512858/thum_race_rt_000_1007_00.png?ex=69e1cf8e&is=69e07e0e&hm=b343ae355428ebe48951cadbae8cd18e5870346e5efb6eef401f613faa449997&=&format=webp&quality=lossless&width=192&height=96",
         "image": "https://media.discordapp.net/attachments/1494730857259471030/1542832798941843517/1001.png?ex=6a92aa83&is=6a915903&hm=c9778de409038dab6b005889bb069ee05dac2936510579e0de819e444fd6ffc5&=&format=webp&quality=lossless",
-        "track": "turf",
+        "track": "dirt",
         "distance": "mile",
         "turn": 8,
         "path": RACETRACKS["TOKYO_1600"],

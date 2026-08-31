@@ -100,6 +100,22 @@ def init_db():
         except Exception:
             pass
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS skill_loadout_presets (
+        user_id INTEGER NOT NULL,
+        preset_slot INTEGER NOT NULL CHECK (preset_slot BETWEEN 1 AND 3),
+        preset_name TEXT NOT NULL,
+        skill_slot_1 TEXT,
+        skill_slot_2 TEXT,
+        skill_slot_3 TEXT,
+        skill_slot_4 TEXT,
+        zone_name TEXT NOT NULL,
+        zone_image_url TEXT,
+        zone_build TEXT NOT NULL DEFAULT ('{}'),
+        PRIMARY KEY (user_id, preset_slot)
+    )
+    """)
+
     for col, col_type in [
         ("profile_image_url", "TEXT"),
         ("profile_image_updated_at", "INTEGER"),
@@ -1051,6 +1067,166 @@ def get_player_skill_slots(user_id: int):
         "slot_3": row[2],
         "slot_4": row[3],
     }
+
+
+def _build_skill_loadout_preset(row: sqlite3.Row) -> dict:
+    try:
+        zone_build = normalize_zone_build(json.loads(row[8] or "{}"))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        zone_build = normalize_zone_build({})
+
+    return {
+        "slot": int(row[0]),
+        "name": row[1],
+        "skill_ids": [row[2], row[3], row[4], row[5]],
+        "zone": {
+            "name": row[6],
+            "image_url": row[7],
+            "build": zone_build,
+        },
+    }
+
+
+def list_player_skill_loadout_presets(user_id: int) -> list[dict]:
+    conn = get_connection()
+    rows = conn.execute(
+        """
+        SELECT preset_slot, preset_name, skill_slot_1, skill_slot_2,
+               skill_slot_3, skill_slot_4, zone_name, zone_image_url, zone_build
+        FROM skill_loadout_presets
+        WHERE user_id = ?
+        ORDER BY preset_slot
+        """,
+        (user_id,),
+    ).fetchall()
+    conn.close()
+    return [_build_skill_loadout_preset(row) for row in rows]
+
+
+def save_player_skill_loadout_preset(
+    user_id: int,
+    preset_slot: int,
+    preset_name: str,
+    skill_ids: list[str | None] | None = None,
+    zone: dict | None = None,
+) -> dict | None:
+    if preset_slot not in (1, 2, 3):
+        return None
+
+    conn = get_connection()
+    row = conn.execute(
+        """
+        SELECT skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4,
+               zone_name, zone_image_url, zone_build
+        FROM players
+        WHERE user_id = ?
+        """,
+        (user_id,),
+    ).fetchone()
+    if row is None:
+        conn.close()
+        return None
+
+    current_skill_ids = [row[0], row[1], row[2], row[3]]
+    current_zone = {
+        "name": row[4] or "Default Zone",
+        "image_url": row[5],
+        "build": normalize_zone_build(json.loads(row[6] or "{}")),
+    }
+    safe_skill_ids = list(skill_ids) if skill_ids is not None else current_skill_ids
+    safe_zone = zone if isinstance(zone, dict) else current_zone
+    zone_name = str(safe_zone.get("name") or "Default Zone").strip()[:80] or "Default Zone"
+    zone_image_url = safe_zone.get("image_url")
+    zone_build = normalize_zone_build(safe_zone.get("build") or {})
+    conn.execute(
+        """
+        INSERT INTO skill_loadout_presets (
+            user_id, preset_slot, preset_name,
+            skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4,
+            zone_name, zone_image_url, zone_build
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(user_id, preset_slot) DO UPDATE SET
+            preset_name = excluded.preset_name,
+            skill_slot_1 = excluded.skill_slot_1,
+            skill_slot_2 = excluded.skill_slot_2,
+            skill_slot_3 = excluded.skill_slot_3,
+            skill_slot_4 = excluded.skill_slot_4,
+            zone_name = excluded.zone_name,
+            zone_image_url = excluded.zone_image_url,
+            zone_build = excluded.zone_build
+        """,
+        (
+            user_id, preset_slot, preset_name,
+            *safe_skill_ids,
+            zone_name, zone_image_url, json.dumps(zone_build),
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+    return {
+        "slot": preset_slot,
+        "name": preset_name,
+        "skill_ids": safe_skill_ids,
+        "zone": {
+            "name": zone_name,
+            "image_url": zone_image_url,
+            "build": zone_build,
+        },
+    }
+
+
+def apply_player_skill_loadout_preset(user_id: int, preset_slot: int) -> dict | None:
+    if preset_slot not in (1, 2, 3):
+        return None
+
+    conn = get_connection()
+    row = conn.execute(
+        """
+        SELECT preset_slot, preset_name, skill_slot_1, skill_slot_2,
+               skill_slot_3, skill_slot_4, zone_name, zone_image_url, zone_build
+        FROM skill_loadout_presets
+        WHERE user_id = ? AND preset_slot = ?
+        """,
+        (user_id, preset_slot),
+    ).fetchone()
+    if row is None:
+        conn.close()
+        return None
+
+    preset = _build_skill_loadout_preset(row)
+    conn.execute(
+        """
+        UPDATE players
+        SET skill_slot_1 = ?, skill_slot_2 = ?, skill_slot_3 = ?, skill_slot_4 = ?,
+            zone_name = ?, zone_image_url = ?, zone_build = ?
+        WHERE user_id = ?
+        """,
+        (
+            *preset["skill_ids"],
+            preset["zone"]["name"],
+            preset["zone"]["image_url"],
+            json.dumps(preset["zone"]["build"]),
+            user_id,
+        ),
+    )
+    conn.commit()
+    conn.close()
+    return preset
+
+
+def delete_player_skill_loadout_preset(user_id: int, preset_slot: int) -> bool:
+    if preset_slot not in (1, 2, 3):
+        return False
+
+    conn = get_connection()
+    cursor = conn.execute(
+        "DELETE FROM skill_loadout_presets WHERE user_id = ? AND preset_slot = ?",
+        (user_id, preset_slot),
+    )
+    conn.commit()
+    conn.close()
+    return cursor.rowcount > 0
 
 def create_player(user_id: int, username: str):
     conn = get_connection()

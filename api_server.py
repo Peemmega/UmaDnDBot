@@ -18,6 +18,10 @@ from utils.database import (
     update_player_username,
     set_player_skill_slot,
     get_player_skill_slots,
+    list_player_skill_loadout_presets,
+    save_player_skill_loadout_preset,
+    apply_player_skill_loadout_preset,
+    delete_player_skill_loadout_preset,
     init_db,
     set_player_profile_image,
     update_player_stat_pool,
@@ -1062,6 +1066,12 @@ class EquipSkillPayload(BaseModel):
     skill_id: str
 
 
+class SkillLoadoutPresetPayload(BaseModel):
+    name: str = ""
+    skill_ids: list[str | None] | None = None
+    zone: dict | None = None
+
+
 @app.post("/player/skill/equip")
 def api_equip_skill(payload: EquipSkillPayload):
     user_id = int(payload.user_id)
@@ -1134,3 +1144,86 @@ def api_get_player_skills(user_id: str):
         }
 
     return result
+
+
+@app.get("/player/{user_id}/skill-loadout-presets")
+def api_get_skill_loadout_presets(user_id: str):
+    return {"presets": list_player_skill_loadout_presets(int(user_id))}
+
+
+@app.put("/player/{user_id}/skill-loadout-presets/{preset_slot}")
+def api_save_skill_loadout_preset(
+    user_id: str,
+    preset_slot: int,
+    payload: SkillLoadoutPresetPayload,
+):
+    if preset_slot not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="Preset slot must be 1-3")
+
+    preset_name = payload.name.strip()[:48] or f"Preset {preset_slot}"
+    skill_ids = None
+    if payload.skill_ids is not None:
+        if len(payload.skill_ids) != 4:
+            raise HTTPException(status_code=400, detail="Preset must have 4 skill slots")
+        skill_ids = [
+            str(skill_id).strip().lower() if skill_id else None
+            for skill_id in payload.skill_ids
+        ]
+        missing_skills = [skill_id for skill_id in skill_ids if skill_id and skill_id not in SKILLS]
+        if missing_skills:
+            raise HTTPException(status_code=400, detail=f"Unknown skill: {missing_skills[0]}")
+        saved_skill_ids = [skill_id for skill_id in skill_ids if skill_id]
+        if len(set(saved_skill_ids)) != len(saved_skill_ids):
+            raise HTTPException(status_code=400, detail="Preset has duplicate skills")
+
+    preset = save_player_skill_loadout_preset(
+        int(user_id),
+        preset_slot,
+        preset_name,
+        skill_ids=skill_ids,
+        zone=payload.zone,
+    )
+    if preset is None:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    return {"success": True, "preset": preset}
+
+
+@app.post("/player/{user_id}/skill-loadout-presets/{preset_slot}/apply")
+def api_apply_skill_loadout_preset(user_id: str, preset_slot: int):
+    if preset_slot not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="Preset slot must be 1-3")
+
+    preset = next(
+        (
+            item
+            for item in list_player_skill_loadout_presets(int(user_id))
+            if item["slot"] == preset_slot
+        ),
+        None,
+    )
+    if preset is None:
+        raise HTTPException(status_code=404, detail="Preset not found")
+
+    skill_ids = [skill_id for skill_id in preset["skill_ids"] if skill_id]
+    missing_skills = [skill_id for skill_id in skill_ids if skill_id not in SKILLS]
+    if missing_skills:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Preset has unavailable skill: {missing_skills[0]}",
+        )
+    if len(set(skill_ids)) != len(skill_ids):
+        raise HTTPException(status_code=400, detail="Preset has duplicate skills")
+
+    applied_preset = apply_player_skill_loadout_preset(int(user_id), preset_slot)
+    if applied_preset is None:
+        raise HTTPException(status_code=404, detail="Preset not found")
+
+    return {"success": True, "preset": applied_preset}
+
+
+@app.delete("/player/{user_id}/skill-loadout-presets/{preset_slot}")
+def api_delete_skill_loadout_preset(user_id: str, preset_slot: int):
+    if not delete_player_skill_loadout_preset(int(user_id), preset_slot):
+        raise HTTPException(status_code=404, detail="Preset not found")
+    return {"success": True}
