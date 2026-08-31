@@ -306,8 +306,11 @@ def _apply_lane_offsets(rows: list[dict[str, Any]]) -> None:
         def flush_cluster() -> None:
             offsets = cluster_offsets.get(len(cluster), cluster_offsets[6])
             for idx, item in enumerate(cluster):
-                x_offset, y_offset = offsets[idx] if idx < len(offsets) else offsets[-1]
-                item["track_offset_x"] = x_offset
+                _, y_offset = offsets[idx] if idx < len(offsets) else offsets[-1]
+                # Keep the horizontal coordinate strictly score-based.  A
+                # collision offset may otherwise make a lower-scoring runner
+                # appear ahead of a higher-scoring runner on the track.
+                item["track_offset_x"] = 0
                 item["lane_offset"] = y_offset
 
         for item in lane_rows:
