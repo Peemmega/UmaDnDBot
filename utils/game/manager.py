@@ -228,6 +228,7 @@ def apply_lane_tactics_to_result(
         uses_lane_system=supports_lane,
         is_sunny=is_sunny(game),
         has_drafting_bonus=drafting_active,
+        turn=game.get("turn"),
     )
     lane_cost = stamina_cost.lane_cost
     path_stamina_cost = stamina_cost.path_cost

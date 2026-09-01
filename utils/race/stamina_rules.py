@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from utils.race.race_lane import get_lane_stamina_cost
+from utils.race.race_lane import get_lane_stamina_base_cost, get_lane_stamina_cost
 
 
 SUNNY_STAMINA_COST = 10
@@ -28,11 +28,14 @@ def calculate_roll_stamina_cost(
     uses_lane_system: bool,
     is_sunny: bool,
     has_drafting_bonus: bool,
+    turn: int | None = None,
 ) -> RollStaminaCost:
     """Return the single authoritative stamina formula for a race roll.
 
-    Lane cost is included only for the Discord lane mode. Path and sunny
-    weather costs apply in every mode. Drafting reduces the final drain by 10%.
+    Lane cost is included only for the Discord lane mode. Turn 1 always uses
+    lane 2's base cost (100), regardless of the runner's starting lane. Path
+    and sunny weather costs apply in every mode. Drafting reduces the final
+    drain by 10%.
     """
     effect = path_effect or {}
     path_cost = int(effect.get("stamina_cost", 0) or 0)
@@ -40,7 +43,11 @@ def calculate_roll_stamina_cost(
     lane_cost = 0
 
     if uses_lane_system:
-        base_lane_cost = get_lane_stamina_cost(player)
+        base_lane_cost = (
+            get_lane_stamina_base_cost({"current_lane": 2})
+            if int(turn or 0) == 1
+            else get_lane_stamina_cost(player)
+        )
         configured_multiplier = effect.get("stamina_multiplier", 1.0)
         multiplier = float(1.0 if configured_multiplier is None else configured_multiplier)
         lane_cost = int(round(base_lane_cost * multiplier))
