@@ -218,7 +218,10 @@ def apply_lane_tactics_to_result(
         blocking_penalty = float(block_info["blocking_penalty"])
         final_total = int(block_info["final_score"])
         lane_base_cost = get_lane_stamina_cost(game_player)
-        lane_stamina_multiplier = float(path_effect.get("stamina_multiplier", 1.0) or 1.0)
+        configured_multiplier = path_effect.get("stamina_multiplier", 1.0)
+        lane_stamina_multiplier = float(
+            1.0 if configured_multiplier is None else configured_multiplier
+        )
         lane_cost = int(round(lane_base_cost * lane_stamina_multiplier))
         stamina_drain = lane_cost + path_stamina_cost + weather_stamina_cost
         drafting_active = has_drafting_bonus(temp_player, working_players)
