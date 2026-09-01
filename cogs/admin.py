@@ -26,6 +26,12 @@ ADMIN_IDS = {
     464058883556769793,
 }
 
+# New general administrators must not automatically receive permission to
+# permanently clear or reset stored data.
+DATA_CLEANUP_ADMIN_IDS = {
+    464058883556769793,
+}
+
 VALID_APTITUDE_FIELDS = {
     "turf", "dirt",
     "sprint", "mile", "medium", "long",
@@ -38,6 +44,9 @@ class Admin(commands.Cog):
 
     def is_admin_user(self, user_id: int) -> bool:
         return user_id in ADMIN_IDS
+
+    def is_data_cleanup_admin(self, user_id: int) -> bool:
+        return user_id in DATA_CLEANUP_ADMIN_IDS
 
     async def silent_delete(self, message: discord.Message):
         try:
@@ -61,6 +70,24 @@ class Admin(commands.Cog):
             ctx,
             action_name=action_name,
             result_text="Permission denied",
+            target=target,
+            color=discord.Color.red(),
+        )
+        return False
+
+    async def require_data_cleanup_admin(
+        self,
+        ctx: commands.Context,
+        action_name: str,
+        target: discord.Member | None = None,
+    ) -> bool:
+        if self.is_data_cleanup_admin(ctx.author.id):
+            return True
+        await self.silent_delete(ctx.message)
+        await self.send_log_embed(
+            ctx,
+            action_name=action_name,
+            result_text="Permission denied: data cleanup is restricted to the owner.",
             target=target,
             color=discord.Color.red(),
         )
@@ -171,6 +198,9 @@ class Admin(commands.Cog):
                 "`!resetall CONFIRM` — ลบข้อมูลผู้เล่นและการเล่นทั้งหมดอย่างถาวร"
             ),
             inline=False,
+        )
+        embed.set_footer(
+            text="คำสั่งล้างหรือรีเซ็ตข้อมูลใช้ได้เฉพาะ UID 464058883556769793"
         )
         await ctx.send(embed=embed)
 
@@ -321,7 +351,7 @@ class Admin(commands.Cog):
         member: discord.Member,
         confirmation: str = "",
     ):
-        if not await self.require_admin(ctx, "remove_skill", member):
+        if not await self.require_data_cleanup_admin(ctx, "remove_skill", member):
             return
         await self.silent_delete(ctx.message)
         if confirmation != "CONFIRM":
@@ -353,7 +383,7 @@ class Admin(commands.Cog):
         member: discord.Member,
         confirmation: str = "",
     ):
-        if not await self.require_admin(ctx, "reset_player", member):
+        if not await self.require_data_cleanup_admin(ctx, "reset_player", member):
             return
         await self.silent_delete(ctx.message)
         normalized_section = section.strip().lower()
@@ -381,7 +411,7 @@ class Admin(commands.Cog):
 
     @commands.command(name="team_remove", aliases=["removeteam"])
     async def team_remove(self, ctx: commands.Context, member: discord.Member, confirmation: str = ""):
-        if not await self.require_admin(ctx, "team_remove", member):
+        if not await self.require_data_cleanup_admin(ctx, "team_remove", member):
             return
         await self.silent_delete(ctx.message)
         if confirmation != "CONFIRM":
@@ -397,7 +427,7 @@ class Admin(commands.Cog):
 
     @commands.command(name="mail_clear", aliases=["clearmail"])
     async def mail_clear(self, ctx: commands.Context, member: discord.Member, confirmation: str = ""):
-        if not await self.require_admin(ctx, "mail_clear", member):
+        if not await self.require_data_cleanup_admin(ctx, "mail_clear", member):
             return
         await self.silent_delete(ctx.message)
         if confirmation != "CONFIRM":
@@ -412,7 +442,7 @@ class Admin(commands.Cog):
 
     @commands.command(name="resetzoneall")
     async def reset_zone_all(self, ctx: commands.Context):
-        if not self.is_admin_user(ctx.author.id):
+        if not self.is_data_cleanup_admin(ctx.author.id):
             await self.silent_delete(ctx.message)
             await self.send_log_embed(
                 ctx,
@@ -440,7 +470,7 @@ class Admin(commands.Cog):
 
     @commands.command(name="clear_race_ranking", aliases=["clearranking", "clear_rank"])
     async def clear_race_ranking(self, ctx: commands.Context, stage_key: str = "all"):
-        if not self.is_admin_user(ctx.author.id):
+        if not self.is_data_cleanup_admin(ctx.author.id):
             await self.silent_delete(ctx.message)
             await self.send_log_embed(
                 ctx,
@@ -500,7 +530,7 @@ class Admin(commands.Cog):
         confirmation: str = "",
     ):
         """Permanently delete completed race records by type."""
-        if not await self.require_admin(ctx, "clear_race_records"):
+        if not await self.require_data_cleanup_admin(ctx, "clear_race_records"):
             return
         await self.silent_delete(ctx.message)
 
@@ -563,7 +593,7 @@ class Admin(commands.Cog):
     @commands.command(name="resetall")
     async def reset_all(self, ctx: commands.Context, confirmation: str = ""):
         """Permanently clear all persisted player and gameplay data."""
-        if not self.is_admin_user(ctx.author.id):
+        if not self.is_data_cleanup_admin(ctx.author.id):
             await self.silent_delete(ctx.message)
             await self.send_log_embed(
                 ctx,
@@ -616,7 +646,7 @@ class Admin(commands.Cog):
         confirmation: str = "",
     ):
         """Remove old role/profile records for one member without deleting gameplay data."""
-        if not self.is_admin_user(ctx.author.id):
+        if not self.is_data_cleanup_admin(ctx.author.id):
             await self.silent_delete(ctx.message)
             await self.send_log_embed(
                 ctx,

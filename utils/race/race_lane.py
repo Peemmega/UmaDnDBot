@@ -8,13 +8,13 @@ LANE_MAX = 6
 LANE_DRAFT_FACTOR = 0.90
 LANE_BLOCK_PENALTY_STEP = 0.10
 LANE_BLOCK_PENALTY_CAP = 0.20
-LANE_STAMINA_MULTIPLIERS = {
-    1: 0.90,
-    2: 1.00,
-    3: 1.10,
-    4: 1.20,
-    5: 1.30,
-    6: 1.40,
+LANE_STAMINA_BASE_COSTS = {
+    1: 90,
+    2: 100,
+    3: 110,
+    4: 120,
+    5: 130,
+    6: 140,
 }
 
 
@@ -34,13 +34,14 @@ def get_default_lane(entry_number: int | None) -> int:
     return clamp_lane(((max(1, entry) - 1) // 2) + 1)
 
 
-def get_lane_stamina_multiplier(player: dict) -> float:
+def get_lane_stamina_base_cost(player: dict) -> int:
     lane = clamp_lane(player.get("current_lane"))
-    return LANE_STAMINA_MULTIPLIERS.get(lane, 1.0)
+    return LANE_STAMINA_BASE_COSTS[lane]
 
 
-def get_lane_stamina_cost(player: dict, base_drain: int) -> int:
-    return int(round(int(base_drain or 0) * get_lane_stamina_multiplier(player)))
+def get_lane_stamina_cost(player: dict, additional_drain: int = 0) -> int:
+    """Return the lane's fixed base cost plus path/weather costs."""
+    return get_lane_stamina_base_cost(player) + max(0, int(additional_drain or 0))
 
 
 def get_player_lane(player: dict) -> int:
