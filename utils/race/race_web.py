@@ -51,7 +51,6 @@ from utils.race.race_presets import PATH_TYPE_TEXT, RACE_PRESET
 from utils.race.race_presets import (
     get_current_path_type,
     get_path_effect,
-    get_web_race_finish_distance,
 )
 from utils.race.race_visibility import (
     build_timing_gauge_config,
@@ -66,14 +65,13 @@ from utils.race.web_timing_config import (
     get_web_timing_start_delay_seconds,
 )
 from utils.zone.zone_manager import apply_zone_in_game
-from utils.race.web_timing_balance import (
-    get_web_timing_snapshot,
-    initialize_web_timing_player,
-    refresh_web_timing_player,
-    roll_web_timing_distance_gain,
+from utils.race.web_timing_engine import (
+    apply_web_timing_gain,
+    initialize_web_timing_race,
 )
 from utils.profile_images import resolve_player_render_image
-from utils.race.race_history import record_race_action, save_completed_race
+from utils.race.race_history import record_race_action
+from utils.race.race_completion import finalize_race
 
 WEB_ROOM_PREFIX = "web_race_"
 DEFAULT_STAGE_KEY = "Debut"
@@ -843,19 +841,10 @@ class RaceWebManager:
                 final_turn = game.get("turn", 0)
                 next_turn(room_id)
                 game["turn"] = final_turn
-                ranked = get_ranked_players(room_id)
-                game["result"] = {
-                    "winner": _serialize_winner(ranked[0]) if ranked else None,
-                    "rankings": [
-                        _serialize_winner(item, index)
-                        for index, item in enumerate(ranked, start=1)
-                    ],
-                }
-                save_completed_race(game, ranked)
-                game["ended"] = True
-                game["started"] = False
-                game["phase"] = "ended"
-                self._log(game, "Race finished", game["result"])
+                ranked, result, _history_id = finalize_race(
+                    game, ranked_players=get_ranked_players(room_id)
+                )
+                self._log(game, "Race finished", result)
                 break
 
             next_turn(room_id)
@@ -881,32 +870,20 @@ class RaceWebManager:
 
     def _initialize_web_timing_race(self, game: dict) -> None:
         stage = RACE_PRESET.get(game.get("stage_key"), {})
-        game["finish_distance"] = get_web_race_finish_distance(stage)
-        game["winner_id"] = None
-        timing_now = time.time()
-        schedule_now = time.monotonic()
-        start_delay_seconds = get_web_timing_start_delay_seconds()
-        for player_id, player in game.get("players", {}).items():
-            refresh_player_race_aptitudes(player, game)
-            player["web_distance"] = 0
-            player["score"] = 0
-            player["web_timing_last_cycle"] = 0
-            player["web_timing_submitted_cycles"] = set()
-            player["web_latest_timing_result"] = None
-            player["web_last_distance_gain"] = 0
-            player["last_distance_gain"] = 0
-            if initialize_web_timing_player(
-                player, game["finish_distance"], timing_now + start_delay_seconds
-            ):
-                self._log(
-                    game, f"{self._player_label(player_id, player)} entered Zone!"
-                )
-            if player.get("is_mob"):
-                player["web_timing_next_auto_submit_at"] = (
-                    schedule_now
-                    + start_delay_seconds
-                    + self._get_bot_timing_half_cycle_seconds(game, player)
-                )
+        entered_zone = initialize_web_timing_race(
+            game,
+            stage,
+            refresh_player=refresh_player_race_aptitudes,
+            start_delay_seconds=get_web_timing_start_delay_seconds(),
+            bot_half_cycle_seconds=lambda player: self._get_bot_timing_half_cycle_seconds(
+                game, player
+            ),
+        )
+        for player_id in entered_zone:
+            self._log(
+                game,
+                f"{self._player_label(player_id, game['players'][player_id])} entered Zone!",
+            )
 
     def _start_web_timing_bot_loop(self, room_id: str) -> None:
         game = self._get_room(room_id)
@@ -1010,53 +987,21 @@ class RaceWebManager:
         is_bot: bool = False,
     ) -> None:
         game = self._get_room(room_id)
-        player = game.get("players", {}).get(str(user_id))
-        if player is None:
-            raise ValueError("Player is not in this race room")
-
-        finish_distance = int(game.get("finish_distance") or 2000)
-        if refresh_web_timing_player(player, finish_distance):
-            self._log(game, f"{self._player_label(user_id, player)} entered Zone!")
-        base_gain, raw_distance_gain, timing_tier = roll_web_timing_distance_gain(
-            player, timing_score
+        event = apply_web_timing_gain(
+            game,
+            user_id,
+            cycle_id=cycle_id,
+            timing_score=timing_score,
+            timing_offset=timing_offset,
         )
-        multiplier = raw_distance_gain / base_gain if base_gain else 0.0
-        distance_gain = max(1, round(raw_distance_gain))
-        distance = min(
-            finish_distance, int(player.get("web_distance", 0)) + distance_gain
-        )
-        player["web_distance"] = distance
-        player["score"] = distance
-        player["web_last_distance_gain"] = distance_gain
-        player["last_distance_gain"] = distance_gain
-        if refresh_web_timing_player(player, finish_distance, increase_speed=False):
+        player = event["player"]
+        if event["entered_zone"]:
             self._log(game, f"{self._player_label(user_id, player)} entered Zone!")
-        snapshot = get_web_timing_snapshot(player, finish_distance)
-
-        result = {
-            "base_gain": round(base_gain, 2),
-            "timing_multiplier": round(multiplier, 3),
-            "timing_score": round(timing_score, 3),
-            "timing_offset": round(timing_offset, 3),
-            "timing_tier": timing_tier,
-            "total": distance_gain,
-        }
-        player["web_latest_timing_result"] = {
-            "cycle_id": cycle_id,
-            "score": result["timing_score"],
-            "timing_score": result["timing_score"],
-            "offset": result["timing_offset"],
-            "tier": result["timing_tier"],
-            "distance_gain": distance_gain,
-            "total": distance_gain,
-            "phase": snapshot["phase"],
-            "tempo_level": snapshot["tempo_level"],
-        }
         self._log(
             game,
-            f"{self._player_label(user_id, player)} timed {result['timing_tier']} +{distance_gain}m",
+            f"{self._player_label(user_id, player)} timed {event['result']['timing_tier']} +{event['distance_gain']}m",
             {
-                "timing": player["web_latest_timing_result"],
+                "timing": event["latest"],
                 "effective_stats": player.get("effective_race_stats"),
                 "aptitude_bonus": player.get("aptitude_bonus"),
                 "client_phase": client_phase,
@@ -1069,36 +1014,18 @@ class RaceWebManager:
             "timing",
             {
                 "cycle_id": cycle_id,
-                "timing_tier": result["timing_tier"],
-                "timing_score": result["timing_score"],
-                "distance_gain": distance_gain,
-                "distance_total": distance,
+                "timing_tier": event["result"]["timing_tier"],
+                "timing_score": event["result"]["timing_score"],
+                "distance_gain": event["distance_gain"],
+                "distance_total": event["distance"],
             },
         )
-        if distance >= finish_distance:
+        if event["finished"]:
             self._finish_web_timing_race(game, str(user_id))
 
     def _finish_web_timing_race(self, game: dict, winner_id: str) -> None:
-        ranked = sorted(
-            game.get("players", {}).items(),
-            key=lambda item: item[1].get("web_distance", 0),
-            reverse=True,
-        )
-        game["winner_id"] = winner_id
-        game["result"] = {
-            "winner": _serialize_winner(
-                next(item for item in ranked if str(item[0]) == winner_id)
-            ),
-            "rankings": [
-                _serialize_winner(item, index)
-                for index, item in enumerate(ranked, start=1)
-            ],
-        }
-        save_completed_race(game, ranked)
-        game["ended"] = True
-        game["started"] = False
-        game["phase"] = "ended"
-        self._log(game, "Race finished", game["result"])
+        ranked, result, _history_id = finalize_race(game, winner_id=winner_id)
+        self._log(game, "Race finished", result)
 
     def _execute_reroll_core(
         self,
@@ -1231,20 +1158,6 @@ class RaceWebManager:
 
         for websocket in stale:
             self.disconnect(room_id, websocket)
-
-
-def _serialize_winner(item, rank: int = 1) -> dict:
-    player_id, player = item
-    distance = int(player.get("web_distance", player.get("score", 0)))
-    return {
-        "rank": rank,
-        "id": str(player_id),
-        "name": player.get("display_name") or player.get("username") or str(player_id),
-        "style": player.get("style"),
-        "score": player.get("score", 0),
-        "distance": distance,
-        "is_mob": bool(player.get("is_mob")),
-    }
 
 
 def _current_buff_payload(player: dict) -> dict:

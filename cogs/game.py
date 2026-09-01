@@ -56,7 +56,7 @@ async def build_turn_result_discord_file(game: dict, ranked_players):
 
 
 from utils.database import ensure_player
-from utils.race.race_history import save_completed_race
+from utils.race.race_completion import complete_race, finalize_race
 from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
 from utils.race.race_presets import (
     get_current_path_type, 
@@ -322,10 +322,12 @@ class GameCog(commands.GroupCog, name="game"):
             return
 
         game = payload["game"]
-        ranked_players = payload["ranked_players"]
         game["record_type"] = "practice"
+        ranked_players = payload["ranked_players"]
         try:
-            save_completed_race(game, ranked_players)
+            ranked_players, _result, _history_id = finalize_race(
+                game, ranked_players=ranked_players
+            )
         except Exception as exc:
             print(f"Practice Race History save error: {exc}")
 
@@ -793,15 +795,14 @@ class GameCog(commands.GroupCog, name="game"):
         new_turn = next_turn(channel_id)
 
         if new_turn > game["max_turn"]:
-            # Block late interactions while rendering/saving the final result.
-            # Without this, a second callback can enter the end path too.
-            game["ended"] = True
-            game["started"] = False
-            game["phase"] = "ending"
+            # Finish the shared race state before rendering or persistence, so
+            # late interactions cannot enter the end path a second time.
             ranked_players = get_ranked_players(channel_id)
             race_history_id = None
             try:
-                race_history_id = save_completed_race(game, ranked_players)
+                ranked_players, _result, race_history_id = finalize_race(
+                    game, ranked_players=ranked_players
+                )
             except Exception as exc:
                 print(f"Race History save error: {exc}")
 

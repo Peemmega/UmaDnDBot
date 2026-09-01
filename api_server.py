@@ -56,6 +56,7 @@ from utils.race.race_history import (
     list_race_history,
     save_completed_race,
 )
+from utils.race.race_completion import finalize_race
 from utils.profile_images import (
     ALLOWED_IMAGE_CONTENT_TYPES,
     MAX_PROFILE_IMAGE_BYTES,
@@ -639,10 +640,12 @@ async def run_api_test_bot_race(bot, channel_id: int):
         }
 
     game = payload["game"]
-    ranked_players = payload["ranked_players"]
     game["record_type"] = PRACTICE
+    ranked_players = payload["ranked_players"]
     try:
-        save_completed_race(game, ranked_players)
+        ranked_players, _result, _history_id = finalize_race(
+            game, ranked_players=ranked_players
+        )
     except Exception as exc:
         print(f"Practice Race History save error: {exc}")
 

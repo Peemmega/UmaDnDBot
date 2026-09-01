@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import time
 
 from utils.database import get_player
@@ -43,7 +44,11 @@ def serialize_player(
     rank: int | None = None,
     finish_distance: int | None = None,
     viewer_id: str | None = None,
+    current_turn: int | None = None,
 ) -> dict:
+    # Snapshot output must not refresh database/timing/stamina state on the
+    # live player object. Several display helpers normalize fields in place.
+    player = copy.deepcopy(player)
     if not str(user_id).startswith("mob_") and not player.get("is_mob"):
         db_player = get_player(user_id)
         if db_player:
@@ -129,7 +134,7 @@ def serialize_player(
         "ai_level": player.get("ai_level"),
         "mob_preset_key": player.get("mob_preset_key"),
         "last_roll_turn": player.get("last_roll_turn", -1),
-        "has_rolled": player.get("last_roll_turn") == player.get("_current_turn"),
+        "has_rolled": player.get("last_roll_turn") == current_turn,
         "stamina_left": stamina_snapshot["current_stamina"],
         "current_stamina": stamina_snapshot["current_stamina"],
         "max_stamina": stamina_snapshot["max_stamina"],
@@ -217,7 +222,6 @@ def serialize_room(
 
     players = []
     for player_id, player in game.get("players", {}).items():
-        player["_current_turn"] = game.get("turn", 0)
         players.append(
             serialize_player(
                 player_id,
@@ -225,15 +229,19 @@ def serialize_room(
                 rank_by_id.get(player_id),
                 finish_distance,
                 str(user_id) if user_id else None,
+                game.get("turn", 0),
             )
         )
-        player.pop("_current_turn", None)
 
     turn = game.get("turn", 0)
     max_turn = game.get("max_turn", 0)
     current_path_type = get_current_path_type(game) if turn else None
     owner_id = str(game.get("owner_id"))
-    current_player = game.get("players", {}).get(str(user_id)) if user_id else None
+    current_player = (
+        copy.deepcopy(game.get("players", {}).get(str(user_id)))
+        if user_id
+        else None
+    )
     phase = game.get("phase")
     if game.get("ended"):
         phase = "ended"
@@ -309,7 +317,7 @@ def serialize_room(
         "winner_id": game.get("winner_id"),
         "timing_gauge": build_timing_gauge_config(game, current_player),
         "timing_gauges": {
-            str(player_id): build_timing_gauge_config(game, player)
+            str(player_id): build_timing_gauge_config(game, copy.deepcopy(player))
             for player_id, player in game.get("players", {}).items()
         },
         "phase": phase,
