@@ -52,18 +52,15 @@ from utils.race.race_lane import (
     get_default_lane,
     get_lane_stamina_cost,
     has_drafting_bonus,
-    resolve_pending_lane_changes,
 )
 from utils.race.race_weather import (
     WEATHER_RULE,
     WEATHER_RULE_OPTIONS,
-    advance_weather_turn,
     initialize_race_weather,
-    is_raining,
     is_sunny,
     is_wet_lane,
-    schedule_next_wet_lanes,
 )
+from utils.race.turn_engine import TurnEngine
 from utils.dice.dice_presets import (
     MAX_SPEED_PHASE
 )
@@ -684,33 +681,25 @@ def reset_turn_confirmations(channel_id: int):
     if game is None:
         return False
 
-    game["turn_confirmations"] = set()
-    game["awaiting_turn_confirm"] = False
-    game["turn_confirmation_turn"] = None
-    game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
+    TurnEngine.reset_confirmations(game)
     return True
 
 def start_turn_confirmation(channel_id: int):
     game = get_game(channel_id)
-    if game is None or game.get("turn_transition_in_progress"):
+    if game is None:
         return False
 
-    game["turn_confirmations"] = set()
-    game["awaiting_turn_confirm"] = True
-    game["turn_confirmation_turn"] = game["turn"]
-    game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
-    schedule_next_wet_lanes(game)
-
-    # Rain previews are shown before a turn is confirmed.  Give Mobs the same
-    # opportunity as players to revise their queued lane for the next turn.
-    if _supports_lane_system(game) and game.get("next_wet_lanes"):
-        for mob_id, player in game.get("players", {}).items():
+    def revise_mob_lanes(race_game: dict) -> None:
+        if not _supports_lane_system(race_game):
+            return
+        for mob_id, player in race_game.get("players", {}).items():
             if not player.get("is_mob"):
                 continue
-            target_lane = decide_mob_target_lane(game, mob_id)
+            target_lane = decide_mob_target_lane(race_game, mob_id)
             if target_lane is not None:
                 player["pending_lane"] = clamp_lane(target_lane)
-    return True
+
+    return TurnEngine.start_confirmation(game, revise_mob_lanes=revise_mob_lanes)
 
 def confirm_turn(
     channel_id: int,
@@ -723,45 +712,21 @@ def confirm_turn(
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
 
-    if not game["awaiting_turn_confirm"]:
-        return False, "ตอนนี้ยังไม่อยู่ในช่วงยืนยันจบเทิร์น"
-
-    current_turn = game.get("turn")
-    if game.get("turn_confirmation_turn") != current_turn:
-        return False, "ช่วงยืนยันนี้หมดอายุแล้ว"
-    if expected_turn is not None and expected_turn != current_turn:
-        return False, "ปุ่มยืนยันนี้เป็นของเทิร์นก่อนหน้า"
-    if (
-        confirmation_token is not None
-        and confirmation_token != game.get("turn_confirmation_token")
-    ):
-        return False, "ปุ่มยืนยันนี้หมดอายุแล้ว"
-
-    if user_id not in game["players"]:
-        return False, "คุณไม่ได้อยู่ในเกมนี้"
-
-    player = game["players"][user_id]
-    if player.get("is_mob"):
-        return False, "Mob ยืนยันเทิร์นอัตโนมัติ"
-    if player.get("last_roll_turn") != current_turn:
-        return False, "ต้องทอยก่อนยืนยัน"
-
-    game["turn_confirmations"].add(user_id)
-
-    required_confirmations = {
-        player_id
-        for player_id, info in game["players"].items()
-        if not info.get("is_mob")
+    result = TurnEngine.confirm(
+        game,
+        user_id,
+        expected_turn=expected_turn,
+        confirmation_token=confirmation_token,
+    )
+    messages = {
+        "not_awaiting_confirmation": "ตอนนี้ยังไม่อยู่ในช่วงยืนยันจบเทิร์น",
+        "stale_confirmation": "ปุ่มยืนยันนี้หมดอายุแล้ว",
+        "stale_turn": "ปุ่มยืนยันนี้เป็นของเทิร์นก่อนหน้า",
+        "player_not_found": "คุณไม่ได้อยู่ในเกมนี้",
+        "mob_cannot_confirm": "Mob ยืนยันเทิร์นอัตโนมัติ",
+        "player_not_rolled": "ต้องทอยก่อนยืนยัน",
     }
-    confirmed_count = len(game["turn_confirmations"] & required_confirmations)
-    total_players = len(required_confirmations)
-    all_confirmed = confirmed_count == total_players
-
-    return True, {
-        "confirmed_count": confirmed_count,
-        "total_players": total_players,
-        "all_confirmed": all_confirmed,
-    }
+    return result.ok, result.payload if result.ok else messages[result.code]
 
 def claim_turn_advance(
     channel_id: int,
@@ -775,47 +740,24 @@ def claim_turn_advance(
     game = get_game(channel_id)
     if game is None:
         return False, "ไม่พบเกมนี้แล้ว"
-    if not game.get("started") or game.get("ended"):
-        return False, "เกมไม่อยู่ในสถานะที่เลื่อนเทิร์นได้"
-    if game.get("turn_transition_in_progress"):
-        return False, "ระบบกำลังเลื่อนเทิร์นนี้อยู่"
 
-    current_turn = game.get("turn")
-    if expected_turn is not None and expected_turn != current_turn:
-        return False, "คำสั่งนี้เป็นของเทิร์นก่อนหน้า"
-
-    if confirmation_token is not None:
-        if (
-            not game.get("awaiting_turn_confirm")
-            or game.get("turn_confirmation_turn") != current_turn
-            or game.get("turn_confirmation_token") != confirmation_token
-        ):
-            return False, "ช่วงยืนยันนี้หมดอายุแล้ว"
-
-    if require_all_rolls and not have_all_players_rolled(channel_id):
-        return False, "ยังมีผู้เล่นที่ยังไม่ได้ทอย"
-
-    if require_all_confirmations:
-        required_confirmations = {
-            player_id
-            for player_id, info in game["players"].items()
-            if not info.get("is_mob")
-        }
-        if (
-            not game.get("awaiting_turn_confirm")
-            or game.get("turn_confirmation_turn") != current_turn
-            or not required_confirmations.issubset(game["turn_confirmations"])
-        ):
-            return False, "ยังยืนยันไม่ครบทุกคน"
-
-    # Claim before any Discord await. Concurrent timeout/button callbacks now
-    # see this latch and cannot increment the turn again.
-    game["turn_transition_in_progress"] = True
-    game["awaiting_turn_confirm"] = False
-    game["turn_confirmations"] = set()
-    game["turn_confirmation_turn"] = None
-    game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
-    return True, current_turn
+    result = TurnEngine.claim_transition(
+        game,
+        all_players_rolled=have_all_players_rolled(channel_id),
+        expected_turn=expected_turn,
+        confirmation_token=confirmation_token,
+        require_all_confirmations=require_all_confirmations,
+        require_all_rolls=require_all_rolls,
+    )
+    messages = {
+        "race_not_active": "เกมไม่อยู่ในสถานะที่เลื่อนเทิร์นได้",
+        "transition_in_progress": "ระบบกำลังเลื่อนเทิร์นนี้อยู่",
+        "stale_turn": "คำสั่งนี้เป็นของเทิร์นก่อนหน้า",
+        "stale_confirmation": "ช่วงยืนยันนี้หมดอายุแล้ว",
+        "pending_rolls": "ยังมีผู้เล่นที่ยังไม่ได้ทอย",
+        "pending_confirmations": "ยังยืนยันไม่ครบทุกคน",
+    }
+    return result.ok, result.payload["turn"] if result.ok else messages[result.code]
 
 
 def refresh_turn_snapshot(channel_id: int):
@@ -1419,138 +1361,6 @@ def use_block(channel_id: int, user_id: int):
         return False, "ไม่พบผู้เล่น"
 
     if player["used_block"]:
-        return False, "คุณใช้ Block ไปแล้ว"
-
-    behind_players = _get_block_candidates(channel_id, user_id)
-    if any(is_in_gold_range_against(player, info) for _, _, info in behind_players):
-        return False, "คุณอยู่ในระยะ Gold แล้ว"
-    gold_range = get_gold_range_value(player)
-    valid_targets = [(uid, gap, info) for uid, gap, info in behind_players if gold_range < gap <= gold_range + 20]
-
-    if snapshot["current_stamina"] < rush_cost:
-        return False, "ไม่มีคนด้านหลังที่ห่างเกิน 20"
-
-    target_id, gap, target_info = valid_targets[0]
-
-    move_back = gap - gold_range
-    player["score"] -= move_back
-
-    player["used_block"] = True
-    player["action_locked"] = True
-
-    record_race_action(
-        game,
-        user_id,
-        "Block",
-        {
-            "move_back": move_back,
-            "new_score": player["score"],
-            "summary": f"Block moved back {move_back} point(s)",
-        },
-        target_id=target_id,
-    )
-
-    return True, {
-        "target_id": target_id,
-        "target": target_info,
-        "move_back": move_back,
-        "new_score": player["score"],
-    }
-
-def can_use_rush(channel_id: int, user_id: int) -> tuple[bool, str | None]:
-    game = get_game(channel_id)
-    if game is None:
-        return False, "ยังไม่มีเกมในห้องนี้"
-
-    player = game["players"].get(user_id)
-    if player is None:
-        return False, "ไม่พบผู้เล่น"
-
-    if player["used_rush"]:
-        return False, "คุณใช้ Rush ไปแล้ว"
-
-    rush_cost = _get_rush_stamina_cost(player)
-    snapshot = get_runtime_stamina_snapshot(player)
-
-    if not valid_targets:
-        return False, "ไม่มีคนด้านหน้าที่อยู่ในระยะ 30"
-
-    return True, None
-
-def use_rush(channel_id: int, user_id: int):
-    ok, reason = can_use_rush(channel_id, user_id)
-    if not ok:
-        return False, reason
-
-    game = get_game(channel_id)
-    player = game["players"].get(user_id)
-
-    ahead_players = get_players_ahead(channel_id, user_id)
-    valid_targets = [(uid, gap, info) for uid, gap, info in ahead_players if gap <= 30]
-
-    target_id, gap, target_info = valid_targets[0]
-
-    move_forward = max(gap - 10, 0)
-    player["score"] += move_forward
-
-    player["next_roll_flat_bonus"] -= 20
-    player["no_reroll_this_turn"] = True
-    player["used_rush"] = True
-    player["action_locked"] = True
-
-    record_race_action(
-        game,
-        user_id,
-        "Rush",
-        {
-            "move_forward": move_forward,
-            "stamina_cost": rush_cost,
-            "stamina_left": player.get("stamina_left", 0),
-            "new_score": player["score"],
-            "summary": f"Rush +{move_forward} (STA -{rush_cost})",
-        },
-    )
-
-    return True, {
-        "target_id": target_id,
-        "move_forward": move_forward,
-        "new_score": player["score"],
-    }
-
-def can_force_rush_targets(channel_id: int, targets: list[tuple[int, dict]]) -> tuple[bool, str | None]:
-    if not targets:
-        return False, "ไม่มีเป้าหมายสำหรับบังคับ Rush"
-
-    for target_id, _ in targets:
-        game = get_game(channel_id)
-        if game is None:
-            return False, "ยังไม่มีเกมในห้องนี้"
-
-        player = game["players"].get(target_id)
-        if player is None:
-            continue
-
-        if player.get("used_rush"):
-            continue
-
-        ahead_players = get_players_ahead(channel_id, target_id)
-        valid_targets = [(uid, gap, info) for uid, gap, info in ahead_players if gap <= 30]
-
-        if valid_targets:
-            return True, None
-
-    return False, "ไม่มีเป้าหมายที่สามารถถูกบังคับใช้ Rush ได้"
-
-def use_block(channel_id: int, user_id: int):
-    game = get_game(channel_id)
-    if game is None:
-        return False, "ยังไม่มีเกมในห้องนี้"
-
-    player = game["players"].get(user_id)
-    if player is None:
-        return False, "ไม่พบผู้เล่น"
-
-    if player["used_block"]:
         return False, "คุณใช้ Block ไปแล้วในเทิร์นนี้"
 
     behind_players = _get_block_candidates(channel_id, user_id)
@@ -1868,125 +1678,22 @@ def next_turn(channel_id: int):
     if game is None:
         return None
 
-    current_turn = game["turn"]
-    snapshot_scores = game.get("turn_snapshot_scores", {})
+    def record_lane_change(race_game: dict, player_id, lane_change: dict) -> None:
+        record_race_action(race_game, player_id, "lane_change", lane_change)
 
-    position_by_player = {
-        player_id: position
-        for position, (player_id, _) in enumerate(
-            sorted(
-                game["players"].items(),
-                key=lambda item: int(item[1].get("score", 0) or 0),
-                reverse=True,
-            ),
-            start=1,
-        )
-    }
+    def after_advance() -> None:
+        tick_skill_cooldowns(channel_id)
+        apply_wit_regen(channel_id)
+        incrase_speed_by_acceleration_turn(channel_id)
+        activate_passive_skills(channel_id)
 
-    game.setdefault("turn_score_logs", [])
-
-    for user_id, info in game["players"].items():
-        before_score = snapshot_scores.get(user_id, 0)
-        current_score = info.get("score", 0)
-        gain = current_score - before_score
-
-        display_name = (
-            info.get("display_name")
-            or info.get("username")
-            or str(user_id)
-        )
-
-        game["turn_score_logs"].append({
-            "turn": current_turn,
-            "player_id": str(user_id),
-            "name": display_name,
-            "style": info.get("style"),
-            "gain": gain,
-            "score_before": before_score,
-            "score_after": current_score,
-            "position": position_by_player.get(user_id),
-            "roll": info.get("last_roll_log"),
-            "skills": info.get("used_skills_this_turn", []),
-        })
-
-    if _supports_lane_system(game):
-        resolve_pending_lane_changes(game["players"])
-        for player_id, player in game["players"].items():
-            if not player.get("lane_changed"):
-                continue
-            display_name = player.get("display_name") or player.get("username") or str(player_id)
-            game["turn_score_logs"].append({
-                "turn": current_turn,
-                "player_id": str(player_id),
-                "name": display_name,
-                "style": player.get("style"),
-                "gain": 0,
-                "score_before": player.get("score", 0),
-                "score_after": player.get("score", 0),
-                "position": position_by_player.get(player_id),
-                "roll": {
-                    "lane_change": {
-                        "from": player.get("previous_lane"),
-                        "to": player.get("current_lane"),
-                    }
-                },
-                "skills": [],
-            })
-            record_race_action(
-                game,
-                player_id,
-                "lane_change",
-                {
-                    "from_lane": player.get("previous_lane"),
-                    "to_lane": player.get("current_lane"),
-                },
-            )
-
-    record_turn_snapshot(game, current_turn)
-    if is_raining(game) and not game.get("next_wet_lanes"):
-        schedule_next_wet_lanes(game)
-    advance_weather_turn(game)
-
-    game["turn"] += 1
-    # The transition latch is only released after the turn number has changed.
-    # This invalidates callbacks belonging to the turn just completed.
-    game["turn_transition_in_progress"] = False
-    game["awaiting_turn_confirm"] = False
-    game["turn_confirmations"] = set()
-    game["turn_confirmation_turn"] = None
-    game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
-
-    tick_skill_cooldowns(channel_id)
-
-    for player in game["players"].values():
-        player["used_block"] = False
-        player["no_reroll_this_turn"] = player.get("no_reroll_next_turn", False)
-        player["no_reroll_next_turn"] = False
-        player["action_locked"] = False
-        player["takeStaminaDebuff"] = False
-        if player.get("debuffPower"):
-            player["debuffPower"] = False
-        player.pop("lastedBuff", None)
-        player.pop("last_roll_log", None)
-        player.pop("turn_stamina_before_roll", None)
-        player["used_skills_this_turn"] = []
-        player["blocked_count"] = 0
-        player["blocking_penalty"] = 0.0
-        player["drafting_active"] = False
-        player["last_stamina_drain"] = 0
-        if not player.get("lane_changed"):
-            player["previous_lane"] = player.get("current_lane", player.get("previous_lane", 1))
-
-    game["turn_snapshot_scores"] = {
-        user_id: info["score"]
-        for user_id, info in game["players"].items()
-    }
-
-    apply_wit_regen(channel_id)
-    incrase_speed_by_acceleration_turn(channel_id)
-    activate_passive_skills(channel_id)
-
-    return game["turn"]
+    return TurnEngine.advance(
+        game,
+        lane_system_enabled=_supports_lane_system(game),
+        record_lane_change=record_lane_change,
+        record_turn_snapshot=record_turn_snapshot,
+        after_advance=after_advance,
+    )
 
 def incrase_speed_by_acceleration_turn(channel_id: int):
     game = get_game(channel_id)
