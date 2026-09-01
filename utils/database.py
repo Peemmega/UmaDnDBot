@@ -673,6 +673,51 @@ def clear_race_rankings(stage_key: str | None = None) -> int:
     return deleted_count
 
 
+def clear_race_records(record_type: str = "all") -> dict[str, int]:
+    """Delete completed race records and all details attached to them.
+
+    ``race_events`` is deliberately retained because it is an operational log
+    of running/legacy games, not a completed race record.
+    """
+    normalized_type = record_type.strip().lower()
+    if normalized_type not in {"all", "official", "practice"}:
+        raise ValueError("Record type must be all, official, or practice")
+
+    with database_connection() as conn:
+        if normalized_type == "all":
+            race_rows = conn.execute("SELECT race_id FROM race_history").fetchall()
+        else:
+            race_rows = conn.execute(
+                "SELECT race_id FROM race_history WHERE record_type = ?",
+                (normalized_type,),
+            ).fetchall()
+
+        race_ids = [row["race_id"] for row in race_rows]
+        deleted_counts = {
+            "race_history": 0,
+            "race_participants": 0,
+            "race_participant_turns": 0,
+            "race_participant_actions": 0,
+        }
+        if not race_ids:
+            return deleted_counts
+
+        placeholders = ", ".join("?" for _ in race_ids)
+        for table_name in (
+            "race_participant_actions",
+            "race_participant_turns",
+            "race_participants",
+            "race_history",
+        ):
+            cursor = conn.execute(
+                f"DELETE FROM {table_name} WHERE race_id IN ({placeholders})",
+                race_ids,
+            )
+            deleted_counts[table_name] = cursor.rowcount
+
+    return deleted_counts
+
+
 def clear_legacy_profile_data(user_id: str) -> dict[str, int]:
     """Remove deprecated role/profile records so the account can choose a new role.
 
@@ -1163,6 +1208,178 @@ def save_player_skill_loadout_preset(
     conn.commit()
     conn.close()
 
+
+ADMIN_EDITABLE_FIELDS = {
+    "speed", "stamina", "power", "gut", "wit",
+    "turf", "dirt", "sprint", "mile", "medium", "long",
+    "front", "pace", "late", "end_style",
+    "stats_point", "skill_point", "fans", "zone_points",
+}
+
+
+def set_admin_player_value(user_id: int | str, field: str, value: int) -> int:
+    """Set one explicitly allow-listed player value for an administrator."""
+    normalized_field = field.strip().lower()
+    if normalized_field not in ADMIN_EDITABLE_FIELDS:
+        raise ValueError("Unsupported player field")
+    if not isinstance(value, int):
+        raise ValueError("Value must be an integer")
+    if normalized_field in {"speed", "stamina", "power", "gut", "wit"}:
+        if not 1 <= value <= MAX_CORE_STAT:
+            raise ValueError(f"Core stats must be between 1 and {MAX_CORE_STAT}")
+    elif normalized_field in {
+        "turf", "dirt", "sprint", "mile", "medium", "long",
+        "front", "pace", "late", "end_style",
+    }:
+        if not 1 <= value <= 8:
+            raise ValueError("Aptitude must be between 1 and 8")
+    elif value < 0:
+        raise ValueError("Points and fans cannot be negative")
+
+    with database_connection() as conn:
+        cursor = conn.execute(
+            f"UPDATE players SET {normalized_field} = ? WHERE CAST(user_id AS TEXT) = ?",
+            (value, str(user_id)),
+        )
+        if cursor.rowcount == 0:
+            raise LookupError("Player not found")
+    return value
+
+
+def reset_player_data_section(user_id: int | str, section: str) -> dict[str, int]:
+    """Reset a safe, individual player-data section without touching race history."""
+    normalized_section = section.strip().lower()
+    if normalized_section not in {"stats", "skills", "zone"}:
+        raise ValueError("Section must be stats, skills, or zone")
+
+    user_key = str(user_id)
+    result: dict[str, int] = {}
+    default_zone_build = json.dumps(normalize_zone_build({}))
+
+    with database_connection() as conn:
+        if normalized_section == "stats":
+            cursor = conn.execute(
+                """
+                UPDATE players
+                SET speed = 1, stamina = 1, power = 1, gut = 1, wit = 1,
+                    turf = 1, dirt = 1, sprint = 1, mile = 1, medium = 1, long = 1,
+                    front = 1, pace = 1, late = 1, end_style = 1,
+                    stats_point = 12, skill_point = 0, fans = 1
+                WHERE CAST(user_id AS TEXT) = ?
+                """,
+                (user_key,),
+            )
+            result["players"] = cursor.rowcount
+        elif normalized_section == "skills":
+            cursor = conn.execute(
+                """
+                UPDATE players
+                SET skill_slot_1 = NULL, skill_slot_2 = NULL,
+                    skill_slot_3 = NULL, skill_slot_4 = NULL
+                WHERE CAST(user_id AS TEXT) = ?
+                """,
+                (user_key,),
+            )
+            result["players"] = cursor.rowcount
+            cursor = conn.execute(
+                "DELETE FROM skill_loadout_presets WHERE CAST(user_id AS TEXT) = ?",
+                (user_key,),
+            )
+            result["skill_loadout_presets"] = cursor.rowcount
+        else:
+            cursor = conn.execute(
+                "UPDATE players SET zone_build = ?, zone_points = 5 WHERE CAST(user_id AS TEXT) = ?",
+                (default_zone_build, user_key),
+            )
+            result["players"] = cursor.rowcount
+
+        if not result.get("players"):
+            raise LookupError("Player not found")
+    return result
+
+
+def clear_player_skills(user_id: int | str, slot: int | None = None) -> int:
+    """Clear one equipped skill or every equipped skill for a player."""
+    if slot is not None and slot not in {1, 2, 3, 4}:
+        raise ValueError("Skill slot must be 1-4")
+
+    with database_connection() as conn:
+        if slot is None:
+            cursor = conn.execute(
+                """
+                UPDATE players
+                SET skill_slot_1 = NULL, skill_slot_2 = NULL,
+                    skill_slot_3 = NULL, skill_slot_4 = NULL
+                WHERE CAST(user_id AS TEXT) = ?
+                """,
+                (str(user_id),),
+            )
+        else:
+            cursor = conn.execute(
+                f"UPDATE players SET skill_slot_{slot} = NULL WHERE CAST(user_id AS TEXT) = ?",
+                (str(user_id),),
+            )
+        if cursor.rowcount == 0:
+            raise LookupError("Player not found")
+    return cursor.rowcount
+
+
+def remove_player_from_team(trainee_user_id: int | str) -> dict[str, int]:
+    """Remove a trainee's current team assignment and pending invitations."""
+    with database_connection() as conn:
+        team_cursor = conn.execute(
+            "DELETE FROM trainer_teams WHERE trainee_user_id = ?",
+            (str(trainee_user_id),),
+        )
+        invite_cursor = conn.execute(
+            "DELETE FROM team_invitations WHERE trainee_user_id = ? AND status = 'pending'",
+            (str(trainee_user_id),),
+        )
+    return {"trainer_teams": team_cursor.rowcount, "pending_invitations": invite_cursor.rowcount}
+
+
+def clear_player_mailbox(user_id: int | str) -> int:
+    with database_connection() as conn:
+        cursor = conn.execute("DELETE FROM mailbox WHERE user_id = ?", (str(user_id),))
+    return cursor.rowcount
+
+
+def get_admin_player_overview(user_id: int | str) -> Optional[dict]:
+    """Return player data plus operational metadata for the admin profile command."""
+    player = get_player(user_id)
+    if player is None:
+        return None
+
+    with database_connection() as conn:
+        role_row = conn.execute(
+            "SELECT role FROM account_roles WHERE user_id = ?", (str(user_id),)
+        ).fetchone()
+        trainer_row = conn.execute(
+            "SELECT trainer_user_id FROM trainer_teams WHERE trainee_user_id = ?",
+            (str(user_id),),
+        ).fetchone()
+        team_count = conn.execute(
+            "SELECT COUNT(*) AS count FROM trainer_teams WHERE trainer_user_id = ?",
+            (str(user_id),),
+        ).fetchone()["count"]
+        mailbox_count = conn.execute(
+            "SELECT COUNT(*) AS count FROM mailbox WHERE user_id = ?",
+            (str(user_id),),
+        ).fetchone()["count"]
+        preset_count = conn.execute(
+            "SELECT COUNT(*) AS count FROM skill_loadout_presets WHERE CAST(user_id AS TEXT) = ?",
+            (str(user_id),),
+        ).fetchone()["count"]
+
+    player["admin"] = {
+        "role": role_row["role"] if role_row else None,
+        "trainer_user_id": trainer_row["trainer_user_id"] if trainer_row else None,
+        "trainee_count": team_count,
+        "mailbox_count": mailbox_count,
+        "skill_preset_count": preset_count,
+    }
+    return player
+
     return {
         "slot": preset_slot,
         "name": preset_name,
@@ -1346,7 +1563,8 @@ def get_player(user_id: int) -> Optional[dict]:
         front, pace, late, end_style,
         stats_point, fans, skill_point,
         profile_image_url, profile_image_updated_at,
-        zone_name, zone_image_url, zone_points, zone_build
+        zone_name, zone_image_url, zone_points, zone_build,
+        skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4
     FROM players
     WHERE CAST(user_id AS TEXT) = ?
     """, (str(user_id),))
@@ -1399,6 +1617,10 @@ def get_player(user_id: int) -> Optional[dict]:
         "stats_point": row[17],
         "fans": row[18],
         "skill_point": row[19],
+        "skill_slot_1": row[26],
+        "skill_slot_2": row[27],
+        "skill_slot_3": row[28],
+        "skill_slot_4": row[29],
         "profile_image_url": resolve_public_url(row[20]),
         "profile_image_updated_at": row[21],
 
