@@ -370,9 +370,9 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 4,
             "stamina": 4,
-            "power": 6,
-            "gut": 3,
-            "wit": 1,
+            "power": 5,
+            "gut": 2,
+            "wit": 3,
             "turf": 2,
             "dirt": 2,
             "sprint": 2,
@@ -396,7 +396,7 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "add_dkh": 3,
-                "cap_floor": 1,
+                "cap_floor": 2,
             },
         },
     },
