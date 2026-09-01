@@ -89,6 +89,7 @@ def build_current_track_text(path: list[int], current_turn: int) -> str:
 def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dict:
     effect = {
         "stamina_cost": 0,
+        "stamina_multiplier": 1.0,
         "stamina_gain": 0,
         "reduce_dice_value": 0,
         "spd_multiplier": 1.0,
@@ -99,16 +100,16 @@ def get_path_effect(path_type: int, game_player: dict, player_stat: dict) -> dic
     }
 
     if path_type == 1:  # ทางตรง
-        effect["stamina_cost"] = 100
+        effect["stamina_cost"] = 0
 
     elif path_type == 2:  # ทางโค้ง
-        effect["stamina_cost"] = 100
+        effect["stamina_cost"] = 0
         effect["reduce_dice_value"] = 5
         effect["extra_max_from_wit"] = player_stat.get("wit", 0)
         effect["extra_floor_from_wit"] = player_stat.get("wit", 0)
 
     elif path_type == 3:  # เนินขึ้น
-        effect["stamina_cost"] = 200
+        effect["stamina_multiplier"] = 2.0
         effect["power_total_multiplier"] = 3.0
         if not game_player.get("debuffPower"):
             game_player["debuffPower"] = True

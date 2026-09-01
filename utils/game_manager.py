@@ -194,9 +194,9 @@ def apply_lane_tactics_to_result(
     blocking_penalty = 0.0
     drafting_active = False
     lane_cost = 0
-    stamina_drain = int(path_effect.get("stamina_cost", 0) or 0)
+    path_stamina_cost = int(path_effect.get("stamina_cost", 0) or 0)
     weather_stamina_cost = 10 if is_sunny(game) else 0
-    stamina_drain += weather_stamina_cost
+    stamina_drain = path_stamina_cost + weather_stamina_cost
     wet_lane_active = is_wet_lane(game, game_player.get("current_lane"))
 
     working_players = _clone_lane_players_with_scores(game, score_map)
@@ -217,8 +217,10 @@ def apply_lane_tactics_to_result(
         blocked_count = int(block_info["blocked_count"])
         blocking_penalty = float(block_info["blocking_penalty"])
         final_total = int(block_info["final_score"])
-        lane_cost = get_lane_stamina_cost(game_player)
-        stamina_drain = get_lane_stamina_cost(game_player, stamina_drain)
+        lane_base_cost = get_lane_stamina_cost(game_player)
+        lane_stamina_multiplier = float(path_effect.get("stamina_multiplier", 1.0) or 1.0)
+        lane_cost = int(round(lane_base_cost * lane_stamina_multiplier))
+        stamina_drain = lane_cost + path_stamina_cost + weather_stamina_cost
         drafting_active = has_drafting_bonus(temp_player, working_players)
         temp_player["score"] = int(temp_player.get("score", 0)) + final_total
         if drafting_active:

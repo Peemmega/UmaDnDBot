@@ -174,6 +174,7 @@ Score ที่ได้จาก Run คือผลเต๋าหลังโ
 
 - Maximum runtime Stamina = `(8 + Stamina stat) × 100`
 - Lane base drain: `L1 90`, `L2 100`, `L3 110`, `L4 120`, `L5 130`, `L6 140`
+- Path drain: Straight `0`, Curve `0`, Uphill `lane base × 2`, Downhill `0`
 - Run drain = `lane base + path cost + weather cost`; Draft drain = `round(total drain × 0.90)`
 - Low-Stamina penalty = `25 − Gut` percent of the final Run total, minimum 0%
 - Rush cost = `max(1, round(maximum Stamina × 0.05))`; Rush เพิ่ม Score `20`
