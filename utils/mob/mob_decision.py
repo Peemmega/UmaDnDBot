@@ -8,6 +8,7 @@ from utils.race.race_dice import (
 )
 from utils.race.runtime_stamina import runtime_stamina_effect_units
 from utils.race.rank_display import get_gold_range_value
+from utils.race.race_weather import is_raining
 
 # =========================================================
 # CONFIG
@@ -20,6 +21,10 @@ BIG_FUTURE_GAIN_TO_HOLD = 80
 # otherwise identical Mobs without making them abandon a Draft or ignore a
 # blocking risk just to spread out.
 MOB_LANE_NON_TACTICAL_CROWDING_PENALTY = 42
+# A wet lane halves this turn's acceleration.  The penalty is deliberately
+# large, but not absolute: a Mob may still accept it if every dry alternative
+# has an even worse tactical cost.
+MOB_WET_LANE_PENALTY = 180
 
 # AI level is intentionally separate from race stats.  A higher level makes
 # better choices, while the existing mob level still controls aptitude growth.
@@ -131,6 +136,11 @@ def decide_mob_target_lane(game, user_id) -> int | None:
     current_gold_count = _gold_count_for_lane(player, players, current_lane, user_id=user_id)
     current_front_gaps = _front_gaps_for_lane(player, players, current_lane, user_id=user_id)
     current_likely_blockers = sum(1 for gap in current_front_gaps if gap <= estimated_gain)
+    preview_wet_lanes = {
+        int(lane)
+        for lane in (game.get("next_wet_lanes") or [])
+        if str(lane).isdigit() and 1 <= int(lane) <= 6
+    } if is_raining(game) else set()
 
     lane_scores: list[tuple[int, int]] = []
 
@@ -159,6 +169,12 @@ def decide_mob_target_lane(game, user_id) -> int | None:
             score += 26
         elif target_lane == 2:
             score += 10
+
+        # A Mob can choose a lane after the rain preview appears in turn
+        # confirmation.  Avoid lanes that will be wet on the next turn, where
+        # they would halve acceleration, unless the tactical tradeoff is large.
+        if target_lane in preview_wet_lanes:
+            score -= MOB_WET_LANE_PENALTY
 
         # Only move out when there is a concrete payoff.
         score += blocker_relief * 34

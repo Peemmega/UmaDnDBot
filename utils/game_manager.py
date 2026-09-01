@@ -695,6 +695,16 @@ def start_turn_confirmation(channel_id: int):
     game["turn_confirmation_turn"] = game["turn"]
     game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
     schedule_next_wet_lanes(game)
+
+    # Rain previews are shown before a turn is confirmed.  Give Mobs the same
+    # opportunity as players to revise their queued lane for the next turn.
+    if _supports_lane_system(game) and game.get("next_wet_lanes"):
+        for mob_id, player in game.get("players", {}).items():
+            if not player.get("is_mob"):
+                continue
+            target_lane = decide_mob_target_lane(game, mob_id)
+            if target_lane is not None:
+                player["pending_lane"] = clamp_lane(target_lane)
     return True
 
 def confirm_turn(
