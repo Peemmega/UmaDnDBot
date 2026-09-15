@@ -185,13 +185,5 @@ RACE_SCHEDULE = [
     # add their events until matching RACE_PRESET/RACETRACKS path data exists.
 ]
 
-# Add community events here when they should appear in the News & Schedule desk.
-# ``image_url`` is optional; the desk uses an event icon when it is omitted.
-# Example:
-# {"id": "autumn-fan-meeting", "kind": "event", "name": "Autumn Fan Meeting",
-#  "description": "พบปะและแข่งกระชับมิตร", "date": "2026-10-03", "time": "19:00",
-#  "image_url": "https://example.com/event-banner.webp"},
-EVENT_SCHEDULE: list[dict] = []
-
 # Race definitions are intentionally stored separately from path behaviour.
 from utils.race.race_preset_data import RACE_PRESET

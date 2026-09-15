@@ -39,8 +39,9 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
-from utils.race.race_presets import EVENT_SCHEDULE, RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
+from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
 from utils.race.race_preset_data import get_race_venue
+from utils.event_schedule import EVENT_SCHEDULE
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
@@ -1027,18 +1028,9 @@ def get_race_calendar():
             "distance": race.get("distance"),
         })
 
-    # Community events intentionally do not need a playable race preset.
-    # Keep this after the race loop so both content types use one calendar API.
-    for item in EVENT_SCHEDULE:
-        events.append({
-            "id": item.get("id"),
-            "kind": "event",
-            "date": item.get("date"),
-            "time": item.get("time"),
-            "name": item.get("name"),
-            "description": item.get("description"),
-            "image_url": item.get("image_url"),
-        })
+    # Event content is maintained separately from RACE_SCHEDULE and has no
+    # gameplay preset.  The UI combines both lists only for chronological display.
+    events.extend(EVENT_SCHEDULE)
 
     return events
 
