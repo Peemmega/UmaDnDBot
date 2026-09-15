@@ -1019,6 +1019,7 @@ def get_race_calendar():
             "date": item["date"],
             "time": item["time"],
             "name": race['name'],
+            "venue": get_race_venue(item["race_id"]),
             "image": race.get("image"),
             "thumbnail": race.get("thumnail"),
             "track": race.get("track"),
