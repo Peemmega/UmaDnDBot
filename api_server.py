@@ -39,7 +39,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
-from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
+from utils.race.race_presets import EVENT_SCHEDULE, RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
 from utils.race.race_preset_data import get_race_venue
 from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
@@ -1016,6 +1016,7 @@ def get_race_calendar():
 
         events.append({
             "id": item["race_id"],
+            "kind": "race",
             "date": item["date"],
             "time": item["time"],
             "name": race['name'],
@@ -1024,6 +1025,19 @@ def get_race_calendar():
             "thumbnail": race.get("thumnail"),
             "track": race.get("track"),
             "distance": race.get("distance"),
+        })
+
+    # Community events intentionally do not need a playable race preset.
+    # Keep this after the race loop so both content types use one calendar API.
+    for item in EVENT_SCHEDULE:
+        events.append({
+            "id": item.get("id"),
+            "kind": "event",
+            "date": item.get("date"),
+            "time": item.get("time"),
+            "name": item.get("name"),
+            "description": item.get("description"),
+            "image_url": item.get("image_url"),
         })
 
     return events
