@@ -1,5 +1,7 @@
 import discord
+from datetime import datetime
 from typing import Optional
+from uuid import uuid4
 from discord.ext import commands
 from utils.database import (
     ensure_player,
@@ -18,6 +20,7 @@ from utils.database import (
     remove_player_from_team,
     reset_player_data_section,
     set_admin_player_value,
+    create_community_event,
 )
 from utils.race.race_presets import RACE_PRESET
 from utils.channel_config import COMMAND_LOG_CHANNEL_ID
@@ -199,10 +202,79 @@ class Admin(commands.Cog):
             ),
             inline=False,
         )
+        embed.add_field(
+            name="News events (GMT+7)",
+            value=(
+                "`!event_add <YYYY-MM-DD> <HH:MM> <name | summary | details | capacity | image_url>`\n"
+                "Example: `!event_add 2026-10-31 19:00 Halloween Night | Costume race | Join the event room | 20 | /eventBanners/halloween_converted.webp`"
+            ),
+            inline=False,
+        )
         embed.set_footer(
             text="คำสั่งล้างหรือรีเซ็ตข้อมูลใช้ได้เฉพาะ UID 464058883556769793"
         )
         await ctx.send(embed=embed)
+
+    @commands.command(name="event_add", aliases=["addevent", "news_add"])
+    async def event_add(self, ctx: commands.Context, event_date: str, event_time: str, *, content: str):
+        """Create a community event for the website News calendar (GMT+7)."""
+        if not await self.require_admin(ctx, "event_add"):
+            return
+
+        try:
+            datetime.strptime(f"{event_date} {event_time}", "%Y-%m-%d %H:%M")
+        except ValueError:
+            await self.silent_delete(ctx.message)
+            await self.send_result_embed(
+                ctx,
+                title="Invalid event date",
+                description="Use `YYYY-MM-DD HH:MM` in GMT+7, for example `2026-10-31 19:00`.",
+                color=discord.Color.red(),
+            )
+            return
+
+        fields = [field.strip() for field in content.split("|")]
+        if not fields or not fields[0] or len(fields) > 5:
+            await self.silent_delete(ctx.message)
+            await self.send_result_embed(
+                ctx,
+                title="Invalid event content",
+                description=(
+                    "Use: `!event_add <YYYY-MM-DD> <HH:MM> "
+                    "<name | summary | details | capacity | image_url>`"
+                ),
+                color=discord.Color.red(),
+            )
+            return
+
+        name, description, details, capacity, image_url = (fields + [""] * 5)[:5]
+        event = {
+            "id": f"community-event-{uuid4().hex}",
+            "kind": "event",
+            "name": name,
+            "description": description,
+            "date": event_date,
+            "time": event_time,
+            "details": details,
+            "capacity": capacity,
+            "image_url": image_url,
+        }
+        create_community_event(event)
+        await self.silent_delete(ctx.message)
+
+        embed = discord.Embed(title="Added News event", color=discord.Color.green())
+        embed.add_field(name="Event", value=name, inline=False)
+        embed.add_field(name="Date", value=f"{event_date} {event_time} (GMT+7)", inline=True)
+        embed.add_field(name="Capacity", value=capacity or "Not specified", inline=True)
+        if image_url:
+            embed.set_thumbnail(url=image_url)
+        await ctx.send(embed=embed)
+        await self.send_log_embed(
+            ctx,
+            action_name="event_add",
+            result_text=f"Added News event: {name} ({event_date} {event_time} GMT+7)",
+            color=discord.Color.green(),
+        )
 
     @commands.command(name="admin_profile", aliases=["adminprofile", "ap"])
     async def admin_profile(self, ctx: commands.Context, member: discord.Member):
