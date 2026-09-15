@@ -869,6 +869,28 @@ def save_profile_preset(user_id: str, profile_type: str, name: str, image_url: s
         """, (str(user_id), profile_type, name.strip() or profile_type.title(), image_url or ""))
 
 
+def set_profile_preset_image(user_id: str, profile_type: str, image_url: str) -> None:
+    """Update a preset avatar without replacing the player-selected name."""
+    with database_connection() as conn:
+        cursor = conn.execute(
+            """
+            UPDATE profile_presets
+            SET image_url = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ? AND profile_type = ?
+            """,
+            (image_url or "", str(user_id), profile_type),
+        )
+        if cursor.rowcount:
+            return
+        conn.execute(
+            """
+            INSERT INTO profile_presets (user_id, profile_type, name, image_url, updated_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """,
+            (str(user_id), profile_type, profile_type.title(), image_url or ""),
+        )
+
+
 VALID_ACCOUNT_ROLES = {"trainee", "trainer", "npc"}
 
 
@@ -913,7 +935,9 @@ def list_uploaded_profile_summaries() -> list[dict]:
     conn = get_connection()
     rows = conn.execute("""
         SELECT user_id, profile_type, name, image_url FROM profile_presets
-        WHERE TRIM(image_url) <> '' ORDER BY name COLLATE NOCASE
+        WHERE TRIM(image_url) <> ''
+          AND LTRIM(image_url) NOT LIKE 'data:%'
+        ORDER BY name COLLATE NOCASE
     """).fetchall()
     conn.close()
     return [{"id": f"{row['user_id']}:{row['profile_type']}", "name": row["name"], "image_url": row["image_url"], "type": row["profile_type"].title()} for row in rows]

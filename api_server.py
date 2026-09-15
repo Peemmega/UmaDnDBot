@@ -1,9 +1,10 @@
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 import json
 import asyncio
+import base64
 import io
 import time
 from pathlib import Path
@@ -31,6 +32,7 @@ from utils.database import (
     create_team_invitation,
     respond_to_team_invitation,
     save_profile_preset,
+    set_profile_preset_image,
     list_uploaded_profile_summaries,
     get_account_role,
     select_account_role,
@@ -64,11 +66,13 @@ from utils.profile_images import (
     MAX_PROFILE_IMAGE_BYTES,
     PROFILE_IMAGE_SIZE,
     build_profile_image_relative_url,
+    build_profile_preset_image_relative_url,
     ensure_upload_dirs,
     get_profile_uploads_dir,
     get_upload_root_dir,
     resolve_public_url,
     sanitize_numeric_user_id,
+    normalize_profile_preset_type,
 )
 from views.create_game_view import LobbyView, build_lobby_message_payload
 import bot_instance
@@ -116,6 +120,74 @@ async def log_timing_validation_error(request: Request, exc: RequestValidationEr
 def api_startup():
     init_db()
     ensure_upload_dirs()
+    migrate_embedded_preset_profile_images()
+
+
+def _save_profile_image(file_bytes: bytes, output_path: Path) -> None:
+    """Validate, resize, and persist one avatar as a compact WebP image."""
+    try:
+        source_image = Image.open(io.BytesIO(file_bytes))
+        source_image.load()
+    except (UnidentifiedImageError, OSError) as exc:
+        raise ValueError("Invalid image file") from exc
+
+    fitted_image = ImageOps.fit(
+        source_image.convert("RGBA"),
+        PROFILE_IMAGE_SIZE,
+        method=Image.Resampling.LANCZOS,
+    )
+    fitted_image.save(output_path, format="WEBP", quality=90, method=6)
+
+
+def migrate_embedded_preset_profile_images() -> None:
+    """One-time-safe migration for legacy data:image preset avatars.
+
+    Older clients stored cropped Trainer/NPC images in SQLite as Base64.  Those
+    values made the public character-summary response grow with every image.
+    Convert only valid, bounded legacy values and leave malformed rows alone.
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT user_id, profile_type, image_url
+            FROM profile_presets
+            WHERE LTRIM(image_url) LIKE 'data:image/%'
+            """
+        ).fetchall()
+        max_base64_chars = ((MAX_PROFILE_IMAGE_BYTES + 1) * 4) // 3
+
+        for row in rows:
+            raw_data_url = str(row["image_url"] or "").strip()
+            try:
+                header, encoded_image = raw_data_url.split(",", 1)
+                if ";base64" not in header.lower() or len(encoded_image) > max_base64_chars:
+                    continue
+                image_bytes = base64.b64decode(encoded_image, validate=True)
+                if not image_bytes or len(image_bytes) > MAX_PROFILE_IMAGE_BYTES:
+                    continue
+                profile_type = normalize_profile_preset_type(row["profile_type"])
+                user_id = sanitize_numeric_user_id(row["user_id"])
+                updated_at = int(time.time())
+                output_path = get_profile_uploads_dir() / f"{user_id}-{profile_type}.webp"
+                _save_profile_image(image_bytes, output_path)
+                conn.execute(
+                    """
+                    UPDATE profile_presets
+                    SET image_url = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = ? AND profile_type = ?
+                    """,
+                    (
+                        build_profile_preset_image_relative_url(user_id, profile_type, updated_at),
+                        user_id,
+                        profile_type,
+                    ),
+                )
+            except (ValueError, UnicodeError, base64.binascii.Error):
+                continue
+        conn.commit()
+    finally:
+        conn.close()
 
 @app.get("/player/{user_id}")
 def api_get_player(user_id: str, username: str = "Unknown"):
@@ -194,11 +266,59 @@ class ProfilePresetPayload(BaseModel):
 
 @app.post("/profiles/preset")
 def api_save_profile_preset(payload: ProfilePresetPayload):
+    if str(payload.image_url or "").lstrip().lower().startswith("data:"):
+        raise HTTPException(
+            status_code=400,
+            detail="Embedded images are not supported; upload through /profiles/preset-image",
+        )
     try:
         save_profile_preset(payload.user_id, payload.profile_type, payload.name, payload.image_url)
         return {"success": True}
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/profiles/preset-image")
+async def api_upload_preset_profile_image(
+    user_id: str = Form(...),
+    profile_type: str = Form(...),
+    file: UploadFile = File(...),
+):
+    """Upload a Trainer/NPC avatar and store only its WebP URL in SQLite."""
+    try:
+        safe_user_id = sanitize_numeric_user_id(user_id)
+        safe_profile_type = normalize_profile_preset_type(profile_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    content_type = (file.content_type or "").lower().strip()
+    if content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Unsupported image type")
+
+    raw_bytes = await file.read(MAX_PROFILE_IMAGE_BYTES + 1)
+    await file.close()
+    if not raw_bytes:
+        raise HTTPException(status_code=400, detail="Empty upload")
+    if len(raw_bytes) > MAX_PROFILE_IMAGE_BYTES:
+        raise HTTPException(status_code=400, detail="File too large")
+
+    updated_at = int(time.time())
+    output_path = get_profile_uploads_dir() / f"{safe_user_id}-{safe_profile_type}.webp"
+    try:
+        _save_profile_image(raw_bytes, output_path)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    image_url = build_profile_preset_image_relative_url(
+        safe_user_id, safe_profile_type, updated_at
+    )
+    set_profile_preset_image(safe_user_id, safe_profile_type, image_url)
+    return {
+        "ok": True,
+        "user_id": safe_user_id,
+        "profile_type": safe_profile_type,
+        "image_url": resolve_public_url(image_url),
+    }
 
 
 @app.get("/api/players/{user_id}/summary")

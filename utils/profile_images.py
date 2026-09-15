@@ -17,6 +17,7 @@ ALLOWED_IMAGE_CONTENT_TYPES = {
 MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024
 PROFILE_IMAGE_SIZE = (256, 256)
 USER_ID_PATTERN = re.compile(r"^\d+$")
+PROFILE_PRESET_TYPES = {"trainer", "npc"}
 
 
 def get_public_base_url() -> str:
@@ -65,6 +66,27 @@ def sanitize_numeric_user_id(user_id: str | int) -> str:
 def build_profile_image_relative_url(user_id: str | int, updated_at: int | str | None) -> str:
     safe_user_id = sanitize_numeric_user_id(user_id)
     url = f"/uploads/profiles/{safe_user_id}.webp"
+    if updated_at is None or str(updated_at).strip() == "":
+        return url
+    return f"{url}?v={updated_at}"
+
+
+def normalize_profile_preset_type(profile_type: str) -> str:
+    normalized_type = str(profile_type or "").strip().lower()
+    if normalized_type not in PROFILE_PRESET_TYPES:
+        raise ValueError("Invalid profile_type")
+    return normalized_type
+
+
+def build_profile_preset_image_relative_url(
+    user_id: str | int,
+    profile_type: str,
+    updated_at: int | str | None,
+) -> str:
+    """Return the public path for a Trainer or NPC profile image."""
+    safe_user_id = sanitize_numeric_user_id(user_id)
+    safe_profile_type = normalize_profile_preset_type(profile_type)
+    url = f"/uploads/profiles/{safe_user_id}-{safe_profile_type}.webp"
     if updated_at is None or str(updated_at).strip() == "":
         return url
     return f"{url}?v={updated_at}"
