@@ -5,7 +5,7 @@ so editing this file cannot change a race track or its gameplay behaviour.
 """
 
 # Dates use 2026 Japanese public holidays or calendar observances where they
-# fit the banner theme.  Start times are community-event times in ICT.
+# fit the banner theme.  Start times are community-event times in GMT+7.
 EVENT_SCHEDULE: list[dict] = [
     {
         "id": "new-year-2026",

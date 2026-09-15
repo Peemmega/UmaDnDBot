@@ -130,7 +130,7 @@ def render_path(path: list[int]) -> str:
 
 
 # 2026 JRA race dates, sourced from https://www.jra.go.jp/keiba/calendar/
-# Times are the app's scheduled start time (ICT); JRA's calendar supplies dates.
+# Times are the app's scheduled start time (GMT+7); JRA's calendar supplies dates.
 RACE_SCHEDULE = [
     # February — Tokyo
     {"race_id": "DiamondStakes", "date": "2026-02-21", "time": "20:00"},
