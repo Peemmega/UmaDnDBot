@@ -854,7 +854,11 @@ def get_trainee_trainer(trainee_user_id: str) -> Optional[dict]:
     conn.close()
     if not row:
         return None
-    return {"user_id": row["user_id"], "username": row["name"], "image_url": row["image_url"]}
+    return {
+        "user_id": row["user_id"],
+        "username": row["name"],
+        "image_url": resolve_public_url(row["image_url"]),
+    }
 
 
 def save_profile_preset(user_id: str, profile_type: str, name: str, image_url: str) -> None:

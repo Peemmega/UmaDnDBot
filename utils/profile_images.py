@@ -101,6 +101,8 @@ def resolve_public_url(value: str | None) -> str:
     text = str(value or "").strip()
     if not text:
         return ""
+    if text.startswith("data:"):
+        return text
     if is_absolute_url(text):
         return text
     if text.startswith("/"):
