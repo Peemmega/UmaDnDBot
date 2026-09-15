@@ -6,6 +6,7 @@ import json
 import asyncio
 import io
 import time
+import uuid
 from pathlib import Path
 import os
 
@@ -34,6 +35,8 @@ from utils.database import (
     list_uploaded_profile_summaries,
     get_account_role,
     select_account_role,
+    list_community_events,
+    create_community_event,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -159,6 +162,16 @@ class AccountRolePayload(BaseModel):
     user_id: str
     username: str
     role: str
+
+
+class CommunityEventPayload(BaseModel):
+    name: str
+    description: str = ""
+    date: str
+    time: str = "19:00"
+    image_url: str = ""
+    details: str = ""
+    capacity: str = ""
 
 
 @app.get("/account/{user_id}/role")
@@ -1033,6 +1046,47 @@ def get_race_calendar():
     events.extend(EVENT_SCHEDULE)
 
     return events
+
+
+def _stored_community_event(row: dict) -> dict:
+    return {
+        "id": row["id"],
+        "kind": "event",
+        "name": row["name"],
+        "description": row["description"],
+        "date": row["event_date"],
+        "time": row["event_time"],
+        "image_url": row["image_url"],
+        "details": row["details"],
+        "capacity": row["capacity"],
+    }
+
+
+@app.get("/news")
+def get_news():
+    """Return the calendar plus community-authored events as one dated feed."""
+    entries = [*get_race_calendar(), *(_stored_community_event(row) for row in list_community_events())]
+    return sorted(entries, key=lambda item: (item.get("date", ""), item.get("time", ""), item.get("name", "")))
+
+
+@app.post("/news/events")
+def post_news_event(payload: CommunityEventPayload):
+    event = {
+        "id": f"community-event-{uuid.uuid4().hex}",
+        "kind": "event",
+        "name": payload.name.strip(),
+        "description": payload.description.strip(),
+        "date": payload.date,
+        "time": payload.time,
+        "image_url": payload.image_url.strip(),
+        "details": payload.details.strip(),
+        "capacity": payload.capacity.strip(),
+    }
+    if not event["name"]:
+        raise HTTPException(status_code=400, detail="Event name is required")
+
+    create_community_event(event)
+    return event
 
 @app.get("/skills")
 def api_get_skills(tag: str = "all"):

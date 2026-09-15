@@ -395,8 +395,44 @@ def init_db():
         )
     cursor.execute("DELETE FROM race_rankings")
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS community_events (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        event_date TEXT NOT NULL,
+        event_time TEXT NOT NULL DEFAULT '19:00',
+        image_url TEXT,
+        details TEXT NOT NULL DEFAULT '',
+        capacity TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     conn.commit()
     conn.close()
+
+
+def list_community_events() -> list[dict]:
+    with database_connection() as conn:
+        rows = conn.execute(
+            "SELECT * FROM community_events ORDER BY event_date, event_time, created_at"
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def create_community_event(event: dict) -> dict:
+    with database_connection() as conn:
+        conn.execute("""
+            INSERT INTO community_events (
+                id, name, description, event_date, event_time, image_url, details, capacity
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            event["id"], event["name"], event.get("description", ""), event["date"],
+            event["time"], event.get("image_url") or None, event.get("details", ""),
+            event.get("capacity", ""),
+        ))
+    return event
 
 
 def upsert_race_ranking(stage_key: str, user_id, score: int, style: str) -> bool:
