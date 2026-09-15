@@ -135,52 +135,42 @@ RACE_SCHEDULE = [
     # February — Tokyo
     {"race_id": "DiamondStakes", "date": "2026-02-21", "time": "20:00"},
     {"race_id": "FebruaryStakes", "date": "2026-02-22", "time": "20:00"},
-
     # March — Chukyo
     {"race_id": "TakamatsunomiyaKinen", "date": "2026-03-29", "time": "20:00"},
-
     # April — Hanshin / Nakayama
     {"race_id": "OsakaHai", "date": "2026-04-05", "time": "20:00"},
     {"race_id": "OkaSho", "date": "2026-04-12", "time": "20:00"},
     {"race_id": "SatsukiSho", "date": "2026-04-19", "time": "20:00"},
-
     # May — Tokyo / Kyoto
     {"race_id": "NHK", "date": "2026-05-10", "time": "20:00"},
     {"race_id": "VictoriaMileTokyo", "date": "2026-05-17", "time": "20:00"},
     {"race_id": "JapaneseOaks", "date": "2026-05-24", "time": "20:00"},
     {"race_id": "Aoi Stakes", "date": "2026-05-30", "time": "20:00"},
     {"race_id": "JapaneseDerby", "date": "2026-05-31", "time": "20:00"},
-
     # June — Tokyo / Hanshin
     {"race_id": "YasudaKinen", "date": "2026-06-07", "time": "20:00"},
     {"race_id": "TakarazukaKinen", "date": "2026-06-14", "time": "20:00"},
-
     # July–August — Hakodate / Niigata
     {"race_id": "HakodateJuniorStakes", "date": "2026-07-19", "time": "20:00"},
     {"race_id": "NiigataJuniorStakes", "date": "2026-08-23", "time": "20:00"},
-
     # September — Nakayama
     {"race_id": "SprintersStakes", "date": "2026-09-27", "time": "20:00"},
-
     # October — Tokyo / Kyoto
     {"race_id": "SaudiArabiaRoyalCup", "date": "2026-10-10", "time": "20:00"},
     {"race_id": "ShukaSho", "date": "2026-10-18", "time": "20:00"},
     {"race_id": "KikukaSho", "date": "2026-10-25", "time": "20:00"},
-
     # November — Tokyo / Kyoto
     {"race_id": "TennoShoAutumn", "date": "2026-11-01", "time": "20:00"},
     {"race_id": "QueenElizabethIICup", "date": "2026-11-15", "time": "20:00"},
     {"race_id": "MileChampionship", "date": "2026-11-22", "time": "20:00"},
     {"race_id": "KyotoJuniorStakes", "date": "2026-11-28", "time": "20:00"},
     {"race_id": "JapanCup", "date": "2026-11-29", "time": "20:00"},
-
     # December — Chukyo / Hanshin / Nakayama
     {"race_id": "ChunichiShimbunHai", "date": "2026-12-12", "time": "20:00"},
     {"race_id": "HanshinJuvenileFillies", "date": "2026-12-13", "time": "20:00"},
     {"race_id": "AsahiHaiFuturityStakes", "date": "2026-12-20", "time": "20:00"},
     {"race_id": "HopefulStakes", "date": "2026-12-26", "time": "20:00"},
     {"race_id": "ArimaKinen", "date": "2026-12-27", "time": "20:00"},
-
     # JRA also holds 2026 meetings at Sapporo, Fukushima, and Kokura.  Do not
     # add their events until matching RACE_PRESET/RACETRACKS path data exists.
 ]

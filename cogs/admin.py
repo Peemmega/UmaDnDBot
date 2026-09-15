@@ -36,10 +36,18 @@ DATA_CLEANUP_ADMIN_IDS = {
 }
 
 VALID_APTITUDE_FIELDS = {
-    "turf", "dirt",
-    "sprint", "mile", "medium", "long",
-    "front", "pace", "late", "end_style",
+    "turf",
+    "dirt",
+    "sprint",
+    "mile",
+    "medium",
+    "long",
+    "front",
+    "pace",
+    "late",
+    "end_style",
 }
+
 
 class Admin(commands.Cog):
     def __init__(self, bot):
@@ -57,7 +65,9 @@ class Admin(commands.Cog):
         except discord.Forbidden:
             pass
 
-    def resolve_target(self, ctx: commands.Context, member: discord.Member | None) -> discord.Member:
+    def resolve_target(
+        self, ctx: commands.Context, member: discord.Member | None
+    ) -> discord.Member:
         return member or ctx.author
 
     async def require_admin(
@@ -104,11 +114,7 @@ class Admin(commands.Cog):
         description: str,
         color: discord.Color = discord.Color.blurple(),
     ):
-        embed = discord.Embed(
-            title=title,
-            description=description,
-            color=color
-        )
+        embed = discord.Embed(title=title, description=description, color=color)
         await ctx.send(embed=embed)
 
     async def send_log_embed(
@@ -129,15 +135,20 @@ class Admin(commands.Cog):
 
         target_text = target.mention if target else "-"
 
-        embed = discord.Embed(
-            title="🛡️ Admin Command Log",
-            color=color
+        embed = discord.Embed(title="🛡️ Admin Command Log", color=color)
+        embed.add_field(
+            name="ผู้ใช้คำสั่ง",
+            value=f"{ctx.author.mention}\n`{ctx.author.id}`",
+            inline=True,
         )
-        embed.add_field(name="ผู้ใช้คำสั่ง", value=f"{ctx.author.mention}\n`{ctx.author.id}`", inline=True)
         embed.add_field(name="คำสั่ง", value=f"`{ctx.message.content}`", inline=False)
         embed.add_field(name="Action", value=action_name, inline=True)
         embed.add_field(name="Target", value=target_text, inline=True)
-        embed.add_field(name="Channel", value=f"{ctx.channel.mention}\n`{ctx.channel.id}`", inline=False)
+        embed.add_field(
+            name="Channel",
+            value=f"{ctx.channel.mention}\n`{ctx.channel.id}`",
+            inline=False,
+        )
         embed.add_field(name="Result", value=result_text, inline=False)
 
         if ctx.guild:
@@ -203,7 +214,7 @@ class Admin(commands.Cog):
             inline=False,
         )
         embed.add_field(
-            name="News events (GMT+7)",
+            name="News events",
             value=(
                 "`!event_add <YYYY-MM-DD> <HH:MM> <name | summary | details | capacity | image_url>`\n"
                 "Example: `!event_add 2026-10-31 19:00 Halloween Night | Costume race | Join the event room | 20 | /eventBanners/halloween_converted.webp`"
@@ -216,8 +227,10 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(name="event_add", aliases=["addevent", "news_add"])
-    async def event_add(self, ctx: commands.Context, event_date: str, event_time: str, *, content: str):
-        """Create a community event for the website News calendar (GMT+7)."""
+    async def event_add(
+        self, ctx: commands.Context, event_date: str, event_time: str, *, content: str
+    ):
+        """Create a community event for the website News calendar."""
         if not await self.require_admin(ctx, "event_add"):
             return
 
@@ -264,7 +277,7 @@ class Admin(commands.Cog):
 
         embed = discord.Embed(title="Added News event", color=discord.Color.green())
         embed.add_field(name="Event", value=name, inline=False)
-        embed.add_field(name="Date", value=f"{event_date} {event_time} (GMT+7)", inline=True)
+        embed.add_field(name="Date", value=f"{event_date} {event_time}", inline=True)
         embed.add_field(name="Capacity", value=capacity or "Not specified", inline=True)
         if image_url:
             embed.set_thumbnail(url=image_url)
@@ -287,9 +300,14 @@ class Admin(commands.Cog):
         if player is None:
             result_text = f"ไม่พบข้อมูลผู้เล่นของ {member.display_name}"
             await self.send_result_embed(
-                ctx, title="ไม่พบข้อมูลผู้เล่น", description=result_text, color=discord.Color.orange()
+                ctx,
+                title="ไม่พบข้อมูลผู้เล่น",
+                description=result_text,
+                color=discord.Color.orange(),
             )
-            await self.send_log_embed(ctx, action_name="admin_profile", result_text=result_text, target=member)
+            await self.send_log_embed(
+                ctx, action_name="admin_profile", result_text=result_text, target=member
+            )
             return
 
         skills = [player.get(f"skill_slot_{slot}") for slot in range(1, 5)]
@@ -347,7 +365,12 @@ class Admin(commands.Cog):
             inline=True,
         )
         await ctx.send(embed=embed)
-        await self.send_log_embed(ctx, action_name="admin_profile", result_text="Viewed player overview", target=member)
+        await self.send_log_embed(
+            ctx,
+            action_name="admin_profile",
+            result_text="Viewed player overview",
+            target=member,
+        )
 
     @commands.command(name="set_stat")
     async def set_stat(
@@ -366,20 +389,53 @@ class Admin(commands.Cog):
         stat_name = stat_name.lower().strip()
         if stat_name not in {"speed", "stamina", "power", "gut", "wit"}:
             result_text = "เลือกได้เฉพาะ `speed`, `stamina`, `power`, `gut`, หรือ `wit`"
-            await self.send_result_embed(ctx, title="ตั้งค่าสเตตัสไม่สำเร็จ", description=result_text, color=discord.Color.red())
-            await self.send_log_embed(ctx, action_name="set_stat", result_text=result_text, target=target, color=discord.Color.red())
+            await self.send_result_embed(
+                ctx,
+                title="ตั้งค่าสเตตัสไม่สำเร็จ",
+                description=result_text,
+                color=discord.Color.red(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="set_stat",
+                result_text=result_text,
+                target=target,
+                color=discord.Color.red(),
+            )
             return
         try:
             set_admin_player_value(target.id, stat_name, value)
         except ValueError as error:
             result_text = str(error)
-            await self.send_result_embed(ctx, title="ตั้งค่าสเตตัสไม่สำเร็จ", description=result_text, color=discord.Color.red())
-            await self.send_log_embed(ctx, action_name="set_stat", result_text=result_text, target=target, color=discord.Color.red())
+            await self.send_result_embed(
+                ctx,
+                title="ตั้งค่าสเตตัสไม่สำเร็จ",
+                description=result_text,
+                color=discord.Color.red(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="set_stat",
+                result_text=result_text,
+                target=target,
+                color=discord.Color.red(),
+            )
             return
 
         result_text = f"ตั้งค่า `{stat_name}` เป็น `{value}` ให้ {target.display_name}"
-        await self.send_result_embed(ctx, title="ตั้งค่าสเตตัสสำเร็จ", description=f"{target.mention}\n{result_text}", color=discord.Color.green())
-        await self.send_log_embed(ctx, action_name="set_stat", result_text=result_text, target=target, color=discord.Color.green())
+        await self.send_result_embed(
+            ctx,
+            title="ตั้งค่าสเตตัสสำเร็จ",
+            description=f"{target.mention}\n{result_text}",
+            color=discord.Color.green(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="set_stat",
+            result_text=result_text,
+            target=target,
+            color=discord.Color.green(),
+        )
 
     @commands.command(name="set_point")
     async def set_point(
@@ -395,25 +451,63 @@ class Admin(commands.Cog):
         target = self.resolve_target(ctx, member)
         ensure_player(target.id, target.name)
 
-        field_by_type = {"stats": "stats_point", "skill": "skill_point", "fans": "fans", "zone": "zone_points"}
+        field_by_type = {
+            "stats": "stats_point",
+            "skill": "skill_point",
+            "fans": "fans",
+            "zone": "zone_points",
+        }
         point_type = point_type.lower().strip()
         field = field_by_type.get(point_type)
         if field is None:
             result_text = "เลือกได้เฉพาะ `stats`, `skill`, `fans`, หรือ `zone`"
-            await self.send_result_embed(ctx, title="ตั้งค่าแต้มไม่สำเร็จ", description=result_text, color=discord.Color.red())
-            await self.send_log_embed(ctx, action_name="set_point", result_text=result_text, target=target, color=discord.Color.red())
+            await self.send_result_embed(
+                ctx,
+                title="ตั้งค่าแต้มไม่สำเร็จ",
+                description=result_text,
+                color=discord.Color.red(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="set_point",
+                result_text=result_text,
+                target=target,
+                color=discord.Color.red(),
+            )
             return
         try:
             set_admin_player_value(target.id, field, value)
         except ValueError as error:
             result_text = str(error)
-            await self.send_result_embed(ctx, title="ตั้งค่าแต้มไม่สำเร็จ", description=result_text, color=discord.Color.red())
-            await self.send_log_embed(ctx, action_name="set_point", result_text=result_text, target=target, color=discord.Color.red())
+            await self.send_result_embed(
+                ctx,
+                title="ตั้งค่าแต้มไม่สำเร็จ",
+                description=result_text,
+                color=discord.Color.red(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="set_point",
+                result_text=result_text,
+                target=target,
+                color=discord.Color.red(),
+            )
             return
 
         result_text = f"ตั้งค่า `{point_type}` เป็น `{value}` ให้ {target.display_name}"
-        await self.send_result_embed(ctx, title="ตั้งค่าแต้มสำเร็จ", description=f"{target.mention}\n{result_text}", color=discord.Color.green())
-        await self.send_log_embed(ctx, action_name="set_point", result_text=result_text, target=target, color=discord.Color.green())
+        await self.send_result_embed(
+            ctx,
+            title="ตั้งค่าแต้มสำเร็จ",
+            description=f"{target.mention}\n{result_text}",
+            color=discord.Color.green(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="set_point",
+            result_text=result_text,
+            target=target,
+            color=discord.Color.green(),
+        )
 
     @commands.command(name="remove_skill", aliases=["clearskill"])
     async def remove_skill(
@@ -428,8 +522,19 @@ class Admin(commands.Cog):
         await self.silent_delete(ctx.message)
         if confirmation != "CONFIRM":
             result_text = "คำสั่งนี้ล้างสกิลที่ติดตั้งอยู่ ใช้ `!remove_skill <1-4|all> @member CONFIRM` เพื่อยืนยัน"
-            await self.send_result_embed(ctx, title="ยกเลิกการล้างสกิล", description=result_text, color=discord.Color.orange())
-            await self.send_log_embed(ctx, action_name="remove_skill", result_text="Cancelled: no confirmation", target=member, color=discord.Color.orange())
+            await self.send_result_embed(
+                ctx,
+                title="ยกเลิกการล้างสกิล",
+                description=result_text,
+                color=discord.Color.orange(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="remove_skill",
+                result_text="Cancelled: no confirmation",
+                target=member,
+                color=discord.Color.orange(),
+            )
             return
 
         normalized_slot = slot.strip().lower()
@@ -438,14 +543,36 @@ class Admin(commands.Cog):
             clear_player_skills(member.id, parsed_slot)
         except (ValueError, LookupError) as error:
             result_text = str(error)
-            await self.send_result_embed(ctx, title="ล้างสกิลไม่สำเร็จ", description=result_text, color=discord.Color.red())
-            await self.send_log_embed(ctx, action_name="remove_skill", result_text=result_text, target=member, color=discord.Color.red())
+            await self.send_result_embed(
+                ctx,
+                title="ล้างสกิลไม่สำเร็จ",
+                description=result_text,
+                color=discord.Color.red(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="remove_skill",
+                result_text=result_text,
+                target=member,
+                color=discord.Color.red(),
+            )
             return
 
         label = "ทุกช่อง" if parsed_slot is None else f"ช่อง {parsed_slot}"
         result_text = f"ล้างสกิล{label}ของ {member.display_name} แล้ว"
-        await self.send_result_embed(ctx, title="ล้างสกิลสำเร็จ", description=f"{member.mention}\n{result_text}", color=discord.Color.green())
-        await self.send_log_embed(ctx, action_name="remove_skill", result_text=result_text, target=member, color=discord.Color.green())
+        await self.send_result_embed(
+            ctx,
+            title="ล้างสกิลสำเร็จ",
+            description=f"{member.mention}\n{result_text}",
+            color=discord.Color.green(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="remove_skill",
+            result_text=result_text,
+            target=member,
+            color=discord.Color.green(),
+        )
 
     @commands.command(name="reset_player")
     async def reset_player(
@@ -461,56 +588,152 @@ class Admin(commands.Cog):
         normalized_section = section.strip().lower()
         if normalized_section not in {"stats", "skills", "zone"}:
             result_text = "เลือกหมวดได้เฉพาะ `stats`, `skills`, หรือ `zone`"
-            await self.send_result_embed(ctx, title="รีเซ็ตข้อมูลไม่สำเร็จ", description=result_text, color=discord.Color.red())
-            await self.send_log_embed(ctx, action_name="reset_player", result_text=result_text, target=member, color=discord.Color.red())
+            await self.send_result_embed(
+                ctx,
+                title="รีเซ็ตข้อมูลไม่สำเร็จ",
+                description=result_text,
+                color=discord.Color.red(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="reset_player",
+                result_text=result_text,
+                target=member,
+                color=discord.Color.red(),
+            )
             return
         if confirmation != "CONFIRM":
             result_text = "คำสั่งนี้รีเซ็ตข้อมูลผู้เล่น ใช้ `!reset_player <stats|skills|zone> @member CONFIRM` เพื่อยืนยัน"
-            await self.send_result_embed(ctx, title="ยกเลิกการรีเซ็ต", description=result_text, color=discord.Color.orange())
-            await self.send_log_embed(ctx, action_name="reset_player", result_text="Cancelled: no confirmation", target=member, color=discord.Color.orange())
+            await self.send_result_embed(
+                ctx,
+                title="ยกเลิกการรีเซ็ต",
+                description=result_text,
+                color=discord.Color.orange(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="reset_player",
+                result_text="Cancelled: no confirmation",
+                target=member,
+                color=discord.Color.orange(),
+            )
             return
         try:
             counts = reset_player_data_section(member.id, normalized_section)
         except (ValueError, LookupError) as error:
             result_text = str(error)
-            await self.send_result_embed(ctx, title="รีเซ็ตข้อมูลไม่สำเร็จ", description=result_text, color=discord.Color.red())
-            await self.send_log_embed(ctx, action_name="reset_player", result_text=result_text, target=member, color=discord.Color.red())
+            await self.send_result_embed(
+                ctx,
+                title="รีเซ็ตข้อมูลไม่สำเร็จ",
+                description=result_text,
+                color=discord.Color.red(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="reset_player",
+                result_text=result_text,
+                target=member,
+                color=discord.Color.red(),
+            )
             return
 
         result_text = f"รีเซ็ตหมวด `{normalized_section}` ของ {member.display_name} แล้ว ({sum(counts.values())} รายการ)"
-        await self.send_result_embed(ctx, title="รีเซ็ตข้อมูลสำเร็จ", description=f"{member.mention}\n{result_text}", color=discord.Color.green())
-        await self.send_log_embed(ctx, action_name="reset_player", result_text=result_text, target=member, color=discord.Color.green())
+        await self.send_result_embed(
+            ctx,
+            title="รีเซ็ตข้อมูลสำเร็จ",
+            description=f"{member.mention}\n{result_text}",
+            color=discord.Color.green(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="reset_player",
+            result_text=result_text,
+            target=member,
+            color=discord.Color.green(),
+        )
 
     @commands.command(name="team_remove", aliases=["removeteam"])
-    async def team_remove(self, ctx: commands.Context, member: discord.Member, confirmation: str = ""):
+    async def team_remove(
+        self, ctx: commands.Context, member: discord.Member, confirmation: str = ""
+    ):
         if not await self.require_data_cleanup_admin(ctx, "team_remove", member):
             return
         await self.silent_delete(ctx.message)
         if confirmation != "CONFIRM":
-            result_text = "ใช้ `!team_remove @trainee CONFIRM` เพื่อยืนยันการนำออกจากทีม"
-            await self.send_result_embed(ctx, title="ยกเลิกการนำออกจากทีม", description=result_text, color=discord.Color.orange())
-            await self.send_log_embed(ctx, action_name="team_remove", result_text="Cancelled: no confirmation", target=member, color=discord.Color.orange())
+            result_text = (
+                "ใช้ `!team_remove @trainee CONFIRM` เพื่อยืนยันการนำออกจากทีม"
+            )
+            await self.send_result_embed(
+                ctx,
+                title="ยกเลิกการนำออกจากทีม",
+                description=result_text,
+                color=discord.Color.orange(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="team_remove",
+                result_text="Cancelled: no confirmation",
+                target=member,
+                color=discord.Color.orange(),
+            )
             return
         counts = remove_player_from_team(member.id)
         total = sum(counts.values())
         result_text = f"นำ {member.display_name} ออกจากทีมแล้ว ({total} รายการ)"
-        await self.send_result_embed(ctx, title="จัดการทีมสำเร็จ", description=f"{member.mention}\n{result_text}", color=discord.Color.green())
-        await self.send_log_embed(ctx, action_name="team_remove", result_text=result_text, target=member, color=discord.Color.green())
+        await self.send_result_embed(
+            ctx,
+            title="จัดการทีมสำเร็จ",
+            description=f"{member.mention}\n{result_text}",
+            color=discord.Color.green(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="team_remove",
+            result_text=result_text,
+            target=member,
+            color=discord.Color.green(),
+        )
 
     @commands.command(name="mail_clear", aliases=["clearmail"])
-    async def mail_clear(self, ctx: commands.Context, member: discord.Member, confirmation: str = ""):
+    async def mail_clear(
+        self, ctx: commands.Context, member: discord.Member, confirmation: str = ""
+    ):
         if not await self.require_data_cleanup_admin(ctx, "mail_clear", member):
             return
         await self.silent_delete(ctx.message)
         if confirmation != "CONFIRM":
-            result_text = "ใช้ `!mail_clear @member CONFIRM` เพื่อยืนยันการลบจดหมายทั้งหมด"
-            await self.send_result_embed(ctx, title="ยกเลิกการลบจดหมาย", description=result_text, color=discord.Color.orange())
-            await self.send_log_embed(ctx, action_name="mail_clear", result_text="Cancelled: no confirmation", target=member, color=discord.Color.orange())
+            result_text = (
+                "ใช้ `!mail_clear @member CONFIRM` เพื่อยืนยันการลบจดหมายทั้งหมด"
+            )
+            await self.send_result_embed(
+                ctx,
+                title="ยกเลิกการลบจดหมาย",
+                description=result_text,
+                color=discord.Color.orange(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="mail_clear",
+                result_text="Cancelled: no confirmation",
+                target=member,
+                color=discord.Color.orange(),
+            )
             return
         deleted_count = clear_player_mailbox(member.id)
         result_text = f"ลบจดหมายของ {member.display_name} แล้ว {deleted_count} ฉบับ"
-        await self.send_result_embed(ctx, title="ลบจดหมายสำเร็จ", description=f"{member.mention}\n{result_text}", color=discord.Color.green())
-        await self.send_log_embed(ctx, action_name="mail_clear", result_text=result_text, target=member, color=discord.Color.green())
+        await self.send_result_embed(
+            ctx,
+            title="ลบจดหมายสำเร็จ",
+            description=f"{member.mention}\n{result_text}",
+            color=discord.Color.green(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="mail_clear",
+            result_text=result_text,
+            target=member,
+            color=discord.Color.green(),
+        )
 
     @commands.command(name="resetzoneall")
     async def reset_zone_all(self, ctx: commands.Context):
@@ -531,7 +754,7 @@ class Admin(commands.Cog):
             ctx,
             title="♻️ Reset Zone สำเร็จ",
             description="รีเซ็ต Zone Build และ Zone Points ของทุกคนแล้ว",
-            color=discord.Color.red()
+            color=discord.Color.red(),
         )
         await self.send_log_embed(
             ctx,
@@ -594,7 +817,9 @@ class Admin(commands.Cog):
             color=discord.Color.green(),
         )
 
-    @commands.command(name="clear_race_records", aliases=["clearracerecords", "clear_race_history"])
+    @commands.command(
+        name="clear_race_records", aliases=["clearracerecords", "clear_race_history"]
+    )
     async def clear_race_records_command(
         self,
         ctx: commands.Context,
@@ -644,7 +869,9 @@ class Admin(commands.Cog):
 
         deleted_counts = clear_race_records(normalized_type)
         deleted_total = sum(deleted_counts.values())
-        type_label = {"all": "ทั้งหมด", "official": "Official", "practice": "Practice"}[normalized_type]
+        type_label = {"all": "ทั้งหมด", "official": "Official", "practice": "Practice"}[
+            normalized_type
+        ]
         result_text = (
             f"ลบ race record ประเภท `{type_label}` แล้ว {deleted_counts['race_history']} รายการ "
             f"(รวมข้อมูลที่เกี่ยวข้อง {deleted_total} แถว)"
@@ -710,7 +937,9 @@ class Admin(commands.Cog):
             color=discord.Color.red(),
         )
 
-    @commands.command(name="clear_legacy_profile", aliases=["clearprofile", "resetprofile"])
+    @commands.command(
+        name="clear_legacy_profile", aliases=["clearprofile", "resetprofile"]
+    )
     async def clear_legacy_profile(
         self,
         ctx: commands.Context,
@@ -804,7 +1033,7 @@ class Admin(commands.Cog):
                 ctx,
                 title="เพิ่ม Aptitude ไม่สำเร็จ",
                 description=error_text,
-                color=discord.Color.red()
+                color=discord.Color.red(),
             )
             await self.send_log_embed(
                 ctx,
@@ -823,7 +1052,7 @@ class Admin(commands.Cog):
                 ctx,
                 title="เพิ่ม Aptitude สำเร็จ",
                 description=f"{target.mention}\nเพิ่ม `{aptitude_name}` +1 แล้ว",
-                color=discord.Color.green()
+                color=discord.Color.green(),
             )
             await self.send_log_embed(
                 ctx,
@@ -837,7 +1066,7 @@ class Admin(commands.Cog):
                 ctx,
                 title="เพิ่ม Aptitude ไม่สำเร็จ",
                 description=msg,
-                color=discord.Color.red()
+                color=discord.Color.red(),
             )
             await self.send_log_embed(
                 ctx,
@@ -873,7 +1102,7 @@ class Admin(commands.Cog):
                 ctx,
                 title="ตั้งค่า Aptitude ไม่สำเร็จ",
                 description=error_text,
-                color=discord.Color.red()
+                color=discord.Color.red(),
             )
             await self.send_log_embed(
                 ctx,
@@ -894,7 +1123,7 @@ class Admin(commands.Cog):
             ctx,
             title="ตั้งค่า Aptitude สำเร็จ",
             description=f"{target.mention}\nตั้งค่า Aptitude ทั้งหมดเป็น `{value}` แล้ว",
-            color=discord.Color.green()
+            color=discord.Color.green(),
         )
         await self.send_log_embed(
             ctx,
@@ -935,7 +1164,7 @@ class Admin(commands.Cog):
                 ctx,
                 title="เพิ่ม Stats Point สำเร็จ",
                 description=f"{target.mention}\nเพิ่ม Stats Point +{amount}",
-                color=discord.Color.green()
+                color=discord.Color.green(),
             )
             await self.send_log_embed(
                 ctx,
@@ -949,7 +1178,7 @@ class Admin(commands.Cog):
                 ctx,
                 title="เพิ่ม Stats Point ไม่สำเร็จ",
                 description=msg,
-                color=discord.Color.red()
+                color=discord.Color.red(),
             )
             await self.send_log_embed(
                 ctx,
@@ -990,7 +1219,7 @@ class Admin(commands.Cog):
                 ctx,
                 title="เพิ่ม Event Point สำเร็จ",
                 description=f"{target.mention}\nเพิ่ม Event Point +{amount}",
-                color=discord.Color.green()
+                color=discord.Color.green(),
             )
             await self.send_log_embed(
                 ctx,
@@ -1004,7 +1233,7 @@ class Admin(commands.Cog):
                 ctx,
                 title="เพิ่ม Event Point ไม่สำเร็จ",
                 description=msg,
-                color=discord.Color.red()
+                color=discord.Color.red(),
             )
             await self.send_log_embed(
                 ctx,
@@ -1013,6 +1242,7 @@ class Admin(commands.Cog):
                 target=target,
                 color=discord.Color.red(),
             )
+
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))
