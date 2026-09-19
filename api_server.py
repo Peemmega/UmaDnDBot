@@ -622,7 +622,6 @@ def api_get_all_races(distance: str = "all"):
         if distance != "all" and race_distance.lower() != distance.lower():
             continue
 
-        categories = get_skill_category_groups(skill)
         result.append({
             "id": race_id,
             "name": race.get("name"),
@@ -1194,6 +1193,7 @@ def api_get_skills(tag: str = "all"):
         if tag != "all" and tag not in tags:
             continue
 
+        categories = get_skill_category_groups(skill)
         result.append({
             "id": skill_id,
             "name": skill['name'],
