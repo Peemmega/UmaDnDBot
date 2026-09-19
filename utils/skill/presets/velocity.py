@@ -394,7 +394,7 @@ VELOCITY_SKILLS = {
         "icon": "velocity",
         "cooldown": 8,
         "cost": 60,
-        "trigger": {"path_type": 2},
+        "trigger": {"path_type": 1},
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "cap_floor", "value": 3, "duration": "this_roll"},

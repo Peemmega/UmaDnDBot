@@ -9,6 +9,12 @@ from utils.icon_presets import USING_MAIN_EMOJIS
 from utils.skill.skill_ids import LEGACY_SKILL_ID_MAP
 
 DB_PATH = os.getenv("PLAYER_DB_PATH", "/app/data/player.db")
+DEFAULT_PLAYER_SKILL_SLOTS = (
+    "rec_010",  # Corner Recovery
+    "rec_011",  # Straightaway Recovery
+    "vel_023",  # Corner Adept
+    "vel_024",  # Straightaway Adept
+)
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH, timeout=10)  # ⬅️ เพิ่ม timeout
@@ -130,6 +136,38 @@ def init_db():
             cursor.execute(f"ALTER TABLE players ADD COLUMN {col} TEXT")
         except Exception:
             pass
+
+    try:
+        cursor.execute(
+            "ALTER TABLE players ADD COLUMN default_skill_loadout_seeded INTEGER NOT NULL DEFAULT 0"
+        )
+    except Exception:
+        pass
+
+    # Seed the starter loadout once. Existing custom or intentionally changed
+    # loadouts are never overwritten on later application starts.
+    cursor.execute(
+        """
+        UPDATE players
+        SET skill_slot_1 = ?, skill_slot_2 = ?, skill_slot_3 = ?, skill_slot_4 = ?,
+            default_skill_loadout_seeded = 1
+        WHERE default_skill_loadout_seeded = 0
+          AND skill_slot_1 IS NULL AND skill_slot_2 IS NULL
+          AND skill_slot_3 IS NULL AND skill_slot_4 IS NULL
+        """,
+        DEFAULT_PLAYER_SKILL_SLOTS,
+    )
+    cursor.execute(
+        """
+        UPDATE players
+        SET default_skill_loadout_seeded = 1
+        WHERE default_skill_loadout_seeded = 0
+          AND (
+            skill_slot_1 IS NOT NULL OR skill_slot_2 IS NOT NULL
+            OR skill_slot_3 IS NOT NULL OR skill_slot_4 IS NOT NULL
+          )
+        """
+    )
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS skill_loadout_presets (
@@ -1543,7 +1581,9 @@ def create_player(user_id: int, username: str):
         turf, dirt,
         sprint, mile, medium, long,
         front, pace, late, end_style,
-        stats_point, fans, skill_point
+        stats_point, fans, skill_point,
+        skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4,
+        default_skill_loadout_seeded
     )
     VALUES (
         ?, ?,
@@ -1551,9 +1591,11 @@ def create_player(user_id: int, username: str):
         1, 1,
         1, 1, 1, 1,
         1, 1, 1, 1,
-        12, 1, 0
+        12, 1, 0,
+        ?, ?, ?, ?,
+        1
     )
-    """, (user_id, username))
+    """, (user_id, username, *DEFAULT_PLAYER_SKILL_SLOTS))
 
     conn.commit()
     conn.close()

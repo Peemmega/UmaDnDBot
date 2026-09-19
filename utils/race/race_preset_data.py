@@ -1,15 +1,21 @@
 RACETRACKS = {
     # HANSHIN RACE
+    "HANSHIN_1400": [1, 1, 2, 4, 2, 2, 3, 1],
     "HANSHIN_1600": [1, 1, 2, 2, 4, 1, 3, 1],
+    "HANSHIN_1800": [1, 1, 1, 2, 4, 1, 3, 1],
     "HANSHIN_2000": [3, 1, 2, 2, 1, 1, 2, 2, 4, 3, 1, 1],
     "HANSHIN_2200": [4, 3, 1, 2, 2, 1, 4, 2, 2, 1, 3, 1],
+    "HANSHIN_2400": [3, 1, 2, 2, 1, 1, 2, 2, 4, 3, 3, 1],
     # TOKYO RACE
     "TOKYO_1600": [1, 3, 4, 2, 2, 3, 1, 1],
     "TOKYO_2000": [1, 3, 2, 2, 4, 1, 3, 1, 1, 2, 2, 1],
     "TOKYO_2400": [1, 2, 2, 2, 3, 4, 2, 2, 2, 3, 3, 1],
     # NAKAYAMA RACE
     "NAKAYAMA_1200": [4, 1, 2, 1, 2, 2, 3, 1],
+    "NAKAYAMA_1600": [1, 4, 2, 1, 1, 2, 3, 1],
+    "NAKAYAMA_1800": [3, 2, 4, 2, 1, 2, 2, 3],
     "NAKAYAMA_2000": [3, 1, 3, 2, 4, 2, 1, 1, 2, 2, 3, 1],
+    "NAKAYAMA_2200": [3, 1, 3, 2, 4, 2, 1, 2, 1, 2, 3, 1],
     "NAKAYAMA_2500": [1, 2, 2, 1, 3, 1, 3, 2, 4, 2, 1, 1, 2, 2, 3, 1],
     # CHUKYO RACE
     "CHUKYO_1200": [4, 1, 2, 2, 2, 3, 1, 1],
@@ -31,18 +37,29 @@ RACETRACKS = {
     "MORIOKA_1600": [1, 1, 4, 2, 2, 3, 1, 1],
 }
 
+# Shared grade artwork.  Individual race artwork is not available for every
+# graded race, so use these consistently for the GII/GIII catalogue entries.
+G2_RACE_THUMBNAIL = "https://media.discordapp.net/attachments/697810514448744448/1550867220589191239/G2_race.webp?ex=6aafe527&is=6aae93a7&hm=e9f1846166a1c8c245dc27719c585bc342f7ba9604e638ae1377357748ee467f&=&format=webp"
+G3_RACE_THUMBNAIL = "https://media.discordapp.net/attachments/697810514448744448/1550867219779428413/G3_race.webp?ex=6aafe526&is=6aae93a6&hm=d122a720ad3b2678029acc78273899cb015f84c2f6d5ebeef8dd22523f09fc7c&=&format=webp"
+
 
 # ``track`` stores the turf/dirt value. Keep the venue separately so
 # consumers can present a proper racecourse filter.
 RACE_VENUE_BY_ID = {
     "Hanshin": {
+        "FilliesRevue",
         "OkaSho",
+        "RoseStakes",
+        "TulipSho",
+        "KobeShimbunHai",
         "AsahiHaiFuturityStakes",
         "HanshinJuvenileFillies",
         "TakarazukaKinen",
         "OsakaHai",
     },
     "Tokyo": {
+        "AobaSho",
+        "FloraStakes",
         "NHK",
         "JapaneseOaks",
         "JapaneseDerby",
@@ -53,7 +70,16 @@ RACE_VENUE_BY_ID = {
         "VictoriaMileTokyo",
         "SaudiArabiaRoyalCup",
     },
-    "Nakayama": {"SatsukiSho", "HopefulStakes", "SprintersStakes", "ArimaKinen"},
+    "Nakayama": {
+        "SpringStakes",
+        "NewZealandTrophy",
+        "YayoiSho",
+        "StLiteKinen",
+        "SatsukiSho",
+        "HopefulStakes",
+        "SprintersStakes",
+        "ArimaKinen",
+    },
     "Chukyo": {"ChampionsCup", "TakamatsunomiyaKinen", "ChunichiShimbunHai"},
     "Kyoto": {
         "KikukaSho",
@@ -85,6 +111,42 @@ def get_race_venue(race_id: str) -> str:
 
 RACE_PRESET = {
     # HANSHIN RACE
+    "FilliesRevue": {
+        "name": "Fillies' Revue (GII)",
+        "thumnail": G2_RACE_THUMBNAIL,
+        "image": G2_RACE_THUMBNAIL,
+        "track": "turf",
+        "distance": "sprint",
+        "turn": 8,
+        "path": RACETRACKS["HANSHIN_1400"],
+    },
+    "TulipSho": {
+        "name": "Tulip Sho (GII)",
+        "thumnail": G2_RACE_THUMBNAIL,
+        "image": G2_RACE_THUMBNAIL,
+        "track": "turf",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["HANSHIN_1600"],
+    },
+    "RoseStakes": {
+        "name": "Rose Stakes (GII)",
+        "thumnail": G2_RACE_THUMBNAIL,
+        "image": G2_RACE_THUMBNAIL,
+        "track": "turf",
+        "distance": "medium",
+        "turn": 8,
+        "path": RACETRACKS["HANSHIN_1800"],
+    },
+    "KobeShimbunHai": {
+        "name": "Kobe Shimbun Hai (GII)",
+        "thumnail": G2_RACE_THUMBNAIL,
+        "image": G2_RACE_THUMBNAIL,
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["HANSHIN_2400"],
+    },
     "OkaSho": {
         "name": "Oka Sho (GI)",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1495054919999291593/thum_race_rt_000_1004_00.png?ex=69e4d9e5&is=69e38865&hm=43e097df171288de94a09c609093567b36f63d96492082d1912cb59068534280&=&format=webp&quality=lossless&width=192&height=96",
@@ -131,6 +193,24 @@ RACE_PRESET = {
         "path": RACETRACKS["HANSHIN_2000"],
     },
     # TOKYO RACE
+    "AobaSho": {
+        "name": "Aoba Sho (GII)",
+        "thumnail": G2_RACE_THUMBNAIL,
+        "image": G2_RACE_THUMBNAIL,
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["TOKYO_2400"],
+    },
+    "FloraStakes": {
+        "name": "Flora Stakes (GII)",
+        "thumnail": G2_RACE_THUMBNAIL,
+        "image": G2_RACE_THUMBNAIL,
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["TOKYO_2000"],
+    },
     "NHK": {
         "name": "NHK Mile Cup (GI)",
         "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219182676512858/thum_race_rt_000_1007_00.png?ex=69e1cf8e&is=69e07e0e&hm=b343ae355428ebe48951cadbae8cd18e5870346e5efb6eef401f613faa449997&=&format=webp&quality=lossless&width=192&height=96",
@@ -204,6 +284,42 @@ RACE_PRESET = {
         "path": RACETRACKS["TOKYO_1600"],
     },
     # NAKAYAMA RACE
+    "SpringStakes": {
+        "name": "Spring Stakes (GII)",
+        "thumnail": G2_RACE_THUMBNAIL,
+        "image": G2_RACE_THUMBNAIL,
+        "track": "turf",
+        "distance": "medium",
+        "turn": 8,
+        "path": RACETRACKS["NAKAYAMA_1800"],
+    },
+    "NewZealandTrophy": {
+        "name": "New Zealand Trophy (GII)",
+        "thumnail": G2_RACE_THUMBNAIL,
+        "image": G2_RACE_THUMBNAIL,
+        "track": "turf",
+        "distance": "mile",
+        "turn": 8,
+        "path": RACETRACKS["NAKAYAMA_1600"],
+    },
+    "YayoiSho": {
+        "name": "Yayoi Sho Deep Impact Kinen (GII)",
+        "thumnail": G2_RACE_THUMBNAIL,
+        "image": G2_RACE_THUMBNAIL,
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["NAKAYAMA_2000"],
+    },
+    "StLiteKinen": {
+        "name": "St. Lite Kinen (GII)",
+        "thumnail": G2_RACE_THUMBNAIL,
+        "image": G2_RACE_THUMBNAIL,
+        "track": "turf",
+        "distance": "medium",
+        "turn": 12,
+        "path": RACETRACKS["NAKAYAMA_2200"],
+    },
     "SatsukiSho": {
         "name": "Satsuki Sho (GI)",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1494730962477519049/thum_race_rt_000_1005_00.png?ex=69e454f0&is=69e30370&hm=7e84d8f95186e443c0e78149ac3dcee1be20600fb14f672bf37e781a94bbb9fa&=&format=webp&quality=lossless&width=192&height=96",
@@ -599,3 +715,14 @@ RACE_PRESET = {
         ],
     },
 }
+
+
+# The bot receives thumbnails from this catalogue, whereas the web app uses
+# bundled assets.  Normalize every existing and future GII/GIII entry here so
+# the grade artwork remains consistent in Discord as well.
+for _race in RACE_PRESET.values():
+    _name = str(_race.get("name", ""))
+    if "(GII)" in _name:
+        _race["thumnail"] = G2_RACE_THUMBNAIL
+    elif "(GIII)" in _name:
+        _race["thumnail"] = G3_RACE_THUMBNAIL
