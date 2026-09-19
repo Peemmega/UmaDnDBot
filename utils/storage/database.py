@@ -6,6 +6,7 @@ from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_C
 import json
 from utils.profile_images import resolve_public_url
 from utils.icon_presets import USING_MAIN_EMOJIS
+from utils.skill.skill_ids import LEGACY_SKILL_ID_MAP
 
 DB_PATH = os.getenv("PLAYER_DB_PATH", "/app/data/player.db")
 
@@ -31,6 +32,36 @@ def database_connection() -> Iterator[sqlite3.Connection]:
         raise
     finally:
         conn.close()
+
+
+def _migrate_legacy_skill_ids(cursor: sqlite3.Cursor) -> None:
+    """Replace retired ``s###`` IDs in every persisted skill loadout.
+
+    The migration is idempotent: after an ID has been replaced it no longer
+    matches a legacy key, so it is skipped on subsequent startups.
+    """
+    legacy_ids = tuple(LEGACY_SKILL_ID_MAP)
+    placeholders = ", ".join("?" for _ in legacy_ids)
+
+    for table in ("players", "skill_loadout_presets"):
+        columns = {
+            row["name"]
+            for row in cursor.execute(f"PRAGMA table_info({table})").fetchall()
+        }
+        for column in ("skill_slot_1", "skill_slot_2", "skill_slot_3", "skill_slot_4"):
+            if column not in columns:
+                continue
+
+            rows = cursor.execute(
+                f"SELECT rowid AS _rowid, {column} FROM {table} "
+                f"WHERE {column} IN ({placeholders})",
+                legacy_ids,
+            ).fetchall()
+            for row in rows:
+                cursor.execute(
+                    f"UPDATE {table} SET {column} = ? WHERE rowid = ?",
+                    (LEGACY_SKILL_ID_MAP[row[column]], row["_rowid"]),
+                )
 
 
 def init_db():
@@ -408,6 +439,8 @@ def init_db():
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
     """)
+
+    _migrate_legacy_skill_ids(cursor)
 
     conn.commit()
     conn.close()

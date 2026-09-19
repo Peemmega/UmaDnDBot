@@ -79,10 +79,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s033",  # Runaway
-            2: "s047",  # Ramp Up
-            3: "s015",  # Beeline Burst
-            4: "s030",  # Groundwork
+            1: "acc_008",  # Runaway
+            2: "vel_014",  # Ramp Up
+            3: "vel_007",  # Beeline Burst
+            4: "acc_005",  # Groundwork
         },
         "zone": {
             "name": "Default Zone",
@@ -117,10 +117,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s012",  # Speed Star
-            2: "s015",  # Beeline Burst
-            3: "s032",  # Neck and Neck
-            4: "s047",  # Ramp Up
+            1: "vel_006",  # Speed Star
+            2: "vel_007",  # Beeline Burst
+            3: "acc_007",  # Neck and Neck
+            4: "vel_014",  # Ramp Up
         },
         "zone": {
             "name": "Default Zone",
@@ -155,10 +155,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s014",
-            2: "s015",
-            3: "s037",
-            4: "s049",
+            1: "acc_003",
+            2: "vel_007",
+            3: "vel_011",
+            4: "vel_016",
         },
         "zone": {
             "name": "Default Zone",
@@ -193,10 +193,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s010",
-            2: "s031",
-            3: "s036",
-            4: "s002",
+            1: "utl_002",
+            2: "acc_006",
+            3: "vel_010",
+            4: "acc_001",
         },
         "zone": {
             "name": "Default Zone",
@@ -231,10 +231,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s033",  # Runaway
-            2: "s043",  # Red Shift/LP1211-M
-            3: "s030",  # Groundwork
-            4: "s051",  # Escape Artist
+            1: "acc_008",  # Runaway
+            2: "unique_002",  # Red Shift/LP1211-M
+            3: "acc_005",  # Groundwork
+            4: "vel_018",  # Escape Artist
         },
         "zone": {
             "name": "Default Zone",
@@ -270,10 +270,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s015",  # Beeline Burst
-            2: "s032",  # Neck and Neck
-            3: "s047",  # Ramp Up
-            4: "s031",  # No Stopping Me!
+            1: "vel_007",  # Beeline Burst
+            2: "acc_007",  # Neck and Neck
+            3: "vel_014",  # Ramp Up
+            4: "acc_006",  # No Stopping Me!
         },
         "zone": {
             "name": "Default Zone",
@@ -308,10 +308,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s014",
-            2: "s037",
-            3: "s049",
-            4: "s032",
+            1: "acc_003",
+            2: "vel_011",
+            3: "vel_016",
+            4: "acc_007",
         },
         "zone": {
             "name": "Default Zone",
@@ -346,10 +346,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s010",
-            2: "s036",
-            3: "s002",
-            4: "s037",  # In Body and Mind
+            1: "utl_002",
+            2: "vel_010",
+            3: "acc_001",
+            4: "vel_011",  # In Body and Mind
         },
         "zone": {
             "name": "Default Zone",
@@ -385,10 +385,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s015",  # Beeline Burst
-            2: "s037",  # In Body and Mind
-            3: "s032",  # Neck and Neck
-            4: "s035",  # Radiant Star
+            1: "vel_007",  # Beeline Burst
+            2: "vel_011",  # In Body and Mind
+            3: "acc_007",  # Neck and Neck
+            4: "acc_010",  # Radiant Star
         },
         "zone": {
             "name": "Abyssal Lament",
@@ -424,10 +424,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s015",  # Beeline Burst
-            2: "s035",  # Radiant Star
-            3: "s040",  # Tail Nine
-            4: "s032",  # Neck and Neck
+            1: "vel_007",  # Beeline Burst
+            2: "acc_010",  # Radiant Star
+            3: "vel_013",  # Tail Nine
+            4: "acc_007",  # Neck and Neck
         },
         "zone": {
             "name": "Champion Zone",
@@ -462,10 +462,10 @@ MOB_PRESETS = {
             "end_style": 4,
         },
         "skills": {
-            1: "s014",  # On Your Left!
-            2: "s044",  # Triumphant Pulse
-            3: "s037",  # In Body and Mind
-            4: "s015",  # Beeline Burst
+            1: "acc_003",  # On Your Left!
+            2: "unique_003",  # Triumphant Pulse
+            3: "vel_011",  # In Body and Mind
+            4: "vel_007",  # Beeline Burst
         },
         "zone": {
             "name": "Grey Phantom",
@@ -499,10 +499,10 @@ MOB_PRESETS = {
             "end_style": 4,
         },
         "skills": {
-            1: "s015",  # Beeline Burst
-            2: "s032",  # Neck and Neck
-            3: "s066",  # Track Demon
-            4: "s022",  # Breath of Fresh Air
+            1: "vel_007",  # Beeline Burst
+            2: "acc_007",  # Neck and Neck
+            3: "pas_002",  # Track Demon
+            4: "rec_005",  # Breath of Fresh Air
         },
         "zone": {
             "name": "Road to Glory",
@@ -536,10 +536,10 @@ MOB_PRESETS = {
             "end_style": 7,
         },
         "skills": {
-            1: "s035",  # Radiant Star!
-            2: "s002",  # Encroaching Shadow
-            3: "s037",  # In Body and Mind
-            4: "s036",  # Sturm und Drang
+            1: "acc_010",  # Radiant Star!
+            2: "acc_001",  # Encroaching Shadow
+            3: "vel_011",  # In Body and Mind
+            4: "vel_010",  # Sturm und Drang
         },
         "zone": {
             "name": "Meteor of Dioscuri",
@@ -573,10 +573,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s047",  # Ramp Up
-            2: "s032",  # Neck and Neck
-            3: "s035",  # Radiant Star
-            4: "s015",  # Beeline Burst
+            1: "vel_014",  # Ramp Up
+            2: "acc_007",  # Neck and Neck
+            3: "acc_010",  # Radiant Star
+            4: "vel_007",  # Beeline Burst
         },
         "zone": {
             "name": "Dance for Vittoria",
@@ -609,10 +609,10 @@ MOB_PRESETS = {
             "end_style": 6,
         },
         "skills": {
-            1: "s014",  # On Your Left!
-            2: "s045",  # Moving Past, and Beyond
-            3: "s037",  # In Body and Mind
-            4: "s039",  # Rising Dragon
+            1: "acc_003",  # On Your Left!
+            2: "unique_004",  # Moving Past, and Beyond
+            3: "vel_011",  # In Body and Mind
+            4: "vel_012",  # Rising Dragon
         },
         "zone": {
             "name": "Faith in the Feral",
@@ -648,10 +648,10 @@ MOB_PRESETS = {
             "end_style": 7,
         },
         "skills": {
-            1: "s002",  # Encroaching Shadow
-            2: "s031",  # No Stopping Me!
-            3: "s037",  # In Body and Mind
-            4: "s010",  # The Coast Is Clear!
+            1: "acc_001",  # Encroaching Shadow
+            2: "acc_006",  # No Stopping Me!
+            3: "vel_011",  # In Body and Mind
+            4: "utl_002",  # The Coast Is Clear!
         },
         "zone": {
             "name": "Wild Joker",
@@ -686,10 +686,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s033",  # Runaway
-            2: "s043",  # Red Shift/LP1211-M
-            3: "s054",  # Cacao Operation Cacao
-            4: "s015",  # Beeline Burst
+            1: "acc_008",  # Runaway
+            2: "unique_002",  # Red Shift/LP1211-M
+            3: "unique_006",  # Cacao Operation Cacao
+            4: "vel_007",  # Beeline Burst
         },
         "zone": {
             "name": "Class President + Speed = Bakushin",
@@ -723,10 +723,10 @@ MOB_PRESETS = {
             "end_style": 2,
         },
         "skills": {
-            1: "s032",  # Neck and Neck
-            3: "s035",  # Radiant Star
-            3: "s015",  # Beeline Burst
-            4: "s037",  # In Body and Mind
+            1: "acc_007",  # Neck and Neck
+            3: "acc_010",  # Radiant Star
+            3: "vel_007",  # Beeline Burst
+            4: "vel_011",  # In Body and Mind
         },
         "zone": {
             "name": "Celeste Oath",
@@ -760,10 +760,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s033",  # Runaway
-            2: "s030",  # Groundwork
-            3: "s043",  # Red Shift/LP1211-M
-            4: "s015",  # Beeline Burst
+            1: "acc_008",  # Runaway
+            2: "acc_005",  # Groundwork
+            3: "unique_002",  # Red Shift/LP1211-M
+            4: "vel_007",  # Beeline Burst
         },
         "zone": {
             "name": "Path of Singular Focus",
@@ -798,10 +798,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s033",  # Runaway
-            2: "s034",  # Unrestrained
-            3: "s043",  # Red Shift/LP1211-M
-            4: "s054",  # Cacao Operation Cacao
+            1: "acc_008",  # Runaway
+            2: "acc_009",  # Unrestrained
+            3: "unique_002",  # Red Shift/LP1211-M
+            4: "unique_006",  # Cacao Operation Cacao
         },
         "zone": {
             "name": "Queen's Rebirth",
@@ -836,10 +836,10 @@ MOB_PRESETS = {
             "end_style": 5,
         },
         "skills": {
-            1: "s032",  # Neck and Neck
-            2: "s035",  # Radiant Star
-            3: "s001",  # Professor of Curvature
-            4: "s015",  # Beeline Burst
+            1: "acc_007",  # Neck and Neck
+            2: "acc_010",  # Radiant Star
+            3: "vel_001",  # Professor of Curvature
+            4: "vel_007",  # Beeline Burst
         },
         "zone": {
             "name": "Shooting Star",
@@ -873,10 +873,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s033",  # Runaway
-            2: "s034",  # Unrestrained
-            3: "s043",  # Red Shift/LP1211-M
-            4: "s046",  # Angling and Scheming
+            1: "acc_008",  # Runaway
+            2: "acc_009",  # Unrestrained
+            3: "unique_002",  # Red Shift/LP1211-M
+            4: "unique_005",  # Angling and Scheming
         },
         "zone": {
             "name": "I'm Not Giving up the Lead!",
@@ -911,10 +911,10 @@ MOB_PRESETS = {
             "end_style": 7,
         },
         "skills": {
-            1: "s002",  # Encroaching Shadow
-            2: "s036",  # Sturm und Drang
-            3: "s037",  # In Body and Mind
-            4: "s035",  # Radiant Star
+            1: "acc_001",  # Encroaching Shadow
+            2: "vel_010",  # Sturm und Drang
+            3: "vel_011",  # In Body and Mind
+            4: "acc_010",  # Radiant Star
         },
         "zone": {
             "name": "Scarlet Ascension of the Rakshasa",
@@ -950,10 +950,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "s033",  # Runaway
-            2: "s034",  # Unrestrained
-            3: "s046",  # Angling and Scheming
-            4: "s035",  # Radiant Star
+            1: "acc_008",  # Runaway
+            2: "acc_009",  # Unrestrained
+            3: "unique_005",  # Angling and Scheming
+            4: "acc_010",  # Radiant Star
         },
         "zone": {
             "name": "Shout of Victory",
@@ -988,10 +988,10 @@ MOB_PRESETS = {
             "end_style": 2,
         },
         "skills": {
-            1: "s045",  # Moving Past, and Beyond
-            2: "s065",  # Impulse
-            3: "s037",  # In Body and Mind
-            4: "s015",  # Beeline Burst
+            1: "unique_004",  # Moving Past, and Beyond
+            2: "pas_001",  # Impulse
+            3: "vel_011",  # In Body and Mind
+            4: "vel_007",  # Beeline Burst
         },
         "zone": {
             "name": "Scarlet Lily's Elation",
@@ -1025,10 +1025,10 @@ MOB_PRESETS = {
             "end_style": 2,
         },
         "skills": {
-            1: "s015",  # Beeline Burst
-            2: "s067",  # Singularity
-            3: "s037",  # In Body and Mind
-            4: "s043",  # Red Shift/LP1211-M
+            1: "vel_007",  # Beeline Burst
+            2: "pas_003",  # Singularity
+            3: "vel_011",  # In Body and Mind
+            4: "unique_002",  # Red Shift/LP1211-M
         },
         "zone": {
             "name": "Peerless Heroine",
@@ -1062,10 +1062,10 @@ MOB_PRESETS = {
             "end_style": 7,
         },
         "skills": {
-            1: "s036",  # Sturm und Drang
-            2: "s015",  # Beeline Burst
-            3: "s037",  # In Body and Mind
-            4: "s002",  # Encroaching Shadow
+            1: "vel_010",  # Sturm und Drang
+            2: "vel_007",  # Beeline Burst
+            3: "vel_011",  # In Body and Mind
+            4: "acc_001",  # Encroaching Shadow
         },
         "zone": {
             "name": "None Shall Object My Rule",
@@ -1099,10 +1099,10 @@ MOB_PRESETS = {
             "end_style": 4,
         },
         "skills": {
-            1: "s032",  # Neck and Neck
-            2: "s047",  # Ramp Up
-            3: "s043",  # Red Shift/LP1211-M
-            4: "s015",  # Beeline Burst
+            1: "acc_007",  # Neck and Neck
+            2: "vel_014",  # Ramp Up
+            3: "unique_002",  # Red Shift/LP1211-M
+            4: "vel_007",  # Beeline Burst
         },
         "zone": {
             "name": "Rose Conquest",
@@ -1135,10 +1135,10 @@ MOB_PRESETS = {
             "end_style": 4,
         },
         "skills": {
-            1: "s032",  # Neck and Neck
-            3: "s035",  # Radiant Star
-            3: "s015",  # Beeline Burst
-            4: "s054",  # Cacao Operation Cacao
+            1: "acc_007",  # Neck and Neck
+            3: "acc_010",  # Radiant Star
+            3: "vel_007",  # Beeline Burst
+            4: "unique_006",  # Cacao Operation Cacao
         },
         "zone": {
             "name": "Shadow Break",
@@ -1173,10 +1173,10 @@ MOB_PRESETS = {
             "end_style": 5,
         },
         "skills": {
-            1: "s062",  # 564 Escapades
-            2: "s037",  # In Body and Mind
-            3: "s014",  # On Your Left!
-            4: "s015",  # Beeline Burst
+            1: "unique_010",  # 564 Escapades
+            2: "vel_011",  # In Body and Mind
+            3: "acc_003",  # On Your Left!
+            4: "vel_007",  # Beeline Burst
         },
         "zone": {
             "name": "Thou, Witness the Heavenly Might of the Emperor",
@@ -1211,10 +1211,10 @@ MOB_PRESETS = {
             "end_style": 8,
         },
         "skills": {
-            1: "s012",  # Speed Star
-            2: "s035",  # Radiant Star
-            3: "s032",  # Neck and Neck
-            4: "s043",  # Red Shift/LP1211-M
+            1: "vel_006",  # Speed Star
+            2: "acc_010",  # Radiant Star
+            3: "acc_007",  # Neck and Neck
+            4: "unique_002",  # Red Shift/LP1211-M
         },
         "zone": {
             "name": "I SHOW SPEED",

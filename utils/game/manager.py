@@ -1883,16 +1883,16 @@ ROOKIE_DISTANCE_STAT_SHIFTS = {
 ROOKIE_DISTANCE_SKILL_LOADOUTS = {
     "rookie_front": {
         "sprint": {
-            1: "s033",  # Runaway
-            2: "s016",  # Turbo Sprint
-            3: "s051",  # Escape Artist
-            4: "s049",  # Homestretch Haste
+            1: "acc_008",  # Runaway
+            2: "acc_004",  # Turbo Sprint
+            3: "vel_018",  # Escape Artist
+            4: "vel_016",  # Homestretch Haste
         },
         "mile": {
-            1: "s033",  # Runaway
-            2: "s015",  # Beeline Burst
-            3: "s051",  # Escape Artist
-            4: "s049",  # Homestretch Haste
+            1: "acc_008",  # Runaway
+            2: "vel_007",  # Beeline Burst
+            3: "vel_018",  # Escape Artist
+            4: "vel_016",  # Homestretch Haste
         },
     },
 }
