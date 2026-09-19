@@ -210,9 +210,9 @@ UNIQUE_SKILLS = {
                 "mode": "flat_total",
                 "value": 50,
                 "duration": "this_roll",
-                "condition": {"skill_use_count_min": 4},
+                "condition": {"distance_type": "Medium", "skill_use_count_min": 3},
             },
         ],
-        "tags": ["middle", "mid_race", "velocity", "unique"],
+        "tags": ["middle", "mid_race", "medium", "velocity", "unique"],
     },
 }

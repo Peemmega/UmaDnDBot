@@ -150,6 +150,16 @@ def _canonical_skill_tags(skill: dict) -> list[str]:
         tags.add("passive")
     for effect in skill.get("effects", []):
         tags.update(_EFFECT_TAGS.get(effect.get("type"), set()))
+        condition = effect.get("condition") or {}
+        condition_track = str(condition.get("track", "")).lower()
+        if condition_track in {"turf", "dirt"}:
+            tags.add(condition_track)
+        condition_distance = str(condition.get("distance_type", "")).lower()
+        if condition_distance in {"sprint", "mile", "medium", "long"}:
+            tags.add(condition_distance)
+        condition_style = str(condition.get("style", "")).lower()
+        if condition_style in {"front", "pace", "late", "end"}:
+            tags.add(condition_style)
 
     return sorted(tags, key=lambda tag: (_TAG_ORDER_INDEX.get(tag, len(_TAG_ORDER)), tag))
 

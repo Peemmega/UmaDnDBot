@@ -20,6 +20,7 @@ COMMON_ICON_KEYS = {
     "velocity": "Velocity",
     "stamina": "Recovery",
     "navigation": "Navigation",
+    "passive": "Passive",
 }
 
 ICON = {
@@ -39,6 +40,7 @@ ICON_URL = {
     "Acceleration_rare": "https://media.discordapp.net/attachments/697810514448744448/1526292465185722469/Acceleration.png?ex=6a567e20&is=6a552ca0&hm=5887f9dfc6348323c2e75c277470052d38bf9d8f15d50b9e84182107fdf32f67&=&format=webp&quality=lossless&width=240&height=240",
     "Velocity_rare": "https://media.discordapp.net/attachments/697810514448744448/1526292464552640652/Velocity.png?ex=6a567e20&is=6a552ca0&hm=cdec2ebfd23657a87bdcecbfd11d1c8dfd528917561d628b792825a64d017add&=&format=webp&quality=lossless&width=240&height=240",
     "Passive_rare": "https://cdn.discordapp.com/attachments/697810514448744448/1543574020023128115/Passive.png?ex=6a955cd4&is=6a940b54&hm=b50e5dd13c0a5e306d9faa48953d051cdf73d6bb89838d87b3b4baca5ce73766",
+    "passive": "https://cdn.discordapp.com/attachments/697810514448744448/1543574020023128115/Passive.png?ex=6a955cd4&is=6a940b54&hm=b50e5dd13c0a5e306d9faa48953d051cdf73d6bb89838d87b3b4baca5ce73766",
     "Navigation_rare": "https://media.discordapp.net/attachments/697810514448744448/1526292468520321267/Navigation.png?ex=6a567e21&is=6a552ca1&hm=bd100dd98982668b999927406c724fdc5cc8d68c2e366286ee9446d03a85b545&=&format=webp&quality=lossless&width=240&height=240",
     "Recovery_rare": "https://media.discordapp.net/attachments/697810514448744448/1526292463436693565/Recovery.png?ex=6a567e20&is=6a552ca0&hm=a8f676d62e27898fcfe21a282a019de5585a298635afa011ec96b472c97f56e1&=&format=webp&quality=lossless&width=240&height=240",
     "DecreaseVelocity_rare": "https://media.discordapp.net/attachments/697810514448744448/1526292466993467513/DecreaseVelocity.png?ex=6a567e21&is=6a552ca1&hm=a12f7f4f7803e42dded5b924be383355dc1bd0861067e8018cd67822bce2f9d7&=&format=webp&quality=lossless&width=240&height=240",
@@ -159,6 +161,18 @@ def get_skill_category_groups(skill: dict) -> dict[str, list[str]]:
     style = _STYLE_TO_APTITUDE.get(trigger.get("style"))
     if style:
         aptitude.add(style)
+
+    for effect in skill.get("effects", []):
+        condition = effect.get("condition") or {}
+        condition_track = str(condition.get("track", "")).lower()
+        if condition_track in {"turf", "dirt"}:
+            aptitude.add(condition_track)
+        condition_distance = str(condition.get("distance_type", "")).lower()
+        if condition_distance in {"sprint", "mile", "medium", "long"}:
+            aptitude.add(condition_distance)
+        condition_style = _STYLE_TO_APTITUDE.get(condition.get("style"))
+        if condition_style:
+            aptitude.add(condition_style)
     detail_aliases = {
         "start": "early_race",
         "last_spurt": "lastspurt",
