@@ -83,7 +83,7 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "cap_floor", "value": 5, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -221,7 +221,7 @@ VELOCITY_SKILLS = {
     },
     "vel_014": {
         "name": "Ramp Up",
-        "icon": "Velocity_rare",
+        "icon": "velocity",
         "cooldown": 20,
         "cost": 50,
         "trigger": {
@@ -243,7 +243,7 @@ VELOCITY_SKILLS = {
     },
     "vel_015": {
         "name": "Uma Stan",
-        "icon": "Velocity_rare",
+        "icon": "velocity",
         "cooldown": 20,
         "cost": 50,
         "trigger": {"nearby_uma_count": 2},
@@ -253,7 +253,7 @@ VELOCITY_SKILLS = {
     },
     "vel_016": {
         "name": "Homestretch Haste",
-        "icon": "Velocity_rare",
+        "icon": "velocity",
         "cooldown": 20,
         "cost": 50,
         "trigger": {"last_corner": True},
@@ -370,5 +370,199 @@ VELOCITY_SKILLS = {
             {"type": "cap_floor", "value": 3, "duration": "this_roll"},
         ],
         "tags": ["late", "mid_race", "middle", "velocity"],
+    },
+    "vel_023": {
+        "name": "Corner Adept",
+        "icon": "velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {"path_type": 2},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 10,
+                "duration": "this_roll",
+            },
+            {"type": "cap_floor", "value": 6, "duration": "this_roll"},
+        ],
+        "tags": ["corner", "velocity"],
+    },
+    "vel_024": {
+        "name": "Straightaway Adept",
+        "icon": "velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {"path_type": 2},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 20,
+                "duration": "this_roll",
+            },
+        ],
+        "tags": ["straightaway", "velocity"],
+    },
+    "vel_025": {
+        "name": "Countermeasure",
+        "icon": "velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {
+            "style": "Late",
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "back",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 20,
+                "duration": "this_roll",
+            },
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+        ],
+        "tags": ["late", "back", "mid_race", "velocity", "positioning"],
+    },
+    "vel_026": {
+        "name": "Highlander",
+        "icon": "velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {"path_type": 3},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 40,
+                "duration": "this_roll",
+            }
+        ],
+        "tags": ["uphill", "velocity"],
+    },
+    "vel_027": {
+        "name": "Playtime's Over!",
+        "icon": "velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {
+            "lastspurt": True,
+            "position_group": "front",
+            "target_distance_min": -20,
+            "target_distance_max": -1,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 40,
+                "duration": "this_roll",
+            }
+        ],
+        "tags": ["front", "lastspurt", "followed", "velocity"],
+    },
+    "vel_028": {
+        "name": "Up-Tempo",
+        "icon": "velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {
+            "distance_type": "Medium",
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "front",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 40,
+                "duration": "this_roll",
+            }
+        ],
+        "tags": ["medium", "front", "mid_race", "velocity", "positioning"],
+    },
+    "vel_029": {
+        "name": "Masterful Gambit",
+        "icon": "velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {"style": "End", "lastspurt": True, "position_group": "back"},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 25,
+                "duration": "this_roll",
+            }
+        ],
+        "tags": ["end", "back", "lastspurt", "velocity"],
+    },
+    "vel_030": {
+        "name": "Prepared to Pass",
+        "icon": "velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {"style": "Pace", "last_corner": True},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 20,
+                "duration": "this_roll",
+            }
+        ],
+        "tags": ["pace", "final_corner", "velocity", "positioning"],
+    },
+    "vel_031": {
+        "name": "Outer Swell",
+        "icon": "velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {
+            "style": "Late",
+            "last_corner": True,
+            "position_group": "back",
+            "target_distance_min": 1,
+            "target_distance_max": 150,
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 20,
+                "duration": "this_roll",
+            }
+        ],
+        "tags": ["late", "back", "final_corner", "velocity"],
+    },
+    "vel_032": {
+        "name": "Fast-Paced",
+        "icon": "velocity",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {"style": "Front", "phase_min": 2, "phase_max": 3},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 20,
+                "duration": "this_roll",
+            }
+        ],
+        "tags": ["front", "mid_race", "velocity", "positioning"],
     },
 }

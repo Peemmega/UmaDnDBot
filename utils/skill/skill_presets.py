@@ -15,11 +15,22 @@ RARE_ICON_KEYS = {
     "Blind": "Blind_rare",
 }
 
+COMMON_ICON_KEYS = {
+    "acceleration": "Acceleration",
+    "velocity": "Velocity",
+    "stamina": "Recovery",
+    "navigation": "Navigation",
+}
+
 ICON = {
     **SKILL_ICONS,
     **{
         rare_key: SKILL_ICONS[icon_key]
         for icon_key, rare_key in RARE_ICON_KEYS.items()
+    },
+    **{
+        common_key: SKILL_ICONS[icon_key]
+        for common_key, icon_key in COMMON_ICON_KEYS.items()
     },
 }
 

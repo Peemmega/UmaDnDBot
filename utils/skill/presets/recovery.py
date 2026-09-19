@@ -33,7 +33,7 @@ RECOVERY_SKILLS = {
             "target_distance_min": 1,
             "target_distance_max": 150,
         },
-        "target": {"scope": "nearest_front", "limit": 3},
+        "target": {"scope": "all_front", "limit": 12},
         "effects": [
             {"type": "recover_stamina", "value": 1.5},
             {"type": "modify_roll_cap", "value": -3, "duration": "this_roll"},
