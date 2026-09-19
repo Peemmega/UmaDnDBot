@@ -112,16 +112,21 @@ SKILL_DETAIL_OPTIONS = [
     ("all", "All details"),
     ("acceleration", "Acceleration"), ("velocity", "Velocity"),
     ("recovery", "Recovery"), ("debuff", "Debuff"), ("passive", "Passive"),
-    ("unique", "Unique"), ("concentration", "Concentration"),
+    ("blind", "Blind"), ("unique", "Unique"), ("concentration", "Concentration"),
     ("vision", "Vision"), ("positioning", "Positioning"),
     ("corner", "Corner"), ("straight", "Straight"),
-    ("uphill", "Uphill"), ("downhill", "Downhill"),
+    ("final_corner", "Final corner"), ("uphill", "Uphill"), ("downhill", "Downhill"),
     ("early_race", "Early race"), ("mid_race", "Mid race"),
     ("late_race", "Late race"), ("lastspurt", "Last spurt"),
-    ("blocked", "Blocked"), ("burst", "Burst"), ("stamina", "Stamina"),
+    ("front_position", "Front position"), ("middle_position", "Middle position"),
+    ("back_position", "Back position"), ("front_blocked", "Front blocked"),
+    ("target_ahead", "Target ahead"), ("target_behind", "Target behind"),
+    ("nearby_uma", "Nearby Uma"), ("followed", "Being followed"),
+    ("stability", "Stability"), ("cap_boost", "Cap boost"),
+    ("blocked", "Blocked"), ("burst", "Burst"), ("sustain", "Sustain"),
+    ("power", "Power"), ("stamina", "Stamina"), ("mindgame", "Mind game"),
 ]
 
-_APTITUDE_KEYS = {key for key, _ in SKILL_APTITUDE_OPTIONS if key != "all"}
 _DETAIL_KEYS = {key for key, _ in SKILL_DETAIL_OPTIONS if key != "all"}
 _STYLE_TO_APTITUDE = {"Front": "front", "Pace": "pace", "Late": "late", "End": "end"}
 _ICON_TO_DETAIL = {
@@ -154,12 +159,6 @@ def get_skill_category_groups(skill: dict) -> dict[str, list[str]]:
     style = _STYLE_TO_APTITUDE.get(trigger.get("style"))
     if style:
         aptitude.add(style)
-    for key in _APTITUDE_KEYS:
-        if key in tags:
-            aptitude.add(key)
-    if "lead" in tags:
-        aptitude.add("front")
-
     detail_aliases = {
         "start": "early_race",
         "last_spurt": "lastspurt",
