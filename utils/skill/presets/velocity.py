@@ -438,12 +438,7 @@ VELOCITY_SKILLS = {
         "trigger": {"path_type": 3},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {
-                "type": "modify_velocity",
-                "mode": "flat_total",
-                "value": 40,
-                "duration": "this_roll",
-            }
+            {"type": "cap_floor", "value": 6, "duration": "this_roll"},
         ],
         "tags": ["uphill", "velocity"],
     },
@@ -482,12 +477,13 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 20,
                 "duration": "this_roll",
-            }
+            },
         ],
         "tags": ["medium", "front", "mid_race", "velocity", "positioning"],
     },
@@ -499,12 +495,13 @@ VELOCITY_SKILLS = {
         "trigger": {"style": "End", "lastspurt": True, "position_group": "back"},
         "target": {"scope": "self", "limit": 1},
         "effects": [
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 20,
                 "duration": "this_roll",
-            }
+            },
         ],
         "tags": ["end", "back", "lastspurt", "velocity"],
     },
@@ -516,12 +513,13 @@ VELOCITY_SKILLS = {
         "trigger": {"style": "Pace", "last_corner": True},
         "target": {"scope": "self", "limit": 1},
         "effects": [
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 20,
                 "duration": "this_roll",
-            }
+            },
         ],
         "tags": ["pace", "final_corner", "velocity", "positioning"],
     },
@@ -539,12 +537,13 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 20,
                 "duration": "this_roll",
-            }
+            },
         ],
         "tags": ["late", "back", "final_corner", "velocity"],
     },
@@ -556,12 +555,13 @@ VELOCITY_SKILLS = {
         "trigger": {"style": "Front", "phase_min": 2, "phase_max": 3},
         "target": {"scope": "self", "limit": 1},
         "effects": [
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 20,
                 "duration": "this_roll",
-            }
+            },
         ],
         "tags": ["front", "mid_race", "velocity", "positioning"],
     },
