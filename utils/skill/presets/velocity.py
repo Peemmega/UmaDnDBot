@@ -502,7 +502,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 25,
+                "value": 40,
                 "duration": "this_roll",
             }
         ],
@@ -519,7 +519,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 20,
+                "value": 40,
                 "duration": "this_roll",
             }
         ],
@@ -542,7 +542,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 20,
+                "value": 40,
                 "duration": "this_roll",
             }
         ],
@@ -559,7 +559,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 20,
+                "value": 40,
                 "duration": "this_roll",
             }
         ],

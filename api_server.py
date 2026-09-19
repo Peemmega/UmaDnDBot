@@ -45,7 +45,13 @@ from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
 from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
 from utils.race.race_preset_data import get_race_venue
 from utils.event_schedule import EVENT_SCHEDULE
-from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
+from utils.skill.skill_presets import (
+    SKILLS,
+    SKILL_APTITUDE_OPTIONS,
+    SKILL_DETAIL_OPTIONS,
+    SKILL_TAG_OPTIONS,
+    get_skill_category_groups,
+)
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
@@ -616,6 +622,7 @@ def api_get_all_races(distance: str = "all"):
         if distance != "all" and race_distance.lower() != distance.lower():
             continue
 
+        categories = get_skill_category_groups(skill)
         result.append({
             "id": race_id,
             "name": race.get("name"),
@@ -1194,6 +1201,8 @@ def api_get_skills(tag: str = "all"):
             "cooldown": skill.get("cooldown", 0),
             "cost": skill.get("cost", 0),
             "tags": tags,
+            "aptitude_categories": categories["aptitude"],
+            "detail_categories": categories["detail"],
             "target": describe_target(skill.get("target", {})),
             "trigger": describe_trigger(skill.get("trigger", {})),
             "effects": [
@@ -1211,6 +1220,21 @@ def api_get_skill_tags():
         {"value": value, "label": label}
         for value, label in SKILL_TAG_OPTIONS
     ]
+
+
+@app.get("/skills/categories")
+def api_get_skill_categories():
+    """Category metadata for the two skill-library filters."""
+    return {
+        "aptitude": [
+            {"value": value, "label": label}
+            for value, label in SKILL_APTITUDE_OPTIONS
+        ],
+        "detail": [
+            {"value": value, "label": label}
+            for value, label in SKILL_DETAIL_OPTIONS
+        ],
+    }
 
 class EquipSkillPayload(BaseModel):
     user_id: str

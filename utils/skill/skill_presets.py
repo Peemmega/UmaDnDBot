@@ -98,6 +98,92 @@ SKILL_TAG_OPTIONS = [
     ("unique", "Unique Skill"),
 ]
 
+# Skill browsing has two independent taxonomies. Aptitude describes where a
+# skill can be used; detail describes its effect or activation characteristic.
+# The game still evaluates the original trigger/tags fields.
+SKILL_APTITUDE_OPTIONS = [
+    ("all", "All aptitudes"),
+    ("turf", "Turf"), ("dirt", "Dirt"),
+    ("sprint", "Sprint"), ("mile", "Mile"), ("medium", "Medium"), ("long", "Long"),
+    ("front", "Front"), ("pace", "Pace"), ("late", "Late"), ("end", "End"),
+]
+
+SKILL_DETAIL_OPTIONS = [
+    ("all", "All details"),
+    ("acceleration", "Acceleration"), ("velocity", "Velocity"),
+    ("recovery", "Recovery"), ("debuff", "Debuff"), ("passive", "Passive"),
+    ("unique", "Unique"), ("concentration", "Concentration"),
+    ("vision", "Vision"), ("positioning", "Positioning"),
+    ("corner", "Corner"), ("straight", "Straight"),
+    ("uphill", "Uphill"), ("downhill", "Downhill"),
+    ("early_race", "Early race"), ("mid_race", "Mid race"),
+    ("late_race", "Late race"), ("lastspurt", "Last spurt"),
+    ("blocked", "Blocked"), ("burst", "Burst"), ("stamina", "Stamina"),
+]
+
+_APTITUDE_KEYS = {key for key, _ in SKILL_APTITUDE_OPTIONS if key != "all"}
+_DETAIL_KEYS = {key for key, _ in SKILL_DETAIL_OPTIONS if key != "all"}
+_STYLE_TO_APTITUDE = {"Front": "front", "Pace": "pace", "Late": "late", "End": "end"}
+_ICON_TO_DETAIL = {
+    "Acceleration": "acceleration", "Acceleration_rare": "acceleration",
+    "acceleration": "acceleration", "UniqueAcceleration": "acceleration",
+    "Velocity": "velocity", "Velocity_rare": "velocity", "velocity": "velocity",
+    "UniqueVelocity": "velocity", "Recovery": "recovery", "Recovery_rare": "recovery",
+    "stamina": "recovery", "Passive": "passive", "Passive_rare": "passive",
+    "Concentration": "concentration", "Concentration_rare": "concentration",
+    "LookUp": "vision", "LookUp_rare": "vision",
+    "DecreaseVelocity": "debuff", "DecreaseVelocity_rare": "debuff",
+    "ReduceSTA": "debuff", "ReduceSTA_rare": "debuff",
+    "Blind": "debuff", "Blind_rare": "debuff",
+}
+
+
+def get_skill_category_groups(skill: dict) -> dict[str, list[str]]:
+    """Return stable aptitude/detail categories for a skill preset."""
+    trigger = skill.get("trigger", {})
+    tags = {str(tag).lower() for tag in skill.get("tags", [])}
+    aptitude = set()
+    detail = set()
+
+    track = str(trigger.get("track", "")).lower()
+    if track in {"turf", "dirt"}:
+        aptitude.add(track)
+    distance = str(trigger.get("distance_type", "")).lower()
+    if distance in {"sprint", "mile", "medium", "long"}:
+        aptitude.add(distance)
+    style = _STYLE_TO_APTITUDE.get(trigger.get("style"))
+    if style:
+        aptitude.add(style)
+    for key in _APTITUDE_KEYS:
+        if key in tags:
+            aptitude.add(key)
+    if "lead" in tags:
+        aptitude.add("front")
+
+    detail_aliases = {
+        "start": "early_race",
+        "last_spurt": "lastspurt",
+        "straightaway": "straight",
+        "mid_late": "late_race",
+    }
+    for tag in tags:
+        normalized = detail_aliases.get(tag, tag)
+        if normalized in _DETAIL_KEYS:
+            detail.add(normalized)
+    path_detail = {1: "straight", 2: "corner", 3: "uphill", 4: "downhill"}.get(trigger.get("path_type"))
+    if path_detail:
+        detail.add(path_detail)
+    if trigger.get("lastspurt"):
+        detail.add("lastspurt")
+    icon_detail = _ICON_TO_DETAIL.get(skill.get("icon"))
+    if icon_detail:
+        detail.add(icon_detail)
+
+    return {
+        "aptitude": [key for key, _ in SKILL_APTITUDE_OPTIONS if key in aptitude],
+        "detail": [key for key, _ in SKILL_DETAIL_OPTIONS if key in detail],
+    }
+
 TRIGGER_SCHEMA = {
     "path_type": None,
     "style": None,
