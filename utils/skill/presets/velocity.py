@@ -274,7 +274,12 @@ VELOCITY_SKILLS = {
         "icon": "Velocity_rare",
         "cooldown": 8,
         "cost": 80,
-        "trigger": {"phase_min": 2, "phase_max": 3, "position_group": "back"},
+        "trigger": {
+            "style": "End",
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "back",
+        },
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
@@ -489,7 +494,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 20,
+                "value": 25,
                 "duration": "this_roll",
             },
         ],
@@ -507,7 +512,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 20,
+                "value": 25,
                 "duration": "this_roll",
             },
         ],
@@ -525,7 +530,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 20,
+                "value": 25,
                 "duration": "this_roll",
             },
         ],
@@ -549,7 +554,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 20,
+                "value": 25,
                 "duration": "this_roll",
             },
         ],
@@ -567,7 +572,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 20,
+                "value": 25,
                 "duration": "this_roll",
             },
         ],
@@ -584,7 +589,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 30,
+                "value": 25,
                 "duration": "this_roll",
             },
             {"type": "cap_floor", "value": 3, "duration": "this_roll"},
@@ -603,17 +608,22 @@ VELOCITY_SKILLS = {
     },
     "vel_035": {
         "name": "Early Start",
-        "icon": "velolcity",
+        "icon": "velocity",
         "cooldown": 8,
         "cost": 60,
-        "trigger": {"phase_min": 2, "phase_max": 3, "position_group": "back"},
+        "trigger": {
+            "style": "End",
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "back",
+        },
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_roll_cap", "value": 3, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 20,
+                "value": 25,
                 "duration": "this_roll",
             },
         ],
