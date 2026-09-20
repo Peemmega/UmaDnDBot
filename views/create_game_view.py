@@ -32,7 +32,9 @@ def build_lobby_preview_file(stage_key: str, stage_data: dict) -> discord.File:
         "path": stage_data.get("path", []),
         "race_key": stage_key,
         "thumbnail_key": stage_data.get("preview_thumbnail_key", stage_key),
+        "thumbnail": stage_data.get("thumbnail") or stage_data.get("thumnail"),
         "background": stage_data.get("background"),
+        "track_image": stage_data.get("track_image"),
         "aptitude_bonus": stage_data.get("aptitude_bonus"),
         "top_rankings": get_preview_rankings(stage_key),
     }
