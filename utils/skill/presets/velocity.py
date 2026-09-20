@@ -199,7 +199,7 @@ VELOCITY_SKILLS = {
         "trigger": {"style": "Late", "phase_min": 3, "phase_max": 4, "path_type": 2},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "cap_floor", "value": 8, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 7, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -248,7 +248,15 @@ VELOCITY_SKILLS = {
         "cost": 50,
         "trigger": {"nearby_uma_count": 2},
         "target": {"scope": "self", "limit": 1},
-        "effects": [{"type": "modify_roll_cap", "value": 10, "duration": "this_roll"}],
+        "effects": [
+            {"type": "modify_roll_cap", "value": 3, "duration": "this_roll"},
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 20,
+                "duration": "this_roll",
+            },
+        ],
         "tags": ["velocity"],
     },
     "vel_016": {
@@ -258,7 +266,7 @@ VELOCITY_SKILLS = {
         "cost": 50,
         "trigger": {"last_corner": True},
         "target": {"scope": "self", "limit": 1},
-        "effects": [{"type": "modify_roll_cap", "value": 10, "duration": "this_roll"}],
+        "effects": [{"type": "modify_roll_cap", "value": 6, "duration": "this_roll"}],
         "tags": ["velocity"],
     },
     "vel_017": {
@@ -269,7 +277,7 @@ VELOCITY_SKILLS = {
         "trigger": {"phase_min": 2, "phase_max": 3, "position_group": "back"},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 6, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -594,18 +602,18 @@ VELOCITY_SKILLS = {
         "tags": ["late", "downhill", "velocity", "stability"],
     },
     "vel_035": {
-        "name": "Daring Strike",
+        "name": "Early Start",
         "icon": "velolcity",
         "cooldown": 8,
-        "cost": 80,
+        "cost": 60,
         "trigger": {"phase_min": 2, "phase_max": 3, "position_group": "back"},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 6, "duration": "this_roll"},
+            {"type": "modify_roll_cap", "value": 3, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 20,
                 "duration": "this_roll",
             },
         ],
