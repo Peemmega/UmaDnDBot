@@ -79,9 +79,9 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "acc_008",  # Runaway
+            1: "acc_013",  # Early Lead
             2: "vel_014",  # Ramp Up
-            3: "vel_007",  # Beeline Burst
+            3: "vel_024",  # Straightaway Adept
             4: "acc_005",  # Groundwork
         },
         "zone": {
@@ -118,8 +118,8 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "vel_006",  # Speed Star
-            2: "vel_007",  # Beeline Burst
-            3: "acc_007",  # Neck and Neck
+            2: "vel_024",  # Straightaway Adept
+            3: "acc_017",  # Head-On
             4: "vel_014",  # Ramp Up
         },
         "zone": {
@@ -155,10 +155,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "acc_003",
-            2: "vel_007",
-            3: "vel_011",
-            4: "vel_016",
+            1: "acc_003",  # Slick Surge
+            2: "vel_024",  # Straightaway Adept
+            3: "vel_016",  # Homestretch Haste
+            4: "vel_031",  # Outer Swell
         },
         "zone": {
             "name": "Default Zone",
@@ -193,10 +193,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "utl_002",
-            2: "acc_006",
-            3: "vel_010",
-            4: "acc_001",
+            1: "rec_014",  # After-School Stroll
+            2: "acc_010",  # Nimble Navigator
+            3: "vel_029",  # Masterful Gambit
+            4: "acc_012",  # Straightaway Spurt
         },
         "zone": {
             "name": "Default Zone",
@@ -231,10 +231,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "acc_008",  # Runaway
-            2: "unique_002",  # Red Shift/LP1211-M
+            1: "acc_013",  # Early Lead
+            2: "vel_032",  # Fast-Paced
             3: "acc_005",  # Groundwork
-            4: "vel_018",  # Escape Artist
+            3: "vel_024",  # Straightaway Adept
         },
         "zone": {
             "name": "Default Zone",
@@ -270,10 +270,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "vel_007",  # Beeline Burst
-            2: "acc_007",  # Neck and Neck
+            1: "vel_024",  # Straightaway Adept
+            2: "acc_017",  # Head-On
             3: "vel_014",  # Ramp Up
-            4: "acc_006",  # No Stopping Me!
+            4: "acc_010",  # Nimble Navigator
         },
         "zone": {
             "name": "Default Zone",
@@ -308,10 +308,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "acc_003",
-            2: "vel_011",
+            1: "acc_003",  # Slick Surge
+            2: "vel_031",  # Outer Swell
             3: "vel_016",
-            4: "acc_007",
+            4: "acc_010",  # Nimble Navigator
         },
         "zone": {
             "name": "Default Zone",
@@ -346,10 +346,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "utl_002",
-            2: "vel_010",
-            3: "acc_001",
-            4: "vel_011",  # In Body and Mind
+            1: "vel_014",  # Ramp Up
+            2: "vel_029",  # Masterful Gambit
+            3: "acc_012",  # Straightaway Spurt
+            4: "vel_016",  # Homestretch Haste
         },
         "zone": {
             "name": "Default Zone",
@@ -385,7 +385,7 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "vel_007",  # Beeline Burst
+            1: "vel_024",  # Straightaway Adept
             2: "vel_011",  # In Body and Mind
             3: "acc_007",  # Neck and Neck
             4: "acc_010",  # Radiant Star

@@ -162,7 +162,7 @@ RECOVERY_SKILLS = {
         "cost": 40,
         "trigger": {"style": "Front", "path_type": 3},
         "target": {"scope": "self", "limit": 1},
-        "effects": [{"type": "recover_stamina", "value": 1}],
+        "effects": [{"type": "recover_stamina", "value": 1.5}],
         "tags": ["front", "uphill", "recovery"],
     },
 }

@@ -249,4 +249,14 @@ ACCELERATION_SKILLS = {
         "effects": [{"type": "modify_current_speed", "value": 2}],
         "tags": ["late", "late_race", "acceleration"],
     },
+    "acc_019": {
+        "name": "Final Push",
+        "icon": "acceleration",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {"style": "Front", "phase_min": 4, "phase_max": 4, "path_type": 2},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [{"type": "add_dkh", "value": 2, "duration": "this_roll"}],
+        "tags": ["front", "final_corner", "acceleration", "burst"],
+    },
 }
