@@ -726,3 +726,127 @@ for _race in RACE_PRESET.values():
         _race["thumnail"] = G2_RACE_THUMBNAIL
     elif "(GIII)" in _name:
         _race["thumnail"] = G3_RACE_THUMBNAIL
+
+
+# GameTora career-race data. Values are the applicable career entry condition
+# and the fans for finishing first; a missing entry has no published fan gate.
+# Course fields use GameTora's course id and its published distance/direction.
+_RACE_CAREER_DATA = {
+    "FilliesRevue": (1750, 5200, 1400, 2, "right"),
+    "TulipSho": (1750, 5200, 1600, 3, "right"),
+    "RoseStakes": (1750, 5200, 1800, 3, "right"),
+    "KobeShimbunHai": (1750, 5400, 2400, 3, "right"),
+    "OkaSho": (4500, 10500, 1600, 3, "right"),
+    "AsahiHaiFuturityStakes": (1000, 7000, 1600, 3, "right"),
+    "HanshinJuvenileFillies": (1000, 6500, 1600, 3, "right"),
+    "TakarazukaKinen": (20000, 15000, 2200, 2, "right"),
+    "OsakaHai": (20000, 13500, 2000, 2, "right"),
+    "AobaSho": (1800, 5400, 2400, 1, "left"),
+    "FloraStakes": (1750, 5200, 2000, 1, "left"),
+    "NHK": (5000, 10500, 1600, 1, "left"),
+    "JapaneseOaks": (6000, 11000, 2400, 1, "left"),
+    "JapaneseDerby": (6000, 20000, 2400, 1, "left"),
+    "TennoShoAutumn": (20000, 15000, 2000, 1, "left"),
+    "JapanCup": (25000, 30000, 2400, 1, "left"),
+    "YasudaKinen": (15000, 13000, 1600, 1, "left"),
+    "FebruaryStakes": (12000, 10000, 1600, 1, "left"),
+    "VictoriaMileTokyo": (10000, 10500, 1600, 1, "left"),
+    "SpringStakes": (1750, 5400, 1800, 2, "right"),
+    "NewZealandTrophy": (1750, 5400, 1600, 3, "right"),
+    "YayoiSho": (1750, 5400, 2000, 2, "right"),
+    "StLiteKinen": (1750, 5400, 2200, 3, "right"),
+    "SatsukiSho": (4500, 11000, 2000, 2, "right"),
+    "HopefulStakes": (1000, 7000, 2000, 2, "right"),
+    "SprintersStakes": (15000, 13000, 1200, 3, "right"),
+    "ArimaKinen": (25000, 30000, 2500, 2, "right"),
+    "ChampionsCup": (12000, 10000, 1800, 1, "left"),
+    "TakamatsunomiyaKinen": (15000, 13000, 1200, 1, "left"),
+    "KikukaSho": (7500, 12000, 3000, 3, "right"),
+    "ShukaSho": (7500, 10000, 2000, 2, "right"),
+    "QueenElizabethIICup": (10000, 10500, 2200, 3, "right"),
+    "MileChampionship": (15000, 11000, 1600, 3, "right"),
+    "TennoShoSpring": (20000, 15000, 3200, 3, "right"),
+    "JapanDirtDerby": (4000, 4500, 2000, 1, "right"),
+    "TokyoDaishoten": (12000, 8000, 2000, 1, "right"),
+    "TeioSho": (12000, 6000, 2000, 1, "right"),
+    "ZenNipponJuniorYushun": (1000, 4200, 1600, 1, "left"),
+    "KawasakiKinen": (12000, 6000, 2100, 1, "left"),
+    "KashiwaKinen": (12000, 8000, 1600, 1, "left"),
+    "MCNambuHai": (12000, 6000, 1600, 1, "left"),
+    "HakodateJuniorStakes": (350, 3100, 1200, 1, "right"),
+    "NiigataJuniorStakes": (350, 3100, 1600, 3, "left"),
+    "DiamondStakes": (1500, 4100, 3400, 1, "left"),
+    "ChunichiShimbunHai": (1500, 4100, 2000, 1, "left"),
+    "KyotoJuniorStakes": (350, 3300, 2000, 2, "right"),
+    "SaudiArabiaRoyalCup": (350, 3300, 1600, 1, "left"),
+    "Aoi Stakes": (1250, 3900, 1200, 2, "right"),
+}
+
+_RACE_STORIES = {
+    "OkaSho": "สนามแรกของ Japanese Fillies' Triple Crown สำหรับม้าอายุสามปีเพศเมีย.",
+    "SatsukiSho": "ด่านแรกของ Japanese Triple Crown และบททดสอบ 2,000 เมตรของม้าสามปี.",
+    "JapaneseOaks": "สนามที่สองของ Japanese Fillies' Triple Crown บนระยะ 2,400 เมตร.",
+    "JapaneseDerby": "Tokyo Yushun คือการแข่งขันที่มีเกียรติสูงสุดรายการหนึ่งสำหรับม้าสามปีของญี่ปุ่น.",
+    "KikukaSho": "บทสรุป Japanese Triple Crown และบททดสอบระยะ 3,000 เมตร.",
+    "ShukaSho": "บทสรุป Japanese Fillies' Triple Crown สำหรับม้าเพศเมียอายุสามปี.",
+    "TennoShoSpring": "รายการ GI ระยะไกลอันทรงเกียรติในฤดูใบไม้ผลิ.",
+    "TennoShoAutumn": "รายการ GI สำคัญของฤดูใบไม้ร่วงบนสนาม Tokyo 2,000 เมตร.",
+    "JapanCup": "การแข่งขันนานาชาติ GI ชั้นนำของญี่ปุ่น จัดที่ Tokyo Racecourse.",
+    "ArimaKinen": "Grand Prix ปลายปีของญี่ปุ่น ซึ่งคัดเลือกผู้ร่วมแข่งจากความนิยมของแฟน ๆ.",
+    "TakarazukaKinen": "Grand Prix ช่วงกลางปีที่ผู้ร่วมแข่งคัดเลือกจากคะแนนโหวตของแฟน ๆ.",
+    "FilliesRevue": "สนาม Trial Race สำคัญสู่ Oka Sho สำหรับม้าเพศเมียอายุสามปี.",
+    "TulipSho": "สนาม Trial Race ระยะไมล์ที่ใช้เตรียมสู่ Oka Sho.",
+    "RoseStakes": "สนาม Trial Race ช่วงฤดูใบไม้ร่วงสำหรับเส้นทางสู่ Shuka Sho.",
+    "KobeShimbunHai": "หนึ่งในสนาม Trial Race หลักก่อน Kikuka Sho สำหรับม้าอายุสามปี.",
+    "AsahiHaiFuturityStakes": "แชมป์เปี้ยนชิพ GI ระยะไมล์ปลายปีสำหรับม้าอายุสองปี.",
+    "HanshinJuvenileFillies": "แชมป์เปี้ยนชิพ GI ปลายปีสำหรับม้าเพศเมียอายุสองปี.",
+    "OsakaHai": "GI ระยะ 2,000 เมตรของฤดูใบไม้ผลิ และหนึ่งในรายการหลักของม้าอายุมาก.",
+    "AobaSho": "สนาม Trial Race ที่มอบเส้นทางสำคัญสู่ Japanese Derby.",
+    "FloraStakes": "สนาม Trial Race ของม้าเพศเมียอายุสามปี ก่อน Japanese Oaks.",
+    "NHK": "GI ระยะไมล์สำหรับม้าอายุสามปี ซึ่งเป็นเป้าหมายสำคัญนอกสาย Classic ระยะกลาง.",
+    "YasudaKinen": "GI ระยะไมล์ชั้นนำของฤดูใบไม้ผลิสำหรับม้าอายุมาก.",
+    "FebruaryStakes": "GI ดินระยะไมล์ชั้นนำของ JRA ที่ Tokyo Racecourse.",
+    "VictoriaMileTokyo": "GI ระยะไมล์ของม้าเพศเมียอายุมากในฤดูใบไม้ผลิ.",
+    "SpringStakes": "สนาม Trial Race สำคัญบนทางสู่ Satsuki Sho.",
+    "NewZealandTrophy": "สนาม Trial Race ระยะไมล์ที่เชื่อมไปยัง NHK Mile Cup.",
+    "YayoiSho": "สนาม Trial Race ระยะ 2,000 เมตรสำหรับม้าอายุสามปี ก่อน Satsuki Sho.",
+    "StLiteKinen": "สนาม Trial Race ช่วงฤดูใบไม้ร่วงสำหรับผู้มุ่งสู่ Kikuka Sho.",
+    "HopefulStakes": "GI ปลายปีระยะ 2,000 เมตรสำหรับม้าอายุสองปี และเวทีชี้วัดดาวรุ่งสาย Classic.",
+    "SprintersStakes": "GI ระยะสปรินต์ 1,200 เมตรชั้นนำของฤดูใบไม้ร่วง.",
+    "ChampionsCup": "GI ดินระยะกลางชั้นนำปลายปีของ JRA.",
+    "TakamatsunomiyaKinen": "GI ระยะสปรินต์ 1,200 เมตรชั้นนำของฤดูใบไม้ผลิ.",
+    "QueenElizabethIICup": "GI สำคัญสำหรับม้าเพศเมียอายุมากในฤดูใบไม้ร่วง.",
+    "MileChampionship": "GI ระยะไมล์ชั้นนำของฤดูใบไม้ร่วงที่ Kyoto Racecourse.",
+    "JapanDirtDerby": "รายการ JpnI สำหรับม้าอายุสามปีบนดิน ซึ่งเป็นเวทีหลักของสาย Dirt Classic.",
+    "TokyoDaishoten": "Grand Prix ดิน JpnI ช่วงสิ้นปีที่ Oi Racecourse.",
+    "TeioSho": "รายการ JpnI ดินระยะกลางสำคัญของฤดูร้อนที่ Oi.",
+    "ZenNipponJuniorYushun": "รายการ JpnI สำหรับม้าอายุสองปีบนดิน และเวทีชี้วัดดาวรุ่งสาย Dirt.",
+    "KawasakiKinen": "รายการ JpnI ดินระยะกลางอันทรงเกียรติที่ Kawasaki Racecourse.",
+    "KashiwaKinen": "รายการ JpnI ดินระยะไมล์สำคัญที่ Funabashi Racecourse.",
+    "MCNambuHai": "รายการ JpnI ดินระยะไมล์ประจำฤดูใบไม้ร่วงที่ Morioka Racecourse.",
+    "HakodateJuniorStakes": "GIII ฤดูร้อนสำหรับม้าอายุสองปี เปิดโอกาสให้ดาวรุ่งแจ้งเกิดที่ Hakodate.",
+    "NiigataJuniorStakes": "GIII สำหรับม้าอายุสองปีบนระยะไมล์ เป็นด่านสร้างชื่อช่วงฤดูร้อน.",
+    "DiamondStakes": "GIII ระยะไกล 3,400 เมตรของ Tokyo สำหรับม้าสายความอึด.",
+    "ChunichiShimbunHai": "GIII ระยะ 2,000 เมตรของ Chukyo ในฤดูหนาว สำหรับม้าระยะกลาง.",
+    "KyotoJuniorStakes": "GIII สำหรับม้าอายุสองปี ระยะ 2,000 เมตรที่ Kyoto.",
+    "SaudiArabiaRoyalCup": "GIII ระยะไมล์ของ Tokyo สำหรับม้าอายุสองปีในช่วงต้นฤดูกาล.",
+    "Aoi Stakes": "GIII ระยะสปรินต์สำหรับม้าอายุสามปีที่ Kyoto Racecourse.",
+}
+
+for _race_id, _data in _RACE_CAREER_DATA.items():
+    _race = RACE_PRESET[_race_id]
+    _fans_required, _fans_reward, _meters, _course_id, _direction = _data
+    _race["requirements"] = {"fans_required": _fans_required}
+    _race["fans_required"] = _fans_required
+    _race["fans_reward_first"] = _fans_reward
+    _race["course"] = {
+        "venue": get_race_venue(_race_id),
+        "surface": _race["track"].lower(),
+        "distance_m": _meters,
+        "course_id": _course_id,
+        "direction": _direction,
+    }
+    _race["description"] = _RACE_STORIES.get(
+        _race_id,
+        f"รายการ {_race['name']} ที่ {get_race_venue(_race_id)}; การเข้าแข่งต้องมีแฟนตามเงื่อนไขของ Career.",
+    )

@@ -633,6 +633,11 @@ def api_get_all_races(distance: str = "all"):
             "turn": race.get("turn"),
             "path": race.get("path", []),
             "finish_distance": get_web_race_finish_distance(race),
+            "description": race.get("description"),
+            "requirements": race.get("requirements", {}),
+            "fans_required": race.get("fans_required"),
+            "fans_reward_first": race.get("fans_reward_first"),
+            "course": race.get("course", {}),
         })
 
     return result
@@ -1151,6 +1156,11 @@ def get_race_calendar():
                 "thumbnail": race.get("thumnail"),
                 "track": race.get("track"),
                 "distance": race.get("distance"),
+                "description": race.get("description"),
+                "requirements": race.get("requirements", {}),
+                "fans_required": race.get("fans_required"),
+                "fans_reward_first": race.get("fans_reward_first"),
+                "course": race.get("course", {}),
                 "playable": True,
             })
             continue
