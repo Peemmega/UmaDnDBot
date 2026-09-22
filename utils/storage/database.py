@@ -2211,7 +2211,9 @@ def update_player_username(user_id: str, username: str):
 
 
 CORE_STAT_FIELDS = ("speed", "stamina", "power", "gut", "wit")
-MAX_CORE_STAT = 8
+# The main community uses the established S cap, while Test is where the
+# extended grade ladder (Sp through UG) is available for balancing.
+MAX_CORE_STAT = 8 if USING_MAIN_EMOJIS else 12
 
 
 def update_player_stat_pool(user_id: int | str, *, stats: dict[str, int], stats_point: int) -> dict:

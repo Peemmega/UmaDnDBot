@@ -4,8 +4,9 @@ from utils.database import (
     update_player_stats,
 )
 from utils.display_helpers import get_stat_emoji, get_stat_icon
+from utils.icon_presets import USING_MAIN_EMOJIS
 from utils.profile_images import resolve_player_avatar_url
-STATS_CAP = 8
+STATS_CAP = 8 if USING_MAIN_EMOJIS else 12
 
 
 def build_stat_embed(user: discord.User | discord.Member, player: dict, title_text: str = "จัดการค่าสเตตัส") -> discord.Embed:
