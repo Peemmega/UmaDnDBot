@@ -783,12 +783,12 @@ _RACE_CAREER_DATA = {
 }
 
 _RACE_STORIES = {
-    "OkaSho": "สนามแรกของ Japanese Fillies' Triple Crown สำหรับม้าอายุสามปีเพศเมีย.",
+    "OkaSho": "สนามแรกของ Japanese Triple Tiara สำหรับม้าอายุสามปีเพศเมีย.",
     "SatsukiSho": "ด่านแรกของ Japanese Triple Crown และบททดสอบ 2,000 เมตรของม้าสามปี.",
-    "JapaneseOaks": "สนามที่สองของ Japanese Fillies' Triple Crown บนระยะ 2,400 เมตร.",
+    "JapaneseOaks": "สนามที่สองของ Japanese Triple Tiara บนระยะ 2,400 เมตร.",
     "JapaneseDerby": "Tokyo Yushun คือการแข่งขันที่มีเกียรติสูงสุดรายการหนึ่งสำหรับม้าสามปีของญี่ปุ่น.",
     "KikukaSho": "บทสรุป Japanese Triple Crown และบททดสอบระยะ 3,000 เมตร.",
-    "ShukaSho": "บทสรุป Japanese Fillies' Triple Crown สำหรับม้าเพศเมียอายุสามปี.",
+    "ShukaSho": "บทสรุป Japanese Triple Tiara สำหรับม้าเพศเมียอายุสามปี.",
     "TennoShoSpring": "รายการ GI ระยะไกลอันทรงเกียรติในฤดูใบไม้ผลิ.",
     "TennoShoAutumn": "รายการ GI สำคัญของฤดูใบไม้ร่วงบนสนาม Tokyo 2,000 เมตร.",
     "JapanCup": "การแข่งขันนานาชาติ GI ชั้นนำของญี่ปุ่น จัดที่ Tokyo Racecourse.",
