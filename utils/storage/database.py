@@ -557,6 +557,16 @@ def _registration_mail(conn, user_id: str, profile_type: str, registration_id: i
     )
 
 
+def _archive_registration_action_mail(conn, registration_id: int, user_id: str) -> None:
+    """Move every completed action mail for this recipient out of the unread list."""
+    conn.execute(
+        """UPDATE mailbox SET is_read = 1
+           WHERE action_id = ? AND CAST(user_id AS TEXT) = ?
+             AND action_type LIKE 'race_registration_%'""",
+        (registration_id, str(user_id)),
+    )
+
+
 def _ensure_registration_cooldown(conn, actor_user_id: str) -> None:
     from datetime import datetime, timedelta
     last = conn.execute(
@@ -704,9 +714,12 @@ def respond_to_race_registration(registration_id: int, actor_user_id: str, actor
                 conn.execute("UPDATE race_registrations SET status='declined', updated_at=CURRENT_TIMESTAMP WHERE id=?", (registration_id,))
             else:
                 conn.execute("UPDATE race_registrations SET status='trainee_pending', updated_at=CURRENT_TIMESTAMP WHERE id=?", (registration_id,))
+                _archive_registration_action_mail(conn, registration_id, registration["trainer_user_id"])
                 _registration_mail(conn, registration["trainee_user_id"], "trainee", registration_id,
                     "Trainer อนุมัติคำขอลงแข่ง", f"Trainer อนุมัติ {registration['race_name']} แล้ว โปรดยืนยันความพร้อมในการแข่ง.",
                     "race_registration_trainee")
+            if not accepted:
+                _archive_registration_action_mail(conn, registration_id, registration["trainer_user_id"])
         elif registration["status"] == "trainee_pending":
             if actor_role != "trainee" or str(actor_user_id) != str(registration["trainee_user_id"]):
                 raise ValueError("เฉพาะสาวม้าที่ได้รับคำขอเท่านั้นที่ตอบได้")
@@ -720,6 +733,7 @@ def respond_to_race_registration(registration_id: int, actor_user_id: str, actor
                        updated_at=CURRENT_TIMESTAMP WHERE id=?""",
                     (availability, registration_id),
                 )
+            _archive_registration_action_mail(conn, registration_id, registration["trainee_user_id"])
         else:
             raise ValueError("คำขอนี้ถูกตอบแล้ว")
         return get_race_registration(registration_id, conn=conn)
