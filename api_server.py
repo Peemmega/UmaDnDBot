@@ -7,6 +7,7 @@ import asyncio
 import base64
 import io
 import time
+import discord
 from pathlib import Path
 import os
 
@@ -37,6 +38,13 @@ from utils.database import (
     get_account_role,
     select_account_role,
     list_community_events,
+    create_race_registration_request,
+    get_race_registration,
+    respond_to_race_registration,
+    list_race_registration_roster,
+    race_registration_window,
+    list_registration_reports_due,
+    mark_registration_reported,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -55,7 +63,7 @@ from utils.skill.skill_presets import (
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
-from utils.channel_config import RACE_LOG_CHANNEL_ID
+from utils.channel_config import RACE_REGISTRATION_CHANNEL_ID
 from utils.race.race_web import race_web_manager
 from utils.race.race_history import (
     OFFICIAL,
@@ -122,11 +130,72 @@ async def log_timing_validation_error(request: Request, exc: RequestValidationEr
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
+async def _send_registration_report_to_discord(report: dict, text: str) -> bool:
+    if RACE_REGISTRATION_CHANNEL_ID is None:
+        return False
+    bot = bot_instance.bot
+    if bot is None or not bot.is_ready():
+        return False
+    channel = bot.get_channel(RACE_REGISTRATION_CHANNEL_ID)
+    if channel is None:
+        try:
+            channel = await bot.fetch_channel(RACE_REGISTRATION_CHANNEL_ID)
+        except Exception:
+            return False
+    filename = f"registration-{report['race_id']}.txt"
+    await channel.send(
+        content=f"ปิดรับสมัคร: **{report['race_name']}** · {report['race_date']} {report['race_time']} GMT+7",
+        file=discord.File(io.BytesIO(text.encode("utf-8")), filename=filename),
+    )
+    return True
+
+
+async def flush_due_registration_reports():
+    # Test deployments must never publish the production roster. Keep their
+    # registrations intact so their UI can still be exercised.
+    if RACE_REGISTRATION_CHANNEL_ID is None:
+        return
+    for report in list_registration_reports_due():
+        roster = list_race_registration_roster(report["race_id"])
+        lines = [
+            f"{report['race_name']}",
+            f"สนาม: {report['venue'] or '-'}",
+            f"แข่งขัน: {report['race_date']} {report['race_time']} GMT+7",
+            "",
+            "ผู้เข้าแข่งขัน (18 คนแรก)",
+        ]
+        for entry in roster[:18]:
+            source = "บัตร Trial" if entry["trial_ticket"] else ("ลงแข่งเอง" if entry["availability"] == "self" else "Bot Auto")
+            lines.append(f"{entry['placement']:>2}. {entry['trainee_name']} — {source} — {entry['fans']} fans")
+        if len(roster) < 18:
+            lines.append("(ยังมีที่ว่าง)")
+        lines.extend(["", "รายชื่อสำรอง"])
+        for entry in roster[18:]:
+            source = "บัตร Trial" if entry["trial_ticket"] else ("ลงแข่งเอง" if entry["availability"] == "self" else "Bot Auto")
+            lines.append(f"{entry['placement']:>2}. {entry['trainee_name']} — {source} — {entry['fans']} fans")
+        if not roster[18:]:
+            lines.append("(ไม่มี)")
+        bot = bot_instance.bot
+        try:
+            future = asyncio.run_coroutine_threadsafe(_send_registration_report_to_discord(report, "\n".join(lines)), bot.loop) if bot else None
+            if future and future.result(timeout=15):
+                mark_registration_reported(report["race_id"])
+        except Exception as exc:
+            print(f"[registration] Discord report failed for {report['race_id']}: {exc}")
+
+
+async def _registration_report_worker():
+    while True:
+        await flush_due_registration_reports()
+        await asyncio.sleep(60)
+
+
 @app.on_event("startup")
-def api_startup():
+async def api_startup():
     init_db()
     ensure_upload_dirs()
     migrate_embedded_preset_profile_images()
+    asyncio.create_task(_registration_report_worker())
 
 
 def _save_profile_image(file_bytes: bytes, output_path: Path) -> None:
@@ -426,7 +495,7 @@ def get_mailbox(user_id: str, profile_type: str = "trainee"):
     """)
 
     cur.execute("""
-        SELECT id, title, message, reward_type, reward_amount, is_read, created_at, invitation_id
+        SELECT id, title, message, reward_type, reward_amount, is_read, created_at, invitation_id, action_type, action_id
         FROM mailbox
         WHERE CAST(user_id AS TEXT) = ? AND profile_type = ?
         ORDER BY id DESC
@@ -446,6 +515,8 @@ def get_mailbox(user_id: str, profile_type: str = "trainee"):
             "is_read": bool(row[5]),
             "created_at": row[6],
             "invitation_id": row[7],
+            "action_type": row[8],
+            "action_id": row[9],
         }
         for row in rows
     ]
@@ -459,6 +530,75 @@ class TeamInvitePayload(BaseModel):
 class TeamInviteResponsePayload(BaseModel):
     trainee_user_id: str
     accepted: bool
+
+
+class RaceRegistrationRequestPayload(BaseModel):
+    actor_user_id: str
+    trainee_user_id: str | None = None
+
+
+class RaceRegistrationDecisionPayload(BaseModel):
+    actor_user_id: str
+    accepted: bool
+    availability: str | None = None
+    mail_id: int | None = None
+
+
+def _registration_event(race_id: str) -> dict:
+    event = next((item for item in get_race_calendar() if item.get("id") == race_id and item.get("kind") == "race"), None)
+    if not event:
+        raise HTTPException(status_code=404, detail="ไม่พบรายการแข่งขัน")
+    return event
+
+
+@app.get("/race-registrations/race/{race_id}")
+def api_race_registration_roster(race_id: str):
+    event = _registration_event(race_id)
+    roster = list_race_registration_roster(race_id)
+    window = race_registration_window(event["date"], event["time"])
+    return {
+        "event": event,
+        "window": {
+            "opens_at": window["opens_at"].isoformat(),
+            "closes_at": window["closes_at"].isoformat(),
+            "is_open": window["is_open"],
+        },
+        "entries": roster[:18],
+        "waitlist": roster[18:],
+        "capacity": 18,
+    }
+
+
+@app.get("/race-registrations/{registration_id}")
+def api_race_registration_detail(registration_id: int):
+    registration = get_race_registration(registration_id)
+    if not registration:
+        raise HTTPException(status_code=404, detail="ไม่พบคำขอลงทะเบียน")
+    return registration
+
+
+@app.post("/race-registrations/{race_id}/request")
+def api_create_race_registration(race_id: str, payload: RaceRegistrationRequestPayload):
+    role = get_account_role(payload.actor_user_id)
+    trainee_user_id = payload.trainee_user_id or payload.actor_user_id
+    try:
+        return create_race_registration_request(_registration_event(race_id), payload.actor_user_id, role or "", trainee_user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/race-registrations/{registration_id}/respond")
+def api_respond_race_registration(registration_id: int, payload: RaceRegistrationDecisionPayload):
+    role = get_account_role(payload.actor_user_id)
+    try:
+        registration = respond_to_race_registration(
+            registration_id, payload.actor_user_id, role or "", payload.accepted, payload.availability,
+        )
+        if payload.mail_id:
+            mark_mail_read(payload.mail_id)
+        return registration
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/trainer/{trainer_user_id}/team")

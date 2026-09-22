@@ -292,6 +292,48 @@ def init_db():
         cursor.execute("ALTER TABLE mailbox ADD COLUMN profile_type TEXT NOT NULL DEFAULT 'trainee'")
     if "invitation_id" not in mailbox_columns:
         cursor.execute("ALTER TABLE mailbox ADD COLUMN invitation_id INTEGER")
+    if "action_type" not in mailbox_columns:
+        cursor.execute("ALTER TABLE mailbox ADD COLUMN action_type TEXT")
+    if "action_id" not in mailbox_columns:
+        cursor.execute("ALTER TABLE mailbox ADD COLUMN action_id INTEGER")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_registrations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        race_id TEXT NOT NULL,
+        race_name TEXT NOT NULL,
+        race_date TEXT NOT NULL,
+        race_time TEXT NOT NULL,
+        venue TEXT NOT NULL DEFAULT '',
+        trainer_user_id TEXT,
+        trainee_user_id TEXT NOT NULL,
+        initiated_by TEXT NOT NULL CHECK(initiated_by IN ('trainer', 'trainee')),
+        status TEXT NOT NULL CHECK(status IN ('trainer_pending', 'trainee_pending', 'confirmed', 'declined', 'cancelled')),
+        availability TEXT CHECK(availability IN ('self', 'bot_auto')),
+        trial_ticket INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        confirmed_at TEXT,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        reported_at TEXT,
+        UNIQUE(race_id, trainee_user_id)
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_registration_requests (
+        actor_user_id TEXT NOT NULL,
+        requested_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_race_registration_race_status
+    ON race_registrations (race_id, status, trial_ticket, availability, confirmed_at)
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_registration_reports (
+        race_id TEXT PRIMARY KEY,
+        reported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS race_rankings (
@@ -482,6 +524,244 @@ def init_db():
 
     conn.commit()
     conn.close()
+
+
+def _registration_now():
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    return datetime.now(ZoneInfo("Asia/Bangkok"))
+
+
+def race_registration_window(race_date: str, race_time: str, now=None) -> dict:
+    """Return the 7-day-to-2-day registration window in Bangkok time."""
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+
+    event_at = datetime.fromisoformat(f"{race_date}T{race_time}").replace(tzinfo=ZoneInfo("Asia/Bangkok"))
+    now = now or _registration_now()
+    opens_at = event_at - timedelta(days=7)
+    closes_at = event_at - timedelta(days=2)
+    return {
+        "event_at": event_at,
+        "opens_at": opens_at,
+        "closes_at": closes_at,
+        "is_open": opens_at <= now < closes_at,
+    }
+
+
+def _registration_mail(conn, user_id: str, profile_type: str, registration_id: int, title: str, message: str, action_type: str):
+    conn.execute(
+        """INSERT INTO mailbox (user_id, profile_type, title, message, action_type, action_id)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (str(user_id), profile_type, title, message, action_type, registration_id),
+    )
+
+
+def _ensure_registration_cooldown(conn, actor_user_id: str) -> None:
+    from datetime import datetime, timedelta
+    last = conn.execute(
+        "SELECT requested_at FROM race_registration_requests WHERE actor_user_id = ? ORDER BY rowid DESC LIMIT 1",
+        (str(actor_user_id),),
+    ).fetchone()
+    now = _registration_now()
+    if last:
+        last_at = datetime.fromisoformat(last["requested_at"].replace("Z", "+00:00"))
+        if last_at.tzinfo is None:
+            last_at = last_at.replace(tzinfo=now.tzinfo)
+        remaining = (last_at + timedelta(minutes=1) - now).total_seconds()
+        if remaining > 0:
+            raise ValueError(f"กรุณารออีก {max(1, int(remaining))} วินาทีก่อนส่งคำขอใหม่")
+    conn.execute(
+        "INSERT INTO race_registration_requests (actor_user_id, requested_at) VALUES (?, ?)",
+        (str(actor_user_id), now.isoformat(timespec="seconds")),
+    )
+
+
+def create_race_registration_request(event: dict, actor_user_id: str, actor_role: str, trainee_user_id: str) -> dict:
+    """Create the appropriate approval mail for a trainer or trainee initiated request."""
+    event_window = race_registration_window(event["date"], event["time"])
+    if not event_window["is_open"]:
+        raise ValueError("ยังไม่อยู่ในช่วงลงทะเบียน (เปิดก่อนแข่ง 7 วัน และปิดก่อนแข่ง 2 วัน)")
+    if actor_role not in {"trainer", "trainee"}:
+        raise ValueError("เฉพาะ Trainer หรือ Umamusume เท่านั้นที่ลงทะเบียนได้")
+
+    with database_connection() as conn:
+        _ensure_registration_cooldown(conn, actor_user_id)
+        trainee = conn.execute(
+            "SELECT username, COALESCE(fans, 0) AS fans FROM players WHERE CAST(user_id AS TEXT) = ?",
+            (str(trainee_user_id),),
+        ).fetchone()
+        if not trainee:
+            raise ValueError("ไม่พบข้อมูลสาวม้า")
+        required_fans = int((event.get("requirements") or {}).get("fans_required") or event.get("fans_required") or 0)
+        if trainee["fans"] < required_fans:
+            raise ValueError(f"ต้องมีอย่างน้อย {required_fans:,} fans จึงจะลงรายการนี้ได้")
+
+        trainer_user_id = None
+        if actor_role == "trainer":
+            trainer_user_id = str(actor_user_id)
+            relation = conn.execute(
+                "SELECT 1 FROM trainer_teams WHERE trainer_user_id = ? AND trainee_user_id = ?",
+                (trainer_user_id, str(trainee_user_id)),
+            ).fetchone()
+            if not relation:
+                raise ValueError("เลือกได้เฉพาะสาวม้าในทีมของคุณ")
+            status = "trainee_pending"
+        else:
+            if str(actor_user_id) != str(trainee_user_id):
+                raise ValueError("สาวม้าสามารถลงทะเบียนให้ตนเองเท่านั้น")
+            relation = conn.execute(
+                "SELECT trainer_user_id FROM trainer_teams WHERE trainee_user_id = ?",
+                (str(trainee_user_id),),
+            ).fetchone()
+            if not relation:
+                raise ValueError("สาวม้ายังไม่มี Trainer ในทีม")
+            trainer_user_id = str(relation["trainer_user_id"])
+            status = "trainer_pending"
+
+        existing = conn.execute(
+            "SELECT id, status FROM race_registrations WHERE race_id = ? AND trainee_user_id = ?",
+            (event["id"], str(trainee_user_id)),
+        ).fetchone()
+        if existing and existing["status"] not in {"declined", "cancelled"}:
+            raise ValueError("มีคำขอลงทะเบียนของสาวม้าคนนี้สำหรับรายการนี้อยู่แล้ว")
+
+        values = (
+            event["id"], event["name"], event["date"], event["time"], event.get("venue") or "",
+            trainer_user_id, str(trainee_user_id), actor_role, status,
+        )
+        if existing:
+            conn.execute(
+                """UPDATE race_registrations SET race_name=?, race_date=?, race_time=?, venue=?, trainer_user_id=?,
+                   initiated_by=?, status=?, availability=NULL, confirmed_at=NULL, updated_at=CURRENT_TIMESTAMP
+                   WHERE id=?""",
+                (event["name"], event["date"], event["time"], event.get("venue") or "", trainer_user_id,
+                 actor_role, status, existing["id"]),
+            )
+            registration_id = existing["id"]
+        else:
+            cur = conn.execute(
+                """INSERT INTO race_registrations
+                   (race_id, race_name, race_date, race_time, venue, trainer_user_id, trainee_user_id, initiated_by, status)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                values,
+            )
+            registration_id = cur.lastrowid
+
+        event_label = f"{event['name']} ({event['date']} {event['time']})"
+        if status == "trainee_pending":
+            _registration_mail(conn, trainee_user_id, "trainee", registration_id,
+                "คำขอลงทะเบียนการแข่งขัน", f"Trainer ส่งคำขอลงทะเบียน {event_label} ให้คุณ โปรดยืนยันหรือปฏิเสธ.",
+                "race_registration_trainee")
+        else:
+            _registration_mail(conn, trainer_user_id, "trainer", registration_id,
+                "คำขอลงทะเบียนจากสาวม้า", f"{trainee['username']} ขอเข้าร่วม {event_label} โปรดอนุมัติหรือปฏิเสธ.",
+                "race_registration_trainer")
+        return get_race_registration(registration_id, conn=conn)
+
+
+def get_race_registration(registration_id: int, conn=None) -> dict | None:
+    owns_connection = conn is None
+    conn = conn or get_connection()
+    row = conn.execute(
+        """SELECT registration.*, trainee.username AS trainee_name, trainer.username AS trainer_name,
+                  COALESCE(trainee.fans, 0) AS fans
+           FROM race_registrations registration
+           JOIN players trainee ON CAST(trainee.user_id AS TEXT) = registration.trainee_user_id
+           LEFT JOIN players trainer ON CAST(trainer.user_id AS TEXT) = registration.trainer_user_id
+           WHERE registration.id = ?""",
+        (registration_id,),
+    ).fetchone()
+    if owns_connection:
+        conn.close()
+    if not row:
+        return None
+    data = dict(row)
+    data["window"] = _serialise_registration_window(race_registration_window(data["race_date"], data["race_time"]))
+    return data
+
+
+def _serialise_registration_window(window: dict) -> dict:
+    return {
+        "opens_at": window["opens_at"].isoformat(),
+        "closes_at": window["closes_at"].isoformat(),
+        "is_open": window["is_open"],
+    }
+
+
+def respond_to_race_registration(registration_id: int, actor_user_id: str, actor_role: str, accepted: bool, availability: str | None = None) -> dict:
+    with database_connection() as conn:
+        registration = get_race_registration(registration_id, conn=conn)
+        if not registration:
+            raise ValueError("ไม่พบคำขอลงทะเบียน")
+        if not registration["window"]["is_open"]:
+            raise ValueError("หมดช่วงเวลาลงทะเบียนแล้ว")
+
+        if registration["status"] == "trainer_pending":
+            if actor_role != "trainer" or str(actor_user_id) != str(registration["trainer_user_id"]):
+                raise ValueError("เฉพาะ Trainer ของสาวม้าคนนี้เท่านั้นที่ตอบคำขอได้")
+            if not accepted:
+                conn.execute("UPDATE race_registrations SET status='declined', updated_at=CURRENT_TIMESTAMP WHERE id=?", (registration_id,))
+            else:
+                conn.execute("UPDATE race_registrations SET status='trainee_pending', updated_at=CURRENT_TIMESTAMP WHERE id=?", (registration_id,))
+                _registration_mail(conn, registration["trainee_user_id"], "trainee", registration_id,
+                    "Trainer อนุมัติคำขอลงแข่ง", f"Trainer อนุมัติ {registration['race_name']} แล้ว โปรดยืนยันความพร้อมในการแข่ง.",
+                    "race_registration_trainee")
+        elif registration["status"] == "trainee_pending":
+            if actor_role != "trainee" or str(actor_user_id) != str(registration["trainee_user_id"]):
+                raise ValueError("เฉพาะสาวม้าที่ได้รับคำขอเท่านั้นที่ตอบได้")
+            if not accepted:
+                conn.execute("UPDATE race_registrations SET status='declined', updated_at=CURRENT_TIMESTAMP WHERE id=?", (registration_id,))
+            else:
+                if availability not in {"self", "bot_auto"}:
+                    raise ValueError("กรุณาเลือกความพร้อมในการแข่ง")
+                conn.execute(
+                    """UPDATE race_registrations SET status='confirmed', availability=?, confirmed_at=CURRENT_TIMESTAMP,
+                       updated_at=CURRENT_TIMESTAMP WHERE id=?""",
+                    (availability, registration_id),
+                )
+        else:
+            raise ValueError("คำขอนี้ถูกตอบแล้ว")
+        return get_race_registration(registration_id, conn=conn)
+
+
+def list_race_registration_roster(race_id: str) -> list[dict]:
+    with database_connection() as conn:
+        rows = conn.execute(
+            """SELECT registration.*, player.username AS trainee_name, COALESCE(player.fans, 0) AS fans
+               FROM race_registrations registration
+               JOIN players player ON CAST(player.user_id AS TEXT) = registration.trainee_user_id
+               WHERE registration.race_id = ? AND registration.status = 'confirmed'
+               ORDER BY registration.trial_ticket DESC,
+                        CASE registration.availability WHEN 'self' THEN 0 ELSE 1 END,
+                        COALESCE(player.fans, 0) DESC, registration.confirmed_at ASC, registration.id ASC""",
+            (race_id,),
+        ).fetchall()
+    return [{**dict(row), "placement": index + 1, "is_confirmed": index < 18} for index, row in enumerate(rows)]
+
+
+def list_registration_reports_due() -> list[dict]:
+    with database_connection() as conn:
+        rows = conn.execute(
+            """SELECT race_id, race_name, race_date, race_time, venue
+               FROM race_registrations
+               WHERE reported_at IS NULL
+               GROUP BY race_id, race_name, race_date, race_time, venue"""
+        ).fetchall()
+    now = _registration_now()
+    return [dict(row) for row in rows if now >= race_registration_window(row["race_date"], row["race_time"], now)["closes_at"]]
+
+
+def mark_registration_reported(race_id: str) -> None:
+    with database_connection() as conn:
+        conn.execute("UPDATE race_registrations SET reported_at=CURRENT_TIMESTAMP WHERE race_id=?", (race_id,))
+        conn.execute("INSERT OR IGNORE INTO race_registration_reports (race_id) VALUES (?)", (race_id,))
+
+
+def list_registration_report_ids() -> set[str]:
+    with database_connection() as conn:
+        rows = conn.execute("SELECT race_id FROM race_registration_reports").fetchall()
+    return {str(row["race_id"]) for row in rows}
 
 
 def list_community_events() -> list[dict]:
