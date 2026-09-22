@@ -131,6 +131,16 @@ def render_path(path: list[int]) -> str:
 
 # 2026 JRA race dates, sourced from https://www.jra.go.jp/keiba/calendar/
 # Times are the app's scheduled start time (GMT+7); JRA's calendar supplies dates.
+def _jra_race(race_id: str, name: str, venue: str, date: str) -> dict:
+    return {
+        "race_id": race_id,
+        "name": name,
+        "venue": venue,
+        "date": date,
+        "time": "20:00",
+    }
+
+
 RACE_SCHEDULE = [
     # February — Tokyo
     {"race_id": "DiamondStakes", "date": "2026-02-21", "time": "20:00"},
@@ -198,135 +208,284 @@ RACE_SCHEDULE = [
     {"race_id": "AsahiHaiFuturityStakes", "date": "2026-12-20", "time": "20:00"},
     {"race_id": "HopefulStakes", "date": "2026-12-26", "time": "20:00"},
     {"race_id": "ArimaKinen", "date": "2026-12-27", "time": "20:00"},
-    # Schedule-only races above deliberately have no RACE_PRESET yet. They
-    # are visible in the calendar but cannot be selected as playable tracks.
+    # Schedule-only races have no RACE_PRESET yet; they remain visible in News.
+    *(
+        _jra_race(*race)
+        for race in [
+            # January
+            (
+                "NakayamaKimpai",
+                "Nikkan Sports Sho Nakayama Kimpai (GIII)",
+                "Nakayama",
+                "2026-01-04",
+            ),
+            (
+                "KyotoKimpai",
+                "Sports Nippon Sho Kyoto Kimpai (GIII)",
+                "Kyoto",
+                "2026-01-04",
+            ),
+            ("FairyStakes", "Fairy Stakes (GIII)", "Nakayama", "2026-01-11"),
+            (
+                "ShinzanKinen",
+                "Nikkan Sports Sho Shinzan Kinen (GIII)",
+                "Kyoto",
+                "2026-01-12",
+            ),
+            ("KeiseiHai", "Keisei Hai (GIII)", "Nakayama", "2026-01-18"),
+            ("NikkeiShinshunHai", "Nikkei Shinshun Hai (GII)", "Kyoto", "2026-01-18"),
+            ("KokuraHimbaStakes", "Kokura Himba Stakes (GIII)", "Kokura", "2026-01-24"),
+            (
+                "AmericanJockeyClubCup",
+                "American Jockey Club Cup (GII)",
+                "Nakayama",
+                "2026-01-25",
+            ),
+            ("ProcyonStakes", "Procyon Stakes (GII)", "Kyoto", "2026-01-25"),
+            # February
+            ("NegishiStakes", "Negishi Stakes (GIII)", "Tokyo", "2026-02-01"),
+            ("SilkRoadStakes", "Silk Road Stakes (GIII)", "Kyoto", "2026-02-01"),
+            ("KisaragiSho", "Kisaragi Sho (GIII)", "Kyoto", "2026-02-10"),
+            ("TokyoShimbunHai", "Tokyo Shimbun Hai (GIII)", "Tokyo", "2026-02-10"),
+            ("DailyHaiQueenCup", "Daily Hai Queen Cup (GIII)", "Tokyo", "2026-02-14"),
+            (
+                "KyodoNewsHai",
+                "Kyodo News Hai (Tokinominoru Kinen) (GIII)",
+                "Tokyo",
+                "2026-02-15",
+            ),
+            ("KyotoKinen", "Kyoto Kinen (GII)", "Kyoto", "2026-02-15"),
+            ("HankyuHai", "Hankyu Hai (GIII)", "Hanshin", "2026-02-21"),
+            ("KokuraDaishoten", "Kokura Daishoten (GIII)", "Kokura", "2026-02-22"),
+            ("OceanStakes", "Ocean Stakes (GIII)", "Nakayama", "2026-02-28"),
+            # March
+            ("NakayamaKinen", "Nakayama Kinen (GII)", "Nakayama", "2026-03-01"),
+            (
+                "TulipSho",
+                "Tulip Sho (Japanese 1000 Guineas Trial) (GII)",
+                "Hanshin",
+                "2026-03-01",
+            ),
+            (
+                "NakayamaHimbaStakes",
+                "Laurel R.C. Sho Nakayama Himba Stakes (GIII)",
+                "Nakayama",
+                "2026-03-07",
+            ),
+            (
+                "FilliesRevue",
+                "Hochi Hai Fillies' Revue (Japanese 1000 Guineas Trial) (GII)",
+                "Hanshin",
+                "2026-03-07",
+            ),
+            (
+                "YayoiSho",
+                "Hochi Hai Yayoi Sho Deep Impact Kinen (GII)",
+                "Nakayama",
+                "2026-03-08",
+            ),
+            (
+                "SpringStakes",
+                "Fuji TV Sho Spring Stakes (GII)",
+                "Nakayama",
+                "2026-03-15",
+            ),
+            ("KinkoSho", "Tokai TV Hai Kinko Sho (GII)", "Chukyo", "2026-03-15"),
+            ("FlowerCup", "Flower Cup (GIII)", "Nakayama", "2026-03-21"),
+            (
+                "FalconStakes",
+                "Chunichi Sports Sho Falcon Stakes (GIII)",
+                "Chukyo",
+                "2026-03-21",
+            ),
+            ("HanshinDaishoten", "Hanshin Daishoten (GII)", "Hanshin", "2026-03-22"),
+            ("AichiHai", "Aichi Hai (GIII)", "Chukyo", "2026-03-22"),
+            ("NikkeiSho", "Nikkei Sho (GII)", "Nakayama", "2026-03-28"),
+            ("MainichiHai", "Mainichi Hai (GIII)", "Hanshin", "2026-03-28"),
+            ("MarchStakes", "March Stakes (GIII)", "Nakayama", "2026-03-29"),
+            # April
+            (
+                "LordDerbyChallengeTrophy",
+                "Lord Derby Challenge Trophy (GIII)",
+                "Nakayama",
+                "2026-04-04",
+            ),
+            (
+                "ChurchillDownsCup",
+                "Churchill Downs Cup (GIII)",
+                "Hanshin",
+                "2026-04-04",
+            ),
+            ("NewZealandTrophy", "New Zealand Trophy (GII)", "Nakayama", "2026-04-11"),
+            (
+                "HanshinHimbaStakes",
+                "Sankei Sports Hai Hanshin Himba Stakes (GII)",
+                "Hanshin",
+                "2026-04-11",
+            ),
+            ("AntaresStakes", "Antares Stakes (GIII)", "Hanshin", "2026-04-18"),
+            ("AobaSho", "TV Tokyo Hai Aoba Sho (GII)", "Tokyo", "2026-04-25"),
+            (
+                "FloraStakes",
+                "Sankei Sports Sho Flora Stakes (GII)",
+                "Tokyo",
+                "2026-04-26",
+            ),
+            ("MilersCup", "Yomiuri Milers Cup (GII)", "Kyoto", "2026-04-26"),
+            # May
+            ("KeioHaiSpringCup", "Keio Hai Spring Cup (GII)", "Tokyo", "2026-05-02"),
+            ("UnicornStakes", "Unicorn Stakes (GIII)", "Kyoto", "2026-05-02"),
+            ("TennoShoSpring", "Tenno Sho (Spring) (GI)", "Kyoto", "2026-05-03"),
+            ("EpsomCup", "Epsom Cup (GIII)", "Tokyo", "2026-05-09"),
+            ("KyotoShimbunHai", "Kyoto Shimbun Hai (GII)", "Kyoto", "2026-05-09"),
+            ("NiigataDaishoten", "Niigata Daishoten (GIII)", "Niigata", "2026-05-16"),
+            ("HeianStakes", "Heian Stakes (GIII)", "Kyoto", "2026-05-23"),
+            ("MeguroKinen", "Meguro Kinen (GII)", "Tokyo", "2026-05-31"),
+            # June
+            (
+                "HakodateSprintStakes",
+                "Hakodate Sprint Stakes (GIII)",
+                "Hakodate",
+                "2026-06-13",
+            ),
+            ("FuchuHimbaStakes", "Fuchu Himba Stakes (GIII)", "Tokyo", "2026-06-21"),
+            ("ShirasagiStakes", "Shirasagi Stakes (GIII)", "Hanshin", "2026-06-21"),
+            ("RadioNikkeiSho", "Radio Nikkei Sho (GIII)", "Fukushima", "2026-06-28"),
+            ("HakodateKinen", "Hakodate Kinen (GIII)", "Hakodate", "2026-06-28"),
+            # July and August
+            (
+                "KitakyushuKinen",
+                "TV Nishinippon Corp. Sho Kitakyushu Kinen (GIII)",
+                "Kokura",
+                "2026-07-05",
+            ),
+            ("TanabataSho", "Tanabata Sho (GIII)", "Fukushima", "2026-07-12"),
+            ("SekiyaKinen", "Sekiya Kinen (GIII)", "Niigata", "2026-07-26"),
+            ("TokaiStakes", "Tokai Stakes (GIII)", "Chukyo", "2026-07-26"),
+            ("IbisSummerDash", "Ibis Summer Dash (GIII)", "Niigata", "2026-08-02"),
+            (
+                "QueenStakes",
+                "Hokkaido Shimbun Hai Queen Stakes (GIII)",
+                "Sapporo",
+                "2026-08-02",
+            ),
+            ("ElmStakes", "Elm Stakes (GIII)", "Sapporo", "2026-08-08"),
+            ("LeopardStakes", "Leopard Stakes (GIII)", "Niigata", "2026-08-09"),
+            ("CBCSho", "CBC Sho (GIII)", "Chukyo", "2026-08-09"),
+            ("ChukyoKinen", "Chukyo Kinen (GIII)", "Chukyo", "2026-08-16"),
+            ("KeenelandCup", "Keeneland Cup (GIII)", "Sapporo", "2026-08-23"),
+            ("NiigataKinen", "Niigata Kinen (GIII)", "Niigata", "2026-08-30"),
+            ("ChukyoNisaiStakes", "Chukyo Nisai Stakes (GIII)", "Chukyo", "2026-08-30"),
+            # September
+            (
+                "KeiseiHaiAutumnHandicap",
+                "Keisei Hai Autumn Handicap (GIII)",
+                "Nakayama",
+                "2026-09-05",
+            ),
+            (
+                "SapporoNisaiStakes",
+                "Sapporo Nisai Stakes (GIII)",
+                "Sapporo",
+                "2026-09-05",
+            ),
+            ("ShionStakes", "Shion Stakes (GII)", "Nakayama", "2026-09-06"),
+            (
+                "CentaurStakes",
+                "Sankei Sho Centaur Stakes (GII)",
+                "Chukyo",
+                "2026-09-06",
+            ),
+            ("ChallengeCup", "Challenge Cup (GIII)", "Hanshin", "2026-09-12"),
+            ("StLiteKinen", "Asahi Hai St. Lite Kinen (GII)", "Nakayama", "2026-09-20"),
+            (
+                "RoseStakes",
+                "Kansai Telecasting Corp. Sho Rose Stakes (GII)",
+                "Chukyo",
+                "2026-09-20",
+            ),
+            ("KobeShimbunHai", "Kobe Shimbun Hai (GII)", "Chukyo", "2026-09-21"),
+            ("SiriusStakes", "Sirius Stakes (GIII)", "Hanshin", "2026-09-26"),
+            # October
+            ("MainichiOkan", "Mainichi Okan (GII)", "Tokyo", "2026-10-04"),
+            ("KyotoDaishoten", "Kyoto Daishoten (GII)", "Kyoto", "2026-10-04"),
+            ("IrelandTrophy", "Ireland Trophy (GII)", "Tokyo", "2026-10-11"),
+            ("SwanStakes", "MBS Sho Swan Stakes (GII)", "Kyoto", "2026-10-12"),
+            ("FujiStakes", "Fuji Stakes (GIII)", "Tokyo", "2026-10-17"),
+            ("ArtemisStakes", "Artemis Stakes (GIII)", "Tokyo", "2026-10-24"),
+            (
+                "FantasyStakes",
+                "KBS Kyoto Sho Fantasy Stakes (GIII)",
+                "Kyoto",
+                "2026-10-31",
+            ),
+            # November
+            (
+                "KeioHaiNisaiStakes",
+                "Keio Hai Nisai Stakes (GII)",
+                "Tokyo",
+                "2026-11-07",
+            ),
+            (
+                "CopaRepublicaArgentina",
+                "Copa Republica Argentina (GII)",
+                "Tokyo",
+                "2026-11-08",
+            ),
+            ("MiyakoStakes", "Miyako Stakes (GIII)", "Kyoto", "2026-11-08"),
+            ("MusashinoStakes", "Musashino Stakes (GIII)", "Tokyo", "2026-11-14"),
+            (
+                "DailyHaiNisaiStakes",
+                "Daily Hai Nisai Stakes (GII)",
+                "Kyoto",
+                "2026-11-14",
+            ),
+            ("FukushimaKinen", "Fukushima Kinen (GIII)", "Fukushima", "2026-11-21"),
+            (
+                "TokyoSportsHaiNisaiStakes",
+                "Tokyo Sports Hai Nisai Stakes (GII)",
+                "Tokyo",
+                "2026-11-23",
+            ),
+            ("KeihanHai", "Keihan Hai (GIII)", "Kyoto", "2026-11-29"),
+            # December
+            (
+                "StayersStakes",
+                "Sports Nippon Sho Stayers Stakes (GII)",
+                "Nakayama",
+                "2026-12-05",
+            ),
+            ("NaruoKinen", "Naruo Kinen (GIII)", "Hanshin", "2026-12-05"),
+            ("ChampionsCup", "Champions Cup (GI)", "Chukyo", "2026-12-06"),
+            ("CapellaStakes", "Capella Stakes (GIII)", "Nakayama", "2026-12-13"),
+            ("TurquoiseStakes", "Turquoise Stakes (GIII)", "Nakayama", "2026-12-19"),
+            ("HanshinCup", "Hanshin Cup (GII)", "Hanshin", "2026-12-26"),
+        ]
+    ),
+    # JRA also lists these graded jump races in the 2026 fixture calendar.
+    _jra_race(
+        "KokuraJumpStakes", "Kokura Jump Stakes (J-GIII)", "Kokura", "2026-02-14"
+    ),
+    _jra_race(
+        "HanshinSpringJump", "Hanshin Spring Jump (J-GII)", "Hanshin", "2026-03-14"
+    ),
+    _jra_race(
+        "NakayamaGrandJump", "Nakayama Grand Jump (J-GI)", "Nakayama", "2026-04-18"
+    ),
+    _jra_race("KyotoHighJump", "Kyoto High-Jump (J-GII)", "Kyoto", "2026-05-16"),
+    _jra_race("TokyoJumpStakes", "Tokyo Jump Stakes (J-GIII)", "Tokyo", "2026-06-13"),
+    _jra_race(
+        "NiigataJumpStakes", "Niigata Jump Stakes (J-GIII)", "Niigata", "2026-08-15"
+    ),
+    _jra_race(
+        "HanshinJumpStakes", "Hanshin Jump Stakes (J-GIII)", "Hanshin", "2026-09-19"
+    ),
+    _jra_race("TokyoHighJump", "Tokyo High-Jump (J-GII)", "Tokyo", "2026-10-18"),
+    _jra_race("KyotoJumpStakes", "Kyoto Jump Stakes (J-GIII)", "Kyoto", "2026-11-07"),
+    _jra_race(
+        "NakayamaDaishogai", "Nakayama Daishogai (J-GI)", "Nakayama", "2026-12-26"
+    ),
 ]
-
-# Complete the 2026 principal-race calendar from the official JRA schedule.
-# Existing entries above retain their playable RACE_PRESET mapping.  These
-# additional entries appear in News even where a gameplay path is not ready.
-def _jra_race(race_id: str, name: str, venue: str, date: str) -> dict:
-    return {
-        "race_id": race_id,
-        "name": name,
-        "venue": venue,
-        "date": date,
-        "time": "20:00",
-    }
-
-
-_JRA_2026_ADDITIONAL_RACES = [
-    # January
-    ("NakayamaKimpai", "Nikkan Sports Sho Nakayama Kimpai (GIII)", "Nakayama", "2026-01-04"),
-    ("KyotoKimpai", "Sports Nippon Sho Kyoto Kimpai (GIII)", "Kyoto", "2026-01-04"),
-    ("FairyStakes", "Fairy Stakes (GIII)", "Nakayama", "2026-01-11"),
-    ("ShinzanKinen", "Nikkan Sports Sho Shinzan Kinen (GIII)", "Kyoto", "2026-01-12"),
-    ("KeiseiHai", "Keisei Hai (GIII)", "Nakayama", "2026-01-18"),
-    ("NikkeiShinshunHai", "Nikkei Shinshun Hai (GII)", "Kyoto", "2026-01-18"),
-    ("KokuraHimbaStakes", "Kokura Himba Stakes (GIII)", "Kokura", "2026-01-24"),
-    ("AmericanJockeyClubCup", "American Jockey Club Cup (GII)", "Nakayama", "2026-01-25"),
-    ("ProcyonStakes", "Procyon Stakes (GII)", "Kyoto", "2026-01-25"),
-    # February
-    ("NegishiStakes", "Negishi Stakes (GIII)", "Tokyo", "2026-02-01"),
-    ("SilkRoadStakes", "Silk Road Stakes (GIII)", "Kyoto", "2026-02-01"),
-    ("KisaragiSho", "Kisaragi Sho (GIII)", "Kyoto", "2026-02-10"),
-    ("TokyoShimbunHai", "Tokyo Shimbun Hai (GIII)", "Tokyo", "2026-02-10"),
-    ("DailyHaiQueenCup", "Daily Hai Queen Cup (GIII)", "Tokyo", "2026-02-14"),
-    ("KyodoNewsHai", "Kyodo News Hai (Tokinominoru Kinen) (GIII)", "Tokyo", "2026-02-15"),
-    ("KyotoKinen", "Kyoto Kinen (GII)", "Kyoto", "2026-02-15"),
-    ("HankyuHai", "Hankyu Hai (GIII)", "Hanshin", "2026-02-21"),
-    ("KokuraDaishoten", "Kokura Daishoten (GIII)", "Kokura", "2026-02-22"),
-    ("OceanStakes", "Ocean Stakes (GIII)", "Nakayama", "2026-02-28"),
-    # March
-    ("NakayamaKinen", "Nakayama Kinen (GII)", "Nakayama", "2026-03-01"),
-    ("TulipSho", "Tulip Sho (Japanese 1000 Guineas Trial) (GII)", "Hanshin", "2026-03-01"),
-    ("NakayamaHimbaStakes", "Laurel R.C. Sho Nakayama Himba Stakes (GIII)", "Nakayama", "2026-03-07"),
-    ("FilliesRevue", "Hochi Hai Fillies' Revue (Japanese 1000 Guineas Trial) (GII)", "Hanshin", "2026-03-07"),
-    ("YayoiSho", "Hochi Hai Yayoi Sho Deep Impact Kinen (GII)", "Nakayama", "2026-03-08"),
-    ("SpringStakes", "Fuji TV Sho Spring Stakes (GII)", "Nakayama", "2026-03-15"),
-    ("KinkoSho", "Tokai TV Hai Kinko Sho (GII)", "Chukyo", "2026-03-15"),
-    ("FlowerCup", "Flower Cup (GIII)", "Nakayama", "2026-03-21"),
-    ("FalconStakes", "Chunichi Sports Sho Falcon Stakes (GIII)", "Chukyo", "2026-03-21"),
-    ("HanshinDaishoten", "Hanshin Daishoten (GII)", "Hanshin", "2026-03-22"),
-    ("AichiHai", "Aichi Hai (GIII)", "Chukyo", "2026-03-22"),
-    ("NikkeiSho", "Nikkei Sho (GII)", "Nakayama", "2026-03-28"),
-    ("MainichiHai", "Mainichi Hai (GIII)", "Hanshin", "2026-03-28"),
-    ("MarchStakes", "March Stakes (GIII)", "Nakayama", "2026-03-29"),
-    # April
-    ("LordDerbyChallengeTrophy", "Lord Derby Challenge Trophy (GIII)", "Nakayama", "2026-04-04"),
-    ("ChurchillDownsCup", "Churchill Downs Cup (GIII)", "Hanshin", "2026-04-04"),
-    ("NewZealandTrophy", "New Zealand Trophy (GII)", "Nakayama", "2026-04-11"),
-    ("HanshinHimbaStakes", "Sankei Sports Hai Hanshin Himba Stakes (GII)", "Hanshin", "2026-04-11"),
-    ("AntaresStakes", "Antares Stakes (GIII)", "Hanshin", "2026-04-18"),
-    ("AobaSho", "TV Tokyo Hai Aoba Sho (GII)", "Tokyo", "2026-04-25"),
-    ("FloraStakes", "Sankei Sports Sho Flora Stakes (GII)", "Tokyo", "2026-04-26"),
-    ("MilersCup", "Yomiuri Milers Cup (GII)", "Kyoto", "2026-04-26"),
-    # May
-    ("KeioHaiSpringCup", "Keio Hai Spring Cup (GII)", "Tokyo", "2026-05-02"),
-    ("UnicornStakes", "Unicorn Stakes (GIII)", "Kyoto", "2026-05-02"),
-    ("TennoShoSpring", "Tenno Sho (Spring) (GI)", "Kyoto", "2026-05-03"),
-    ("EpsomCup", "Epsom Cup (GIII)", "Tokyo", "2026-05-09"),
-    ("KyotoShimbunHai", "Kyoto Shimbun Hai (GII)", "Kyoto", "2026-05-09"),
-    ("NiigataDaishoten", "Niigata Daishoten (GIII)", "Niigata", "2026-05-16"),
-    ("HeianStakes", "Heian Stakes (GIII)", "Kyoto", "2026-05-23"),
-    ("MeguroKinen", "Meguro Kinen (GII)", "Tokyo", "2026-05-31"),
-    # June
-    ("HakodateSprintStakes", "Hakodate Sprint Stakes (GIII)", "Hakodate", "2026-06-13"),
-    ("FuchuHimbaStakes", "Fuchu Himba Stakes (GIII)", "Tokyo", "2026-06-21"),
-    ("ShirasagiStakes", "Shirasagi Stakes (GIII)", "Hanshin", "2026-06-21"),
-    ("RadioNikkeiSho", "Radio Nikkei Sho (GIII)", "Fukushima", "2026-06-28"),
-    ("HakodateKinen", "Hakodate Kinen (GIII)", "Hakodate", "2026-06-28"),
-    # July and August
-    ("KitakyushuKinen", "TV Nishinippon Corp. Sho Kitakyushu Kinen (GIII)", "Kokura", "2026-07-05"),
-    ("TanabataSho", "Tanabata Sho (GIII)", "Fukushima", "2026-07-12"),
-    ("SekiyaKinen", "Sekiya Kinen (GIII)", "Niigata", "2026-07-26"),
-    ("TokaiStakes", "Tokai Stakes (GIII)", "Chukyo", "2026-07-26"),
-    ("IbisSummerDash", "Ibis Summer Dash (GIII)", "Niigata", "2026-08-02"),
-    ("QueenStakes", "Hokkaido Shimbun Hai Queen Stakes (GIII)", "Sapporo", "2026-08-02"),
-    ("ElmStakes", "Elm Stakes (GIII)", "Sapporo", "2026-08-08"),
-    ("LeopardStakes", "Leopard Stakes (GIII)", "Niigata", "2026-08-09"),
-    ("CBCSho", "CBC Sho (GIII)", "Chukyo", "2026-08-09"),
-    ("ChukyoKinen", "Chukyo Kinen (GIII)", "Chukyo", "2026-08-16"),
-    ("KeenelandCup", "Keeneland Cup (GIII)", "Sapporo", "2026-08-23"),
-    ("NiigataKinen", "Niigata Kinen (GIII)", "Niigata", "2026-08-30"),
-    ("ChukyoNisaiStakes", "Chukyo Nisai Stakes (GIII)", "Chukyo", "2026-08-30"),
-    # September
-    ("KeiseiHaiAutumnHandicap", "Keisei Hai Autumn Handicap (GIII)", "Nakayama", "2026-09-05"),
-    ("SapporoNisaiStakes", "Sapporo Nisai Stakes (GIII)", "Sapporo", "2026-09-05"),
-    ("ShionStakes", "Shion Stakes (GII)", "Nakayama", "2026-09-06"),
-    ("CentaurStakes", "Sankei Sho Centaur Stakes (GII)", "Chukyo", "2026-09-06"),
-    ("ChallengeCup", "Challenge Cup (GIII)", "Hanshin", "2026-09-12"),
-    ("StLiteKinen", "Asahi Hai St. Lite Kinen (GII)", "Nakayama", "2026-09-20"),
-    ("RoseStakes", "Kansai Telecasting Corp. Sho Rose Stakes (GII)", "Chukyo", "2026-09-20"),
-    ("KobeShimbunHai", "Kobe Shimbun Hai (GII)", "Chukyo", "2026-09-21"),
-    ("SiriusStakes", "Sirius Stakes (GIII)", "Hanshin", "2026-09-26"),
-    # October
-    ("MainichiOkan", "Mainichi Okan (GII)", "Tokyo", "2026-10-04"),
-    ("KyotoDaishoten", "Kyoto Daishoten (GII)", "Kyoto", "2026-10-04"),
-    ("IrelandTrophy", "Ireland Trophy (GII)", "Tokyo", "2026-10-11"),
-    ("SwanStakes", "MBS Sho Swan Stakes (GII)", "Kyoto", "2026-10-12"),
-    ("FujiStakes", "Fuji Stakes (GIII)", "Tokyo", "2026-10-17"),
-    ("ArtemisStakes", "Artemis Stakes (GIII)", "Tokyo", "2026-10-24"),
-    ("FantasyStakes", "KBS Kyoto Sho Fantasy Stakes (GIII)", "Kyoto", "2026-10-31"),
-    # November
-    ("KeioHaiNisaiStakes", "Keio Hai Nisai Stakes (GII)", "Tokyo", "2026-11-07"),
-    ("CopaRepublicaArgentina", "Copa Republica Argentina (GII)", "Tokyo", "2026-11-08"),
-    ("MiyakoStakes", "Miyako Stakes (GIII)", "Kyoto", "2026-11-08"),
-    ("MusashinoStakes", "Musashino Stakes (GIII)", "Tokyo", "2026-11-14"),
-    ("DailyHaiNisaiStakes", "Daily Hai Nisai Stakes (GII)", "Kyoto", "2026-11-14"),
-    ("FukushimaKinen", "Fukushima Kinen (GIII)", "Fukushima", "2026-11-21"),
-    ("TokyoSportsHaiNisaiStakes", "Tokyo Sports Hai Nisai Stakes (GII)", "Tokyo", "2026-11-23"),
-    ("KeihanHai", "Keihan Hai (GIII)", "Kyoto", "2026-11-29"),
-    # December
-    ("StayersStakes", "Sports Nippon Sho Stayers Stakes (GII)", "Nakayama", "2026-12-05"),
-    ("NaruoKinen", "Naruo Kinen (GIII)", "Hanshin", "2026-12-05"),
-    ("ChampionsCup", "Champions Cup (GI)", "Chukyo", "2026-12-06"),
-    ("CapellaStakes", "Capella Stakes (GIII)", "Nakayama", "2026-12-13"),
-    ("TurquoiseStakes", "Turquoise Stakes (GIII)", "Nakayama", "2026-12-19"),
-    ("HanshinCup", "Hanshin Cup (GII)", "Hanshin", "2026-12-26"),
-]
-
-RACE_SCHEDULE.extend(_jra_race(*race) for race in _JRA_2026_ADDITIONAL_RACES)
 
 # Race definitions are intentionally stored separately from path behaviour.
 from utils.race.race_preset_data import RACE_PRESET
