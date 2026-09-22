@@ -494,6 +494,28 @@ def get_mailbox(user_id: str, profile_type: str = "trainee"):
           AND created_at <= datetime('now', '-7 days')
     """)
 
+    # A request can have been resolved by another browser/session before its
+    # action mail was marked read. Archive those stale actions on load so they
+    # cannot remain in the List or be answered a second time.
+    cur.execute("""
+        UPDATE mailbox
+        SET is_read = 1
+        WHERE is_read = 0
+          AND (
+            (action_type = 'race_registration_trainer' AND EXISTS (
+                SELECT 1 FROM race_registrations
+                WHERE race_registrations.id = mailbox.action_id
+                  AND race_registrations.status <> 'trainer_pending'
+            ))
+            OR
+            (action_type = 'race_registration_trainee' AND EXISTS (
+                SELECT 1 FROM race_registrations
+                WHERE race_registrations.id = mailbox.action_id
+                  AND race_registrations.status <> 'trainee_pending'
+            ))
+          )
+    """)
+
     cur.execute("""
         SELECT id, title, message, reward_type, reward_amount, is_read, created_at, invitation_id, action_type, action_id
         FROM mailbox
@@ -598,6 +620,14 @@ def api_respond_race_registration(registration_id: int, payload: RaceRegistratio
             mark_mail_read(payload.mail_id)
         return registration
     except ValueError as exc:
+        # Treat a retry on an already-resolved mail as successful cleanup. This
+        # covers mails produced before automatic archiving was available.
+        if "ถูกตอบแล้ว" in str(exc):
+            registration = get_race_registration(registration_id)
+            if registration:
+                if payload.mail_id:
+                    mark_mail_read(payload.mail_id)
+                return {**registration, "already_processed": True}
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
