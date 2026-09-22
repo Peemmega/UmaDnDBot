@@ -980,15 +980,13 @@ def get_account_role(user_id: str) -> Optional[str]:
 
 
 def select_account_role(user_id: str, username: str, role: str) -> str:
-    """Set an account's initial role and create only that role's data."""
+    """Synchronize an account role and ensure that role's profile data exists."""
     normalized_role = role.strip().lower()
     if normalized_role not in VALID_ACCOUNT_ROLES:
         raise ValueError("Role must be trainee, trainer, or npc")
 
     existing_role = get_account_role(user_id)
-    if existing_role:
-        if existing_role != normalized_role:
-            raise ValueError("This account already has a role")
+    if existing_role == normalized_role:
         return existing_role
 
     display_name = username.strip() or normalized_role.title()
@@ -999,7 +997,10 @@ def select_account_role(user_id: str, username: str, role: str) -> str:
 
     with database_connection() as conn:
         conn.execute(
-            "INSERT INTO account_roles (user_id, role) VALUES (?, ?)",
+            """
+            INSERT INTO account_roles (user_id, role) VALUES (?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET role = excluded.role
+            """,
             (str(user_id), normalized_role),
         )
 
