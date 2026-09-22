@@ -111,7 +111,7 @@ class SkillCog(commands.Cog):
     #     if mode_value == "info":
     #         if not info:
     #             await interaction.response.send_message(
-    #                 "กรุณาใส่รหัสหรือชื่อสกิล เช่น s001",
+    #                 "กรุณาใส่รหัสหรือชื่อสกิล เช่น vel_001",
     #                 ephemeral=True
     #             )
     #             return
@@ -142,7 +142,7 @@ class SkillCog(commands.Cog):
     #         return
 
     # @skill_group.command(name="equip", description="ติดตั้งสกิลลงช่อง")
-    # @app_commands.describe(slot="ช่องสกิล", skill_id="รหัสสกิล เช่น s001")
+    # @app_commands.describe(slot="ช่องสกิล", skill_id="รหัสสกิล เช่น vel_001")
     # @app_commands.choices(slot=[
     #     app_commands.Choice(name="Slot 1", value=1),
     #     app_commands.Choice(name="Slot 2", value=2),

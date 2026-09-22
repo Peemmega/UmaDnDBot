@@ -397,6 +397,52 @@ def _draw_bonus_rows(
 
         y += 38
 
+
+def _draw_track_thumbnail_fallback(
+    canvas: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    stage: dict[str, Any],
+    box: tuple[int, int, int, int],
+) -> None:
+    """Draw a local racecourse badge when a stage has no bundled thumbnail."""
+    left, top, right, bottom = box
+    track_type = str(stage.get("track") or "turf").strip().lower()
+    surface = (139, 86, 48) if track_type == "dirt" else (57, 148, 75)
+    surface_dark = (92, 55, 31) if track_type == "dirt" else (33, 104, 55)
+
+    draw.rounded_rectangle(box, radius=12, fill=surface_dark)
+    draw.rounded_rectangle(
+        (left + 7, top + 7, right - 7, bottom - 7),
+        radius=9,
+        fill=surface,
+    )
+
+    # A simple oval circuit makes the fallback recognizable as a racecourse
+    # without needing a network image for every stage in the catalogue.
+    oval = (left + 36, top + 22, right - 36, bottom - 22)
+    draw.ellipse(oval, outline=(244, 239, 211), width=10)
+    draw.ellipse(
+        (oval[0] + 15, oval[1] + 15, oval[2] - 15, oval[3] - 15),
+        fill=surface_dark,
+    )
+    finish_x = (left + right) // 2
+    draw.line((finish_x, top + 25, finish_x, top + 45), fill=(255, 255, 255), width=4)
+
+    label = _title_value(stage.get("distance"), "Race")
+    draw.rounded_rectangle(
+        (left + 12, bottom - 31, right - 12, bottom - 10),
+        radius=8,
+        fill=(20, 20, 20, 150),
+    )
+    draw.text(
+        ((left + right) // 2, bottom - 29),
+        label,
+        font=_font(15),
+        fill=(255, 255, 255),
+        anchor="ma",
+    )
+
+
 def create_racing_room_image(stage: dict[str, Any], *, debug: bool = False) -> Image.Image:
     bg = _load_image(stage.get("background"), fallback=BG_PATH, size=(W, H), fill=(235, 246, 230, 255))
     canvas = Image.new("RGBA", (W, H), (255, 255, 255, 0))
@@ -412,8 +458,13 @@ def create_racing_room_image(stage: dict[str, Any], *, debug: bool = False) -> I
         fill=(150, 55, 5),
     )
 
-    thumb = _load_image(_resolve_race_thumbnail(stage), fallback=stage.get("background") or BG_PATH, size=(238, 120))
-    canvas.alpha_composite(thumb, (880, 143))
+    thumbnail_box = (880, 143, 1118, 263)
+    thumbnail_path = _resolve_race_thumbnail(stage)
+    if thumbnail_path:
+        thumb = _load_image(thumbnail_path, size=(238, 120))
+        canvas.alpha_composite(thumb, thumbnail_box[:2])
+    else:
+        _draw_track_thumbnail_fallback(canvas, draw, stage, thumbnail_box)
 
     draw.text((395, 266), str(stage.get("turns", "-")), font=_font(28), fill=(40, 40, 40), anchor="ra")
 

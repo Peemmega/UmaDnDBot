@@ -10,9 +10,13 @@ import aiohttp
 from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
 
 from utils.profile_images import is_local_filesystem_path, resolve_player_render_image
-from utils.race.race_presets import PATH_TYPE_TEXT, build_path_effect_text, get_current_path_type
+from utils.race.race_presets import (
+    PATH_TYPE_TEXT,
+    build_path_effect_text,
+    get_current_path_type,
+)
 from utils.race.rank_display import is_in_gold_range
-
+from utils.race.race_weather import display_wet_lanes, is_raining, weather_label
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = BASE_DIR / "assets"
@@ -57,7 +61,9 @@ EFFECT_TOKEN_RE = re.compile(r"(STA|SPD|POW|GUT|WIT)")
 DEFAULT_AVATAR = ASSETS_DIR / "characters" / "mob_01.png"
 
 
-def _font(size: int, *, bold: bool = True) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+def _font(
+    size: int, *, bold: bool = True
+) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     path = FONT_BOLD_PATH if bold else FONT_REGULAR_PATH
     try:
         return ImageFont.truetype(str(path), size)
@@ -94,7 +100,9 @@ async def _load_avatar_image(source: str, size: tuple[int, int]) -> Image.Image:
     return ImageOps.fit(image, size, Image.LANCZOS)
 
 
-def _circular_avatar(base_avatar: Image.Image, *, border_color: tuple[int, int, int, int]) -> Image.Image:
+def _circular_avatar(
+    base_avatar: Image.Image, *, border_color: tuple[int, int, int, int]
+) -> Image.Image:
     mask = Image.new("L", (AVATAR_SIZE, AVATAR_SIZE), 0)
     draw_mask = ImageDraw.Draw(mask)
     draw_mask.ellipse((0, 0, AVATAR_SIZE - 1, AVATAR_SIZE - 1), fill=255)
@@ -102,7 +110,11 @@ def _circular_avatar(base_avatar: Image.Image, *, border_color: tuple[int, int, 
     avatar = Image.new("RGBA", (AVATAR_SIZE, AVATAR_SIZE), (0, 0, 0, 0))
     avatar.paste(base_avatar, (0, 0), mask)
 
-    framed = Image.new("RGBA", (AVATAR_SIZE + AVATAR_BORDER * 2, AVATAR_SIZE + AVATAR_BORDER * 2), (0, 0, 0, 0))
+    framed = Image.new(
+        "RGBA",
+        (AVATAR_SIZE + AVATAR_BORDER * 2, AVATAR_SIZE + AVATAR_BORDER * 2),
+        (0, 0, 0, 0),
+    )
     draw = ImageDraw.Draw(framed)
     draw.ellipse(
         (0, 0, framed.width - 1, framed.height - 1),
@@ -181,14 +193,22 @@ def _parse_effect_tokens(text: str) -> list[tuple[str, str]]:
     return tokens
 
 
-def _token_width(draw: ImageDraw.ImageDraw, token: tuple[str, str], font, icon_size: int) -> int:
+def _token_width(
+    draw: ImageDraw.ImageDraw, token: tuple[str, str], font, icon_size: int
+) -> int:
     token_type, value = token
     if token_type == "icon":
         return icon_size + 8
     return draw.textbbox((0, 0), value, font=font)[2]
 
 
-def _wrap_effect_tokens(draw: ImageDraw.ImageDraw, tokens: list[tuple[str, str]], font, max_width: int, icon_size: int) -> list[list[tuple[str, str]]]:
+def _wrap_effect_tokens(
+    draw: ImageDraw.ImageDraw,
+    tokens: list[tuple[str, str]],
+    font,
+    max_width: int,
+    icon_size: int,
+) -> list[list[tuple[str, str]]]:
     lines: list[list[tuple[str, str]]] = []
     current: list[tuple[str, str]] = []
     current_width = 0
@@ -206,7 +226,9 @@ def _wrap_effect_tokens(draw: ImageDraw.ImageDraw, tokens: list[tuple[str, str]]
     return lines
 
 
-def _paste_icon(canvas: Image.Image, icon_key: str, pos: tuple[int, int], size: int) -> int:
+def _paste_icon(
+    canvas: Image.Image, icon_key: str, pos: tuple[int, int], size: int
+) -> int:
     icon_path = ICON_MAP.get(icon_key)
     if not icon_path or not icon_path.exists():
         return 0
@@ -255,7 +277,9 @@ def _sanitize_effect_text(text: str) -> str:
     return cleaned
 
 
-def _build_scoreboard_rows(ranked_players: list[tuple[Any, dict]]) -> list[dict[str, Any]]:
+def _build_scoreboard_rows(
+    ranked_players: list[tuple[Any, dict]],
+) -> list[dict[str, Any]]:
     rows = []
     for index, (user_id, info) in enumerate(ranked_players, start=1):
         name = (
@@ -264,17 +288,25 @@ def _build_scoreboard_rows(ranked_players: list[tuple[Any, dict]]) -> list[dict[
             or info.get("name")
             or str(user_id)
         )
-        rows.append({
-            "rank": index,
-            "user_id": user_id,
-            "entry_number": int(info.get("entry_number", index) or index),
-            "name": str(name),
-            "style": str(info.get("style") or "-"),
-            "score": int(info.get("score", 0) or 0),
-            "lane": max(1, min(6, int(info.get("current_lane", info.get("entry_number", 1)) or 1))),
-            "gold": is_in_gold_range(user_id, info, ranked_players),
-            "info": info,
-        })
+        rows.append(
+            {
+                "rank": index,
+                "user_id": user_id,
+                "entry_number": int(info.get("entry_number", index) or index),
+                "name": str(name),
+                "style": str(info.get("style") or "-"),
+                "score": int(info.get("score", 0) or 0),
+                "lane": max(
+                    1,
+                    min(
+                        6,
+                        int(info.get("current_lane", info.get("entry_number", 1)) or 1),
+                    ),
+                ),
+                "gold": is_in_gold_range(user_id, info, ranked_players),
+                "info": info,
+            }
+        )
     return rows
 
 
@@ -284,6 +316,45 @@ def _position_x(score: int, min_score: int, max_score: int) -> int:
 
     ratio = (score - min_score) / float(max_score - min_score)
     return int(round(TRACK_LEFT + (TRACK_RIGHT - TRACK_LEFT) * ratio))
+
+
+def _draw_weather_lanes(canvas: Image.Image, game: dict) -> None:
+    if not is_raining(game):
+        return
+
+    lanes = display_wet_lanes(game)
+    if not lanes:
+        return
+
+    draw = ImageDraw.Draw(canvas, "RGBA")
+    for lane in lanes:
+        lane_y = LANE_Y.get(int(lane))
+        if lane_y is None:
+            continue
+        draw.rounded_rectangle(
+            (TRACK_LEFT, lane_y - 48, TRACK_RIGHT, lane_y + 48),
+            radius=18,
+            fill=(66, 175, 255, 255),
+            outline=(30, 119, 203, 255),
+            width=3,
+        )
+
+
+def _weather_effect_lines(game: dict) -> list[str]:
+    """Return the rain status for the Effect Turn panel, not the track itself."""
+    if not is_raining(game):
+        return []
+
+    lanes = display_wet_lanes(game)
+    if not lanes:
+        return []
+
+    timing = "เทิร์นถัดไป" if game.get("awaiting_turn_confirm") else "เทิร์นนี้"
+    lane_text = ", ".join(map(str, lanes))
+    return [
+        f"{weather_label(game)} | {timing}: Lane {lane_text} เปียก",
+        "ผล: อัตราเพิ่มความเร็วในเทิร์นนี้ -50%",
+    ]
 
 
 def _apply_lane_offsets(rows: list[dict[str, Any]]) -> None:
@@ -306,8 +377,11 @@ def _apply_lane_offsets(rows: list[dict[str, Any]]) -> None:
         def flush_cluster() -> None:
             offsets = cluster_offsets.get(len(cluster), cluster_offsets[6])
             for idx, item in enumerate(cluster):
-                x_offset, y_offset = offsets[idx] if idx < len(offsets) else offsets[-1]
-                item["track_offset_x"] = x_offset
+                _, y_offset = offsets[idx] if idx < len(offsets) else offsets[-1]
+                # Keep the horizontal coordinate strictly score-based.  A
+                # collision offset may otherwise make a lower-scoring runner
+                # appear ahead of a higher-scoring runner on the track.
+                item["track_offset_x"] = 0
                 item["lane_offset"] = y_offset
 
         for item in lane_rows:
@@ -326,13 +400,17 @@ def _apply_lane_offsets(rows: list[dict[str, Any]]) -> None:
             flush_cluster()
 
 
-async def create_turn_result_card(game: dict, ranked_players: list[tuple[Any, dict]]) -> Image.Image:
+async def create_turn_result_card(
+    game: dict, ranked_players: list[tuple[Any, dict]]
+) -> Image.Image:
     canvas = Image.open(TEMPLATE_PATH).convert("RGBA")
     draw = ImageDraw.Draw(canvas)
 
     rows = _build_scoreboard_rows(ranked_players)
     if not rows:
         return canvas
+
+    _draw_weather_lanes(canvas, game)
 
     scores = [row["score"] for row in rows]
     min_score = min(scores)
@@ -350,10 +428,12 @@ async def create_turn_result_card(game: dict, ranked_players: list[tuple[Any, di
         resolve_player_render_image(row["info"], row["info"].get("avatar", ""))
         for row in rows
     ]
-    avatars = await asyncio.gather(*[
-        _load_avatar_image(source, (AVATAR_SIZE, AVATAR_SIZE))
-        for source in avatar_sources
-    ])
+    avatars = await asyncio.gather(
+        *[
+            _load_avatar_image(source, (AVATAR_SIZE, AVATAR_SIZE))
+            for source in avatar_sources
+        ]
+    )
 
     for row, avatar in zip(rows, avatars):
         border_color = YELLOW if row["gold"] else BLACK
@@ -361,7 +441,9 @@ async def create_turn_result_card(game: dict, ranked_players: list[tuple[Any, di
         paste_x = row["track_x"] - framed.width // 2 + int(row["track_offset_x"])
         paste_y = row["lane_y"] - framed.height // 2 + int(row["lane_offset"])
         canvas.paste(framed, (paste_x, paste_y), framed)
-        _draw_number_badge(canvas, row["entry_number"], (paste_x - 8, paste_y - 18), diameter=28)
+        _draw_number_badge(
+            canvas, row["entry_number"], (paste_x - 8, paste_y - 18), diameter=28
+        )
 
     row_count = len(rows)
     available_height = RIGHT_PANEL_BOTTOM - RIGHT_PANEL_Y
@@ -386,8 +468,15 @@ async def create_turn_result_card(game: dict, ranked_players: list[tuple[Any, di
             stroke_fill=GREEN,
         )
 
-        rank_box = draw.textbbox((RIGHT_PANEL_X, y), rank_text, font=font, stroke_width=2)
-        label = _fit_text(draw, f"#{row['entry_number']} {row['name']} | {row['style']}", font, NAME_MAX_WIDTH)
+        rank_box = draw.textbbox(
+            (RIGHT_PANEL_X, y), rank_text, font=font, stroke_width=2
+        )
+        label = _fit_text(
+            draw,
+            f"#{row['entry_number']} {row['name']} | {row['style']}",
+            font,
+            NAME_MAX_WIDTH,
+        )
         draw.text(
             (rank_box[2] + 10, y),
             label,
@@ -414,6 +503,10 @@ async def create_turn_result_card(game: dict, ranked_players: list[tuple[Any, di
         effect_title_font = _font(30, bold=True)
         effect_body_font = _font(24, bold=True)
         effect_small_font = _font(21, bold=False)
+        weather_font = _font(20, bold=True)
+        weather_lines = _weather_effect_lines(game)
+        weather_height = len(weather_lines) * 27
+        effect_bottom = EFFECT_BOX_BOTTOM - weather_height
 
         draw.text(
             (RIGHT_PANEL_X, EFFECT_BOX_TOP),
@@ -431,13 +524,17 @@ async def create_turn_result_card(game: dict, ranked_players: list[tuple[Any, di
         )
 
         effect_text = _sanitize_effect_text(build_path_effect_text(path_type))
-        effect_lines = [segment.strip() for segment in effect_text.split("•") if segment.strip()]
+        effect_lines = [
+            segment.strip() for segment in effect_text.split("•") if segment.strip()
+        ]
         text_y = EFFECT_BOX_TOP + 68
         for segment in effect_lines:
             tokens = _parse_effect_tokens(segment)
-            wrapped_token_lines = _wrap_effect_tokens(draw, tokens, effect_body_font, RIGHT_PANEL_WIDTH - 10, 24)
+            wrapped_token_lines = _wrap_effect_tokens(
+                draw, tokens, effect_body_font, RIGHT_PANEL_WIDTH - 10, 24
+            )
             for token_line in wrapped_token_lines:
-                if text_y + 26 > EFFECT_BOX_BOTTOM:
+                if text_y + 26 > effect_bottom:
                     break
                 _draw_effect_token_line(
                     canvas,
@@ -449,7 +546,18 @@ async def create_turn_result_card(game: dict, ranked_players: list[tuple[Any, di
                     icon_size=24,
                 )
                 text_y += 30
-            if text_y + 26 > EFFECT_BOX_BOTTOM:
+            if text_y + 26 > effect_bottom:
                 break
+
+        for weather_line in weather_lines:
+            draw.text(
+                (RIGHT_PANEL_X, text_y),
+                weather_line,
+                font=weather_font,
+                fill=WHITE,
+                stroke_width=2,
+                stroke_fill=(18, 75, 112, 255),
+            )
+            text_y += 27
 
     return canvas

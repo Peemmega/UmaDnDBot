@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 # UI countdown. Keep the backend bot delay derived from these values so bots and
 # players begin moving after the same countdown.
 WEB_TIMING_COUNTDOWN_STEPS = ("3", "2", "1", "GO!")
@@ -63,8 +62,10 @@ MAX_WEB_TIMING_SPEED = 40.0
 MAX_WEB_TIMING_ACCELERATION = 4.0
 MIN_WEB_TIMING_ACCELERATION = 0.30
 MAX_ACCELERATION_ELAPSED_SECONDS = 3.0
-WEB_TIMING_BASE_ACCELERATION = 0.25
-WEB_TIMING_POWER_ACCELERATION_MULTIPLIER_PER_POINT = 0.10
+# The race formula applies Track Aptitude to the whole acceleration value:
+# (base acceleration + Power contribution) * Track modifier.
+WEB_TIMING_BASE_ACCELERATION = 0.30
+WEB_TIMING_POWER_ACCELERATION_PER_POINT = 0.10
 
 
 def get_web_timing_start_delay_seconds() -> float:

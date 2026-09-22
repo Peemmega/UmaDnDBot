@@ -1,9 +1,10 @@
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 import json
 import asyncio
+import base64
 import io
 import time
 from pathlib import Path
@@ -18,31 +19,66 @@ from utils.database import (
     update_player_username,
     set_player_skill_slot,
     get_player_skill_slots,
+    list_player_skill_loadout_presets,
+    save_player_skill_loadout_preset,
+    apply_player_skill_loadout_preset,
+    delete_player_skill_loadout_preset,
     init_db,
     set_player_profile_image,
     update_player_stat_pool,
+    get_available_trainees,
+    get_trainer_team,
+    get_trainee_trainer,
+    create_team_invitation,
+    respond_to_team_invitation,
+    save_profile_preset,
+    set_profile_preset_image,
+    list_uploaded_profile_summaries,
+    get_account_role,
+    select_account_role,
+    list_community_events,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
 from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
-from utils.skill.skill_presets import SKILLS, SKILL_TAG_OPTIONS
+from utils.race.race_preset_data import get_race_venue
+from utils.event_schedule import EVENT_SCHEDULE
+from utils.skill.skill_presets import (
+    SKILLS,
+    SKILL_APTITUDE_OPTIONS,
+    SKILL_DETAIL_OPTIONS,
+    SKILL_TAG_OPTIONS,
+    get_skill_category_groups,
+)
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
 from utils.channel_config import RACE_LOG_CHANNEL_ID
 from utils.race.race_web import race_web_manager
+from utils.race.race_history import (
+    OFFICIAL,
+    PRACTICE,
+    get_course_leaderboard,
+    get_participant_history,
+    get_race_by_id,
+    list_race_history,
+    save_completed_race,
+)
+from utils.race.race_completion import finalize_race
 from utils.profile_images import (
     ALLOWED_IMAGE_CONTENT_TYPES,
     MAX_PROFILE_IMAGE_BYTES,
     PROFILE_IMAGE_SIZE,
     build_profile_image_relative_url,
+    build_profile_preset_image_relative_url,
     ensure_upload_dirs,
     get_profile_uploads_dir,
     get_upload_root_dir,
     resolve_public_url,
     sanitize_numeric_user_id,
+    normalize_profile_preset_type,
 )
 from views.create_game_view import LobbyView, build_lobby_message_payload
 import bot_instance
@@ -90,6 +126,74 @@ async def log_timing_validation_error(request: Request, exc: RequestValidationEr
 def api_startup():
     init_db()
     ensure_upload_dirs()
+    migrate_embedded_preset_profile_images()
+
+
+def _save_profile_image(file_bytes: bytes, output_path: Path) -> None:
+    """Validate, resize, and persist one avatar as a compact WebP image."""
+    try:
+        source_image = Image.open(io.BytesIO(file_bytes))
+        source_image.load()
+    except (UnidentifiedImageError, OSError) as exc:
+        raise ValueError("Invalid image file") from exc
+
+    fitted_image = ImageOps.fit(
+        source_image.convert("RGBA"),
+        PROFILE_IMAGE_SIZE,
+        method=Image.Resampling.LANCZOS,
+    )
+    fitted_image.save(output_path, format="WEBP", quality=90, method=6)
+
+
+def migrate_embedded_preset_profile_images() -> None:
+    """One-time-safe migration for legacy data:image preset avatars.
+
+    Older clients stored cropped Trainer/NPC images in SQLite as Base64.  Those
+    values made the public character-summary response grow with every image.
+    Convert only valid, bounded legacy values and leave malformed rows alone.
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT user_id, profile_type, image_url
+            FROM profile_presets
+            WHERE LTRIM(image_url) LIKE 'data:image/%'
+            """
+        ).fetchall()
+        max_base64_chars = ((MAX_PROFILE_IMAGE_BYTES + 1) * 4) // 3
+
+        for row in rows:
+            raw_data_url = str(row["image_url"] or "").strip()
+            try:
+                header, encoded_image = raw_data_url.split(",", 1)
+                if ";base64" not in header.lower() or len(encoded_image) > max_base64_chars:
+                    continue
+                image_bytes = base64.b64decode(encoded_image, validate=True)
+                if not image_bytes or len(image_bytes) > MAX_PROFILE_IMAGE_BYTES:
+                    continue
+                profile_type = normalize_profile_preset_type(row["profile_type"])
+                user_id = sanitize_numeric_user_id(row["user_id"])
+                updated_at = int(time.time())
+                output_path = get_profile_uploads_dir() / f"{user_id}-{profile_type}.webp"
+                _save_profile_image(image_bytes, output_path)
+                conn.execute(
+                    """
+                    UPDATE profile_presets
+                    SET image_url = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = ? AND profile_type = ?
+                    """,
+                    (
+                        build_profile_preset_image_relative_url(user_id, profile_type, updated_at),
+                        user_id,
+                        profile_type,
+                    ),
+                )
+            except (ValueError, UnicodeError, base64.binascii.Error):
+                continue
+        conn.commit()
+    finally:
+        conn.close()
 
 @app.get("/player/{user_id}")
 def api_get_player(user_id: str, username: str = "Unknown"):
@@ -102,9 +206,125 @@ def api_get_player(user_id: str, username: str = "Unknown"):
     return player
 
 
+@app.get("/player/{user_id}/race-history")
+def api_get_player_race_history(
+    user_id: str,
+    record_type: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    return {
+        "races": get_participant_history(
+            column="uma_id", value=user_id, record_type=record_type, limit=limit, offset=offset,
+        )
+    }
+
+
+@app.get("/trainer/{user_id}/race-history")
+def api_get_trainer_race_history(
+    user_id: str,
+    record_type: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    return {
+        "races": get_participant_history(
+            column="trainer_id", value=user_id, record_type=record_type, limit=limit, offset=offset,
+        )
+    }
+
+
+class AccountRolePayload(BaseModel):
+    user_id: str
+    username: str
+    role: str
+
+
+@app.get("/account/{user_id}/role")
+def api_get_account_role(user_id: str):
+    return {"role": get_account_role(user_id)}
+
+
+@app.post("/account/role")
+def api_select_account_role(payload: AccountRolePayload):
+    try:
+        role = select_account_role(payload.user_id, payload.username, payload.role)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "role": role,
+        "player": get_player(payload.user_id) if role == "trainee" else None,
+    }
+
+
 @app.get("/api/players/summary")
 def api_get_players_summary():
-    return {"players": list_player_summaries()}
+    return {"players": [*list_player_summaries(), *list_uploaded_profile_summaries()]}
+
+
+class ProfilePresetPayload(BaseModel):
+    user_id: str
+    profile_type: str
+    name: str
+    image_url: str = ""
+
+
+@app.post("/profiles/preset")
+def api_save_profile_preset(payload: ProfilePresetPayload):
+    if str(payload.image_url or "").lstrip().lower().startswith("data:"):
+        raise HTTPException(
+            status_code=400,
+            detail="Embedded images are not supported; upload through /profiles/preset-image",
+        )
+    try:
+        save_profile_preset(payload.user_id, payload.profile_type, payload.name, payload.image_url)
+        return {"success": True}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/profiles/preset-image")
+async def api_upload_preset_profile_image(
+    user_id: str = Form(...),
+    profile_type: str = Form(...),
+    file: UploadFile = File(...),
+):
+    """Upload a Trainer/NPC avatar and store only its WebP URL in SQLite."""
+    try:
+        safe_user_id = sanitize_numeric_user_id(user_id)
+        safe_profile_type = normalize_profile_preset_type(profile_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    content_type = (file.content_type or "").lower().strip()
+    if content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail="Unsupported image type")
+
+    raw_bytes = await file.read(MAX_PROFILE_IMAGE_BYTES + 1)
+    await file.close()
+    if not raw_bytes:
+        raise HTTPException(status_code=400, detail="Empty upload")
+    if len(raw_bytes) > MAX_PROFILE_IMAGE_BYTES:
+        raise HTTPException(status_code=400, detail="File too large")
+
+    updated_at = int(time.time())
+    output_path = get_profile_uploads_dir() / f"{safe_user_id}-{safe_profile_type}.webp"
+    try:
+        _save_profile_image(raw_bytes, output_path)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    image_url = build_profile_preset_image_relative_url(
+        safe_user_id, safe_profile_type, updated_at
+    )
+    set_profile_preset_image(safe_user_id, safe_profile_type, image_url)
+    return {
+        "ok": True,
+        "user_id": safe_user_id,
+        "profile_type": safe_profile_type,
+        "image_url": resolve_public_url(image_url),
+    }
 
 
 @app.get("/api/players/{user_id}/summary")
@@ -195,7 +415,7 @@ def update_player_stats(payload: UpdateStatsPayload):
     return {"success": True, "message": "Stats updated successfully", "player": player}
 
 @app.get("/mailbox/{user_id}")
-def get_mailbox(user_id: str):
+def get_mailbox(user_id: str, profile_type: str = "trainee"):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -206,11 +426,11 @@ def get_mailbox(user_id: str):
     """)
 
     cur.execute("""
-        SELECT id, title, message, reward_type, reward_amount, is_read, created_at
+        SELECT id, title, message, reward_type, reward_amount, is_read, created_at, invitation_id
         FROM mailbox
-        WHERE CAST(user_id AS TEXT) = ?
+        WHERE CAST(user_id AS TEXT) = ? AND profile_type = ?
         ORDER BY id DESC
-    """, (str(user_id),))
+    """, (str(user_id), profile_type))
 
     rows = cur.fetchall()
     conn.commit()
@@ -225,9 +445,53 @@ def get_mailbox(user_id: str):
             "reward_amount": row[4],
             "is_read": bool(row[5]),
             "created_at": row[6],
+            "invitation_id": row[7],
         }
         for row in rows
     ]
+
+
+class TeamInvitePayload(BaseModel):
+    trainer_user_id: str
+    trainee_user_id: str
+
+
+class TeamInviteResponsePayload(BaseModel):
+    trainee_user_id: str
+    accepted: bool
+
+
+@app.get("/trainer/{trainer_user_id}/team")
+def api_get_trainer_team(trainer_user_id: str):
+    members = get_trainer_team(trainer_user_id)
+    return {"members": members, "fans": sum(int(member["fans"] or 0) for member in members)}
+
+
+@app.get("/trainee/{trainee_user_id}/trainer")
+def api_get_trainee_trainer(trainee_user_id: str):
+    return {"trainer": get_trainee_trainer(trainee_user_id)}
+
+
+@app.get("/trainer/{trainer_user_id}/available-trainees")
+def api_get_available_trainees(trainer_user_id: str):
+    return {"trainees": get_available_trainees(trainer_user_id)}
+
+
+@app.post("/trainer/invitations")
+def api_create_team_invitation(payload: TeamInvitePayload):
+    try:
+        return {"invitation_id": create_team_invitation(payload.trainer_user_id, payload.trainee_user_id)}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/trainer/invitations/{invitation_id}/respond")
+def api_respond_team_invitation(invitation_id: int, payload: TeamInviteResponsePayload):
+    try:
+        respond_to_team_invitation(invitation_id, payload.trainee_user_id, payload.accepted)
+        return {"success": True}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/mailbox/{mail_id}/read")
@@ -364,6 +628,7 @@ def api_get_all_races(distance: str = "all"):
             "image": race.get("image"),
             "thumbnail": race.get("thumnail"),
             "track": race.get("track"),
+            "venue": get_race_venue(race_id),
             "distance": race_distance,
             "turn": race.get("turn"),
             "path": race.get("path", []),
@@ -371,6 +636,41 @@ def api_get_all_races(distance: str = "all"):
         })
 
     return result
+
+
+@app.get("/race-history")
+def api_list_race_history(
+    stage_key: str | None = None,
+    record_type: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+):
+    return {"races": list_race_history(stage_key=stage_key, record_type=record_type, limit=limit, offset=offset)}
+
+
+@app.get("/race-events")
+def api_list_race_events(stage_key: str | None = None, limit: int = 20, offset: int = 0):
+    """Compatibility alias for the centralized completed Race History list."""
+    return {"events": list_race_history(stage_key=stage_key, limit=limit, offset=offset)}
+
+
+@app.get("/race-history/{race_id}")
+@app.get("/race-events/{race_id}")
+def api_get_race_history_detail(race_id: str):
+    race = get_race_by_id(race_id)
+    if race is None:
+        raise HTTPException(status_code=404, detail="Race history not found")
+    return race
+
+
+@app.get("/races/{stage_key}/leaderboard")
+def api_get_course_leaderboard(stage_key: str, limit: int = 10, include_practice: bool = False):
+    record_type = None if include_practice else OFFICIAL
+    if record_type is None:
+        official = get_course_leaderboard(stage_key, limit=limit, record_type=OFFICIAL)
+        practice = get_course_leaderboard(stage_key, limit=limit, record_type=PRACTICE)
+        return {"stage_key": stage_key, "rankings": official + practice}
+    return {"stage_key": stage_key, "rankings": get_course_leaderboard(stage_key, limit=limit, record_type=record_type)}
 
 
 RACE_ROOM_CHANNEL_IDS = [
@@ -396,6 +696,7 @@ class WebRacePlayerPayload(BaseModel):
     mob_preset: str | None = None
     level: int = 1
     gameplay_mode: str = "timing"
+    record_type: str = "practice"
 
 
 class WebRaceSkillPayload(BaseModel):
@@ -467,7 +768,14 @@ async def run_api_test_bot_race(bot, channel_id: int):
         }
 
     game = payload["game"]
+    game["record_type"] = PRACTICE
     ranked_players = payload["ranked_players"]
+    try:
+        ranked_players, _result, _history_id = finalize_race(
+            game, ranked_players=ranked_players
+        )
+    except Exception as exc:
+        print(f"Practice Race History save error: {exc}")
 
     log_embed = build_race_log_embed(game, ranked_players)
     log_file = build_race_log_file(game, ranked_players)
@@ -557,6 +865,7 @@ async def api_web_race_create_room(payload: WebRacePlayerPayload):
             stage_key=payload.stage_key,
             style=payload.style,
             gameplay_mode=payload.gameplay_mode,
+            record_type=payload.record_type,
         )
         await race_web_manager.broadcast(room["room_id"])
         return room
@@ -835,16 +1144,44 @@ def get_race_calendar():
 
         events.append({
             "id": item["race_id"],
+            "kind": "race",
             "date": item["date"],
             "time": item["time"],
             "name": race['name'],
+            "venue": get_race_venue(item["race_id"]),
             "image": race.get("image"),
             "thumbnail": race.get("thumnail"),
             "track": race.get("track"),
             "distance": race.get("distance"),
         })
 
+    # Event content is maintained separately from RACE_SCHEDULE and has no
+    # gameplay preset.  The UI combines both lists only for chronological display.
+    events.extend(EVENT_SCHEDULE)
+
     return events
+
+
+def _stored_community_event(row: dict) -> dict:
+    return {
+        "id": row["id"],
+        "kind": "event",
+        "name": row["name"],
+        "description": row["description"],
+        "date": row["event_date"],
+        "time": row["event_time"],
+        "image_url": row["image_url"],
+        "details": row["details"],
+        "capacity": row["capacity"],
+    }
+
+
+@app.get("/news")
+def get_news():
+    """Return the calendar plus community-authored events as one dated feed."""
+    entries = [*get_race_calendar(), *(_stored_community_event(row) for row in list_community_events())]
+    return sorted(entries, key=lambda item: (item.get("date", ""), item.get("time", ""), item.get("name", "")))
+
 
 @app.get("/skills")
 def api_get_skills(tag: str = "all"):
@@ -856,6 +1193,7 @@ def api_get_skills(tag: str = "all"):
         if tag != "all" and tag not in tags:
             continue
 
+        categories = get_skill_category_groups(skill)
         result.append({
             "id": skill_id,
             "name": skill['name'],
@@ -863,6 +1201,8 @@ def api_get_skills(tag: str = "all"):
             "cooldown": skill.get("cooldown", 0),
             "cost": skill.get("cost", 0),
             "tags": tags,
+            "aptitude_categories": categories["aptitude"],
+            "detail_categories": categories["detail"],
             "target": describe_target(skill.get("target", {})),
             "trigger": describe_trigger(skill.get("trigger", {})),
             "effects": [
@@ -881,11 +1221,31 @@ def api_get_skill_tags():
         for value, label in SKILL_TAG_OPTIONS
     ]
 
+
+@app.get("/skills/categories")
+def api_get_skill_categories():
+    """Category metadata for the two skill-library filters."""
+    return {
+        "aptitude": [
+            {"value": value, "label": label}
+            for value, label in SKILL_APTITUDE_OPTIONS
+        ],
+        "detail": [
+            {"value": value, "label": label}
+            for value, label in SKILL_DETAIL_OPTIONS
+        ],
+    }
+
 class EquipSkillPayload(BaseModel):
     user_id: str
     username: str = "Unknown"
     slot: int
     skill_id: str
+
+
+class SkillLoadoutPresetPayload(BaseModel):
+    name: str = ""
+    skill_ids: list[str | None] | None = None
 
 
 @app.post("/player/skill/equip")
@@ -960,3 +1320,85 @@ def api_get_player_skills(user_id: str):
         }
 
     return result
+
+
+@app.get("/player/{user_id}/skill-loadout-presets")
+def api_get_skill_loadout_presets(user_id: str):
+    return {"presets": list_player_skill_loadout_presets(int(user_id))}
+
+
+@app.put("/player/{user_id}/skill-loadout-presets/{preset_slot}")
+def api_save_skill_loadout_preset(
+    user_id: str,
+    preset_slot: int,
+    payload: SkillLoadoutPresetPayload,
+):
+    if preset_slot not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="Preset slot must be 1-3")
+
+    preset_name = payload.name.strip()[:48] or f"Preset {preset_slot}"
+    skill_ids = None
+    if payload.skill_ids is not None:
+        if len(payload.skill_ids) != 4:
+            raise HTTPException(status_code=400, detail="Preset must have 4 skill slots")
+        skill_ids = [
+            str(skill_id).strip().lower() if skill_id else None
+            for skill_id in payload.skill_ids
+        ]
+        missing_skills = [skill_id for skill_id in skill_ids if skill_id and skill_id not in SKILLS]
+        if missing_skills:
+            raise HTTPException(status_code=400, detail=f"Unknown skill: {missing_skills[0]}")
+        saved_skill_ids = [skill_id for skill_id in skill_ids if skill_id]
+        if len(set(saved_skill_ids)) != len(saved_skill_ids):
+            raise HTTPException(status_code=400, detail="Preset has duplicate skills")
+
+    preset = save_player_skill_loadout_preset(
+        int(user_id),
+        preset_slot,
+        preset_name,
+        skill_ids=skill_ids,
+    )
+    if preset is None:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    return {"success": True, "preset": preset}
+
+
+@app.post("/player/{user_id}/skill-loadout-presets/{preset_slot}/apply")
+def api_apply_skill_loadout_preset(user_id: str, preset_slot: int):
+    if preset_slot not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="Preset slot must be 1-3")
+
+    preset = next(
+        (
+            item
+            for item in list_player_skill_loadout_presets(int(user_id))
+            if item["slot"] == preset_slot
+        ),
+        None,
+    )
+    if preset is None:
+        raise HTTPException(status_code=404, detail="Preset not found")
+
+    skill_ids = [skill_id for skill_id in preset["skill_ids"] if skill_id]
+    missing_skills = [skill_id for skill_id in skill_ids if skill_id not in SKILLS]
+    if missing_skills:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Preset has unavailable skill: {missing_skills[0]}",
+        )
+    if len(set(skill_ids)) != len(skill_ids):
+        raise HTTPException(status_code=400, detail="Preset has duplicate skills")
+
+    applied_preset = apply_player_skill_loadout_preset(int(user_id), preset_slot)
+    if applied_preset is None:
+        raise HTTPException(status_code=404, detail="Preset not found")
+
+    return {"success": True, "preset": applied_preset}
+
+
+@app.delete("/player/{user_id}/skill-loadout-presets/{preset_slot}")
+def api_delete_skill_loadout_preset(user_id: str, preset_slot: int):
+    if not delete_player_skill_loadout_preset(int(user_id), preset_slot):
+        raise HTTPException(status_code=404, detail="Preset not found")
+    return {"success": True}

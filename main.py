@@ -50,7 +50,7 @@ class Client(commands.Bot):
 intents = discord.Intents.default()
 intents.message_content = True
 
-client = Client(command_prefix="!", intents=intents)
+client = Client(command_prefix="!", intents=intents, help_command=None)
 
 # ให้ api_server เรียกใช้ bot ตัวนี้ได้
 bot_instance.bot = client

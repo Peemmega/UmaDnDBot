@@ -10,7 +10,11 @@ from utils.mob.mob_fast_output import build_mob_fast_roll_text
 
 from views.confirmDeleteGameView import ConfirmDeleteView
 from views.use_skill_view import UseSkillView
-from views.create_game_view import CreateGameView
+from views.create_game_view import (
+    CreateGameView,
+    TrainingTrackSelectView,
+    build_training_track_menu_embed,
+)
 
 from utils.icon_presets import Status_Icon_Type
 from utils.channel_config import RACE_LOG_CHANNEL_ID
@@ -51,7 +55,8 @@ async def build_turn_result_discord_file(game: dict, ranked_players):
     return discord.File(buffer, filename="turn_result.png")
 
 
-from utils.database import ensure_player, record_race_rankings
+from utils.database import ensure_player
+from utils.race.race_completion import complete_race, finalize_race
 from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
 from utils.race.race_presets import (
     get_current_path_type, 
@@ -66,6 +71,7 @@ from utils.mob.mob_presets import (MOB_PRESETS)
 from utils.game_manager import (
     get_game,
     is_owner,
+    claim_turn_advance,
     next_turn,
     get_player_in_game,
     get_players,
@@ -74,6 +80,7 @@ from utils.game_manager import (
     get_ranked_players,
     have_all_players_rolled,
     start_turn_confirmation,
+    drain_pending_passive_skill_embeds,
     is_skill_on_cooldown,
     add_mob_from_preset,
     add_player_as_mob_preset,
@@ -84,6 +91,9 @@ from utils.game_manager import (
     run_bot_race_test,
     refresh_player_profile_snapshot,
     format_player_reference,
+    set_race_record_type,
+    set_game_rule,
+    get_game_rule,
 )
 
 def build_race_log_embed(game: dict, ranked_players):
@@ -312,7 +322,14 @@ class GameCog(commands.GroupCog, name="game"):
             return
 
         game = payload["game"]
+        game["record_type"] = "practice"
         ranked_players = payload["ranked_players"]
+        try:
+            ranked_players, _result, _history_id = finalize_race(
+                game, ranked_players=ranked_players
+            )
+        except Exception as exc:
+            print(f"Practice Race History save error: {exc}")
 
         log_channel_id = RACE_LOG_CHANNEL_ID
         log_channel = interaction.guild.get_channel(log_channel_id)
@@ -396,6 +413,7 @@ class GameCog(commands.GroupCog, name="game"):
 
                 ranked_players = get_ranked_players(interaction.channel_id)
                 phase = get_phase_from_turn(game["turn"], game["max_turn"])
+                track_preview = build_track_progress_text(game["path"], game["turn"])
 
                 rank_lines = []
                 for index, (user_id, info) in enumerate(ranked_players, start=1):
@@ -420,6 +438,11 @@ class GameCog(commands.GroupCog, name="game"):
                     description=(
                         f"อันดับคะแนน:🏆\n" + "\n".join(rank_lines)
                     )
+                )
+                confirm_embed.add_field(
+                    name="🗺️ เส้นทางทั้งสนาม",
+                    value=track_preview,
+                    inline=False,
                 )
                 confirm_embed.set_footer(text="ทุกคนต้องกดยืนยันก่อนจะไปเทิร์นถัดไป")
                 confirm_embed.add_field(
@@ -478,6 +501,119 @@ class GameCog(commands.GroupCog, name="game"):
         )
 
     @app_commands.command(
+        name="create_training_track",
+        description="สร้างเกมด้วยสนาม Training Track",
+    )
+    async def create_training_track(self, interaction: discord.Interaction):
+        channel_id = interaction.channel_id
+        owner_id = interaction.user.id
+
+        if get_game(channel_id) is not None:
+            await interaction.response.send_message(
+                "ห้องนี้มีเกมอยู่แล้ว",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.send_message(
+            embed=build_training_track_menu_embed(),
+            view=TrainingTrackSelectView(channel_id, owner_id),
+            ephemeral=True,
+        )
+
+    @app_commands.command(
+        name="official",
+        description="ตั้งการแข่งขันในห้องนี้เป็น Official ก่อนเริ่มเกม"
+    )
+    async def official(self, interaction: discord.Interaction):
+        game = get_game(interaction.channel_id)
+
+        if game is None:
+            await interaction.response.send_message(
+                "ยังไม่มีเกมในห้องนี้",
+                ephemeral=True,
+            )
+            return
+
+        if not is_owner(interaction.channel_id, interaction.user.id):
+            await interaction.response.send_message(
+                "เฉพาะเจ้าของห้องเท่านั้นที่ตั้งการแข่งขันเป็น Official ได้",
+                ephemeral=True,
+            )
+            return
+
+        success, message = set_race_record_type(interaction.channel_id, "official")
+        if not success:
+            await interaction.response.send_message(message, ephemeral=True)
+            return
+
+        await interaction.response.send_message(
+            "✅ ห้องนี้ถูกตั้งเป็น **Official** แล้ว ผลการแข่งขันจะถูกนับใน Leaderboard เมื่อแข่งจบ",
+            ephemeral=False,
+        )
+
+    @app_commands.command(
+        name="set_rule",
+        description="ตั้งค่า Game Rule ของห้องก่อนเริ่มเกม",
+    )
+    @app_commands.describe(rule="กฎที่ต้องการตั้งค่า", value="ค่าของกฎ")
+    @app_commands.choices(rule=[
+        app_commands.Choice(name="AllowSkill — อนุญาต Skill / Zone", value="AllowSkill"),
+        app_commands.Choice(name="DreamMode — ค่าสเตตัสพื้นฐาน 8", value="DreamMode"),
+        app_commands.Choice(name="NoDebuff — ห้ามใช้สกิล Debuff", value="NoDebuff"),
+        app_commands.Choice(name="Weather — สภาพอากาศ", value="Weather"),
+    ], value=[
+        app_commands.Choice(name="true", value="true"),
+        app_commands.Choice(name="false", value="false"),
+        app_commands.Choice(name="none — ไม่มีสภาพอากาศ", value="none"),
+        app_commands.Choice(name="random — สุ่ม", value="random"),
+        app_commands.Choice(name="warm — อบอุ่น", value="warm"),
+        app_commands.Choice(name="rainy — ฝนตก", value="rainy"),
+        app_commands.Choice(name="sunny — แดดจัด", value="sunny"),
+    ])
+    async def set_rule(
+        self,
+        interaction: discord.Interaction,
+        rule: app_commands.Choice[str],
+        value: app_commands.Choice[str],
+    ):
+        game = get_game(interaction.channel_id)
+        if game is None:
+            await interaction.response.send_message(
+                "ต้องสร้างห้องด้วย `/game create` ก่อนตั้งค่า Game Rule",
+                ephemeral=True,
+            )
+            return
+
+        if not is_owner(interaction.channel_id, interaction.user.id):
+            await interaction.response.send_message(
+                "เฉพาะเจ้าของห้องเท่านั้นที่ตั้งค่า Game Rule ได้",
+                ephemeral=True,
+            )
+            return
+
+        success, result = set_game_rule(
+            interaction.channel_id,
+            rule.value,
+            value.value if rule.value == "Weather" else value.value == "true",
+        )
+        if not success:
+            await interaction.response.send_message(result, ephemeral=True)
+            return
+
+        descriptions = {
+            "AllowSkill": "อนุญาตให้ใช้ Skill และ Zone",
+            "DreamMode": "กำหนด Speed / Stamina / Power / Gut / Wit เป็น 8 ตอนเริ่มแข่ง",
+            "NoDebuff": "ห้ามใช้สกิลที่มีประเภท Debuff",
+            "Weather": "เลือก none, random, warm, rainy หรือ sunny ก่อนเริ่มการแข่งขัน",
+        }
+        status = result if rule.value == "Weather" else ("เปิด" if result else "ปิด")
+        await interaction.response.send_message(
+            f"✅ ตั้งค่า **{rule.value}** เป็น **{status}**\n{descriptions[rule.value]}",
+            ephemeral=False,
+        )
+
+    @app_commands.command(
         name="test_bot_race",
         description="ทดสอบให้บอทวิ่งจนจบ ส่ง log ไปห้อง log และปิดเกม"
     )
@@ -503,7 +639,11 @@ class GameCog(commands.GroupCog, name="game"):
 
         await interaction.response.defer()
         await interaction.followup.send(f"⏭️ <@{interaction.user.id}> ข้ามเทิร์น {game['turn']}")
-        await self.process_next_turn(interaction)
+        await self.process_next_turn(
+            interaction,
+            require_all_confirmations=False,
+            require_all_rolls=False,
+        )
 
     @app_commands.command(name="add_mob", description="เพิ่ม mob preset")
     @app_commands.autocomplete(preset=mob_preset_autocomplete)
@@ -627,10 +767,24 @@ class GameCog(commands.GroupCog, name="game"):
         send_func,
         guild,
         title_suffix: str = "",
+        expected_turn: int | None = None,
+        confirmation_token: int | None = None,
+        require_all_confirmations: bool = True,
+        require_all_rolls: bool = True,
     ):
         game = get_game(channel_id)
         if game is None:
-            return
+            return False
+
+        claimed, _reason = claim_turn_advance(
+            channel_id,
+            expected_turn=expected_turn,
+            confirmation_token=confirmation_token,
+            require_all_confirmations=require_all_confirmations,
+            require_all_rolls=require_all_rolls,
+        )
+        if not claimed:
+            return False
 
         previous_ranked_players = get_ranked_players(channel_id)
         previous_players = build_narrator_players_from_ranked(
@@ -641,13 +795,16 @@ class GameCog(commands.GroupCog, name="game"):
         new_turn = next_turn(channel_id)
 
         if new_turn > game["max_turn"]:
+            # Finish the shared race state before rendering or persistence, so
+            # late interactions cannot enter the end path a second time.
             ranked_players = get_ranked_players(channel_id)
-            saved_rankings = 0
-            if game.get("stage_key"):
-                saved_rankings = record_race_rankings(
-                    game["stage_key"],
-                    ranked_players,
+            race_history_id = None
+            try:
+                ranked_players, _result, race_history_id = finalize_race(
+                    game, ranked_players=ranked_players
                 )
+            except Exception as exc:
+                print(f"Race History save error: {exc}")
 
             commentary_text = None
             try:
@@ -663,10 +820,10 @@ class GameCog(commands.GroupCog, name="game"):
                 ranked_players,
                 commentary_text=commentary_text
             )
-            if saved_rankings:
+            if race_history_id:
                 embed.add_field(
-                    name="Race Ranking",
-                    value=f"Saved {saved_rankings} real player result(s).",
+                    name="Race History",
+                    value=f"Saved completed race `{race_history_id[:8]}`.",
                     inline=False,
                 )
             await send_func(embed=embed)
@@ -684,7 +841,7 @@ class GameCog(commands.GroupCog, name="game"):
             ok, msg = stop_bgm(guild)
 
             delete_game(channel_id)
-            return
+            return True
 
         game = get_game(channel_id)
 
@@ -764,10 +921,16 @@ class GameCog(commands.GroupCog, name="game"):
 
         await send_func(**send_kwargs)
 
+        for passive_embed in drain_pending_passive_skill_embeds(channel_id):
+            await send_func(embed=passive_embed)
+
         game = get_game(channel_id)
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(channel_id, user_id)
+                if not success:
+                    print(f"Mob turn failed for {user_id}: {payload.get('message', payload)}")
+                    continue
                 if success and payload.get("zone_preview"):
                     await send_func(embed=payload["zone_preview"])
 
@@ -801,33 +964,57 @@ class GameCog(commands.GroupCog, name="game"):
                 channel_id=channel_id,
                 send_func=send_func,
                 guild=guild,
-                title_suffix="(Auto Mob)"
+                title_suffix="(Auto Mob)",
+                require_all_confirmations=False,
             )
 
-    async def process_next_turn(self, interaction: discord.Interaction):
+        return True
+
+    async def process_next_turn(
+        self,
+        interaction: discord.Interaction,
+        *,
+        expected_turn: int | None = None,
+        confirmation_token: int | None = None,
+        require_all_confirmations: bool = True,
+        require_all_rolls: bool = True,
+    ):
         game = get_game(interaction.channel_id)
         if game is None:
             await interaction.followup.send("เกมยังไม่เข้าร่วม race", ephemeral=True)
             return
 
-        await self._process_next_turn_core(
+        return await self._process_next_turn_core(
             channel_id=interaction.channel_id,
             send_func=interaction.followup.send,
             guild=interaction.guild,
-            title_suffix=""
+            title_suffix="",
+            expected_turn=expected_turn,
+            confirmation_token=confirmation_token,
+            require_all_confirmations=require_all_confirmations,
+            require_all_rolls=require_all_rolls,
         )
 
-    async def process_next_turn_from_timeout(self, channel: discord.TextChannel):
+    async def process_next_turn_from_timeout(
+        self,
+        channel: discord.TextChannel,
+        *,
+        expected_turn: int,
+        confirmation_token: int,
+    ):
         game = get_game(channel.id)
         if game is None:
             return
 
-        await self._process_next_turn_core(
+        return await self._process_next_turn_core(
             channel_id=channel.id,
             send_func=channel.send,
             guild=channel.guild,
-            title_suffix="(Auto)"
-    )
+            title_suffix="(Auto)",
+            expected_turn=expected_turn,
+            confirmation_token=confirmation_token,
+            require_all_confirmations=False,
+        )
 
     # @app_commands.command(name="myinfo", description="ดูข้อมูลของตัวเองในเกม")
     # async def myinfo(self, interaction: discord.Interaction):
@@ -1011,6 +1198,14 @@ class GameCog(commands.GroupCog, name="game"):
 
     @discord.app_commands.command(name="skill", description="เปิดเมนูใช้สกิล")
     async def skill(self, interaction: discord.Interaction):
+        game = get_game(interaction.channel_id)
+        if game is not None and not get_game_rule(game, "AllowSkill"):
+            await interaction.response.send_message(
+                "ห้องนี้ปิดการใช้ Skill และ Zone",
+                ephemeral=True,
+            )
+            return
+
         playerInGame = get_player_in_game(
             interaction.channel_id,
             interaction.user.id

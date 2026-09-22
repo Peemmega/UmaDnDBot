@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-
 APTITUDE_MODIFIER = {
-    "G": 0.90,
-    "F": 0.95,
-    "E": 1.00,
-    "D": 1.05,
-    "C": 1.10,
-    "B": 1.15,
-    "A": 1.20,
-    "S": 1.25,
+    "G": 1.00,
+    "F": 1.05,
+    "E": 1.10,
+    "D": 1.15,
+    "C": 1.20,
+    "B": 1.25,
+    "A": 1.30,
+    "S": 1.35,
 }
 
 APTITUDE_ORDER = ("G", "F", "E", "D", "C", "B", "A", "S")
@@ -54,18 +53,20 @@ def format_aptitude_percent(rank: Any) -> str:
     return f"{percent:+d}%"
 
 
-def get_aptitude_values(source: dict | None, surface: str | None, distance: str | None, style: str | None) -> dict:
+def get_aptitude_values(
+    source: dict | None, track: str | None, distance: str | None, style: str | None
+) -> dict:
     source = source or {}
-    surface_key = "dirt" if str(surface or "").lower() == "dirt" else "turf"
+    track_key = "dirt" if str(track or "").lower() == "dirt" else "turf"
     distance_key = str(distance or "medium").lower()
     style_key = STYLE_FIELD_MAP.get(style or "Pace", "pace")
 
-    track_rank = normalize_aptitude_rank(source.get(surface_key, "E"))
+    track_rank = normalize_aptitude_rank(source.get(track_key, "E"))
     distance_rank = normalize_aptitude_rank(source.get(distance_key, "E"))
     style_rank = normalize_aptitude_rank(source.get(style_key, "E"))
 
     return {
-        "track_field": surface_key,
+        "track_field": track_key,
         "distance_field": distance_key,
         "style_field": style_key,
         "track_rank": track_rank,
@@ -79,7 +80,7 @@ def get_aptitude_values(source: dict | None, surface: str | None, distance: str 
 
 def _resolve_race_context(player: dict, race: dict | None) -> tuple[str, str, str]:
     race = race or {}
-    track = race.get("track") or race.get("surface") or "turf"
+    track = race.get("track") or "turf"
     distance = race.get("distance") or "medium"
     style = player.get("style") or race.get("style") or "Pace"
     return str(track), str(distance), str(style)
@@ -99,7 +100,9 @@ def calculate_effective_race_stats(player: dict, race: dict | None) -> dict:
     effective_speed = int(round(base_speed * aptitude["distance_modifier"]))
     effective_power = int(round(base_power * aptitude["track_modifier"]))
     effective_wit_gain = int(round(base_wit_gain * aptitude["style_modifier"]))
-    effective_wit_requirement = int(round(base_wit_requirement * aptitude["style_modifier"]))
+    effective_wit_requirement = int(
+        round(base_wit_requirement * aptitude["style_modifier"])
+    )
     return {
         "track_rank": aptitude["track_rank"],
         "distance_rank": aptitude["distance_rank"],
@@ -143,5 +146,7 @@ def build_aptitude_debug_lines(effective_stats: dict | None) -> list[str]:
 def get_roll_race_stats(player: dict) -> dict:
     race_profile = ((player or {}).get("race_profile") or {}).copy()
     effective_stats = (player or {}).get("effective_race_stats") or {}
-    race_profile["power"] = int(effective_stats.get("effective_power", race_profile.get("power", 0)))
+    race_profile["power"] = int(
+        effective_stats.get("effective_power", race_profile.get("power", 0))
+    )
     return race_profile

@@ -7,6 +7,7 @@ from utils.game_manager import (
     get_game,
     is_owner,
     start_game,
+    drain_pending_passive_skill_embeds,
     get_player,
     build_join_embed,
     process_mob_turn,
@@ -20,6 +21,7 @@ from utils.mob.mob_fast_output import build_mob_fast_roll_text
 from utils.race.race_dice import (
     build_dice_table_grid
 )
+from utils.race.race_weather import weather_label
 
 import math
 from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
@@ -217,14 +219,21 @@ class LobbyView(discord.ui.View):
             description=f"สนาม: {game['stage_name']} เทิร์นที่ 1",
             color=discord.Color.gold()
         )
+        embed.add_field(name="🌤️ สภาพอากาศ", value=weather_label(game), inline=True)
         embed.add_field(name="📢 วิธีเล่น", value=f"ในแต่ละ turn สามาใช้งาน\n /game run เพื่อวิ่ง\nนอกจากนี้ยังสามารถใช้งานสกิลโดยใช้\n/game skill (แนะนำให้ใช้ก่อน run)", inline=True)
         
         embed.set_image(url="https://media.discordapp.net/attachments/697810514448744448/1495728671300780083/uma-musume-running.gif?ex=69e74d60&is=69e5fbe0&hm=958b07dacfcb4c4b2bb82049ac1863c8d1b4ecc2122514250b3b18104b9ce09a&=&width=747&height=422")
         await interaction.followup.send(embed=embed)
 
+        for passive_embed in drain_pending_passive_skill_embeds(self.channel_id):
+            await interaction.followup.send(embed=passive_embed)
+
         for user_id, player in game["players"].items():
             if player.get("is_mob"):
                 success, payload = process_mob_turn(self.channel_id, user_id)
+                if not success:
+                    print(f"Mob turn failed for {user_id}: {payload.get('message', payload)}")
+                    continue
                 if success and payload.get("zone_preview"):
                     await interaction.followup.send(embed=payload["zone_preview"])
 
@@ -272,5 +281,6 @@ class LobbyView(discord.ui.View):
                     channel_id=self.channel_id,
                     send_func=interaction.followup.send,
                     guild=interaction.guild,
-                    title_suffix="(Auto Mob)"
+                    title_suffix="(Auto Mob)",
+                    require_all_confirmations=False,
                 )

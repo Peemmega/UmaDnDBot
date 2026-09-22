@@ -5,7 +5,9 @@ LEGACY_RUNTIME_STAMINA_BASE = 8
 
 
 def runtime_stamina_from_stat(stat: int) -> int:
-    return (LEGACY_RUNTIME_STAMINA_BASE + max(0, int(stat))) * RACE_RUNTIME_STAMINA_SCALE
+    return (
+        LEGACY_RUNTIME_STAMINA_BASE + max(0, int(stat))
+    ) * RACE_RUNTIME_STAMINA_SCALE
 
 
 def runtime_stamina_effect_units(amount: int) -> int:
