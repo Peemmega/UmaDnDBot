@@ -141,6 +141,15 @@ RACE_SCHEDULE = [
     {"race_id": "OsakaHai", "date": "2026-04-05", "time": "20:00"},
     {"race_id": "OkaSho", "date": "2026-04-12", "time": "20:00"},
     {"race_id": "SatsukiSho", "date": "2026-04-19", "time": "20:00"},
+    {
+        "race_id": "FukushimaHimbaStakes",
+        "name": "Fukushima Himba Stakes (GIII)",
+        "venue": "Fukushima",
+        "track": "turf",
+        "distance": "medium",
+        "date": "2026-04-19",
+        "time": "20:00",
+    },
     # May — Tokyo / Kyoto
     {"race_id": "NHK", "date": "2026-05-10", "time": "20:00"},
     {"race_id": "VictoriaMileTokyo", "date": "2026-05-17", "time": "20:00"},
@@ -150,8 +159,26 @@ RACE_SCHEDULE = [
     # June — Tokyo / Hanshin
     {"race_id": "YasudaKinen", "date": "2026-06-07", "time": "20:00"},
     {"race_id": "TakarazukaKinen", "date": "2026-06-14", "time": "20:00"},
-    # July–August — Hakodate / Niigata
+    # July–August — Hakodate / Kokura / Niigata / Sapporo
     {"race_id": "HakodateJuniorStakes", "date": "2026-07-19", "time": "20:00"},
+    {
+        "race_id": "KokuraKinen",
+        "name": "Kokura Kinen (GIII)",
+        "venue": "Kokura",
+        "track": "turf",
+        "distance": "medium",
+        "date": "2026-07-19",
+        "time": "20:00",
+    },
+    {
+        "race_id": "SapporoKinen",
+        "name": "Sapporo Kinen (GII)",
+        "venue": "Sapporo",
+        "track": "turf",
+        "distance": "medium",
+        "date": "2026-08-16",
+        "time": "20:00",
+    },
     {"race_id": "NiigataJuniorStakes", "date": "2026-08-23", "time": "20:00"},
     # September — Nakayama
     {"race_id": "SprintersStakes", "date": "2026-09-27", "time": "20:00"},
@@ -171,8 +198,8 @@ RACE_SCHEDULE = [
     {"race_id": "AsahiHaiFuturityStakes", "date": "2026-12-20", "time": "20:00"},
     {"race_id": "HopefulStakes", "date": "2026-12-26", "time": "20:00"},
     {"race_id": "ArimaKinen", "date": "2026-12-27", "time": "20:00"},
-    # JRA also holds 2026 meetings at Sapporo, Fukushima, and Kokura.  Do not
-    # add their events until matching RACE_PRESET/RACETRACKS path data exists.
+    # Schedule-only races above deliberately have no RACE_PRESET yet. They
+    # are visible in the calendar but cannot be selected as playable tracks.
 ]
 
 # Race definitions are intentionally stored separately from path behaviour.

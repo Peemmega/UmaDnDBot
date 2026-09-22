@@ -1139,20 +1139,36 @@ def get_race_calendar():
 
     for item in RACE_SCHEDULE:
         race = RACE_PRESET.get(item["race_id"])
-        if not race:
+        if race:
+            events.append({
+                "id": item["race_id"],
+                "kind": "race",
+                "date": item["date"],
+                "time": item["time"],
+                "name": race['name'],
+                "venue": get_race_venue(item["race_id"]),
+                "image": race.get("image"),
+                "thumbnail": race.get("thumnail"),
+                "track": race.get("track"),
+                "distance": race.get("distance"),
+                "playable": True,
+            })
             continue
 
+        # Calendar-only races let the schedule represent every JRA venue even
+        # before gameplay path data has been authored for that racecourse.
         events.append({
             "id": item["race_id"],
             "kind": "race",
             "date": item["date"],
             "time": item["time"],
-            "name": race['name'],
-            "venue": get_race_venue(item["race_id"]),
-            "image": race.get("image"),
-            "thumbnail": race.get("thumnail"),
-            "track": race.get("track"),
-            "distance": race.get("distance"),
+            "name": item.get("name", item["race_id"]),
+            "venue": item.get("venue", "Other"),
+            "image": item.get("image"),
+            "thumbnail": item.get("thumbnail"),
+            "track": item.get("track"),
+            "distance": item.get("distance"),
+            "playable": False,
         })
 
     # Event content is maintained separately from RACE_SCHEDULE and has no
