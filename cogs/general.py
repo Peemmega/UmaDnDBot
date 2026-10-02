@@ -22,13 +22,13 @@ class GeneralCog(commands.Cog):
         )
 
         embed.add_field(
-            name="⚪ White Roll",
+            name="⬜ Off Pack Roll",
             value=f"```{white_text}```",
             inline=False
         )
 
         embed.add_field(
-            name="🟡 Gold Roll",
+            name="🟡 In Pack Roll",
             value=f"```{gold_text}```",
             inline=False
         )

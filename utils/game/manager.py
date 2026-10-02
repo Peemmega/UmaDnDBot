@@ -45,7 +45,7 @@ from utils.race.runtime_stamina import (
     sync_runtime_stamina,
 )
 from utils.race.stamina_rules import calculate_roll_stamina_cost
-from utils.race.result_display import format_bonus_display, format_stamina_line
+from utils.race.result_display import format_bonus_display, format_pack_status, format_stamina_line
 from utils.race.rank_display import get_gold_range_value, get_player_lane, is_in_gold_range_against
 from utils.race.race_lane import (
     clamp_lane,
@@ -1314,7 +1314,7 @@ def use_block(channel_id: int, user_id: int):
 
     behind_players = _get_block_candidates(channel_id, user_id)
     if any(is_in_gold_range_against(player, info) for _, _, info in behind_players):
-        return False, "คุณอยู่ในระยะ Gold แล้ว"
+        return False, "คุณอยู่ในระยะ In Pack แล้ว"
 
     gold_range = get_gold_range_value(player)
     valid_targets = [
@@ -1323,7 +1323,7 @@ def use_block(channel_id: int, user_id: int):
         if gold_range < gap <= gold_range + 20
     ]
     if not valid_targets:
-        return False, "ไม่มีเป้าหมายด้านหลังในเลนเดียวกันหรือเลนติดกันที่ถอยเข้า Gold ได้ไม่เกิน 20"
+        return False, "ไม่มีเป้าหมายด้านหลังในเลนเดียวกันหรือเลนติดกันที่ถอยเข้า In Pack ได้ไม่เกิน 20"
 
     target_id, gap, target_info = valid_targets[0]
     move_back = gap - gold_range
@@ -1588,7 +1588,7 @@ def build_run_embed(
     wit_reroll = game_player.get("wit_reroll_left", 0)
 
     bonus_display = format_bonus_display(result.get("bonus_display", "-"), block_label="🚫")
-    embed.add_field(name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {result['distance_color']}", value= f"{result['display']} {bonus_display}" , inline=False)
+    embed.add_field(name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {format_pack_status(result['distance_color'])}", value= f"{result['display']} {bonus_display}" , inline=False)
     
     if stamina_note == None:
         stamina_note = format_runtime_stamina(game_player)
@@ -3136,10 +3136,10 @@ def build_next_roll_buff_text(player: dict) -> str:
 
     gold_range = player.get("gold_range_bonus_this_turn", 0)
     if gold_range:
-        lines.append(f"เพิ่มระยะในการนับโรล Gold +{gold_range}")
+        lines.append(f"เพิ่มระยะในการนับโรล In Pack +{gold_range}")
     gold_lane_bonus = player.get("gold_lane_bonus_this_turn", 0)
     if gold_lane_bonus:
-        lines.append(f"เพิ่มระยะตรวจเลน Gold +{gold_lane_bonus}")
+        lines.append(f"เพิ่มระยะตรวจเลน In Pack +{gold_lane_bonus}")
 
     selected = player.get("next_roll_selected_die_bonus", 0)
     if selected:

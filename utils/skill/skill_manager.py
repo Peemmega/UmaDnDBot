@@ -306,16 +306,16 @@ def describe_effect(effect: dict) -> str:
         sign = "+" if value >= 0 else ""
         return f"ปรับคะแนนทันที {sign}{value}"
     if effect_type == "modify_gold_range":
-        return f"เพิ่มระยะตรวจ Gold +{value}"
+        return f"เพิ่มระยะตรวจ In Pack +{value}"
     if effect_type == "modify_enemy_gold_range":
-        return f"ลดระยะตรวจ Gold ของศัตรู {value}"
+        return f"ลดระยะตรวจ In Pack ของศัตรู {value}"
     if effect_type == "modify_gold_lane_range":
         sign = "+" if value >= 0 else ""
-        return f"ปรับช่วง Gold Lane ของตัวเอง {sign}{value}" + (
+        return f"ปรับช่วงเลน In Pack ของตัวเอง {sign}{value}" + (
             f" ({dur})" if dur else ""
         )
     if effect_type == "modify_enemy_gold_lane_range":
-        return f"ลดช่วง Gold Lane ของศัตรู {abs(value)}" + (f" ({dur})" if dur else "")
+        return f"ลดช่วงเลน In Pack ของศัตรู {abs(value)}" + (f" ({dur})" if dur else "")
     if effect_type == "apply_debuff_next_turn":
         stat = effect.get("stat", "unknown")
         return f"ทำให้เป้าหมายได้รับดีบัฟเทิร์นหน้า {stat} {value}"

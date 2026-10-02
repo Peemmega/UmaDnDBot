@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from utils.race.result_display import format_bonus_display, format_stamina_line
+from utils.race.result_display import format_bonus_display, format_pack_status, format_stamina_line
 
 
 def build_mob_fast_roll_text(
@@ -20,7 +20,7 @@ def build_mob_fast_roll_text(
     bonus = format_bonus_display(result.get("bonus_display", "-"), block_label="BLOCK")
     speed = math.floor(float(game_player.get("current_max_speed", 0) or 0))
     lane = int(result.get("current_lane", game_player.get("current_lane", 1)) or 1)
-    color = result.get("distance_color") or "White"
+    color = format_pack_status(result.get("distance_color") or "White")
     gained = int(result.get("total", 0) or 0)
     score = int(payload.get("new_score", game_player.get("score", 0)) or 0)
     stamina_note = format_stamina_line(

@@ -59,13 +59,13 @@ def build_join_style_embed(max_turn: int) -> discord.Embed:
     )
 
     embed.add_field(
-        name="⚪ White Roll",
+        name="⬜ Off Pack Roll",
         value=f"```{white_text}```",
         inline=False
     )
 
     embed.add_field(
-        name="🟡 Gold Roll",
+        name="🟡 In Pack Roll",
         value=f"```{gold_text}```",
         inline=False
     )
@@ -77,7 +77,7 @@ def build_join_style_embed(max_turn: int) -> discord.Embed:
             f"`d` 1 ลูก = สุ่ม 1 - Current Speed\n"
             "`kh` = เลือกค่ามากสุดจำนวนที่กำหนด\n"
             "เช่น `6dkh2` = ทอย 6 ลูก แล้วเลือก 2 ลูกที่มากสุดมารวม\n"
-            "`White / Gold` = ประเภทการทอยตามระยะห่างกับผู้เล่นอื่น"
+            "`Off Pack / In Pack` = ประเภทการทอยตามระยะห่างกับผู้เล่นอื่น"
         ),
         inline=False
     )

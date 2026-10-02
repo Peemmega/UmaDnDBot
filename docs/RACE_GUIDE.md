@@ -9,7 +9,7 @@
 - **เริ่มเล่นทันที:** อ่าน Introduction, Quick Start และ Race Flow ตามลำดับ
 - **ศึกษาระบบ:** อ่าน Before Race, Turn Actions, Race Mechanics, Strategy Guide, Dictionary และ Formula Reference เมื่อต้องการรายละเอียดเพิ่ม
 
-ชื่อระบบ เช่น Status, Skill, Zone, Stamina, Gold/White, Draft และ Block จะอธิบายเต็มรูปแบบเพียงครั้งเดียวใน **Race Mechanics** เพื่อลดข้อมูลซ้ำ ส่วนอื่นจะบอกเฉพาะสิ่งที่ต้องทำและลิงก์กลับไปยังหัวข้อนั้น
+ชื่อระบบ เช่น Status, Skill, Zone, Stamina, In Pack/Off Pack, Draft และ Block จะอธิบายเต็มรูปแบบเพียงครั้งเดียวใน **Race Mechanics** เพื่อลดข้อมูลซ้ำ ส่วนอื่นจะบอกเฉพาะสิ่งที่ต้องทำและลิงก์กลับไปยังหัวข้อนั้น
 
 ## Quick Start
 
@@ -54,7 +54,7 @@ Stat และ Aptitude ในโปรไฟล์จะถูก snapshot ต�
 
 ใช้ `/game run` แล้วกด **ยืนยัน** หลังผลรวมเทิร์นปรากฏเท่านั้น การเปลี่ยนเลน, Skill, Zone, Rush, Block และ Reroll เป็นทางเลือก ไม่ต้องใช้เพื่อเริ่มเล่น
 
-ผล Run แสดงสี White/Gold, กติกาเต๋า, โบนัส, Score ที่ได้ และ Stamina คงเหลือ ความหมายเชิงลึกของสิ่งเหล่านี้อยู่ที่ [Race Mechanics](#race-mechanics)
+ผล Run แสดงสถานะ Off Pack/In Pack, กติกาเต๋า, โบนัส, Score ที่ได้ และ Stamina คงเหลือ ความหมายเชิงลึกของสิ่งเหล่านี้อยู่ที่ [Race Mechanics](#race-mechanics)
 
 ## Turn Actions
 
@@ -79,7 +79,7 @@ Stat หลักในโปรไฟล์คือ Speed, Stamina, Power, Gut
 - **Speed:** เพิ่มโบนัสผล Run และกำหนดเพดานเต๋าตามช่วงของสไตล์
 - **Stamina:** กำหนด Stamina สูงสุดในการแข่ง และเป็นโบนัสคงที่ในผล Run
 - **Power:** ลดโทษเมื่อวิ่งแซงคู่แข่งในเลนเดียวกัน
-- **Gut:** ตั้งแต่ Phase 3 จะเพิ่มผล Run; เมื่อเป็น Gold จะได้เพิ่มตามจำนวนคู่แข่งใกล้ตัวสูงสุดสองคน
+- **Gut:** ตั้งแต่ Phase 3 จะเพิ่มผล Run; เมื่อเป็น In Pack จะได้เพิ่มตามจำนวนคู่แข่งใกล้ตัวสูงสุดสองคน
 - **Wit:** ใช้เป็นทรัพยากร Skill และเกี่ยวข้องกับ Reroll แบบ Wit
 
 Aptitude ของสนาม (Turf/Dirt), ระยะ และสไตล์ แปลงเป็นโบนัสให้ Power, ผลรวม Run และ Wit ตามลำดับ โดยค่าที่ใช้เป็นค่าจากโปรไฟล์ตอนเริ่มแข่ง ดูตัวคูณและสมการที่ [Formula Reference — Aptitude](#aptitude)
@@ -88,7 +88,7 @@ Aptitude ของสนาม (Turf/Dirt), ระยะ และสไตล�
 
 ผู้เล่นมีช่อง Skill สี่ช่อง แต่ละ Skill มีค่า Wit, cooldown, เงื่อนไข, เป้าหมาย และผลของตัวเอง กดใช้ก่อน Run ในเทิร์นที่ต้องการ และระบบจะปฏิเสธหาก Wit ไม่พอ, อยู่ cooldown หรือเงื่อนไขไม่ผ่าน
 
-ผลของ Skill อาจปรับเต๋า/ผลรวม, Stamina, ความเร็ว, Gold range, เลน หรือสถานะของเป้าหมาย ให้ดูเงื่อนไขและผลที่แน่นอนจากหน้ารายละเอียดของ Skill นั้น เพราะแต่ละรายการต่างกัน
+ผลของ Skill อาจปรับเต๋า/ผลรวม, Stamina, ความเร็ว, In Pack range, เลน หรือสถานะของเป้าหมาย ให้ดูเงื่อนไขและผลที่แน่นอนจากหน้ารายละเอียดของ Skill นั้น เพราะแต่ละรายการต่างกัน
 
 ### Zone
 
@@ -102,18 +102,18 @@ Stamina ในการแข่งขันเป็นค่าพลังง
 
 ถ้า Stamina ก่อน Run น้อยกว่าค่าที่ต้องจ่าย ผล Run จะถูกลดตามค่า Gut แล้ว Stamina จะถูกหักแต่ไม่ต่ำกว่า 0 การฟื้นจาก Skill และ Zone ใช้หน่วย Stamina Stat หนึ่งหน่วยต่อค่าที่ระบุ รายละเอียดตัวเลขอยู่ที่ [Formula Reference — Stamina](#stamina)
 
-### Gold/White
+### In Pack/Off Pack
 
-ก่อน Run ระบบตรวจคู่แข่งจาก Score ณ จุดเริ่มต้นของเทิร์น หากมีคู่แข่งห่างไม่เกิน 20 Score และอยู่ห่างเลนไม่เกิน 1 จะได้ **Gold**; นอกนั้นเป็น **White**. โบนัส/ดีบัฟจาก Skill อาจเปลี่ยนระยะ Score หรือช่วงเลนนี้ได้
+ก่อน Run ระบบตรวจคู่แข่งจาก Score ณ จุดเริ่มต้นของเทิร์น หากมีคู่แข่งห่างไม่เกิน 20 Score และอยู่ห่างเลนไม่เกิน 1 จะได้ **In Pack**; นอกนั้นเป็น **Off Pack**. โบนัส/ดีบัฟจาก Skill อาจเปลี่ยนระยะ Score หรือช่วงเลนนี้ได้
 
-สีเป็นตัวเลือกตารางเต๋าตามสไตล์และ Phase ไม่ใช่โบนัสตายตัว: บางสไตล์เด่นเมื่อ Gold และบางสไตล์เด่นเมื่อ White ดูตารางทั้งหมดที่ [Formula Reference — Dice tables](#dice-tables)
+สถานะเป็นตัวเลือกตารางเต๋าตามสไตล์และ Phase ไม่ใช่โบนัสตายตัว: บางสไตล์เด่นเมื่อ In Pack และบางสไตล์เด่นเมื่อ Off Pack ดูตารางทั้งหมดที่ [Formula Reference — Dice tables](#dice-tables)
 
 ### เลน, Draft และ Blocked
 
 มีเลน 1–6; เลนเริ่มต้นมาจากลำดับออกตัวที่สุ่ม และ `/game lane` จะตั้งเลนสำหรับเทิร์นถัดไป
 
 - **ค่า Stamina ของเลน:** เทิร์นแรกใช้ฐานเลน 2 (`100`) เสมอเพื่อให้การออกตัวเท่าเทียมกัน; ตั้งแต่เทิร์น 2 เลน 1–6 ใช้ค่า `90`, `100`, `110`, `120`, `130`, `140` ตามลำดับ แล้วจึงบวกค่าเส้นทางและสภาพอากาศ
-- **Draft:** ถ้ามีคู่แข่งนำหน้าในเลนเดียวกันและอยู่ใน Gold range การใช้ Stamina ของ Run นั้นลดลง 10%
+- **Draft:** ถ้ามีคู่แข่งนำหน้าในเลนเดียวกันและอยู่ใน In Pack range การใช้ Stamina ของ Run นั้นลดลง 10%
 - **Blocked:** หากผล Run จะวิ่งผ่านคู่แข่งที่อยู่ข้างหน้าในเลนเดียวกัน จะถูกลดผลรวม 10% ต่อคน สูงสุด 20%; Power ลดโทษนี้ 1 จุดเปอร์เซ็นต์ต่อ Power 1 หน่วย แต่ไม่ต่ำกว่า 0%
 
 ### Rush และ Block
@@ -121,7 +121,7 @@ Stamina ในการแข่งขันเป็นค่าพลังง
 ใช้ได้ในช่วงสรุปเทิร์นอย่างละหนึ่งครั้งต่อการแข่งขัน
 
 - **Rush:** ขยับ Score ไปข้างหน้าทันที โดยจ่าย 5% ของ Stamina สูงสุด (อย่างน้อย 1)
-- **Block:** ใช้เมื่อมีผู้ตามหลังในเลนเดียวกันหรือเลนติดกันที่อยู่เลย Gold range แต่ห่างไม่เกิน Gold range + 20 ระบบเลือกผู้ตามหลังที่ใกล้ที่สุด แล้วให้ผู้ใช้ถอย Score เท่าที่จำเป็นเพื่อให้ระยะห่างเหลือ Gold range จึงเป็นการดึงคู่แข่งเข้ากลุ่ม ไม่ใช่การผลัก Score ของเป้าหมาย
+- **Block:** ใช้เมื่อมีผู้ตามหลังในเลนเดียวกันหรือเลนติดกันที่อยู่เลย In Pack range แต่ห่างไม่เกิน In Pack range + 20 ระบบเลือกผู้ตามหลังที่ใกล้ที่สุด แล้วให้ผู้ใช้ถอย Score เท่าที่จำเป็นเพื่อให้ระยะห่างเหลือ In Pack range จึงเป็นการดึงคู่แข่งเข้ากลุ่ม ไม่ใช่การผลัก Score ของเป้าหมาย
 
 ### Reroll และ Wit Reroll
 
@@ -135,11 +135,11 @@ Score ที่ได้จาก Run คือผลเต๋าหลังโ
 
 ## Strategy Guide
 
-- เลือกสไตล์ที่ Aptitude สูงและดูตาราง Gold/White ก่อนตัดสินใจไล่กลุ่มหรือหนีเดี่ยว; ดู [Gold/White](#goldwhite) และ [Dice tables](#dice-tables)
+- เลือกสไตล์ที่ Aptitude สูงและดูตาราง In Pack/Off Pack ก่อนตัดสินใจไล่กลุ่มหรือหนีเดี่ยว; ดู [In Pack/Off Pack](#in-packoff-pack) และ [Dice tables](#dice-tables)
 - ถ้า Stamina เริ่มต่ำ ให้พิจารณาเลนในก่อนยืนยันเทิร์นถัดไป หรือเกาะ Draft แทนการใช้เลนนอก; ดู [Stamina](#stamina) และ [เลน-draft-และ-blocked](#เลน-draft-และ-blocked)
 - อย่าเปลี่ยนเข้าเลนเดียวกับคู่แข่งที่อยู่หน้า ถ้าผลของคุณมีแนวโน้มวิ่งผ่าน เพราะอาจเจอ Blocked
 - เก็บ Zone และ Skill ไว้ใช้ใน Phase ที่สไตล์ของคุณเด่นหรือช่วงท้ายที่ต้องการผลรวมสูง
-- ใช้ Rush เพื่อเร่ง Score 20 แต้ม หรือใช้ Block เพื่อยอมถอยเข้าระยะ Gold ตามจังหวะที่ต้องการ; ดูเงื่อนไขที่ [Rush และ Block](#rush-และ-block)
+- ใช้ Rush เพื่อเร่ง Score 20 แต้ม หรือใช้ Block เพื่อยอมถอยเข้าระยะ In Pack ตามจังหวะที่ต้องการ; ดูเงื่อนไขที่ [Rush และ Block](#rush-และ-block)
 
 ## Dictionary
 
@@ -147,7 +147,7 @@ Score ที่ได้จาก Run คือผลเต๋าหลังโ
 | --- | --- | --- |
 | Score | ระยะ/คะแนนสะสม ใช้จัดอันดับ | [เส้นทาง, Phase และ Score](#เส้นทาง-phase-และ-score) |
 | Phase | ช่วงหนึ่งในสี่ของการแข่งขัน | [เส้นทาง, Phase และ Score](#เส้นทาง-phase-และ-score) |
-| White / Gold | สีที่เลือกตารางเต๋า | [Gold/White](#goldwhite) |
+| Off Pack / In Pack | สถานะที่เลือกตารางเต๋า | [In Pack/Off Pack](#in-packoff-pack) |
 | Draft | ลดค่า Stamina เมื่อวิ่งตามหลังในเลนเดียวกัน | [เลน, Draft และ Blocked](#เลน-draft-และ-blocked) |
 | Blocked | โทษผลรวมเมื่อวิ่งผ่านคู่แข่งในเลนเดียวกัน | [เลน, Draft และ Blocked](#เลน-draft-และ-blocked) |
 | Zone | ความสามารถใช้ได้ครั้งเดียวต่อการแข่งขัน | [Zone](#zone) |
@@ -183,7 +183,7 @@ Score ที่ได้จาก Run คือผลเต๋าหลังโ
 
 `Nd khK` หมายถึงทอย N ลูก แล้วรวม K ลูกที่สูงสุด; `Nd` หมายถึงรวมทุกลูก
 
-| Style | White P1 | White P2 | White P3 | White P4 | Gold P1 | Gold P2 | Gold P3 | Gold P4 |
+| Style | Off Pack P1 | Off Pack P2 | Off Pack P3 | Off Pack P4 | In Pack P1 | In Pack P2 | In Pack P3 | In Pack P4 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Front | 2d | 4d kh2 | 4d kh2 | 6d kh2 | 4d kh2 | 2d | 2d | 2d |
 | Pace | 1d | 2d | 2d | 3d | 4d kh1 | 4d kh2 | 4d kh2 | 4d kh3 |
@@ -208,16 +208,16 @@ Current max speed ใช้ค่าในตารางของสไตล�
 
 `selected dice + 2×Speed + Power + Stamina + Gut bonus + flat velocity + distance bonus + total-percent modifier`
 
-Gut bonus ใน Phase 3–4 คือ `2×Gut` และเพิ่มอีก `2×Gut` ต่อคู่แข่ง Gold (นับสูงสุด 2 คน)
+Gut bonus ใน Phase 3–4 คือ `2×Gut` และเพิ่มอีก `2×Gut` ต่อคู่แข่ง In Pack (นับสูงสุด 2 คน)
 
-### Gold/White และเลน
+### In Pack/Off Pack และเลน
 
-- Gold range = `max(1, 20 + self bonus − enemy penalty)` Score
-- Gold lane tolerance = `max(0, 1 + self bonus − enemy penalty)` เลน
+- In Pack range = `max(1, 20 + self bonus − enemy penalty)` Score
+- In Pack lane tolerance = `max(0, 1 + self bonus − enemy penalty)` เลน
 - Blocked raw penalty = `min(20%, 10% × จำนวนคู่แข่งที่ถูกวิ่งผ่าน)`
 - Blocked final penalty = `max(0%, raw penalty − Power%)`
 - Final after Blocked = `round(pre-lane total × (1 − final penalty))`
-- Block move-back = `gap to nearest eligible trailing runner − Gold range`
+- Block move-back = `gap to nearest eligible trailing runner − In Pack range`
 
 ## Centralized Race History
 

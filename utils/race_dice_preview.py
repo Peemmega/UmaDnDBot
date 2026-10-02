@@ -243,7 +243,7 @@ async def create_race_dice_preview(
     # ===== left text =====
     phase = result.get("phase", "?")
     turn = result.get("turn", "?")
-    distance_color = "อยู่ในกลุ่ม" if result.get("distance_color", "White") == "Gold" else "อยู่นอกกลุ่ม"
+    distance_color = "In Pack" if result.get("distance_color", "White") == "Gold" else "Off Pack"
     style = game_player.get("style", "-")
 
     draw_text_outline(

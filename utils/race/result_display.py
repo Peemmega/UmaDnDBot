@@ -5,6 +5,12 @@ def _normalize_spaces(text: str) -> str:
     return " ".join(str(text or "").split())
 
 
+def format_pack_status(value: str | None) -> str:
+    labels = {"white": "Off Pack", "gold": "In Pack"}
+    normalized = str(value or "").strip().lower()
+    return labels.get(normalized, str(value or ""))
+
+
 def format_bonus_display(bonus_display: str, *, block_label: str = "BLOCK") -> str:
     text = _normalize_spaces(bonus_display)
     if not text or text == "-":

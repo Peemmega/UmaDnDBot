@@ -28,6 +28,7 @@ from utils.music_manager import play_bgm, stop_bgm
 
 from utils.race.race_presets import RACE_PRESET, render_path, build_track_progress_text, build_current_track_text
 from utils.race.race_log_embed import build_race_log_file
+from utils.race.result_display import format_pack_status
 from utils.race.rank_display import gold_range_marker
 from utils.dice.roll_service import (execute_player_roll)
 from utils.turn_result_image import create_turn_result_card
@@ -147,7 +148,7 @@ def build_race_log_embed(game: dict, ranked_players):
                 phase = roll.get("phase")
                 color = roll.get("distance_color")
                 rule = roll.get("rule")
-                detail_parts.append(f"P{phase} {color} {rule}")
+                detail_parts.append(f"P{phase} {format_pack_status(color)} {rule}")
 
             skills = item.get("skills") or []
             if skills:

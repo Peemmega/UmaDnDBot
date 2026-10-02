@@ -297,7 +297,7 @@ def _modify_gold_range(context: SkillEffectContext, effect: dict) -> SkillEffect
     context.player["gold_range_bonus_this_turn"] = (
         context.player.get("gold_range_bonus_this_turn", 0) + value
     )
-    return SkillEffectResult([f"เพิ่มระยะตรวจ Gold +{value}"])
+    return SkillEffectResult([f"เพิ่มระยะตรวจ In Pack +{value}"])
 
 
 @SKILL_EFFECTS.register("modify_gold_lane_range")
@@ -306,7 +306,7 @@ def _modify_gold_lane_range(context: SkillEffectContext, effect: dict) -> SkillE
     context.player["gold_lane_bonus_this_turn"] = (
         context.player.get("gold_lane_bonus_this_turn", 0) + value
     )
-    return SkillEffectResult([f"เพิ่มระยะตรวจเลน Gold +{value}"])
+    return SkillEffectResult([f"เพิ่มระยะตรวจเลน In Pack +{value}"])
 
 
 @SKILL_EFFECTS.register("modify_enemy_gold_range")
@@ -320,7 +320,7 @@ def _modify_enemy_gold_range(context: SkillEffectContext, effect: dict) -> Skill
             target.get("enemy_gold_range_penalty_next_turn", 0) + value
         )
         texts.append(
-            f"ลดระยะตรวจ Gold ของ {context.format_player_reference(target_id, target)} {value}"
+            f"ลดระยะตรวจ In Pack ของ {context.format_player_reference(target_id, target)} {value}"
         )
     return SkillEffectResult(texts)
 
@@ -336,7 +336,7 @@ def _modify_enemy_gold_lane_range(context: SkillEffectContext, effect: dict) -> 
             target.get("enemy_gold_lane_penalty_next_turn", 0) + value
         )
         texts.append(
-            f"ลดระยะตรวจเลน Gold ของ {context.format_player_reference(target_id, target)} {value}"
+            f"ลดระยะตรวจเลน In Pack ของ {context.format_player_reference(target_id, target)} {value}"
         )
     return SkillEffectResult(texts)
 

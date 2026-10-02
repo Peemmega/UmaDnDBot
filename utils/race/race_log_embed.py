@@ -3,6 +3,7 @@ import io
 import discord
 
 from utils.race.rank_display import gold_range_marker
+from utils.race.result_display import format_pack_status
 
 
 def build_race_log_text(game: dict, ranked_players, markdown: bool = True) -> str:
@@ -51,7 +52,7 @@ def build_race_log_text(game: dict, ranked_players, markdown: bool = True) -> st
                 phase = roll.get("phase")
                 color = roll.get("distance_color")
                 rule = roll.get("rule")
-                detail_parts.append(f"P{phase} {color} {rule}")
+                detail_parts.append(f"P{phase} {format_pack_status(color)} {rule}")
 
             skills = item.get("skills") or []
             if skills:
