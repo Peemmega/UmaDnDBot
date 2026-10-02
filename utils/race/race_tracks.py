@@ -152,8 +152,8 @@ RACE_SCHEDULE = [
     {"race_id": "OkaSho", "date": "2026-04-12", "time": "20:00"},
     {"race_id": "SatsukiSho", "date": "2026-04-19", "time": "20:00"},
     {
-        "race_id": "FukushimaHimbaStakes",
-        "name": "Fukushima Himba Stakes (GIII)",
+        "race_id": "FukushimaUmamusumeStakes",
+        "name": "Fukushima Umamusume Stakes (GIII)",
         "venue": "Fukushima",
         "track": "turf",
         "distance": "medium",
@@ -234,7 +234,6 @@ RACE_SCHEDULE = [
             ),
             ("KeiseiHai", "Keisei Hai (GIII)", "Nakayama", "2026-01-18"),
             ("NikkeiShinshunHai", "Nikkei Shinshun Hai (GII)", "Kyoto", "2026-01-18"),
-            ("KokuraHimbaStakes", "Kokura Himba Stakes (GIII)", "Kokura", "2026-01-24"),
             (
                 "AmericanJockeyClubCup",
                 "American Jockey Club Cup (GII)",
@@ -383,12 +382,6 @@ RACE_SCHEDULE = [
                 "Nakayama",
                 "2026-09-05",
             ),
-            (
-                "SapporoNisaiStakes",
-                "Sapporo Nisai Stakes (GIII)",
-                "Sapporo",
-                "2026-09-05",
-            ),
             ("ShionStakes", "Shion Stakes (GII)", "Nakayama", "2026-09-06"),
             (
                 "CentaurStakes",
@@ -461,29 +454,6 @@ RACE_SCHEDULE = [
             ("TurquoiseStakes", "Turquoise Stakes (GIII)", "Nakayama", "2026-12-19"),
             ("HanshinCup", "Hanshin Cup (GII)", "Hanshin", "2026-12-26"),
         ]
-    ),
-    # JRA also lists these graded jump races in the 2026 fixture calendar.
-    _jra_race(
-        "KokuraJumpStakes", "Kokura Jump Stakes (J-GIII)", "Kokura", "2026-02-14"
-    ),
-    _jra_race(
-        "HanshinSpringJump", "Hanshin Spring Jump (J-GII)", "Hanshin", "2026-03-14"
-    ),
-    _jra_race(
-        "NakayamaGrandJump", "Nakayama Grand Jump (J-GI)", "Nakayama", "2026-04-18"
-    ),
-    _jra_race("KyotoHighJump", "Kyoto High-Jump (J-GII)", "Kyoto", "2026-05-16"),
-    _jra_race("TokyoJumpStakes", "Tokyo Jump Stakes (J-GIII)", "Tokyo", "2026-06-13"),
-    _jra_race(
-        "NiigataJumpStakes", "Niigata Jump Stakes (J-GIII)", "Niigata", "2026-08-15"
-    ),
-    _jra_race(
-        "HanshinJumpStakes", "Hanshin Jump Stakes (J-GIII)", "Hanshin", "2026-09-19"
-    ),
-    _jra_race("TokyoHighJump", "Tokyo High-Jump (J-GII)", "Tokyo", "2026-10-18"),
-    _jra_race("KyotoJumpStakes", "Kyoto Jump Stakes (J-GIII)", "Kyoto", "2026-11-07"),
-    _jra_race(
-        "NakayamaDaishogai", "Nakayama Daishogai (J-GI)", "Nakayama", "2026-12-26"
     ),
 ]
 

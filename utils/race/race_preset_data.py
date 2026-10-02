@@ -35,6 +35,26 @@ RACETRACKS = {
     "FUNABASHI_1600": [1, 2, 1, 1, 2, 2, 1, 1],
     # MORIOKA RACE
     "MORIOKA_1600": [1, 1, 4, 2, 2, 3, 1, 1],
+    # Hakodate
+    "HAKODATE_1200": [2, 1, 1, 1, 2, 2, 1, 1],
+    "HAKODATE_2000": [1, 1, 3, 2, 2, 3, 1, 1, 2, 2, 1, 1],
+    # Niigata
+    "NIIGATA_1000": [3, 1, 4, 1, 1, 1, 1, 1],
+    "NIIGATA_1600": [1, 3, 4, 2, 2, 1, 1, 1],
+    "NIIGATA_1800": [1, 2, 2, 1, 1, 2, 2, 1],
+    "NIIGATA_2000": [1, 1, 1, 1, 3, 1, 4, 2, 2, 1, 1, 1],
+    # Sapporo Kinen
+    "SAPPORO_1200": [1, 1, 1, 2, 2, 2, 1, 1],
+    "SAPPORO_1700": [1, 2, 2, 1, 1, 2, 2, 1],
+    "SAPPORO_1800": [1, 2, 2, 1, 1, 2, 2, 1],
+    "SAPPORO_2000": [1, 1, 2, 2, 2, 1, 1, 2, 2, 2, 1, 1],
+    # Kokura
+    "KOKURA_1200": [4, 1, 1, 1, 2, 2, 1, 1],
+    "KOKURA_1800": [1, 3, 2, 1, 2, 2, 1, 1],
+    "KOKURA_2000": [1, 1, 1, 3, 2, 2, 1, 1, 2, 2, 1, 1],
+    # Fukushima
+    "FUKUSHIMA_1800": [1, 2, 2, 3, 1, 2, 2, 1],
+    "FUKUSHIMA_2000": [1, 1, 1, 2, 2, 3, 1, 1, 2, 2, 1, 1],
 }
 
 # Shared grade artwork.  Individual race artwork is not available for every
@@ -94,8 +114,23 @@ RACE_VENUE_BY_ID = {
     "Kawasaki": {"ZenNipponJuniorYushun", "KawasakiKinen"},
     "Funabashi": {"KashiwaKinen"},
     "Morioka": {"MCNambuHai"},
-    "Hakodate": {"HakodateJuniorStakes"},
-    "Niigata": {"NiigataJuniorStakes"},
+    "Hakodate": {"HakodateJuniorStakes", "HakodateSprintStakes", "HakodateKinen"},
+    "Niigata": {
+        "NiigataJuniorStakes", "NiigataDaishoten", "SekiyaKinen",
+        "IbisSummerDash", "LeopardStakes", "NiigataKinen",
+    },
+    "Sapporo": {
+        "SapporoKinen", "QueenStakes", "ElmStakes", "KeenelandCup",
+        "SapporoNisaiStakes",
+    },
+    "Kokura": {
+        "KokuraKinen", "KokuraHimbaStakes", "KokuraDaishoten",
+        "KitakyushuKinen",
+    },
+    "Fukushima": {
+        "FukushimaUmamusumeStakes", "FukushimaHimbaStakes", "RadioNikkeiSho",
+        "TanabataSho", "FukushimaKinen",
+    },
     "Tokyo (Steeplechase)": {"DiamondStakes"},
     "Special": {"Debut", "Test Mile", "Test Med", "Test Long", "SteelBallRun"},
 }
@@ -488,7 +523,7 @@ RACE_PRESET = {
         "turn": 8,
         "path": RACETRACKS["MORIOKA_1600"],
     },
-    # Other
+    # Hakodate
     "HakodateJuniorStakes": {
         "name": "Hakodate Junior Stakes (GIII)",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502922265438982276/3041.png?ex=6a0178ef&is=6a00276f&hm=0aa4939ffb5743a57eb7ccbaf22e6b56b22176378f776ff8e68da546dda0dd8f&=&format=webp&quality=lossless&width=192&height=96",
@@ -498,6 +533,7 @@ RACE_PRESET = {
         "turn": 8,
         "path": [3, 1, 1, 2, 2, 2, 1, 1],
     },
+    # Other
     "NiigataJuniorStakes": {
         "name": "Niigata Junior Stakes (GIII)",
         "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1502921936135786667/3049.png?ex=6a0178a0&is=6a002720&hm=4e510374253a640fd0bb7ac4163a1d1dae6c1c9585d374f12f25a528f6beeb45&=&format=webp&quality=lossless&width=192&height=96",
@@ -606,115 +642,234 @@ RACE_PRESET = {
         "turn": 16,
         "path": [1, 1, 3, 3, 2, 2, 4, 4, 1, 1, 1, 2, 2, 1, 1, 1],
     },
-    # Test
-    "Test Mile": {
-        "name": "Test Mile",
-        "turn": 8,
-        "track": "Turf",
-        "distance": "mile",
-        "path": [1, 3, 1, 2, 1, 4, 1, 1],
-        "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1496520361968406598/thum_race_rt_000_9002_00.png?ex=69ed7a72&is=69ec28f2&hm=8306829b74f79dcfd3a6f7b65cef14fdd6c96dfa0f5d614b106e4ba11efa8c39&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
-        "auto_mobs": [
-            "rookie_front",
-            "rookie_pace",
-            "rookie_late",
-            "rookie_end",
-            "rookie_alt_front",
-            "rookie_alt_pace",
-            "rookie_alt_late",
-            "rookie_alt_end",
-        ],
-    },
-    "Test Med": {
-        "name": "Test Med",
-        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219500743163954/thum_race_rt_000_1012_00.png?ex=69e1cfda&is=69e07e5a&hm=9aaa79075889b9f8a5fad33f09a31c72c252e586b3f753d472bff3ea15422de2&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
-        "track": "turf",
-        "distance": "medium",
-        "turn": 12,
-        "path": [4, 3, 1, 2, 2, 1, 4, 2, 2, 1, 3, 1],
-        "auto_mobs": [
-            "rookie_front",
-            "rookie_pace",
-            "rookie_late",
-            "rookie_end",
-            "rookie_alt_front",
-            "rookie_alt_pace",
-            "rookie_alt_late",
-            "rookie_alt_end",
-        ],
-    },
-    "Test Long": {
-        "name": "Test Long",
-        "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219500743163954/thum_race_rt_000_1012_00.png?ex=69e1cfda&is=69e07e5a&hm=9aaa79075889b9f8a5fad33f09a31c72c252e586b3f753d472bff3ea15422de2&=&format=webp&quality=lossless&width=192&height=96",
-        "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
-        "track": "turf",
-        "distance": "long",
-        "turn": 16,
-        "path": [1, 2, 2, 1, 3, 1, 3, 2, 4, 2, 1, 1, 2, 2, 3, 1],
-        "auto_mobs": [
-            "rookie_front",
-            "rookie_pace",
-            "rookie_late",
-            "rookie_end",
-            "rookie_alt_front",
-            "rookie_alt_pace",
-            "rookie_alt_late",
-            "rookie_alt_end",
-        ],
-    },
-    "SteelBallRun": {
-        "name": "Steel Ball Run 4000000m",
-        "thumnail": "https://media.discordapp.net/attachments/697810514448744448/1496124802065371156/2026-04-21_192453.png?ex=69e8be4d&is=69e76ccd&hm=5b70ed31363207dd1453202f3657a698a98f8842aaf382b3360c0fa4ec3f4517&=&format=webp&quality=lossless&width=884&height=479",
-        "image": "https://media.discordapp.net/attachments/697810514448744448/1496124786143924304/Steel-Ball-Run-1-580x326.png?ex=69e8be49&is=69e76cc9&hm=c2aa1c996100f886b9eed318fad5b9ff35222dbecb78706b5c075aa382544bf4&=&format=webp&quality=lossless&width=870&height=489",
-        "track": "dirt",
-        "distance": "long",
-        "turn": 40,
-        "path": [
-            1,
-            3,
-            3,
-            4,
-            2,
-            2,
-            1,
-            1,
-            1,
-            3,
-            3,
-            4,
-            2,
-            2,
-            1,
-            1,
-            1,
-            3,
-            3,
-            4,
-            2,
-            2,
-            1,
-            1,
-            1,
-            3,
-            3,
-            4,
-            2,
-            2,
-            1,
-            1,
-            1,
-            3,
-            3,
-            4,
-            2,
-            2,
-            1,
-            1,
-        ],
-    },
+    # # Test
+    # "Test Mile": {
+    #     "name": "Test Mile",
+    #     "turn": 8,
+    #     "track": "Turf",
+    #     "distance": "mile",
+    #     "path": [1, 3, 1, 2, 1, 4, 1, 1],
+    #     "thumnail": "https://media.discordapp.net/attachments/1494730857259471030/1496520361968406598/thum_race_rt_000_9002_00.png?ex=69ed7a72&is=69ec28f2&hm=8306829b74f79dcfd3a6f7b65cef14fdd6c96dfa0f5d614b106e4ba11efa8c39&=&format=webp&quality=lossless&width=192&height=96",
+    #     "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
+    #     "auto_mobs": [
+    #         "rookie_front",
+    #         "rookie_pace",
+    #         "rookie_late",
+    #         "rookie_end",
+    #         "rookie_alt_front",
+    #         "rookie_alt_pace",
+    #         "rookie_alt_late",
+    #         "rookie_alt_end",
+    #     ],
+    # },
+    # "Test Med": {
+    #     "name": "Test Med",
+    #     "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219500743163954/thum_race_rt_000_1012_00.png?ex=69e1cfda&is=69e07e5a&hm=9aaa79075889b9f8a5fad33f09a31c72c252e586b3f753d472bff3ea15422de2&=&format=webp&quality=lossless&width=192&height=96",
+    #     "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
+    #     "track": "turf",
+    #     "distance": "medium",
+    #     "turn": 12,
+    #     "path": [4, 3, 1, 2, 2, 1, 4, 2, 2, 1, 3, 1],
+    #     "auto_mobs": [
+    #         "rookie_front",
+    #         "rookie_pace",
+    #         "rookie_late",
+    #         "rookie_end",
+    #         "rookie_alt_front",
+    #         "rookie_alt_pace",
+    #         "rookie_alt_late",
+    #         "rookie_alt_end",
+    #     ],
+    # },
+    # "Test Long": {
+    #     "name": "Test Long",
+    #     "thumnail": "https://media.discordapp.net/attachments/1493695524812095489/1494219500743163954/thum_race_rt_000_1012_00.png?ex=69e1cfda&is=69e07e5a&hm=9aaa79075889b9f8a5fad33f09a31c72c252e586b3f753d472bff3ea15422de2&=&format=webp&quality=lossless&width=192&height=96",
+    #     "image": "https://media.discordapp.net/attachments/1494730857259471030/1496520362337243336/uma-musume-pretty-derby.gif?ex=69ea2eb2&is=69e8dd32&hm=7768738070afad1ade85f8cf04f2d87cf71edb46ccb86d127fb0dc608252892f&=&width=747&height=420",
+    #     "track": "turf",
+    #     "distance": "long",
+    #     "turn": 16,
+    #     "path": [1, 2, 2, 1, 3, 1, 3, 2, 4, 2, 1, 1, 2, 2, 3, 1],
+    #     "auto_mobs": [
+    #         "rookie_front",
+    #         "rookie_pace",
+    #         "rookie_late",
+    #         "rookie_end",
+    #         "rookie_alt_front",
+    #         "rookie_alt_pace",
+    #         "rookie_alt_late",
+    #         "rookie_alt_end",
+    #     ],
+    # },
+    # "SteelBallRun": {
+    #     "name": "Steel Ball Run 4000000m",
+    #     "thumnail": "https://media.discordapp.net/attachments/697810514448744448/1496124802065371156/2026-04-21_192453.png?ex=69e8be4d&is=69e76ccd&hm=5b70ed31363207dd1453202f3657a698a98f8842aaf382b3360c0fa4ec3f4517&=&format=webp&quality=lossless&width=884&height=479",
+    #     "image": "https://media.discordapp.net/attachments/697810514448744448/1496124786143924304/Steel-Ball-Run-1-580x326.png?ex=69e8be49&is=69e76cc9&hm=c2aa1c996100f886b9eed318fad5b9ff35222dbecb78706b5c075aa382544bf4&=&format=webp&quality=lossless&width=870&height=489",
+    #     "track": "dirt",
+    #     "distance": "long",
+    #     "turn": 40,
+    #     "path": [
+    #         1,
+    #         3,
+    #         3,
+    #         4,
+    #         2,
+    #         2,
+    #         1,
+    #         1,
+    #         1,
+    #         3,
+    #         3,
+    #         4,
+    #         2,
+    #         2,
+    #         1,
+    #         1,
+    #         1,
+    #         3,
+    #         3,
+    #         4,
+    #         2,
+    #         2,
+    #         1,
+    #         1,
+    #         1,
+    #         3,
+    #         3,
+    #         4,
+    #         2,
+    #         2,
+    #         1,
+    #         1,
+    #         1,
+    #         3,
+    #         3,
+    #         4,
+    #         2,
+    #         2,
+    #         1,
+    #         1,
+    #     ],
+    # },
 }
+
+
+# Additional flat races in the 2026 schedule. Course facts follow GameTora's
+# race list; jump races remain schedule-only because their path model differs.
+_SCHEDULE_RACE_COURSES = {
+    "FukushimaUmamusumeStakes": (
+        "Fukushima Umamusume Stakes (GIII)", "Fukushima", "turf", 1800,
+        "right", "FUKUSHIMA_1800",
+    ),
+    "FukushimaHimbaStakes": (
+        "Fukushima Himba Stakes (GIII)", "Fukushima", "turf", 1800,
+        "right", "FUKUSHIMA_1800",
+    ),
+    "RadioNikkeiSho": (
+        "Radio Nikkei Sho (GIII)", "Fukushima", "turf", 1800,
+        "right", "FUKUSHIMA_1800",
+    ),
+    "TanabataSho": (
+        "Tanabata Sho (GIII)", "Fukushima", "turf", 2000,
+        "right", "FUKUSHIMA_2000",
+    ),
+    "FukushimaKinen": (
+        "Fukushima Kinen (GIII)", "Fukushima", "turf", 2000,
+        "right", "FUKUSHIMA_2000",
+    ),
+    "KokuraKinen": (
+        "Kokura Kinen (GIII)", "Kokura", "turf", 2000,
+        "right", "KOKURA_2000",
+    ),
+    "KokuraHimbaStakes": (
+        "Kokura Himba Stakes (GIII)", "Kokura", "turf", 2000,
+        "right", "KOKURA_2000",
+    ),
+    "KokuraDaishoten": (
+        "Kokura Daishoten (GIII)", "Kokura", "turf", 1800,
+        "right", "KOKURA_1800",
+    ),
+    "KitakyushuKinen": (
+        "Kitakyushu Kinen (GIII)", "Kokura", "turf", 1200,
+        "right", "KOKURA_1200",
+    ),
+    "SapporoKinen": (
+        "Sapporo Kinen (GII)", "Sapporo", "turf", 2000,
+        "right", "SAPPORO_2000",
+    ),
+    "QueenStakes": (
+        "Queen Stakes (GIII)", "Sapporo", "turf", 1800,
+        "right", "SAPPORO_1800",
+    ),
+    "ElmStakes": (
+        "Elm Stakes (GIII)", "Sapporo", "dirt", 1700,
+        "right", "SAPPORO_1700",
+    ),
+    "KeenelandCup": (
+        "Keeneland Cup (GIII)", "Sapporo", "turf", 1200,
+        "right", "SAPPORO_1200",
+    ),
+    "SapporoNisaiStakes": (
+        "Sapporo Nisai Stakes (GIII)", "Sapporo", "turf", 1800,
+        "right", "SAPPORO_1800",
+    ),
+    "HakodateSprintStakes": (
+        "Hakodate Sprint Stakes (GIII)", "Hakodate", "turf", 1200,
+        "right", "HAKODATE_1200",
+    ),
+    "HakodateKinen": (
+        "Hakodate Kinen (GIII)", "Hakodate", "turf", 2000,
+        "right", "HAKODATE_2000",
+    ),
+    "NiigataDaishoten": (
+        "Niigata Daishoten (GIII)", "Niigata", "turf", 2000,
+        "left", "NIIGATA_2000",
+    ),
+    "SekiyaKinen": (
+        "Sekiya Kinen (GIII)", "Niigata", "turf", 1600,
+        "left", "NIIGATA_1600",
+    ),
+    "IbisSummerDash": (
+        "Ibis Summer Dash (GIII)", "Niigata", "turf", 1000,
+        "straight", "NIIGATA_1000",
+    ),
+    "LeopardStakes": (
+        "Leopard Stakes (GIII)", "Niigata", "dirt", 1800,
+        "left", "NIIGATA_1800",
+    ),
+    "NiigataKinen": (
+        "Niigata Kinen (GIII)", "Niigata", "turf", 2000,
+        "left", "NIIGATA_2000",
+    ),
+}
+
+for _race_id, (
+    _name,
+    _venue,
+    _surface,
+    _meters,
+    _direction,
+    _path_key,
+) in _SCHEDULE_RACE_COURSES.items():
+    _grade_image = G2_RACE_THUMBNAIL if "(GII)" in _name else G3_RACE_THUMBNAIL
+    _path = RACETRACKS[_path_key]
+    RACE_PRESET[_race_id] = {
+        "name": _name,
+        "thumnail": _grade_image,
+        "image": _grade_image,
+        "track": _surface,
+        "distance": (
+            "sprint" if _meters <= 1400 else "mile" if _meters <= 1800 else "medium"
+        ),
+        "finish_distance": _meters,
+        "turn": len(_path),
+        "path": _path,
+        "course": {
+            "venue": _venue,
+            "surface": _surface,
+            "distance_m": _meters,
+            "direction": _direction,
+        },
+    }
 
 
 # The bot receives thumbnails from this catalogue, whereas the web app uses
