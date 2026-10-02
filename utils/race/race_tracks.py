@@ -32,6 +32,10 @@ def get_web_race_finish_distance(stage: dict | None) -> int:
     if custom_distance is not None:
         return max(1, int(custom_distance))
 
+    course_distance = (stage.get("course") or {}).get("distance_m")
+    if course_distance is not None:
+        return max(1, int(course_distance))
+
     distance_type = (
         stage.get("category") or stage.get("distance_type") or stage.get("distance")
     )
@@ -458,4 +462,12 @@ RACE_SCHEDULE = [
 ]
 
 # Race definitions are intentionally stored separately from path behaviour.
-from utils.race.race_preset_data import RACE_PRESET
+from utils.race.race_preset_data import (
+    RACETRACKS,
+    RACE_PRESET,
+    RACE_VENUE_BY_ID,
+    get_race_distance_m,
+    get_race_distance_type,
+    get_race_turns,
+    get_race_venue,
+)

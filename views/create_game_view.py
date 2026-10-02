@@ -1,7 +1,12 @@
 import discord
 from io import BytesIO
 
-from utils.race.race_presets import RACE_PRESET, render_path
+from utils.race.race_presets import (
+    RACE_PRESET,
+    get_race_distance_type,
+    get_race_turns,
+    render_path,
+)
 from utils.race_room_preview import create_racing_room_image
 from utils.database import get_race_rankings
 from views.join_view import LobbyView
@@ -26,9 +31,9 @@ def get_preview_rankings(stage_key: str) -> list[dict]:
 def build_lobby_preview_file(stage_key: str, stage_data: dict) -> discord.File:
     preview_stage = {
         "name": stage_data.get("name", stage_key),
-        "turns": stage_data.get("turn", "-"),
+        "turns": get_race_turns(stage_data),
         "track": stage_data.get("track", ""),
-        "distance": stage_data.get("distance", ""),
+        "distance": get_race_distance_type(stage_data),
         "path": stage_data.get("path", []),
         "race_key": stage_key,
         "thumbnail_key": stage_data.get("preview_thumbnail_key", stage_key),
@@ -81,7 +86,7 @@ def build_lobby_embed(channel_id: int) -> discord.Embed:
 
     embed.set_thumbnail(url=stage_data["thumnail"])
     embed.add_field(name="👑 ผู้ดูแล", value=f"<@{game['owner_id']}>", inline=False)
-    embed.add_field(name="จำนวนเทิร์น", value=f"⏱️ {stage_data['turn']}", inline=False)
+    embed.add_field(name="จำนวนเทิร์น", value=f"⏱️ {get_race_turns(stage_data)}", inline=False)
     embed.add_field(
         name="🗺️ เส้นทาง", value=render_path(stage_data["path"]), inline=False
     )
@@ -113,7 +118,7 @@ def get_stages_by_distance(distance):
     return {
         key: stage
         for key, stage in RACE_PRESET.items()
-        if stage.get("distance") == distance
+        if get_race_distance_type(stage) == distance
     }
 
 
@@ -127,7 +132,7 @@ def build_stage_preview_embed(stage):
     embed.set_thumbnail(url=stage["thumnail"])
     embed.set_image(url=stage["image"])
 
-    embed.add_field(name="⏱️ เทิร์น", value=stage["turn"])
+    embed.add_field(name="⏱️ เทิร์น", value=get_race_turns(stage))
     embed.add_field(name="🗺️ เส้นทาง", value=render_path(stage["path"]), inline=False)
 
     return embed

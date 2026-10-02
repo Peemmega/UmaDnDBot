@@ -50,8 +50,14 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
-from utils.race.race_presets import RACE_SCHEDULE, RACE_PRESET, get_web_race_finish_distance
-from utils.race.race_preset_data import get_race_venue
+from utils.race.race_presets import (
+    RACE_SCHEDULE,
+    RACE_PRESET,
+    get_race_distance_type,
+    get_race_turns,
+    get_race_venue,
+    get_web_race_finish_distance,
+)
 from utils.event_schedule import EVENT_SCHEDULE
 from utils.skill.skill_presets import (
     SKILLS,
@@ -787,7 +793,7 @@ def api_get_all_races(distance: str = "all"):
     result = []
 
     for race_id, race in RACE_PRESET.items():
-        race_distance = race.get("distance", "unknown")
+        race_distance = get_race_distance_type(race)
 
         if distance != "all" and race_distance.lower() != distance.lower():
             continue
@@ -800,13 +806,17 @@ def api_get_all_races(distance: str = "all"):
             "track": race.get("track"),
             "venue": get_race_venue(race_id),
             "distance": race_distance,
-            "turn": race.get("turn"),
+            "turn": get_race_turns(race),
             "path": race.get("path", []),
             "finish_distance": get_web_race_finish_distance(race),
-            "description": race.get("description"),
-            "requirements": race.get("requirements", {}),
-            "fans_required": race.get("fans_required"),
-            "fans_reward_first": race.get("fans_reward_first"),
+            "description": race.get("story"),
+            "requirements": (
+                {"fans_required": (race.get("fans") or {}).get("required")}
+                if (race.get("fans") or {}).get("required") is not None
+                else {}
+            ),
+            "fans_required": (race.get("fans") or {}).get("required"),
+            "fans_reward_first": (race.get("fans") or {}).get("reward_first"),
             "course": race.get("course", {}),
         })
 
@@ -1325,11 +1335,15 @@ def get_race_calendar():
                 "image": race.get("image"),
                 "thumbnail": race.get("thumnail"),
                 "track": race.get("track"),
-                "distance": race.get("distance"),
-                "description": race.get("description"),
-                "requirements": race.get("requirements", {}),
-                "fans_required": race.get("fans_required"),
-                "fans_reward_first": race.get("fans_reward_first"),
+                "distance": get_race_distance_type(race),
+                "description": race.get("story"),
+                "requirements": (
+                    {"fans_required": (race.get("fans") or {}).get("required")}
+                    if (race.get("fans") or {}).get("required") is not None
+                    else {}
+                ),
+                "fans_required": (race.get("fans") or {}).get("required"),
+                "fans_reward_first": (race.get("fans") or {}).get("reward_first"),
                 "course": race.get("course", {}),
                 "playable": True,
             })

@@ -5,7 +5,7 @@ import discord
 import random
 from datetime import datetime, timezone
 
-from utils.race.race_presets import RACE_PRESET
+from utils.race.race_presets import RACE_PRESET, get_race_distance_type, get_race_turns
 from utils.skill.skill_presets import SKILLS, ICON_URL
 from utils.mob.mob_decision import decide_mob_skill_combo, decide_mob_target_lane
 
@@ -599,9 +599,9 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
         "channel_id": channel_id,
         "stage_key": stage_key,
         "stage_name": stage['name'],
-        "max_turn": stage["turn"],
+        "max_turn": get_race_turns(stage),
         "track": stage["track"],
-        "distance": stage["distance"],
+        "distance": get_race_distance_type(stage),
         "path": stage["path"],
         "owner_id": owner_id,
         "turn": 0,
