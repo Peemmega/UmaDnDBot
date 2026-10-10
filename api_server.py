@@ -43,6 +43,7 @@ from utils.database import (
     respond_to_race_registration,
     list_race_registration_roster,
     race_registration_window,
+    delete_expired_pending_race_registrations,
     list_registration_reports_due,
     mark_registration_reported,
 )
@@ -192,6 +193,7 @@ async def flush_due_registration_reports():
 
 async def _registration_report_worker():
     while True:
+        delete_expired_pending_race_registrations()
         await flush_due_registration_reports()
         await asyncio.sleep(60)
 
@@ -491,6 +493,7 @@ def update_player_stats(payload: UpdateStatsPayload):
 
 @app.get("/mailbox/{user_id}")
 def get_mailbox(user_id: str, profile_type: str = "trainee"):
+    delete_expired_pending_race_registrations()
     conn = get_connection()
     cur = conn.cursor()
 
@@ -599,6 +602,7 @@ def api_race_registration_roster(race_id: str):
 
 @app.get("/race-registrations/{registration_id}")
 def api_race_registration_detail(registration_id: int):
+    delete_expired_pending_race_registrations()
     registration = get_race_registration(registration_id)
     if not registration:
         raise HTTPException(status_code=404, detail="ไม่พบคำขอลงทะเบียน")
@@ -607,6 +611,7 @@ def api_race_registration_detail(registration_id: int):
 
 @app.post("/race-registrations/{race_id}/request")
 def api_create_race_registration(race_id: str, payload: RaceRegistrationRequestPayload):
+    delete_expired_pending_race_registrations()
     role = get_account_role(payload.actor_user_id)
     trainee_user_id = payload.trainee_user_id or payload.actor_user_id
     try:
@@ -617,6 +622,7 @@ def api_create_race_registration(race_id: str, payload: RaceRegistrationRequestP
 
 @app.post("/race-registrations/{registration_id}/respond")
 def api_respond_race_registration(registration_id: int, payload: RaceRegistrationDecisionPayload):
+    delete_expired_pending_race_registrations()
     role = get_account_role(payload.actor_user_id)
     try:
         registration = respond_to_race_registration(

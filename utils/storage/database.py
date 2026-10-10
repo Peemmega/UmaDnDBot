@@ -699,6 +699,37 @@ def _serialise_registration_window(window: dict) -> dict:
     }
 
 
+def delete_expired_pending_race_registrations(now=None) -> int:
+    """Delete unanswered race registration requests after their response window closes."""
+    now = now or _registration_now()
+    with database_connection() as conn:
+        rows = conn.execute(
+            """SELECT id, race_date, race_time
+               FROM race_registrations
+               WHERE status IN ('trainer_pending', 'trainee_pending')"""
+        ).fetchall()
+        expired_ids = [
+            row["id"]
+            for row in rows
+            if now >= race_registration_window(row["race_date"], row["race_time"], now)["closes_at"]
+        ]
+        if not expired_ids:
+            return 0
+
+        placeholders = ", ".join("?" for _ in expired_ids)
+        conn.execute(
+            f"DELETE FROM mailbox WHERE action_type LIKE 'race_registration_%' "
+            f"AND action_id IN ({placeholders})",
+            expired_ids,
+        )
+        cursor = conn.execute(
+            f"DELETE FROM race_registrations WHERE id IN ({placeholders}) "
+            "AND status IN ('trainer_pending', 'trainee_pending')",
+            expired_ids,
+        )
+        return cursor.rowcount
+
+
 def respond_to_race_registration(registration_id: int, actor_user_id: str, actor_role: str, accepted: bool, availability: str | None = None) -> dict:
     with database_connection() as conn:
         registration = get_race_registration(registration_id, conn=conn)
