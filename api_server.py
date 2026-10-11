@@ -47,6 +47,14 @@ from utils.database import (
     delete_expired_pending_race_registrations,
     list_registration_reports_due,
     mark_registration_reported,
+    list_race_registration_forum_roster,
+    get_race_registration_forum_post,
+    get_race_registration_forum_post_by_thread,
+    save_race_registration_forum_post,
+    get_race_registration_forum_entry,
+    save_race_registration_forum_entry,
+    clear_race_registration_forum_entries,
+    list_unposted_race_registration_forum_groups,
 )
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -72,7 +80,7 @@ from utils.skill.skill_presets import (
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
-from utils.channel_config import RACE_REGISTRATION_CHANNEL_ID
+from utils.channel_config import RACE_REGISTRATION_FORUM_CHANNEL_ID
 from utils.race.race_web import race_web_manager
 from utils.race.race_history import (
     OFFICIAL,
@@ -139,63 +147,233 @@ async def log_timing_validation_error(request: Request, exc: RequestValidationEr
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
-async def _send_registration_report_to_discord(report: dict, text: str) -> bool:
-    if RACE_REGISTRATION_CHANNEL_ID is None:
+async def flush_due_registration_reports():
+    # Final registration results are written into the corresponding Forum post.
+    if RACE_REGISTRATION_FORUM_CHANNEL_ID is None:
+        return
+    for report in list_registration_reports_due():
+        roster = list_race_registration_forum_roster(
+            report["race_name"], report["race_date"], report["race_time"],
+        )
+        if not roster:
+            mark_registration_reported(report["race_id"])
+            continue
+        try:
+            synced = await _run_registration_forum_sync(roster[0], finalized=True)
+            if synced:
+                mark_registration_reported(report["race_id"])
+        except Exception as exc:
+            print(f"[registration] Final Forum summary failed for {report['race_id']}: {exc}")
+
+
+_registration_forum_locks: dict[str, asyncio.Lock] = {}
+
+
+def _registration_forum_event_key(registration: dict) -> str:
+    return json.dumps(
+        [registration["race_name"], registration["race_date"], registration["race_time"]],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+
+
+
+def _registration_priority_embed(
+    registration: dict,
+    roster: list[dict],
+    *,
+    finalized: bool = False,
+) -> discord.Embed:
+    lines = []
+    for entry in roster:
+        method = "ลงแข่งเอง" if entry["availability"] == "self" else "Bot Auto"
+        trial = " · Trial Ticket" if entry["trial_ticket"] else ""
+        category = "ผู้เข้าแข่งขัน" if entry["is_confirmed"] else "รายชื่อสำรอง"
+        lines.append(
+            f"**{entry['placement']}. {str(entry['trainee_name'])[:80]}** — "
+            f"{int(entry['fans']):,} fans · {method}{trial} · {category}"
+        )
+
+    heading = (
+        f"**วันที่:** {registration['race_date']} เวลา {registration['race_time']} (GMT+7)\n"
+        f"**สนาม:** {registration.get('venue') or '-'}\n"
+        f"**สถานะ:** {'ปิดรับสมัครแล้ว' if finalized else 'กำลังเปิดรับสมัคร'}\n"
+        "**ลำดับสิทธิ์:** Trial Ticket → ลงแข่งเอง → Fans มาก → ยืนยันก่อน\n\n"
+    )
+    included_lines = []
+    for line in lines:
+        if len(heading) + len("\n".join([*included_lines, line])) > 3800:
+            break
+        included_lines.append(line)
+    description = heading + "\n".join(included_lines)
+    if len(included_lines) < len(lines):
+        description += f"\n\nแสดง {len(included_lines)} จาก {len(roster)} คน · รายชื่อที่เหลือยังเรียงอยู่ในระบบ"
+
+    embed = discord.Embed(
+        title="สรุปผลลงทะเบียน · ปิดรับสมัครแล้ว" if finalized else "ลำดับการลงทะเบียน",
+        description=description,
+        color=discord.Color.from_rgb(111, 77, 163),
+    )
+    embed.set_author(name=registration["race_name"][:256])
+    footer = f"ผู้ลงทะเบียนทั้งหมด {len(roster)} คน"
+    embed.set_footer(text=f"{footer} · สรุปสุดท้าย" if finalized else f"{footer} · อัปเดตอัตโนมัติ")
+    return embed
+
+
+def _registration_entry_embed(registration: dict) -> discord.Embed:
+    method = "ลงแข่งเอง" if registration["availability"] == "self" else "Bot Auto"
+    embed = discord.Embed(
+        title="มีผู้ลงทะเบียนแข่งขันเพิ่ม",
+        description=(
+            f"{registration['race_name']} · {registration['race_date']} "
+            f"{registration['race_time']} (GMT+7)"
+        ),
+        color=discord.Color.from_rgb(61, 153, 117),
+    )
+    embed.add_field(name="ชื่อในระบบ", value=str(registration["trainee_name"])[:1024], inline=True)
+    embed.add_field(name="Fans", value=f"{int(registration['fans']):,}", inline=True)
+    embed.add_field(name="รูปแบบลงแข่ง", value=method, inline=True)
+    if registration["trial_ticket"]:
+        embed.add_field(name="สิทธิ์เพิ่มเติม", value="Trial Ticket", inline=False)
+    embed.set_footer(text=f"Registration #{registration['id']}")
+    return embed
+
+
+async def _sync_registration_forum_post(registration: dict, *, finalized: bool = False) -> bool:
+    if RACE_REGISTRATION_FORUM_CHANNEL_ID is None or registration.get("status") != "confirmed":
         return False
     bot = bot_instance.bot
     if bot is None or not bot.is_ready():
         return False
-    channel = bot.get_channel(RACE_REGISTRATION_CHANNEL_ID)
-    if channel is None:
-        try:
-            channel = await bot.fetch_channel(RACE_REGISTRATION_CHANNEL_ID)
-        except Exception:
+
+    event_key = _registration_forum_event_key(registration)
+    lock = _registration_forum_locks.setdefault(event_key, asyncio.Lock())
+    async with lock:
+        forum = bot.get_channel(RACE_REGISTRATION_FORUM_CHANNEL_ID)
+        if forum is None:
+            forum = await bot.fetch_channel(RACE_REGISTRATION_FORUM_CHANNEL_ID)
+        if not isinstance(forum, discord.ForumChannel):
+            raise TypeError(f"Configured registration channel {RACE_REGISTRATION_FORUM_CHANNEL_ID} is not a ForumChannel")
+        applied_tags = forum.available_tags[:1] if forum.flags.require_tag else []
+        if forum.flags.require_tag and not applied_tags:
+            raise RuntimeError("The registration forum requires a tag but has no available tags")
+
+        roster = list_race_registration_forum_roster(
+            registration["race_name"], registration["race_date"], registration["race_time"],
+        )
+        if not roster:
             return False
-    filename = f"registration-{report['race_id']}.txt"
-    await channel.send(
-        content=f"ปิดรับสมัคร: **{report['race_name']}** · {report['race_date']} {report['race_time']} GMT+7",
-        file=discord.File(io.BytesIO(text.encode("utf-8")), filename=filename),
+        post_record = get_race_registration_forum_post(event_key)
+        finalized = finalized or bool(post_record and post_record.get("closed_at"))
+        summary_embed = _registration_priority_embed(registration, roster, finalized=finalized)
+        thread = None
+        summary_message = None
+        replacing_thread = False
+
+        if post_record:
+            thread = bot.get_channel(int(post_record["thread_id"]))
+            if not isinstance(thread, discord.Thread):
+                try:
+                    thread = await bot.fetch_channel(int(post_record["thread_id"]))
+                except discord.NotFound:
+                    thread = None
+            if not isinstance(thread, discord.Thread):
+                thread = None
+                replacing_thread = True
+            else:
+                if thread.archived:
+                    await thread.edit(archived=False)
+                try:
+                    summary_message = await thread.fetch_message(int(post_record["summary_message_id"]))
+                except discord.NotFound:
+                    summary_message = None
+
+        if thread is None:
+            if replacing_thread:
+                clear_race_registration_forum_entries(event_key)
+            thread_name = (
+                f"{registration['race_name']} — {registration['race_date']} {registration['race_time']}"
+            )[:100]
+            created = await forum.create_thread(
+                name=thread_name,
+                embed=summary_embed,
+                applied_tags=applied_tags,
+                allowed_mentions=discord.AllowedMentions.none(),
+                reason=f"Race registration board for {registration['race_name']} ({registration['race_date']} {registration['race_time']})",
+            )
+            thread = created.thread
+            summary_message = created.message
+            save_race_registration_forum_post(
+                event_key, registration, thread.id, summary_message.id,
+            )
+        elif summary_message is None:
+            summary_message = await thread.send(
+                embed=summary_embed,
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+            save_race_registration_forum_post(
+                event_key, registration, thread.id, summary_message.id,
+            )
+        else:
+            await summary_message.edit(
+                embed=summary_embed,
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+
+        for entry in roster:
+            message_id = get_race_registration_forum_entry(int(entry["id"]))
+            if message_id is not None:
+                continue
+            entry_message = await thread.send(
+                embed=_registration_entry_embed(entry),
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+            save_race_registration_forum_entry(int(entry["id"]), event_key, entry_message.id)
+        return True
+
+
+async def _run_registration_forum_sync(registration: dict, *, finalized: bool = False) -> bool:
+    bot = bot_instance.bot
+    if bot is None or not bot.is_ready():
+        return False
+    future = asyncio.run_coroutine_threadsafe(
+        _sync_registration_forum_post(registration, finalized=finalized), bot.loop,
     )
-    return True
+    return await asyncio.wrap_future(future)
 
 
-async def flush_due_registration_reports():
-    # Test deployments must never publish the production roster. Keep their
-    # registrations intact so their UI can still be exercised.
-    if RACE_REGISTRATION_CHANNEL_ID is None:
+async def finalize_registration_forum_thread(thread_id: int) -> bool:
+    """Refresh the saved summary embed as closed for a forum registration thread."""
+    post = get_race_registration_forum_post_by_thread(thread_id)
+    if not post:
+        return False
+    roster = list_race_registration_forum_roster(
+        post["race_name"], post["race_date"], post["race_time"],
+    )
+    if not roster:
+        return False
+    return await _run_registration_forum_sync(roster[0], finalized=True)
+
+
+async def flush_pending_race_registration_forum_posts():
+    if RACE_REGISTRATION_FORUM_CHANNEL_ID is None:
         return
-    for report in list_registration_reports_due():
-        roster = list_race_registration_roster(report["race_id"])
-        lines = [
-            f"{report['race_name']}",
-            f"สนาม: {report['venue'] or '-'}",
-            f"แข่งขัน: {report['race_date']} {report['race_time']} GMT+7",
-            "",
-            "ผู้เข้าแข่งขัน (18 คนแรก)",
-        ]
-        for entry in roster[:18]:
-            source = "บัตร Trial" if entry["trial_ticket"] else ("ลงแข่งเอง" if entry["availability"] == "self" else "Bot Auto")
-            lines.append(f"{entry['placement']:>2}. {entry['trainee_name']} — {source} — {entry['fans']} fans")
-        if len(roster) < 18:
-            lines.append("(ยังมีที่ว่าง)")
-        lines.extend(["", "รายชื่อสำรอง"])
-        for entry in roster[18:]:
-            source = "บัตร Trial" if entry["trial_ticket"] else ("ลงแข่งเอง" if entry["availability"] == "self" else "Bot Auto")
-            lines.append(f"{entry['placement']:>2}. {entry['trainee_name']} — {source} — {entry['fans']} fans")
-        if not roster[18:]:
-            lines.append("(ไม่มี)")
-        bot = bot_instance.bot
+    for registration in list_unposted_race_registration_forum_groups():
+        if not race_registration_window(registration["race_date"], registration["race_time"])["is_open"]:
+            continue
         try:
-            future = asyncio.run_coroutine_threadsafe(_send_registration_report_to_discord(report, "\n".join(lines)), bot.loop) if bot else None
-            if future and future.result(timeout=15):
-                mark_registration_reported(report["race_id"])
+            await _run_registration_forum_sync({**registration, "status": "confirmed"})
         except Exception as exc:
-            print(f"[registration] Discord report failed for {report['race_id']}: {exc}")
+            print(
+                "[registration] Forum sync retry failed "
+                f"for {registration['race_id']} ({registration['race_date']} {registration['race_time']}): {exc}"
+            )
 
 
 async def _registration_report_worker():
     while True:
         delete_expired_pending_race_registrations()
+        await flush_pending_race_registration_forum_posts()
         await flush_due_registration_reports()
         await asyncio.sleep(60)
 
@@ -623,7 +801,7 @@ def api_create_race_registration(race_id: str, payload: RaceRegistrationRequestP
 
 
 @app.post("/race-registrations/{registration_id}/respond")
-def api_respond_race_registration(registration_id: int, payload: RaceRegistrationDecisionPayload):
+async def api_respond_race_registration(registration_id: int, payload: RaceRegistrationDecisionPayload):
     delete_expired_pending_race_registrations()
     role = get_account_role(payload.actor_user_id)
     try:
@@ -632,7 +810,6 @@ def api_respond_race_registration(registration_id: int, payload: RaceRegistratio
         )
         if payload.mail_id:
             mark_mail_read(payload.mail_id)
-        return registration
     except ValueError as exc:
         # Treat a retry on an already-resolved mail as successful cleanup. This
         # covers mails produced before automatic archiving was available.
@@ -641,8 +818,20 @@ def api_respond_race_registration(registration_id: int, payload: RaceRegistratio
             if registration:
                 if payload.mail_id:
                     mark_mail_read(payload.mail_id)
-                return {**registration, "already_processed": True}
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+                registration = {**registration, "already_processed": True}
+            else:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+        else:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    if registration.get("status") == "confirmed":
+        try:
+            registration["forum_post_synced"] = await _run_registration_forum_sync(registration)
+        except Exception as exc:
+            # Registration approval must remain successful even if Discord is unavailable.
+            registration["forum_post_synced"] = False
+            print(f"[registration] Forum sync failed for registration {registration_id}: {exc}")
+    return registration
 
 
 @app.get("/trainer/{trainer_user_id}/team")

@@ -23,10 +23,11 @@ from utils.database import (
     reset_player_data_section,
     set_admin_player_value,
     create_community_event,
+    close_race_registration_forum_post,
 )
 from utils.race.race_presets import RACE_PRESET
 from utils.skill.skill_presets import SKILLS, get_skill_rarity
-from utils.channel_config import COMMAND_LOG_CHANNEL_ID
+from utils.channel_config import COMMAND_LOG_CHANNEL_ID, RACE_REGISTRATION_FORUM_CHANNEL_ID
 
 ADMIN_IDS = {
     464058883556769793,
@@ -108,6 +109,70 @@ class Admin(commands.Cog):
             color=discord.Color.red(),
         )
         return False
+
+    @commands.command(name="close_registration", aliases=["reg_close"])
+    async def close_registration(self, ctx: commands.Context):
+        """Immediately close registration from inside its forum post thread."""
+        if not await self.require_admin(ctx, "close_registration"):
+            return
+
+        if (
+            not isinstance(ctx.channel, discord.Thread)
+            or RACE_REGISTRATION_FORUM_CHANNEL_ID is None
+            or ctx.channel.parent_id != RACE_REGISTRATION_FORUM_CHANNEL_ID
+        ):
+            await self.send_result_embed(
+                ctx,
+                title="ใช้คำสั่งในโพสต์ลงทะเบียน",
+                description="คำสั่งนี้ใช้ได้ภายในโพสต์ฟอรัมลงทะเบียนการแข่งขันเท่านั้น",
+                color=discord.Color.orange(),
+            )
+            return
+
+        post = close_race_registration_forum_post(ctx.channel.id, str(ctx.author.id))
+        if not post:
+            await self.send_result_embed(
+                ctx,
+                title="ไม่พบข้อมูลโพสต์ลงทะเบียน",
+                description="โพสต์นี้ไม่มีรายการลงทะเบียนที่บันทึกไว้ในระบบ",
+                color=discord.Color.red(),
+            )
+            return
+        if post.get("already_closed"):
+            await self.send_result_embed(
+                ctx,
+                title="ปิดรับสมัครแล้ว",
+                description=f"{post['race_name']} · {post['race_date']} {post['race_time']}",
+                color=discord.Color.orange(),
+            )
+            return
+
+        summary_updated = False
+        try:
+            from api_server import finalize_registration_forum_thread
+            summary_updated = await finalize_registration_forum_thread(ctx.channel.id)
+        except Exception as exc:
+            print(f"[registration] Admin close summary update failed for thread {ctx.channel.id}: {exc}")
+
+        description = (
+            f"**{post['race_name']}** · {post['race_date']} {post['race_time']}\n"
+            "ปิดรับสมัครทันทีแล้ว และยกเลิกคำขอที่ยังรอการตอบรับ "
+            f"({post.get('cancelled_count', 0)} รายการ)"
+        )
+        if not summary_updated:
+            description += "\nแก้ไขสรุปในโพสต์ไม่สำเร็จ กรุณาตรวจสิทธิ์บอตในฟอรัม"
+        await self.send_result_embed(
+            ctx,
+            title="ปิดรับสมัครเรียบร้อย",
+            description=description,
+            color=discord.Color.green() if summary_updated else discord.Color.orange(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="close_registration",
+            result_text=f"Closed {post['race_name']} ({post['race_date']} {post['race_time']}); cancelled {post.get('cancelled_count', 0)} pending requests.",
+            color=discord.Color.green(),
+        )
 
     async def send_result_embed(
         self,

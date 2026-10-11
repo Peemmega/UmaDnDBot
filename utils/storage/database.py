@@ -363,6 +363,34 @@ def init_db():
         reported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
     """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_registration_forum_posts (
+        event_key TEXT PRIMARY KEY,
+        race_id TEXT NOT NULL,
+        race_name TEXT NOT NULL,
+        race_date TEXT NOT NULL,
+        race_time TEXT NOT NULL,
+        thread_id INTEGER NOT NULL,
+        summary_message_id INTEGER NOT NULL,
+        closed_at TEXT,
+        closed_by TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    forum_post_columns = {row["name"] for row in cursor.execute("PRAGMA table_info(race_registration_forum_posts)").fetchall()}
+    if "closed_at" not in forum_post_columns:
+        cursor.execute("ALTER TABLE race_registration_forum_posts ADD COLUMN closed_at TEXT")
+    if "closed_by" not in forum_post_columns:
+        cursor.execute("ALTER TABLE race_registration_forum_posts ADD COLUMN closed_by TEXT")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS race_registration_forum_entries (
+        registration_id INTEGER PRIMARY KEY,
+        event_key TEXT NOT NULL,
+        message_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS race_rankings (
@@ -625,6 +653,13 @@ def create_race_registration_request(event: dict, actor_user_id: str, actor_role
         raise ValueError("เฉพาะ Trainer หรือ Umamusume เท่านั้นที่ลงทะเบียนได้")
 
     with database_connection() as conn:
+        manually_closed = conn.execute(
+            """SELECT 1 FROM race_registration_forum_posts
+               WHERE race_name = ? AND race_date = ? AND race_time = ? AND closed_at IS NOT NULL LIMIT 1""",
+            (event["name"], event["date"], event["time"]),
+        ).fetchone()
+        if manually_closed:
+            raise ValueError("การลงทะเบียนสำหรับสนามนี้ปิดแล้ว")
         _ensure_registration_cooldown(conn, actor_user_id)
         trainee = conn.execute(
             "SELECT username, COALESCE(fans, 0) AS fans FROM players WHERE CAST(user_id AS TEXT) = ?",
@@ -762,6 +797,12 @@ def delete_expired_pending_race_registrations(now=None) -> int:
 def respond_to_race_registration(registration_id: int, actor_user_id: str, actor_role: str, accepted: bool, availability: str | None = None) -> dict:
     with database_connection() as conn:
         registration = get_race_registration(registration_id, conn=conn)
+        if registration and conn.execute(
+            """SELECT 1 FROM race_registration_forum_posts
+               WHERE race_name = ? AND race_date = ? AND race_time = ? AND closed_at IS NOT NULL LIMIT 1""",
+            (registration["race_name"], registration["race_date"], registration["race_time"]),
+        ).fetchone():
+            raise ValueError("การลงทะเบียนสำหรับสนามนี้ปิดแล้ว")
         if not registration:
             raise ValueError("ไม่พบคำขอลงทะเบียน")
         if not registration["window"]["is_open"]:
@@ -812,6 +853,149 @@ def list_race_registration_roster(race_id: str) -> list[dict]:
             (race_id,),
         ).fetchall()
     return [{**dict(row), "placement": index + 1, "is_confirmed": index < 18} for index, row in enumerate(rows)]
+
+
+def list_race_registration_forum_roster(race_name: str, race_date: str, race_time: str) -> list[dict]:
+    """Return confirmed entries sharing the same race name, date, and time, in registration priority order."""
+    with database_connection() as conn:
+        rows = conn.execute(
+            """SELECT registration.*, player.username AS trainee_name, COALESCE(player.fans, 0) AS fans
+               FROM race_registrations registration
+               JOIN players player ON CAST(player.user_id AS TEXT) = registration.trainee_user_id
+               WHERE registration.race_name = ? AND registration.race_date = ?
+                 AND registration.race_time = ? AND registration.status = 'confirmed'
+               ORDER BY registration.trial_ticket DESC,
+                        CASE registration.availability WHEN 'self' THEN 0 ELSE 1 END,
+                        COALESCE(player.fans, 0) DESC, registration.confirmed_at ASC, registration.id ASC""",
+            (race_name, race_date, race_time),
+        ).fetchall()
+    return [{**dict(row), "placement": index + 1, "is_confirmed": index < 18} for index, row in enumerate(rows)]
+
+
+def get_race_registration_forum_post(event_key: str) -> dict | None:
+    with database_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM race_registration_forum_posts WHERE event_key = ?",
+            (event_key,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def get_race_registration_forum_post_by_thread(thread_id: int) -> dict | None:
+    with database_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM race_registration_forum_posts WHERE thread_id = ?",
+            (int(thread_id),),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def close_race_registration_forum_post(thread_id: int, closed_by: str) -> dict | None:
+    """Close a forum registration thread and cancel requests awaiting approval."""
+    with database_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM race_registration_forum_posts WHERE thread_id = ?",
+            (int(thread_id),),
+        ).fetchone()
+        if not row:
+            return None
+        post = dict(row)
+        if post["closed_at"]:
+            post["already_closed"] = True
+            return post
+
+        conn.execute(
+            """UPDATE race_registration_forum_posts
+               SET closed_at = CURRENT_TIMESTAMP, closed_by = ?, updated_at = CURRENT_TIMESTAMP
+               WHERE event_key = ? AND closed_at IS NULL""",
+            (str(closed_by), post["event_key"]),
+        )
+        pending = conn.execute(
+            """SELECT id, trainer_user_id, trainee_user_id FROM race_registrations
+               WHERE race_name = ? AND race_date = ? AND race_time = ?
+                 AND status IN ('trainer_pending', 'trainee_pending')""",
+            (post["race_name"], post["race_date"], post["race_time"]),
+        ).fetchall()
+        for registration in pending:
+            conn.execute(
+                "UPDATE race_registrations SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (registration["id"],),
+            )
+            _archive_registration_action_mail(conn, registration["id"], registration["trainer_user_id"])
+            _archive_registration_action_mail(conn, registration["id"], registration["trainee_user_id"])
+        conn.execute(
+            "UPDATE race_registrations SET reported_at = COALESCE(reported_at, CURRENT_TIMESTAMP) WHERE race_id = ?",
+            (post["race_id"],),
+        )
+        post["closed_at"] = "closed"
+        post["closed_by"] = str(closed_by)
+        post["cancelled_count"] = len(pending)
+        return post
+
+
+def save_race_registration_forum_post(
+    event_key: str,
+    registration: dict,
+    thread_id: int,
+    summary_message_id: int,
+) -> None:
+    with database_connection() as conn:
+        conn.execute(
+            """INSERT INTO race_registration_forum_posts
+               (event_key, race_id, race_name, race_date, race_time, thread_id, summary_message_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(event_key) DO UPDATE SET
+                   race_id=excluded.race_id, race_name=excluded.race_name,
+                   race_date=excluded.race_date, race_time=excluded.race_time,
+                   thread_id=excluded.thread_id, summary_message_id=excluded.summary_message_id,
+                   updated_at=CURRENT_TIMESTAMP""",
+            (
+                event_key, registration["race_id"], registration["race_name"],
+                registration["race_date"], registration["race_time"],
+                int(thread_id), int(summary_message_id),
+            ),
+        )
+
+
+def get_race_registration_forum_entry(registration_id: int) -> int | None:
+    with database_connection() as conn:
+        row = conn.execute(
+            "SELECT message_id FROM race_registration_forum_entries WHERE registration_id = ?",
+            (registration_id,),
+        ).fetchone()
+    return int(row["message_id"]) if row else None
+
+
+def save_race_registration_forum_entry(registration_id: int, event_key: str, message_id: int) -> bool:
+    with database_connection() as conn:
+        cursor = conn.execute(
+            """INSERT OR IGNORE INTO race_registration_forum_entries
+               (registration_id, event_key, message_id) VALUES (?, ?, ?)""",
+            (registration_id, event_key, int(message_id)),
+        )
+    return cursor.rowcount > 0
+
+
+def clear_race_registration_forum_entries(event_key: str) -> None:
+    with database_connection() as conn:
+        conn.execute(
+            "DELETE FROM race_registration_forum_entries WHERE event_key = ?",
+            (event_key,),
+        )
+
+
+def list_unposted_race_registration_forum_groups() -> list[dict]:
+    with database_connection() as conn:
+        rows = conn.execute(
+            """SELECT DISTINCT registration.race_id, registration.race_name,
+                      registration.race_date, registration.race_time
+               FROM race_registrations registration
+               LEFT JOIN race_registration_forum_entries entry
+                 ON entry.registration_id = registration.id
+               WHERE registration.status = 'confirmed' AND entry.registration_id IS NULL
+               ORDER BY registration.race_date, registration.race_time, registration.race_name"""
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def list_registration_reports_due() -> list[dict]:
