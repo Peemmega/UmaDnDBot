@@ -16,8 +16,13 @@ from utils.skill.skill_manager import (
 from views.skill_fillter import SkillListView
 from views.skill_equip_view import SkillEquipView
 
-from utils.database import ensure_player, set_player_skill_slot, get_player_skill_slots
-from utils.skill.skill_presets import SKILLS
+from utils.database import (
+    ensure_player,
+    set_player_skill_slot,
+    get_player_skill_slots,
+    get_player_acquired_skills,
+)
+from utils.skill.skill_presets import SKILLS, get_skill_rarity
 
 
 class SkillCog(commands.Cog):
@@ -43,6 +48,13 @@ class SkillCog(commands.Cog):
                 f"ไม่พบสกิล `{skill_id}`",
                 ephemeral=True
             )
+            return
+
+        if (
+            get_skill_rarity(SKILLS[skill_id]) != "common"
+            and skill_id not in get_player_acquired_skills(interaction.user.id)
+        ):
+            await interaction.followup.send("คุณยังไม่ได้รับสกิลนี้", ephemeral=True)
             return
 
         slots = get_player_skill_slots(interaction.user.id)

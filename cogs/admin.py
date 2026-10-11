@@ -16,6 +16,8 @@ from utils.database import (
     reset_all_data,
     clear_player_mailbox,
     clear_player_skills,
+    grant_player_skill,
+    remove_player_skill,
     get_admin_player_overview,
     remove_player_from_team,
     reset_player_data_section,
@@ -23,6 +25,7 @@ from utils.database import (
     create_community_event,
 )
 from utils.race.race_presets import RACE_PRESET
+from utils.skill.skill_presets import SKILLS, get_skill_rarity
 from utils.channel_config import COMMAND_LOG_CHANNEL_ID
 
 ADMIN_IDS = {
@@ -186,6 +189,8 @@ class Admin(commands.Cog):
                 "`!set_stat <speed|stamina|power|gut|wit> <1-8> [@member]` — ตั้งค่าสเตตัส\n"
                 "`!set_point <stats|skill|fans|zone> <จำนวน> [@member]` — ตั้งค่าแต้ม/แฟน\n"
                 "`!remove_skill <1-4|all> @member CONFIRM` — ล้างสกิลที่ติดตั้ง\n"
+                "`!grant_skill @member <skill_id>` — มอบสกิล Rare/Unique ให้ผู้เล่น\n"
+                "`!revoke_skill @member <skill_id>` — ถอนสกิลที่ผู้เล่นได้รับ\n"
                 "`!reset_player <stats|skills|zone> @member CONFIRM` — รีเซ็ตข้อมูลเป็นหมวด\n"
                 "`!team_remove @trainee CONFIRM` — นำผู้เล่นออกจากทีมและยกเลิกคำเชิญค้าง\n"
                 "`!mail_clear @member CONFIRM` — ลบจดหมายทั้งหมดของผู้เล่น"
@@ -572,6 +577,86 @@ class Admin(commands.Cog):
             result_text=result_text,
             target=member,
             color=discord.Color.green(),
+        )
+
+    @commands.command(name="grant_skill", aliases=["give_skill"])
+    async def grant_skill(
+        self,
+        ctx: commands.Context,
+        member: discord.Member,
+        skill_id: str,
+    ):
+        if not await self.require_admin(ctx, "grant_skill", member):
+            return
+        await self.silent_delete(ctx.message)
+        normalized_skill_id = skill_id.strip().lower()
+        skill = SKILLS.get(normalized_skill_id)
+        if skill is None:
+            result_text = f"ไม่พบสกิล `{normalized_skill_id}`"
+            color = discord.Color.red()
+        elif get_skill_rarity(skill) == "common":
+            result_text = "สกิล Common ใช้ได้กับผู้เล่นทุกคนอยู่แล้ว ไม่ต้องมอบสกิล"
+            color = discord.Color.orange()
+        else:
+            ensure_player(member.id, member.name)
+            if not grant_player_skill(member.id, normalized_skill_id):
+                result_text = f"{member.display_name} มีสกิล `{normalized_skill_id}` อยู่แล้ว"
+                color = discord.Color.orange()
+            else:
+                result_text = f"มอบสกิล `{normalized_skill_id}` ให้ {member.display_name} แล้ว"
+                color = discord.Color.green()
+
+        await self.send_result_embed(
+            ctx,
+            title="มอบสกิล",
+            description=f"{member.mention}\n{result_text}",
+            color=color,
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="grant_skill",
+            result_text=result_text,
+            target=member,
+            color=color,
+        )
+
+    @commands.command(name="revoke_skill", aliases=["take_skill"])
+    async def revoke_skill(
+        self,
+        ctx: commands.Context,
+        member: discord.Member,
+        skill_id: str,
+    ):
+        if not await self.require_admin(ctx, "revoke_skill", member):
+            return
+        await self.silent_delete(ctx.message)
+        normalized_skill_id = skill_id.strip().lower()
+        skill = SKILLS.get(normalized_skill_id)
+        if skill is None:
+            result_text = f"ไม่พบสกิล `{normalized_skill_id}`"
+            color = discord.Color.red()
+        elif get_skill_rarity(skill) == "common":
+            result_text = "สกิล Common ใช้ได้กับผู้เล่นทุกคน จึงไม่สามารถถอนสิทธิ์ได้"
+            color = discord.Color.orange()
+        elif not remove_player_skill(member.id, normalized_skill_id):
+            result_text = f"{member.display_name} ยังไม่ได้รับสกิล `{normalized_skill_id}`"
+            color = discord.Color.orange()
+        else:
+            result_text = f"ถอนสกิล `{normalized_skill_id}` จาก {member.display_name} แล้ว"
+            color = discord.Color.green()
+
+        await self.send_result_embed(
+            ctx,
+            title="ถอนสกิล",
+            description=f"{member.mention}\n{result_text}",
+            color=color,
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="revoke_skill",
+            result_text=result_text,
+            target=member,
+            color=color,
         )
 
     @commands.command(name="reset_player")

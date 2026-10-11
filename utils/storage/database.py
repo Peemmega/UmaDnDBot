@@ -69,6 +69,17 @@ def _migrate_legacy_skill_ids(cursor: sqlite3.Cursor) -> None:
                     (LEGACY_SKILL_ID_MAP[row[column]], row["_rowid"]),
                 )
 
+    inventory_rows = cursor.execute(
+        f"SELECT rowid AS _rowid, user_id, skill_id, granted_at FROM player_skills WHERE skill_id IN ({placeholders})",
+        legacy_ids,
+    ).fetchall()
+    for row in inventory_rows:
+        cursor.execute(
+            "INSERT OR IGNORE INTO player_skills (user_id, skill_id, granted_at) VALUES (?, ?, ?)",
+            (row["user_id"], LEGACY_SKILL_ID_MAP[row["skill_id"]], row["granted_at"]),
+        )
+        cursor.execute("DELETE FROM player_skills WHERE rowid = ?", (row["_rowid"],))
+
 
 def init_db():
     conn = get_connection()
@@ -180,6 +191,24 @@ def init_db():
         skill_slot_4 TEXT,
         PRIMARY KEY (user_id, preset_slot)
     )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS player_skills (
+        user_id INTEGER NOT NULL,
+        skill_id TEXT NOT NULL,
+        granted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, skill_id)
+    )
+    """)
+    # Preserve access to previously equipped non-common skills when upgrading.
+    # Common skills are available to every player and do not need inventory rows.
+    cursor.execute("""
+        INSERT OR IGNORE INTO player_skills (user_id, skill_id)
+        SELECT user_id, skill_slot_1 FROM players WHERE skill_slot_1 IS NOT NULL
+        UNION SELECT user_id, skill_slot_2 FROM players WHERE skill_slot_2 IS NOT NULL
+        UNION SELECT user_id, skill_slot_3 FROM players WHERE skill_slot_3 IS NOT NULL
+        UNION SELECT user_id, skill_slot_4 FROM players WHERE skill_slot_4 IS NOT NULL
     """)
 
     preset_columns = {
@@ -1598,6 +1627,52 @@ def get_player_skill_slots(user_id: int):
         "slot_3": row[2],
         "slot_4": row[3],
     }
+
+
+def get_player_acquired_skills(user_id: int | str) -> list[str]:
+    """Return skill IDs explicitly owned by a player, excluding universal Common skills."""
+    from utils.skill.skill_presets import SKILLS, get_skill_rarity
+
+    with database_connection() as conn:
+        rows = conn.execute(
+            "SELECT skill_id FROM player_skills WHERE CAST(user_id AS TEXT) = ? ORDER BY granted_at, skill_id",
+            (str(user_id),),
+        ).fetchall()
+    return [
+        row["skill_id"]
+        for row in rows
+        if row["skill_id"] not in SKILLS
+        or get_skill_rarity(SKILLS[row["skill_id"]]) != "common"
+    ]
+
+
+def grant_player_skill(user_id: int | str, skill_id: str) -> bool:
+    """Grant a skill; return False when the player already owns it."""
+    with database_connection() as conn:
+        cursor = conn.execute(
+            "INSERT OR IGNORE INTO player_skills (user_id, skill_id) VALUES (?, ?)",
+            (int(user_id), skill_id),
+        )
+    return cursor.rowcount > 0
+
+
+def remove_player_skill(user_id: int | str, skill_id: str) -> bool:
+    """Revoke a skill and remove it from equipped and saved loadouts."""
+    with database_connection() as conn:
+        cursor = conn.execute(
+            "DELETE FROM player_skills WHERE CAST(user_id AS TEXT) = ? AND skill_id = ?",
+            (str(user_id), skill_id),
+        )
+        for slot in range(1, 5):
+            conn.execute(
+                f"UPDATE players SET skill_slot_{slot} = NULL WHERE CAST(user_id AS TEXT) = ? AND skill_slot_{slot} = ?",
+                (str(user_id), skill_id),
+            )
+            conn.execute(
+                f"UPDATE skill_loadout_presets SET skill_slot_{slot} = NULL WHERE CAST(user_id AS TEXT) = ? AND skill_slot_{slot} = ?",
+                (str(user_id), skill_id),
+            )
+    return cursor.rowcount > 0
 
 
 def _build_skill_loadout_preset(row: sqlite3.Row) -> dict:

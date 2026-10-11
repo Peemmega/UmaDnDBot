@@ -55,6 +55,16 @@ ICON_URL = {
     "navigation": "https://media.discordapp.net/attachments/697810514448744448/1550789850792326144/navigation_common.png?ex=6aaf9d18&is=6aae4b98&hm=3b9ea7d0b5969d7c01acbc51b002861014736acf8e78404dfd1402fa01b6b369&=&format=webp&quality=lossless",
 }
 
+
+def get_skill_rarity(skill: dict) -> str:
+    """Classify skill variants using the catalog's established icon naming."""
+    icon = str(skill.get("icon") or "")
+    if icon.startswith("Unique"):
+        return "unique"
+    if icon.endswith("_rare"):
+        return "rare"
+    return "common"
+
 EFFECT_TYPES = {
     "cap_floor",
     "modify_roll_cap_floor",

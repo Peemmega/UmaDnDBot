@@ -20,6 +20,7 @@ from utils.database import (
     update_player_username,
     set_player_skill_slot,
     get_player_skill_slots,
+    get_player_acquired_skills,
     list_player_skill_loadout_presets,
     save_player_skill_loadout_preset,
     apply_player_skill_loadout_preset,
@@ -62,6 +63,7 @@ from utils.race.race_presets import (
 from utils.event_schedule import EVENT_SCHEDULE
 from utils.skill.skill_presets import (
     SKILLS,
+    get_skill_rarity,
     SKILL_APTITUDE_OPTIONS,
     SKILL_DETAIL_OPTIONS,
     SKILL_TAG_OPTIONS,
@@ -1477,6 +1479,12 @@ def api_equip_skill(payload: EquipSkillPayload):
     if skill_id not in SKILLS:
         raise HTTPException(status_code=404, detail=f"ไม่พบสกิล `{skill_id}`")
 
+    if (
+        get_skill_rarity(SKILLS[skill_id]) != "common"
+        and skill_id not in get_player_acquired_skills(user_id)
+    ):
+        raise HTTPException(status_code=403, detail="คุณยังไม่ได้รับสกิลนี้")
+
     slots = get_player_skill_slots(user_id)
     if slots and skill_id in slots.values():
         raise HTTPException(status_code=400, detail="คุณติดตั้งสกิลนี้ไว้แล้ว")
@@ -1538,6 +1546,18 @@ def api_get_player_skills(user_id: str):
     return result
 
 
+@app.get("/player/{user_id}/skill-inventory")
+def api_get_player_skill_inventory(user_id: str):
+    acquired_ids = get_player_acquired_skills(int(user_id))
+    return {
+        "skills": [
+            {"id": skill_id, "name": SKILLS[skill_id]["name"], "icon": SKILLS[skill_id].get("icon")}
+            for skill_id in acquired_ids
+            if skill_id in SKILLS
+        ]
+    }
+
+
 @app.get("/player/{user_id}/skill-loadout-presets")
 def api_get_skill_loadout_presets(user_id: str):
     return {"presets": list_player_skill_loadout_presets(int(user_id))}
@@ -1567,6 +1587,16 @@ def api_save_skill_loadout_preset(
         saved_skill_ids = [skill_id for skill_id in skill_ids if skill_id]
         if len(set(saved_skill_ids)) != len(saved_skill_ids):
             raise HTTPException(status_code=400, detail="Preset has duplicate skills")
+        acquired_ids = set(get_player_acquired_skills(int(user_id)))
+        unavailable_skills = [
+            skill_id for skill_id in saved_skill_ids
+            if get_skill_rarity(SKILLS[skill_id]) != "common" and skill_id not in acquired_ids
+        ]
+        if unavailable_skills:
+            raise HTTPException(
+                status_code=403,
+                detail=f"You have not acquired skill: {unavailable_skills[0]}",
+            )
 
     preset = save_player_skill_loadout_preset(
         int(user_id),
@@ -1605,6 +1635,17 @@ def api_apply_skill_loadout_preset(user_id: str, preset_slot: int):
         )
     if len(set(skill_ids)) != len(skill_ids):
         raise HTTPException(status_code=400, detail="Preset has duplicate skills")
+
+    acquired_ids = set(get_player_acquired_skills(int(user_id)))
+    unavailable_skills = [
+        skill_id for skill_id in skill_ids
+        if get_skill_rarity(SKILLS[skill_id]) != "common" and skill_id not in acquired_ids
+    ]
+    if unavailable_skills:
+        raise HTTPException(
+            status_code=403,
+            detail=f"You have not acquired skill: {unavailable_skills[0]}",
+        )
 
     applied_preset = apply_player_skill_loadout_preset(int(user_id), preset_slot)
     if applied_preset is None:
