@@ -484,19 +484,27 @@ class CharacterBasicProfilePayload(BaseModel):
     personality: str = ""
     biography: str = ""
     additional: str = ""
+    word_counts: dict[str, int] | None = None
 
 
 @app.put("/player/{user_id}/basic-profile")
 def api_save_character_basic_profile(user_id: str, payload: CharacterBasicProfilePayload):
     profile = payload.dict()
-    for field, limit in (("self_intro", 100), ("personality", 200), ("biography", 500), ("additional", 200)):
+    word_counts = payload.word_counts or {}
+    for field, limit in (("self_intro", 100),):
         profile[field] = str(profile[field] or "").strip()
         if len(profile[field]) > limit:
             raise HTTPException(status_code=400, detail=f"{field} must be {limit} characters or fewer")
     for field in ("likes", "dislikes"):
         profile[field] = str(profile[field] or "").strip()
-        if len(profile[field].split()) > 60:
+        word_count = word_counts.get(field, len(profile[field].split()))
+        if word_count < 0 or word_count > 60:
             raise HTTPException(status_code=400, detail=f"{field} must be 60 words or fewer")
+    for field in ("personality", "biography", "additional"):
+        profile[field] = str(profile[field] or "").strip()
+        word_count = word_counts.get(field, len(profile[field].split()))
+        if word_count < 0 or word_count > 200:
+            raise HTTPException(status_code=400, detail=f"{field} must be 200 words or fewer")
 
     profile["name_th"] = profile["name_th"].strip()
     profile["name_en"] = profile["name_en"].strip()
