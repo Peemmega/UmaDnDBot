@@ -1501,8 +1501,10 @@ def get_available_trainees(trainer_user_id: str) -> list[dict]:
     rows = conn.execute(f"""
         SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url, p.fans
         FROM players p
+        LEFT JOIN account_roles ar ON CAST(ar.user_id AS TEXT) = CAST(p.user_id AS TEXT)
         LEFT JOIN trainer_teams t ON t.trainee_user_id = CAST(p.user_id AS TEXT)
         WHERE p.profile_image_url IS NOT NULL AND TRIM(p.profile_image_url) <> ''
+          AND COALESCE(ar.role, 'trainee') = 'trainee'
           AND t.trainee_user_id IS NULL
           {same_account_filter}
         ORDER BY p.username COLLATE NOCASE
