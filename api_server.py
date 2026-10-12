@@ -466,19 +466,20 @@ def api_get_player(user_id: str, username: str = "Unknown"):
 
 
 @app.get("/player/{user_id}/basic-profile")
-def api_get_character_basic_profile(user_id: str):
-    return {"profile": get_character_basic_profile(user_id)}
+def api_get_character_basic_profile(user_id: str, profile_type: str = "trainee"):
+    if profile_type not in {"trainee", "trainer", "npc"}:
+        raise HTTPException(status_code=400, detail="Choose a valid profile type")
+    return {"profile": get_character_basic_profile(user_id, profile_type)}
 
 
 class CharacterBasicProfilePayload(BaseModel):
     self_intro: str = ""
     name_th: str = ""
     name_en: str = ""
-    division: str = ""
+    age: int | None = None
     birthday_day: int | None = None
     birthday_month: int | None = None
     height_cm: int | None = None
-    dorm: str = ""
     likes: str = ""
     dislikes: str = ""
     personality: str = ""
@@ -488,7 +489,9 @@ class CharacterBasicProfilePayload(BaseModel):
 
 
 @app.put("/player/{user_id}/basic-profile")
-def api_save_character_basic_profile(user_id: str, payload: CharacterBasicProfilePayload):
+def api_save_character_basic_profile(user_id: str, payload: CharacterBasicProfilePayload, profile_type: str = "trainee"):
+    if profile_type not in {"trainee", "trainer", "npc"}:
+        raise HTTPException(status_code=400, detail="Choose a valid profile type")
     profile = payload.dict()
     word_counts = payload.word_counts or {}
     for field, limit in (("self_intro", 100),):
@@ -508,14 +511,10 @@ def api_save_character_basic_profile(user_id: str, payload: CharacterBasicProfil
 
     profile["name_th"] = profile["name_th"].strip()
     profile["name_en"] = profile["name_en"].strip()
-    profile["division"] = profile["division"].strip()
-    profile["dorm"] = profile["dorm"].strip()
     if not profile["name_th"] or not profile["name_en"]:
         raise HTTPException(status_code=400, detail="Thai and English names are required")
-    if profile["division"] not in {"Junior Division", "Senior Division"}:
-        raise HTTPException(status_code=400, detail="Choose a valid division")
-    if profile["dorm"] not in {"Ritto", "Miho"}:
-        raise HTTPException(status_code=400, detail="Choose a valid dorm")
+    if profile["age"] is not None and not 1 <= profile["age"] <= 150:
+        raise HTTPException(status_code=400, detail="Age must be between 1 and 150")
     if profile["birthday_month"] not in range(1, 13) or profile["birthday_day"] not in range(1, 32):
         raise HTTPException(status_code=400, detail="Choose a valid birthday")
     if profile["birthday_month"] in {4, 6, 9, 11} and profile["birthday_day"] > 30:
@@ -525,8 +524,8 @@ def api_save_character_basic_profile(user_id: str, payload: CharacterBasicProfil
     if profile["height_cm"] is None or not 1 <= profile["height_cm"] <= 300:
         raise HTTPException(status_code=400, detail="Height must be between 1 and 300 cm")
 
-    save_character_basic_profile(user_id, profile)
-    return {"success": True, "profile": get_character_basic_profile(user_id)}
+    save_character_basic_profile(user_id, profile_type, profile)
+    return {"success": True, "profile": get_character_basic_profile(user_id, profile_type)}
 
 
 @app.get("/player/{user_id}/race-history")

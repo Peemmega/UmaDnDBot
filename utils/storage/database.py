@@ -326,6 +326,38 @@ def init_db():
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS character_role_basic_profiles (
+        user_id TEXT NOT NULL,
+        profile_type TEXT NOT NULL CHECK(profile_type IN ('trainee', 'trainer', 'npc')),
+        self_intro TEXT NOT NULL DEFAULT '',
+        name_th TEXT NOT NULL DEFAULT '',
+        name_en TEXT NOT NULL DEFAULT '',
+        age INTEGER,
+        birthday_day INTEGER,
+        birthday_month INTEGER,
+        height_cm INTEGER,
+        likes TEXT NOT NULL DEFAULT '',
+        dislikes TEXT NOT NULL DEFAULT '',
+        personality TEXT NOT NULL DEFAULT '',
+        biography TEXT NOT NULL DEFAULT '',
+        additional TEXT NOT NULL DEFAULT '',
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, profile_type)
+    )
+    """)
+    cursor.execute("""
+    INSERT OR IGNORE INTO character_role_basic_profiles (
+        user_id, profile_type, self_intro, name_th, name_en, birthday_day,
+        birthday_month, height_cm, likes, dislikes, personality, biography,
+        additional, updated_at
+    )
+    SELECT user_id, 'trainee', self_intro, name_th, name_en, birthday_day,
+           birthday_month, height_cm, likes, dislikes, personality, biography,
+           additional, updated_at
+    FROM character_basic_profiles
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS team_invitations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         trainer_user_id TEXT NOT NULL,
@@ -1502,21 +1534,25 @@ def save_profile_preset(user_id: str, profile_type: str, name: str, image_url: s
         """, (str(user_id), profile_type, name.strip() or profile_type.title(), image_url or ""))
 
 
-def get_character_basic_profile(user_id: str) -> Optional[dict]:
+def get_character_basic_profile(user_id: str, profile_type: str = "trainee") -> Optional[dict]:
+    if profile_type not in {"trainee", "trainer", "npc"}:
+        raise ValueError("Profile type must be trainee, trainer, or npc")
     with database_connection() as conn:
         row = conn.execute(
-            "SELECT * FROM character_basic_profiles WHERE user_id = ?",
-            (str(user_id),),
+            "SELECT * FROM character_role_basic_profiles WHERE user_id = ? AND profile_type = ?",
+            (str(user_id), profile_type),
         ).fetchone()
     if row is None:
         return None
-    return {key: row[key] for key in row.keys() if key != "user_id" and key != "updated_at"}
+    return {key: row[key] for key in row.keys() if key not in {"user_id", "profile_type", "updated_at"}}
 
 
-def save_character_basic_profile(user_id: str, profile: dict) -> None:
+def save_character_basic_profile(user_id: str, profile_type: str, profile: dict) -> None:
+    if profile_type not in {"trainee", "trainer", "npc"}:
+        raise ValueError("Profile type must be trainee, trainer, or npc")
     fields = (
-        "self_intro", "name_th", "name_en", "division", "birthday_day",
-        "birthday_month", "height_cm", "dorm", "likes", "dislikes",
+        "self_intro", "name_th", "name_en", "age", "birthday_day",
+        "birthday_month", "height_cm", "likes", "dislikes",
         "personality", "biography", "additional",
     )
     values = [profile.get(field) for field in fields]
@@ -1526,13 +1562,13 @@ def save_character_basic_profile(user_id: str, profile: dict) -> None:
     with database_connection() as conn:
         conn.execute(
             f"""
-            INSERT INTO character_basic_profiles (user_id, {columns_sql}, updated_at)
-            VALUES (?, {placeholders_sql}, CURRENT_TIMESTAMP)
-            ON CONFLICT(user_id) DO UPDATE SET
+            INSERT INTO character_role_basic_profiles (user_id, profile_type, {columns_sql}, updated_at)
+            VALUES (?, ?, {placeholders_sql}, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id, profile_type) DO UPDATE SET
               {updates_sql},
               updated_at = CURRENT_TIMESTAMP
             """,
-            [str(user_id), *values],
+            [str(user_id), profile_type, *values],
         )
 
 
