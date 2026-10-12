@@ -306,6 +306,26 @@ def init_db():
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS character_basic_profiles (
+        user_id TEXT PRIMARY KEY,
+        self_intro TEXT NOT NULL DEFAULT '',
+        name_th TEXT NOT NULL DEFAULT '',
+        name_en TEXT NOT NULL DEFAULT '',
+        division TEXT NOT NULL DEFAULT '',
+        birthday_day INTEGER,
+        birthday_month INTEGER,
+        height_cm INTEGER,
+        dorm TEXT NOT NULL DEFAULT '',
+        likes TEXT NOT NULL DEFAULT '',
+        dislikes TEXT NOT NULL DEFAULT '',
+        personality TEXT NOT NULL DEFAULT '',
+        biography TEXT NOT NULL DEFAULT '',
+        additional TEXT NOT NULL DEFAULT '',
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS team_invitations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         trainer_user_id TEXT NOT NULL,
@@ -1480,6 +1500,40 @@ def save_profile_preset(user_id: str, profile_type: str, name: str, image_url: s
             ON CONFLICT(user_id, profile_type) DO UPDATE SET
               name = excluded.name, image_url = excluded.image_url, updated_at = CURRENT_TIMESTAMP
         """, (str(user_id), profile_type, name.strip() or profile_type.title(), image_url or ""))
+
+
+def get_character_basic_profile(user_id: str) -> Optional[dict]:
+    with database_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM character_basic_profiles WHERE user_id = ?",
+            (str(user_id),),
+        ).fetchone()
+    if row is None:
+        return None
+    return {key: row[key] for key in row.keys() if key != "user_id" and key != "updated_at"}
+
+
+def save_character_basic_profile(user_id: str, profile: dict) -> None:
+    fields = (
+        "self_intro", "name_th", "name_en", "division", "birthday_day",
+        "birthday_month", "height_cm", "dorm", "likes", "dislikes",
+        "personality", "biography", "additional",
+    )
+    values = [profile.get(field) for field in fields]
+    columns_sql = ", ".join(fields)
+    placeholders_sql = ", ".join("?" for _ in fields)
+    updates_sql = ", ".join(f"{field} = excluded.{field}" for field in fields)
+    with database_connection() as conn:
+        conn.execute(
+            f"""
+            INSERT INTO character_basic_profiles (user_id, {columns_sql}, updated_at)
+            VALUES (?, {placeholders_sql}, CURRENT_TIMESTAMP)
+            ON CONFLICT(user_id) DO UPDATE SET
+              {updates_sql},
+              updated_at = CURRENT_TIMESTAMP
+            """,
+            [str(user_id), *values],
+        )
 
 
 def set_profile_preset_image(user_id: str, profile_type: str, image_url: str) -> None:

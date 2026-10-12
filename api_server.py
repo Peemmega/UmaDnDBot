@@ -13,6 +13,8 @@ import os
 
 from utils.database import (
     get_player, 
+    get_character_basic_profile,
+    save_character_basic_profile,
     get_player_summary,
     list_player_summaries,
     get_connection, 
@@ -461,6 +463,62 @@ def api_get_player(user_id: str, username: str = "Unknown"):
         player = get_player(user_id)
 
     return player
+
+
+@app.get("/player/{user_id}/basic-profile")
+def api_get_character_basic_profile(user_id: str):
+    return {"profile": get_character_basic_profile(user_id)}
+
+
+class CharacterBasicProfilePayload(BaseModel):
+    self_intro: str = ""
+    name_th: str = ""
+    name_en: str = ""
+    division: str = ""
+    birthday_day: int | None = None
+    birthday_month: int | None = None
+    height_cm: int | None = None
+    dorm: str = ""
+    likes: str = ""
+    dislikes: str = ""
+    personality: str = ""
+    biography: str = ""
+    additional: str = ""
+
+
+@app.put("/player/{user_id}/basic-profile")
+def api_save_character_basic_profile(user_id: str, payload: CharacterBasicProfilePayload):
+    profile = payload.dict()
+    for field, limit in (("self_intro", 100), ("personality", 200), ("biography", 500), ("additional", 200)):
+        profile[field] = str(profile[field] or "").strip()
+        if len(profile[field]) > limit:
+            raise HTTPException(status_code=400, detail=f"{field} must be {limit} characters or fewer")
+    for field in ("likes", "dislikes"):
+        profile[field] = str(profile[field] or "").strip()
+        if len(profile[field].split()) > 60:
+            raise HTTPException(status_code=400, detail=f"{field} must be 60 words or fewer")
+
+    profile["name_th"] = profile["name_th"].strip()
+    profile["name_en"] = profile["name_en"].strip()
+    profile["division"] = profile["division"].strip()
+    profile["dorm"] = profile["dorm"].strip()
+    if not profile["name_th"] or not profile["name_en"]:
+        raise HTTPException(status_code=400, detail="Thai and English names are required")
+    if profile["division"] not in {"Junior Division", "Senior Division"}:
+        raise HTTPException(status_code=400, detail="Choose a valid division")
+    if profile["dorm"] not in {"Ritto", "Miho"}:
+        raise HTTPException(status_code=400, detail="Choose a valid dorm")
+    if profile["birthday_month"] not in range(1, 13) or profile["birthday_day"] not in range(1, 32):
+        raise HTTPException(status_code=400, detail="Choose a valid birthday")
+    if profile["birthday_month"] in {4, 6, 9, 11} and profile["birthday_day"] > 30:
+        raise HTTPException(status_code=400, detail="Choose a valid birthday")
+    if profile["birthday_month"] == 2 and profile["birthday_day"] > 29:
+        raise HTTPException(status_code=400, detail="Choose a valid birthday")
+    if profile["height_cm"] is None or not 1 <= profile["height_cm"] <= 300:
+        raise HTTPException(status_code=400, detail="Height must be between 1 and 300 cm")
+
+    save_character_basic_profile(user_id, profile)
+    return {"success": True, "profile": get_character_basic_profile(user_id)}
 
 
 @app.get("/player/{user_id}/race-history")
