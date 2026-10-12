@@ -114,7 +114,7 @@ Stamina ในการแข่งขันเป็นค่าพลังง
 
 - **ค่า Stamina ของเลน:** เทิร์นแรกใช้ฐานเลน 2 (`100`) เสมอเพื่อให้การออกตัวเท่าเทียมกัน; ตั้งแต่เทิร์น 2 เลน 1–6 ใช้ค่า `90`, `100`, `110`, `120`, `130`, `140` ตามลำดับ แล้วจึงบวกค่าเส้นทางและสภาพอากาศ
 - **Draft:** ถ้ามีคู่แข่งนำหน้าในเลนเดียวกันและอยู่ใน In Pack range การใช้ Stamina ของ Run นั้นลดลง 10%
-- **Blocked:** หากผล Run จะวิ่งผ่านคู่แข่งที่อยู่ข้างหน้าในเลนเดียวกัน จะถูกลดผลรวม 10% ต่อคน สูงสุด 20%; Power ลดโทษนี้ 1 จุดเปอร์เซ็นต์ต่อ Power 1 หน่วย แต่ไม่ต่ำกว่า 0%
+- **Blocked:** หากผล Run จะวิ่งผ่านคู่แข่งที่อยู่ข้างหน้าในเลนเดียวกัน จะคิดโทษ 10% ต่อคน หัก Power 1 จุดเปอร์เซ็นต์ต่อ Power 1 หน่วย แล้วจำกัดโทษไว้ไม่เกิน 20% และไม่ต่ำกว่า 0% ตัวอย่าง 3 คนกับ Power 6: 30% − 6% = 24% แล้วตัดเหลือ 20%
 
 ### Rush และ Block
 
@@ -214,8 +214,8 @@ Gut bonus ใน Phase 3–4 คือ `2×Gut` และเพิ่มอี�
 
 - In Pack range = `max(1, 20 + self bonus − enemy penalty)` Score
 - In Pack lane tolerance = `max(0, 1 + self bonus − enemy penalty)` เลน
-- Blocked raw penalty = `min(20%, 10% × จำนวนคู่แข่งที่ถูกวิ่งผ่าน)`
-- Blocked final penalty = `max(0%, raw penalty − Power%)`
+- Blocked raw penalty = `10% × จำนวนคู่แข่งที่ถูกวิ่งผ่าน − Power%`
+- Blocked final penalty = `min(20%, max(0%, raw penalty))`
 - Final after Blocked = `round(pre-lane total × (1 − final penalty))`
 - Block move-back = `gap to nearest eligible trailing runner − In Pack range`
 

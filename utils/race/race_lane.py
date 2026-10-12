@@ -81,11 +81,10 @@ def calculate_lane_block_penalty(
             if player_id is not None:
                 blocked_runner_ids.append(str(player_id))
 
-    raw_blocking_penalty = min(
-        LANE_BLOCK_PENALTY_CAP, blocked_count * LANE_BLOCK_PENALTY_STEP
-    )
+    raw_blocking_penalty = blocked_count * LANE_BLOCK_PENALTY_STEP
     power_reduction = max(0.0, float(power_stat) / 100.0)
-    blocking_penalty = max(0.0, raw_blocking_penalty - power_reduction)
+    power_adjusted_penalty = max(0.0, raw_blocking_penalty - power_reduction)
+    blocking_penalty = min(LANE_BLOCK_PENALTY_CAP, power_adjusted_penalty)
     final_score = int(round(int(base_score or 0) * (1 - blocking_penalty)))
 
     return {
