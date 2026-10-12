@@ -1548,10 +1548,14 @@ def select_account_role(user_id: str, username: str, role: str) -> str:
 def list_uploaded_profile_summaries() -> list[dict]:
     conn = get_connection()
     rows = conn.execute("""
-        SELECT user_id, profile_type, name, image_url FROM profile_presets
-        WHERE TRIM(image_url) <> ''
-          AND LTRIM(image_url) NOT LIKE 'data:%'
-        ORDER BY name COLLATE NOCASE
+        SELECT preset.user_id, preset.profile_type, preset.name, preset.image_url
+        FROM profile_presets AS preset
+        JOIN account_roles AS account_role
+          ON account_role.user_id = preset.user_id
+         AND account_role.role = preset.profile_type
+        WHERE TRIM(preset.image_url) <> ''
+          AND LTRIM(preset.image_url) NOT LIKE 'data:%'
+        ORDER BY preset.name COLLATE NOCASE
     """).fetchall()
     conn.close()
     return [{"id": f"{row['user_id']}:{row['profile_type']}", "name": row["name"], "image_url": row["image_url"], "type": row["profile_type"].title()} for row in rows]
@@ -2404,19 +2408,25 @@ def list_player_summaries() -> list[dict]:
     if has_profile_image:
         cursor.execute(
             """
-            SELECT user_id, username, profile_image_url
-            FROM players
-            WHERE username IS NOT NULL AND TRIM(username) <> ''
-            ORDER BY username COLLATE NOCASE ASC, user_id ASC
+            SELECT player.user_id, player.username, player.profile_image_url
+            FROM players AS player
+            LEFT JOIN account_roles AS account_role
+              ON CAST(account_role.user_id AS TEXT) = CAST(player.user_id AS TEXT)
+            WHERE player.username IS NOT NULL AND TRIM(player.username) <> ''
+              AND COALESCE(account_role.role, 'trainee') = 'trainee'
+            ORDER BY player.username COLLATE NOCASE ASC, player.user_id ASC
             """
         )
     else:
         cursor.execute(
             """
-            SELECT user_id, username
-            FROM players
-            WHERE username IS NOT NULL AND TRIM(username) <> ''
-            ORDER BY username COLLATE NOCASE ASC, user_id ASC
+            SELECT player.user_id, player.username
+            FROM players AS player
+            LEFT JOIN account_roles AS account_role
+              ON CAST(account_role.user_id AS TEXT) = CAST(player.user_id AS TEXT)
+            WHERE player.username IS NOT NULL AND TRIM(player.username) <> ''
+              AND COALESCE(account_role.role, 'trainee') = 'trainee'
+            ORDER BY player.username COLLATE NOCASE ASC, player.user_id ASC
             """
         )
     rows = cursor.fetchall()
