@@ -332,10 +332,12 @@ def init_db():
         self_intro TEXT NOT NULL DEFAULT '',
         name_th TEXT NOT NULL DEFAULT '',
         name_en TEXT NOT NULL DEFAULT '',
+        division TEXT NOT NULL DEFAULT '',
         age INTEGER,
         birthday_day INTEGER,
         birthday_month INTEGER,
         height_cm INTEGER,
+        dorm TEXT NOT NULL DEFAULT '',
         likes TEXT NOT NULL DEFAULT '',
         dislikes TEXT NOT NULL DEFAULT '',
         personality TEXT NOT NULL DEFAULT '',
@@ -345,17 +347,34 @@ def init_db():
         PRIMARY KEY (user_id, profile_type)
     )
     """)
+    role_basic_profile_columns = {
+        row["name"]
+        for row in cursor.execute("PRAGMA table_info(character_role_basic_profiles)").fetchall()
+    }
+    role_basic_profile_needs_class_dorm_migration = not {"division", "dorm"}.issubset(role_basic_profile_columns)
+    if "division" not in role_basic_profile_columns:
+        cursor.execute("ALTER TABLE character_role_basic_profiles ADD COLUMN division TEXT NOT NULL DEFAULT ''")
+    if "dorm" not in role_basic_profile_columns:
+        cursor.execute("ALTER TABLE character_role_basic_profiles ADD COLUMN dorm TEXT NOT NULL DEFAULT ''")
     cursor.execute("""
     INSERT OR IGNORE INTO character_role_basic_profiles (
-        user_id, profile_type, self_intro, name_th, name_en, birthday_day,
-        birthday_month, height_cm, likes, dislikes, personality, biography,
+        user_id, profile_type, self_intro, name_th, name_en, division, birthday_day,
+        birthday_month, height_cm, dorm, likes, dislikes, personality, biography,
         additional, updated_at
     )
-    SELECT user_id, 'trainee', self_intro, name_th, name_en, birthday_day,
-           birthday_month, height_cm, likes, dislikes, personality, biography,
+    SELECT user_id, 'trainee', self_intro, name_th, name_en, division, birthday_day,
+           birthday_month, height_cm, dorm, likes, dislikes, personality, biography,
            additional, updated_at
     FROM character_basic_profiles
     """)
+    if role_basic_profile_needs_class_dorm_migration:
+        cursor.execute("""
+        UPDATE character_role_basic_profiles
+        SET division = COALESCE((SELECT division FROM character_basic_profiles legacy WHERE legacy.user_id = character_role_basic_profiles.user_id), division),
+            dorm = COALESCE((SELECT dorm FROM character_basic_profiles legacy WHERE legacy.user_id = character_role_basic_profiles.user_id), dorm)
+        WHERE profile_type = 'trainee'
+          AND EXISTS (SELECT 1 FROM character_basic_profiles legacy WHERE legacy.user_id = character_role_basic_profiles.user_id)
+        """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS team_invitations (
@@ -1551,8 +1570,8 @@ def save_character_basic_profile(user_id: str, profile_type: str, profile: dict)
     if profile_type not in {"trainee", "trainer", "npc"}:
         raise ValueError("Profile type must be trainee, trainer, or npc")
     fields = (
-        "self_intro", "name_th", "name_en", "age", "birthday_day",
-        "birthday_month", "height_cm", "likes", "dislikes",
+        "self_intro", "name_th", "name_en", "division", "age", "birthday_day",
+        "birthday_month", "height_cm", "dorm", "likes", "dislikes",
         "personality", "biography", "additional",
     )
     values = [profile.get(field) for field in fields]

@@ -476,10 +476,12 @@ class CharacterBasicProfilePayload(BaseModel):
     self_intro: str = ""
     name_th: str = ""
     name_en: str = ""
+    division: str = ""
     age: int | None = None
     birthday_day: int | None = None
     birthday_month: int | None = None
     height_cm: int | None = None
+    dorm: str = ""
     likes: str = ""
     dislikes: str = ""
     personality: str = ""
@@ -511,8 +513,15 @@ def api_save_character_basic_profile(user_id: str, payload: CharacterBasicProfil
 
     profile["name_th"] = profile["name_th"].strip()
     profile["name_en"] = profile["name_en"].strip()
+    profile["division"] = profile["division"].strip()
+    profile["dorm"] = profile["dorm"].strip()
     if not profile["name_th"] or not profile["name_en"]:
         raise HTTPException(status_code=400, detail="Thai and English names are required")
+    if profile_type == "trainee":
+        if profile["division"] not in {"Junior Division", "Senior Division"}:
+            raise HTTPException(status_code=400, detail="Choose a valid division")
+        if profile["dorm"] not in {"Ritto", "Miho"}:
+            raise HTTPException(status_code=400, detail="Choose a valid dorm")
     if profile["age"] is not None and not 1 <= profile["age"] <= 150:
         raise HTTPException(status_code=400, detail="Age must be between 1 and 150")
     if profile["birthday_month"] not in range(1, 13) or profile["birthday_day"] not in range(1, 32):
