@@ -573,9 +573,7 @@ class AccountRolePayload(BaseModel):
 
 @app.get("/account/{user_id}/role")
 def api_get_account_role(user_id: str):
-    # Accounts without an explicit selection use the legacy trainee role in
-    # player summaries and other profile lookups, so report that same role.
-    return {"role": get_account_role(user_id) or "trainee"}
+    return {"role": get_account_role(user_id)}
 
 
 @app.post("/account/role")
