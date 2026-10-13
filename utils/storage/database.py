@@ -1501,10 +1501,10 @@ def get_available_trainees(trainer_user_id: str) -> list[dict]:
     rows = conn.execute(f"""
         SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url, p.fans
         FROM players p
-        LEFT JOIN account_roles ar ON CAST(ar.user_id AS TEXT) = CAST(p.user_id AS TEXT)
+        JOIN account_roles ar ON CAST(ar.user_id AS TEXT) = CAST(p.user_id AS TEXT)
         LEFT JOIN trainer_teams t ON t.trainee_user_id = CAST(p.user_id AS TEXT)
         WHERE p.profile_image_url IS NOT NULL AND TRIM(p.profile_image_url) <> ''
-          AND COALESCE(ar.role, 'trainee') = 'trainee'
+          AND ar.role = 'trainee'
           AND t.trainee_user_id IS NULL
           {same_account_filter}
         ORDER BY p.username COLLATE NOCASE
@@ -1518,7 +1518,10 @@ def get_trainer_team(trainer_user_id: str) -> list[dict]:
     rows = conn.execute("""
         SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url, p.fans
         FROM trainer_teams t JOIN players p ON CAST(p.user_id AS TEXT) = t.trainee_user_id
-        WHERE t.trainer_user_id = ? ORDER BY t.joined_at ASC
+        JOIN account_roles ar
+          ON CAST(ar.user_id AS TEXT) = CAST(p.user_id AS TEXT) AND ar.role = 'trainee'
+        WHERE t.trainer_user_id = ?
+        ORDER BY t.joined_at ASC
     """, (str(trainer_user_id),)).fetchall()
     conn.close()
     return [{"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"]), "fans": row["fans"]} for row in rows]
@@ -1531,6 +1534,8 @@ def get_trainee_trainer(trainee_user_id: str) -> Optional[dict]:
         FROM trainer_teams t
         JOIN profile_presets preset
           ON preset.user_id = t.trainer_user_id AND preset.profile_type = 'trainer'
+        JOIN account_roles ar
+          ON CAST(ar.user_id AS TEXT) = t.trainee_user_id AND ar.role = 'trainee'
         WHERE t.trainee_user_id = ?
     """, (str(trainee_user_id),)).fetchone()
     conn.close()
