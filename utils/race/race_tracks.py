@@ -502,7 +502,7 @@ RACE_SCHEDULE.extend([
     _local_dirt_race("NipponTVHai", "Nippon TV Hai", "Funabashi", "2026-09-30", "GII", 1800),
     _local_dirt_race("LadiesPrelude", "Ladies Prelude", "Oi", "2026-10-06", "GII", 1800),
     _local_dirt_race("TokyoHai", "Tokyo Hai", "Oi", "2026-10-08", "GII", 1200),
-    _local_dirt_race("MileChampionshipNambuHai", "Mile Championship Nambu Hai", "Morioka", "2026-10-12", "GI", 1600),
+    _local_dirt_race("MCNambuHai", "M.C. Nambu Hai", "Morioka", "2026-10-12", "GI", 1600),
     _local_dirt_race("TokyoDaishoten", "Tokyo Daishoten", "Oi", "2026-12-29", "GI", 2000),
 ])
 
