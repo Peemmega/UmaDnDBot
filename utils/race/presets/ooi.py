@@ -25,7 +25,7 @@ RACES = {
         'course': {'venue': 'Ooi', 'surface': 'dirt', 'distance_m': 2000, 'course_id': 1, 'direction': 'right'},
         'path': TRACK_PATHS['OOI_2000'],
         'fans': {'required': 12000, 'reward_first': 8000},
-        'story': 'บทสรุปขิงเจ้าแห่งฝุ่น ไม่ว่าจะมากจากที่ใด ฉันจะปดขยี้มันเอง',
+        'story': 'บทสรุปของเจ้าแห่งฝุ่น ไม่ว่าจะมากจากที่ใด ฉันจะปดขยี้มันเอง',
 
     },
     'TeioSho': {
