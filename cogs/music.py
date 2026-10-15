@@ -1,59 +1,60 @@
+from types import SimpleNamespace
+
 import discord
 from discord.ext import commands
-from discord import app_commands
 
-from utils.music_manager import join_user_voice, leave_voice, play_bgm, stop_bgm
+from utils.music_manager import (
+    get_music_choices,
+    join_user_voice,
+    leave_voice,
+    play_bgm,
+    stop_bgm,
+)
 
 
 class Music(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name="music_play", description="เล่นเพลงในห้องเสียง")
-    @app_commands.choices(
-        music=[
-            app_commands.Choice(name="Last Spurt", value="lastspurt"),
-            app_commands.Choice(name="Arima Kinen", value="arima_kinen"),
-            app_commands.Choice(name="G1 Race", value="g1_race"),
-            app_commands.Choice(name="Girl Legend U", value="girl_legend_u"),
-            app_commands.Choice(name="L'Arc", value="l_arc"),
-            app_commands.Choice(name="Glorious Moment", value="glorious_moment"),
-            app_commands.Choice(name="Cingrey OST", value="cingrey_ost_01"),
-            app_commands.Choice(name="Japan cup Special week", value="SpecialWeekAura"),
-        ]
-    )
-    async def music_play(
-        self,
-        interaction: discord.Interaction,
-        music: app_commands.Choice[str]
-    ):
-        await interaction.response.defer(ephemeral=True)
+    def _is_server_admin(self, ctx: commands.Context) -> bool:
+        return bool(ctx.guild and ctx.author.guild_permissions.administrator)
 
-        ok, msg = await join_user_voice(interaction)
-        if not ok:
-            await interaction.followup.send(msg, ephemeral=True)
+    @commands.group(name="music", invoke_without_command=True)
+    async def music_group(self, ctx: commands.Context):
+        await ctx.send("ใช้ `!music play <music_key>` หรือ `!music stop`")
+
+    @music_group.command(name="play")
+    async def music_play(self, ctx: commands.Context, music_key: str):
+        if not self._is_server_admin(ctx):
+            await ctx.send("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์")
             return
 
-        ok, msg = play_bgm(interaction.guild, music.value)
-        await interaction.followup.send(msg, ephemeral=True)
+        matching_key = next(
+            (key for key in get_music_choices() if key.lower() == music_key.lower()),
+            None,
+        )
+        if matching_key is None:
+            await ctx.send("ไม่พบเพลง ใช้ key เหล่านี้ได้: `" + "`, `".join(get_music_choices()) + "`")
+            return
 
-    # @app_commands.command(name="joinvc", description="ให้บอทเข้าห้องเสียงของคุณ")
-    # async def joinvc(self, interaction: discord.Interaction):
-    #     ok, msg = await join_user_voice(interaction)
-    #     await interaction.response.send_message(msg, ephemeral=True)
+        adapter = SimpleNamespace(guild=ctx.guild, user=ctx.author)
+        ok, message = await join_user_voice(adapter)
+        if not ok:
+            await ctx.send(message)
+            return
 
-    # @app_commands.command(name="leavevc", description="ให้บอทออกจากห้องเสียง")
-    # async def leavevc(self, interaction: discord.Interaction):
-    #     ok, msg = await leave_voice(interaction.guild)
-    #     await interaction.response.send_message(msg, ephemeral=True)
+        ok, message = play_bgm(ctx.guild, matching_key)
+        await ctx.send(message)
 
-    @app_commands.command(name="music_stop", description="หยุดเพลง")
-    async def music_stop(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
+    @music_group.command(name="stop")
+    async def music_stop(self, ctx: commands.Context):
+        if not self._is_server_admin(ctx):
+            await ctx.send("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์")
+            return
 
-        ok, msg = stop_bgm(interaction.guild)
-        ok, msg = await leave_voice(interaction.guild)
-        await interaction.followup.send(msg, ephemeral=True)    
+        stop_bgm(ctx.guild)
+        _ok, message = await leave_voice(ctx.guild)
+        await ctx.send(message)
 
 
 async def setup(bot: commands.Bot):

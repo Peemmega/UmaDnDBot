@@ -84,7 +84,6 @@ from utils.game_manager import (
     start_turn_confirmation,
     drain_pending_passive_skill_embeds,
     is_skill_on_cooldown,
-    add_mob_from_preset,
     add_player_as_mob_preset,
     build_mob_join_embed,
     process_mob_turn,
@@ -93,7 +92,6 @@ from utils.game_manager import (
     run_bot_race_test,
     refresh_player_profile_snapshot,
     format_player_reference,
-    set_race_record_type,
     get_game_rule,
     add_player,
 )
@@ -287,20 +285,94 @@ async def stage_autocomplete(
 
     return results[:25]
 
-async def mob_preset_autocomplete(
-    interaction: discord.Interaction,
-    current: str
-):
-    return [
-        app_commands.Choice(name=data['name'], value=key)
-        for key, data in MOB_PRESETS.items()
-        if current.lower() in data['name'].lower()
-    ][:25]
-
-
 class GameCog(commands.GroupCog, name="game"):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.group(name="game", invoke_without_command=True)
+    async def game_admin_group(self, ctx: commands.Context):
+        await ctx.send("ใช้ `!game join_as_mob`, `!game skil_turn` หรือ `!game test_bot_race`")
+
+    @game_admin_group.command(name="join_as_mob")
+    async def join_as_mob_admin(
+        self,
+        ctx: commands.Context,
+        target: discord.Member,
+        preset: str,
+    ):
+        if not self._is_server_admin(ctx):
+            await ctx.send("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์")
+            return
+
+        if preset not in MOB_PRESETS:
+            await ctx.send("ไม่พบ preset นี้ กรุณาใช้ preset key เช่น `rookie_front`")
+            return
+
+        success, message = add_player_as_mob_preset(
+            ctx.channel.id,
+            target.id,
+            target.display_name,
+            preset,
+        )
+        if not success:
+            await ctx.send(message)
+            return
+
+        game = get_game(ctx.channel.id)
+        player = (game or {}).get("players", {}).get(target.id)
+        if player is None:
+            await ctx.send("เพิ่มผู้เล่นแล้ว แต่ไม่พบข้อมูลผู้เล่นในห้อง")
+            return
+
+        embed = build_mob_join_embed(game, player)
+        embed.title = "🏇 เพิ่มผู้เล่นด้วย Mob Preset แล้ว"
+        embed.add_field(name="ผู้เล่น", value=target.mention, inline=True)
+        embed.add_field(name="Preset", value=MOB_PRESETS[preset]["name"], inline=True)
+        await ctx.send(embed=embed)
+
+    @game_admin_group.command(name="skil_turn", aliases=["skip_turn"])
+    async def skil_turn_admin(self, ctx: commands.Context):
+        if not self._is_server_admin(ctx):
+            await ctx.send("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์")
+            return
+
+        game = get_game(ctx.channel.id)
+        if game is None:
+            await ctx.send("ห้องนี้ยังไม่มีเกม")
+            return
+        if not game.get("started"):
+            await ctx.send("เกมยังไม่เริ่ม")
+            return
+
+        await ctx.send(f"⏭️ Admin ข้ามเทิร์น {game.get('turn')}")
+        advanced = await self._process_next_turn_core(
+            channel_id=ctx.channel.id,
+            send_func=ctx.send,
+            guild=ctx.guild,
+            title_suffix="(Admin)",
+            require_all_confirmations=False,
+            require_all_rolls=False,
+        )
+        if not advanced:
+            await ctx.send("ข้ามเทิร์นไม่สำเร็จ อาจมีคำสั่งข้ามเทิร์นอื่นกำลังทำงาน")
+
+    @game_admin_group.command(name="test_bot_race")
+    async def test_bot_race_admin(self, ctx: commands.Context):
+        if not self._is_server_admin(ctx):
+            await ctx.send("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์")
+            return
+
+        async def send_response(content=None, **kwargs):
+            kwargs.pop("ephemeral", None)
+            return await ctx.send(content, **kwargs)
+
+        adapter = SimpleNamespace(
+            channel_id=ctx.channel.id,
+            guild=ctx.guild,
+            user=ctx.author,
+            followup=SimpleNamespace(send=send_response),
+        )
+        await self.run_test_bot_race_command_logic(adapter)
 
     async def run_test_bot_race_command_logic(self, interaction: discord.Interaction):
         channel_id = interaction.channel_id
@@ -310,7 +382,11 @@ class GameCog(commands.GroupCog, name="game"):
             await interaction.followup.send("ยังไม่มีเกมในห้องนี้", ephemeral=True)
             return
 
-        if not is_owner(channel_id, interaction.user.id):
+        is_server_admin = bool(
+            interaction.guild
+            and interaction.user.guild_permissions.administrator
+        )
+        if not is_owner(channel_id, interaction.user.id) and not is_server_admin:
             await interaction.followup.send(
                 "มีแค่เจ้าของห้องเท่านั้นที่ใช้คำสั่งนี้ได้",
                 ephemeral=True
@@ -680,184 +756,6 @@ class GameCog(commands.GroupCog, name="game"):
             return
         game["players"].pop(user_id, None)
         await ctx.send(f"นำ <@{user_id}> (ลำดับ {number}) ออกจากห้องแล้ว")
-
-    @app_commands.command(
-        name="official",
-        description="ตั้งการแข่งขันในห้องนี้เป็น Official ก่อนเริ่มเกม"
-    )
-    async def official(self, interaction: discord.Interaction):
-        game = get_game(interaction.channel_id)
-
-        if game is None:
-            await interaction.response.send_message(
-                "ยังไม่มีเกมในห้องนี้",
-                ephemeral=True,
-            )
-            return
-
-        if not is_owner(interaction.channel_id, interaction.user.id):
-            await interaction.response.send_message(
-                "เฉพาะเจ้าของห้องเท่านั้นที่ตั้งการแข่งขันเป็น Official ได้",
-                ephemeral=True,
-            )
-            return
-
-        success, message = set_race_record_type(interaction.channel_id, "official")
-        if not success:
-            await interaction.response.send_message(message, ephemeral=True)
-            return
-
-        await interaction.response.send_message(
-            "✅ ห้องนี้ถูกตั้งเป็น **Official** แล้ว ผลการแข่งขันจะถูกนับใน Leaderboard เมื่อแข่งจบ",
-            ephemeral=False,
-        )
-
-    @app_commands.command(
-        name="test_bot_race",
-        description="ทดสอบให้บอทวิ่งจนจบ ส่ง log ไปห้อง log และปิดเกม"
-    )
-    async def test_bot_race(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-        await self.run_test_bot_race_command_logic(interaction)
-
-    @discord.app_commands.command(name="skip_turn", description="ข้ามไปเทิร์นถัดไปทันที (เฉพาะเจ้าของห้อง)")
-    async def skip_turn(self, interaction: discord.Interaction):
-        game = get_game(interaction.channel_id)
-
-        if game is None:
-            await interaction.response.send_message("ยังไม่มีเกมในห้องนี้", ephemeral=True)
-            return
-
-        if not game["started"]:
-            await interaction.response.send_message("เกมยังไม่เริ่ม", ephemeral=True)
-            return
-
-        if not is_owner(interaction.channel_id, interaction.user.id):
-            await interaction.response.send_message("มีแค่เจ้าของห้องเท่านั้นที่ข้ามเทิร์นได้", ephemeral=True)
-            return
-
-        await interaction.response.defer()
-        await interaction.followup.send(f"⏭️ <@{interaction.user.id}> ข้ามเทิร์น {game['turn']}")
-        await self.process_next_turn(
-            interaction,
-            require_all_confirmations=False,
-            require_all_rolls=False,
-        )
-
-    @app_commands.command(name="add_mob", description="เพิ่ม mob preset")
-    @app_commands.autocomplete(preset=mob_preset_autocomplete)
-    async def add_mob(
-        self,
-        interaction: discord.Interaction,
-        preset: str
-    ):
-        success, message = add_mob_from_preset(interaction.channel_id, preset)
-
-        if not success:
-            await interaction.response.send_message(message, ephemeral=True)
-            return
-
-        game = get_game(interaction.channel_id)
-        if game is None:
-            await interaction.response.send_message("ไม่พบข้อมูลเกม", ephemeral=True)
-            return
-
-        # หา mob ที่เพิ่งเพิ่มล่าสุด
-        mob_players = [
-            info for uid, info in game["players"].items()
-            if str(uid).startswith("mob_")
-        ]
-
-        if not mob_players:
-            await interaction.response.send_message("เพิ่ม mob สำเร็จ แต่ไม่พบข้อมูล mob", ephemeral=True)
-            return
-
-        mob = mob_players[-1]
-        embed = build_mob_join_embed(game, mob)
-
-        await interaction.response.send_message(embed=embed)
-
-    @app_commands.command(name="add_rookies", description="เพิ่ม rookie ทั้ง 8 ตัวลงสนาม")
-    @app_commands.describe(level="ระดับ mob 1-8")
-    @app_commands.choices(level=[
-        app_commands.Choice(name="Level 1", value=1),
-        app_commands.Choice(name="Level 2", value=2),
-        app_commands.Choice(name="Level 3", value=3),
-        app_commands.Choice(name="Level 4", value=4),
-        app_commands.Choice(name="Level 5", value=5),
-        app_commands.Choice(name="Level 6", value=6),
-        app_commands.Choice(name="Level 7", value=7),
-        app_commands.Choice(name="Level 8", value=8),
-    ])
-    async def add_rookies(
-        self,
-        interaction: discord.Interaction,
-        level: app_commands.Choice[int],
-    ):
-        rookie_presets = [
-            "rookie_front",
-            "rookie_pace",
-            "rookie_late",
-            "rookie_end",
-            "rookie_alt_front",
-            "rookie_alt_pace",
-            "rookie_alt_late",
-            "rookie_alt_end",
-        ]
-
-        added = []
-
-        for preset_key in rookie_presets:
-            success, message = add_mob_from_preset(
-                interaction.channel_id,
-                preset_key,
-                level.value
-            )
-
-            if not success:
-                await interaction.response.send_message(message, ephemeral=True)
-                return
-
-            added.append(message)
-
-        await interaction.response.send_message(
-            "เพิ่ม Rookie ทั้ง 8 ตัวเรียบร้อย\n" + "\n".join(added)
-        )
-
-    @app_commands.command(name="join_as_mob", description="เข้าร่วมโดยใช้ mob preset")
-    @app_commands.autocomplete(preset=mob_preset_autocomplete)
-    async def join_as_mob(
-        self,
-        interaction: discord.Interaction,
-        preset: str
-    ):
-        success, message = add_player_as_mob_preset(
-            interaction.channel_id,
-            interaction.user.id,
-            interaction.user.display_name,
-            preset
-        )
-
-        if not success:
-            await interaction.response.send_message(message, ephemeral=True)
-            return
-
-        game = get_game(interaction.channel_id)
-        if game is None:
-            await interaction.response.send_message("ไม่พบข้อมูลเกม", ephemeral=True)
-            return
-
-        player = game["players"].get(interaction.user.id)
-        if player is None:
-            await interaction.response.send_message("เข้าร่วมสำเร็จ แต่ไม่พบข้อมูลผู้เล่นในเกม", ephemeral=True)
-            return
-
-        embed = build_mob_join_embed(game, player)
-        embed.title = "🏇 ผู้เล่นเข้าร่วมด้วย Mob Preset!"
-        embed.add_field(name="ผู้เล่น", value=interaction.user.mention, inline=True)
-        embed.add_field(name="Preset", value=MOB_PRESETS[preset]['name'], inline=True)
-
-        await interaction.response.send_message(embed=embed)
 
     async def _process_next_turn_core(
         self,

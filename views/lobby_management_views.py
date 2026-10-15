@@ -7,6 +7,7 @@ from utils.game_manager import (
     set_game_rule,
     add_mob_from_preset,
     build_mob_join_embed,
+    set_race_record_type,
 )
 from utils.mob.mob_presets import MOB_PRESETS
 
@@ -29,6 +30,7 @@ RULE_LABELS = {
     "NoDebuff": "NoDebuff · ปิด Debuff",
     "Weather": "Weather · สภาพอากาศ",
     "FastMode": "Fast Mode · รูปแบบผลทอยบอท",
+    "RaceType": "ประเภทการแข่งขัน · Official / Practice",
 }
 WEATHER_LABELS = {
     "none": "ไม่กำหนด",
@@ -89,6 +91,8 @@ class SettingsView(discord.ui.View):
         embed.add_field(name="NoDebuff", value="เปิด" if get_game_rule(game, "NoDebuff") else "ปิด", inline=True)
         embed.add_field(name="Weather", value=WEATHER_LABELS.get(weather, weather), inline=True)
         embed.add_field(name="Fast Mode", value="เปิด · แสดงผลแบบข้อความ" if fast_mode else "ปิด · แสดงภาพผลทอย", inline=True)
+        record_type = str(game.get("record_type", "practice")).lower()
+        embed.add_field(name="ประเภทการแข่งขัน", value="Official" if record_type == "official" else "Practice", inline=True)
         embed.set_footer(text=f"กำลังแก้: {RULE_LABELS.get(self.selected_rule, self.selected_rule)}")
         return embed
 
@@ -120,6 +124,11 @@ class RuleValueSelect(discord.ui.Select):
                 discord.SelectOption(label="ปิด · แสดงภาพผลทอย", value="detailed"),
                 discord.SelectOption(label="เปิด · แสดงผลแบบข้อความ", value="compact"),
             ]
+        elif rule == "RaceType":
+            options = [
+                discord.SelectOption(label="Practice", value="practice"),
+                discord.SelectOption(label="Official", value="official"),
+            ]
         else:
             options = [discord.SelectOption(label="ปิด", value="false"), discord.SelectOption(label="เปิด", value="true")]
         super().__init__(placeholder="เลือกค่า", options=options, row=1)
@@ -133,6 +142,11 @@ class RuleValueSelect(discord.ui.Select):
         value = self.values[0]
         if rule == "FastMode":
             game["mob_render_mode"] = value
+        elif rule == "RaceType":
+            success, result = set_race_record_type(self.parent_view.channel_id, value)
+            if not success:
+                await interaction.response.send_message(str(result), ephemeral=True)
+                return
         else:
             success, result = set_game_rule(
                 self.parent_view.channel_id,

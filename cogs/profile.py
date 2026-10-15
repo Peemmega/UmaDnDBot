@@ -185,31 +185,5 @@ class ProfileCog(commands.Cog):
     #     )
 
 
-    @discord.app_commands.command(name="set_all_att", description="ตั้งค่า aptitude ทั้งหมด (สำหรับทดสอบ)")
-    @discord.app_commands.describe(value="ระดับ 1-8")
-    @discord.app_commands.choices(value=[
-        discord.app_commands.Choice(name="1", value=1),
-        discord.app_commands.Choice(name="2", value=2),
-        discord.app_commands.Choice(name="3", value=3),
-        discord.app_commands.Choice(name="4", value=4),
-        discord.app_commands.Choice(name="5", value=5),
-        discord.app_commands.Choice(name="6", value=6),
-        discord.app_commands.Choice(name="7", value=7),
-        discord.app_commands.Choice(name="8", value=8),
-    ])
-    async def set_all_att(self, interaction: discord.Interaction, value: discord.app_commands.Choice[int]):
-        await interaction.response.defer(ephemeral=True)
-        ensure_player(interaction.user.id, interaction.user.name)
-
-        set_all_aptitude(interaction.user.id, value.value)
-
-        grade = GRADE_TEXT.get(value.value, str(value.value))
-
-        await interaction.followup.send(
-            f"📊 ตั้งค่า Aptitude ทั้งหมดเป็นระดับ {grade} ({value.value})",
-            ephemeral=True
-        )
-
-
 async def setup(bot):
     await bot.add_cog(ProfileCog(bot))
