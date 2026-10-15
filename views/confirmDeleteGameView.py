@@ -16,7 +16,12 @@ class ConfirmDeleteView(discord.ui.View):
             )
             return False
 
-        if interaction.user.id != game["owner_id"]:
+        is_game_owner = interaction.user.id == game["owner_id"]
+        is_admin = bool(
+            interaction.guild
+            and interaction.user.guild_permissions.administrator
+        )
+        if not (is_game_owner or is_admin):
             await interaction.response.send_message(
                 "มีแค่ผู้สร้างเกมเท่านั้นที่ลบเกมได้",
                 ephemeral=True

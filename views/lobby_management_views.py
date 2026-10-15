@@ -1,7 +1,13 @@
 import discord
 import os
 
-from utils.game_manager import get_game, get_game_rule, set_game_rule, add_mob_from_preset
+from utils.game_manager import (
+    get_game,
+    get_game_rule,
+    set_game_rule,
+    add_mob_from_preset,
+    build_mob_join_embed,
+)
 from utils.mob.mob_presets import MOB_PRESETS
 
 
@@ -202,6 +208,8 @@ class RookieLevelSelect(discord.ui.Select):
             await interaction.response.send_message(error, ephemeral=True)
             return
         level = int(self.values[0])
+        game = get_game(self.channel_id)
+        existing_ids = set(game["players"])
         added = []
         for preset_key in ROOKIE_PRESET_KEYS:
             success, message = add_mob_from_preset(self.channel_id, preset_key, level)
@@ -209,11 +217,27 @@ class RookieLevelSelect(discord.ui.Select):
                 await interaction.response.send_message(message, ephemeral=True)
                 return
             added.append(message)
+        rookie_players = [
+            player
+            for user_id, player in game["players"].items()
+            if user_id not in existing_ids and player.get("is_mob")
+        ]
+        announcement = build_mob_join_embed(game, rookie_players[0])
+        announcement.title = "🏇 Rookie ทั้ง 8 ตัวเข้าร่วมสนามแล้ว!"
+        announcement.add_field(
+            name="Rookie Bots",
+            value="\n".join(
+                f"• {player.get('display_name', player.get('username', 'Rookie'))}"
+                for player in rookie_players
+            ),
+            inline=False,
+        )
         await interaction.response.edit_message(
             content=f"เพิ่ม Rookie ทั้ง 8 ตัวที่ Level {level} แล้ว\n" + "\n".join(added),
             embed=None,
             view=None,
         )
+        await interaction.channel.send(embed=announcement)
 
 
 class UmaPageView(discord.ui.View):
@@ -294,7 +318,14 @@ class UmaLevelSelect(discord.ui.Select):
             await interaction.response.send_message(error, ephemeral=True)
             return
         success, message = add_mob_from_preset(self.channel_id, self.preset_key, int(self.values[0]))
-        await interaction.response.edit_message(content=message if success else f"เพิ่มไม่สำเร็จ: {message}", embed=None, view=None if success else self.view)
+        if not success:
+            await interaction.response.edit_message(content=f"เพิ่มไม่สำเร็จ: {message}", embed=None, view=self.view)
+            return
+        game = get_game(self.channel_id)
+        mob_id = next(reversed(game["players"]))
+        mob = game["players"][mob_id]
+        await interaction.response.edit_message(content=message, embed=None, view=None)
+        await interaction.channel.send(embed=build_mob_join_embed(game, mob))
 
 
 class ReturnToUmaPageButton(discord.ui.Button):
