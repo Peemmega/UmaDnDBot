@@ -478,33 +478,85 @@ RACE_SCHEDULE = [
 # Additional 2026 local dirt-grade races from JRA's published schedule, limited
 # to venues with track definitions in this app. Keep the community start time
 # at 20:00 GMT+7; races without race presets remain calendar-only.
-RACE_SCHEDULE.extend([
-    _local_dirt_race("ZenNipponJuniorYushun", "Zen-Nippon Junior Yushun", "Kawasaki", "2026-12-16", "GI", 1600),
-    _local_dirt_race("BluebirdCup", "Bluebird Cup", "Funabashi", "2026-01-21", "GIII", 1800),
-    _local_dirt_race("KumotoriSho", "Kumotori Sho", "Oi", "2026-02-18", "GIII", 1800),
-    _local_dirt_race("KeihinHai", "Keihin Hai", "Oi", "2026-03-25", "GII", 1700),
-    _local_dirt_race("HanedaHai", "Haneda Hai", "Oi", "2026-04-29", "GI", 1800),
-    _local_dirt_race("TokyoDerby", "Tokyo Derby", "Oi", "2026-06-10", "GI", 2000),
-    _local_dirt_race("KantoOaks", "Kanto Oaks", "Kawasaki", "2026-06-17", "GII", 2100),
-    _local_dirt_race("FuraikataSho", "Furaikata Sho", "Morioka", "2026-09-01", "GII", 2000),
-    _local_dirt_race("MarineCup", "Marine Cup", "Funabashi", "2026-10-01", "GIII", 1800),
-    _local_dirt_race("JapanDirtClassic", "Japan Dirt Classic", "Oi", "2026-10-07", "GI", 2000),
-    _local_dirt_race("QueenSho", "Queen Sho", "Funabashi", "2026-02-11", "GIII", 1800),
-    _local_dirt_race("DioliteKinen", "Diolite Kinen", "Funabashi", "2026-03-11", "GII", 2400),
-    _local_dirt_race("KawasakiKinen", "Kawasaki Kinen", "Kawasaki", "2026-04-08", "GI", 2100),
-    _local_dirt_race("TokyoSprint", "Tokyo Sprint", "Oi", "2026-04-15", "GIII", 1200),
-    _local_dirt_race("KashiwaKinen", "Kashiwa Kinen", "Funabashi", "2026-05-05", "GI", 1600),
-    _local_dirt_race("EmpressHai", "Empress Hai", "Kawasaki", "2026-05-13", "GII", 2100),
-    _local_dirt_race("TeioSho", "Teio Sho", "Oi", "2026-07-01", "GI", 2000),
-    _local_dirt_race("SparkingLadyCup", "Sparking Lady Cup", "Kawasaki", "2026-07-08", "GIII", 1600),
-    _local_dirt_race("MercuryCup", "Mercury Cup", "Morioka", "2026-07-20", "GIII", 2000),
-    _local_dirt_race("ClusterCup", "Cluster Cup", "Morioka", "2026-08-11", "GIII", 1200),
-    _local_dirt_race("NipponTVHai", "Nippon TV Hai", "Funabashi", "2026-09-30", "GII", 1800),
-    _local_dirt_race("LadiesPrelude", "Ladies Prelude", "Oi", "2026-10-06", "GII", 1800),
-    _local_dirt_race("TokyoHai", "Tokyo Hai", "Oi", "2026-10-08", "GII", 1200),
-    _local_dirt_race("MCNambuHai", "M.C. Nambu Hai", "Morioka", "2026-10-12", "GI", 1600),
-    _local_dirt_race("TokyoDaishoten", "Tokyo Daishoten", "Oi", "2026-12-29", "GI", 2000),
-])
+RACE_SCHEDULE.extend(
+    [
+        _local_dirt_race(
+            "ZenNipponJuniorYushun",
+            "Zen-Nippon Junior Yushun",
+            "Kawasaki",
+            "2026-12-16",
+            "GI",
+            1600,
+        ),
+        _local_dirt_race(
+            "BluebirdCup", "Bluebird Cup", "Funabashi", "2026-01-21", "GIII", 1800
+        ),
+        _local_dirt_race(
+            "KumotoriSho", "Kumotori Sho", "Oi", "2026-02-18", "GIII", 1800
+        ),
+        _local_dirt_race("KeihinHai", "Keihin Hai", "Oi", "2026-03-25", "GII", 1700),
+        _local_dirt_race("HanedaHai", "Haneda Hai", "Oi", "2026-04-29", "GI", 1800),
+        _local_dirt_race("TokyoDerby", "Tokyo Derby", "Oi", "2026-06-10", "GI", 2000),
+        _local_dirt_race(
+            "KantoOaks", "Kanto Oaks", "Kawasaki", "2026-06-17", "GII", 2100
+        ),
+        _local_dirt_race(
+            "FuraikataSho", "Furaikata Sho", "Morioka", "2026-09-01", "GII", 2000
+        ),
+        _local_dirt_race(
+            "MarineCup", "Marine Cup", "Funabashi", "2026-10-01", "GIII", 1800
+        ),
+        _local_dirt_race(
+            "JapanDirtClassic", "Japan Dirt Classic", "Oi", "2026-10-07", "GI", 2000
+        ),
+        _local_dirt_race(
+            "QueenSho", "Queen Sho", "Funabashi", "2026-02-11", "GIII", 1800
+        ),
+        _local_dirt_race(
+            "DioliteKinen", "Diolite Kinen", "Funabashi", "2026-03-11", "GII", 2400
+        ),
+        _local_dirt_race(
+            "KawasakiKinen", "Kawasaki Kinen", "Kawasaki", "2026-04-08", "GI", 2100
+        ),
+        _local_dirt_race(
+            "TokyoSprint", "Tokyo Sprint", "Oi", "2026-04-15", "GIII", 1200
+        ),
+        _local_dirt_race(
+            "KashiwaKinen", "Kashiwa Kinen", "Funabashi", "2026-05-05", "GI", 1600
+        ),
+        _local_dirt_race(
+            "EmpressHai", "Empress Hai", "Kawasaki", "2026-05-13", "GII", 2100
+        ),
+        _local_dirt_race("TeioSho", "Teio Sho", "Oi", "2026-07-01", "GI", 2000),
+        _local_dirt_race(
+            "SparkingLadyCup",
+            "Sparking Lady Cup",
+            "Kawasaki",
+            "2026-07-08",
+            "GIII",
+            1600,
+        ),
+        _local_dirt_race(
+            "MercuryCup", "Mercury Cup", "Morioka", "2026-07-20", "GIII", 2000
+        ),
+        _local_dirt_race(
+            "ClusterCup", "Cluster Cup", "Morioka", "2026-08-11", "GIII", 1200
+        ),
+        _local_dirt_race(
+            "NipponTVHai", "Nippon TV Hai", "Funabashi", "2026-09-30", "GII", 1800
+        ),
+        _local_dirt_race(
+            "LadiesPrelude", "Ladies Prelude", "Oi", "2026-10-06", "GII", 1800
+        ),
+        _local_dirt_race("TokyoHai", "Tokyo Hai", "Oi", "2026-10-08", "GII", 1200),
+        _local_dirt_race(
+            "MCNambuHai", "M.C. Nambu Hai", "Morioka", "2026-10-12", "GI", 1600
+        ),
+        _local_dirt_race(
+            "TokyoDaishoten", "Tokyo Daishoten", "Oi", "2026-12-29", "GI", 2000
+        ),
+    ]
+)
 
 # Race definitions are intentionally stored separately from path behaviour.
 from utils.race.race_preset_data import (
