@@ -1050,7 +1050,7 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
             "success": True,
             "zone": {
                 "name": zone_name,
-                "image_url": payload.image_url,
+                "image_url": resolve_public_url(payload.image_url),
                 "points": max_points,
                 "build": safe_build,
             }

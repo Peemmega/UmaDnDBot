@@ -2470,7 +2470,7 @@ def get_player(user_id: int) -> Optional[dict]:
 
         "zone": {
             "name": row[22],
-            "image_url": row[23],
+            "image_url": resolve_public_url(row[23]),
             "points": row[24],
             "build": zone_build,
         }
