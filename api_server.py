@@ -505,11 +505,11 @@ def api_save_character_basic_profile(user_id: str, payload: CharacterBasicProfil
         word_count = word_counts.get(field, len(profile[field].split()))
         if word_count < 0 or word_count > 60:
             raise HTTPException(status_code=400, detail=f"{field} must be 60 words or fewer")
-    for field in ("personality", "biography", "additional"):
+    for field, limit in (("personality", 200), ("biography", 800), ("additional", 200)):
         profile[field] = str(profile[field] or "").strip()
         word_count = word_counts.get(field, len(profile[field].split()))
-        if word_count < 0 or word_count > 200:
-            raise HTTPException(status_code=400, detail=f"{field} must be 200 words or fewer")
+        if word_count < 0 or word_count > limit:
+            raise HTTPException(status_code=400, detail=f"{field} must be {limit} words or fewer")
 
     profile["name_th"] = profile["name_th"].strip()
     profile["name_en"] = profile["name_en"].strip()
