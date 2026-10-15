@@ -1618,7 +1618,7 @@ def build_run_embed(
 
 def has_real_player(game: dict) -> bool:
         return any(
-            not player.get("is_mob", False)
+            not player.get("is_mob", False) and not player.get("bot_auto", False)
             for player in game["players"].values()
         )
 
@@ -1702,6 +1702,9 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
         "profile_image_url": db_player.get("profile_image_url") if db_player else "",
         "display_name": display_name,
         "style": style,
+        "is_mob": False,
+        "bot_auto": False,
+        "auto_control_turn": None,
         "current_max_speed": MAX_SPEED_PHASE[style]["start"],
         "score": 0,
         "last_roll_turn": -1,
@@ -2557,7 +2560,7 @@ def process_mob_turn(channel_id: int, user_id: str):
     if player is None:
         return False, {"message": "ไม่พบ mob"}
 
-    if not player.get("is_mob"):
+    if not player.get("is_mob") and not player.get("bot_auto") and player.get("auto_control_turn") != game.get("turn"):
         return False, {"message": "ผู้เล่นนี้ไม่ใช่ mob"}
 
     # This function can be reached from both the turn-start flow and the

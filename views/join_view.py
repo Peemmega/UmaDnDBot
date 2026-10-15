@@ -26,6 +26,7 @@ from utils.race.race_weather import weather_label
 import math
 from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
 from utils.image_encoding import encode_png
+from views.lobby_management_views import AddBotView, SettingsView
 
 def build_phase_text(max_turn: int) -> str:
     phase_size = max_turn / 4
@@ -183,6 +184,33 @@ class LobbyView(discord.ui.View):
             ephemeral=True
         )
 
+    @discord.ui.button(label="Settings", style=discord.ButtonStyle.secondary, emoji="⚙️", row=1)
+    async def settings_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        game = get_game(self.channel_id)
+        if game is None or game.get("started"):
+            await interaction.response.send_message("ไม่พบห้องรอแข่งที่แก้ Settings ได้", ephemeral=True)
+            return
+        if not is_owner(self.channel_id, interaction.user.id):
+            await interaction.response.send_message("เปิดดูและแก้ Settings ได้เฉพาะผู้สร้างห้อง", ephemeral=True)
+            return
+        view = SettingsView(self.channel_id, interaction.user.id)
+        await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
+
+    @discord.ui.button(label="Add bot", style=discord.ButtonStyle.secondary, emoji="🤖", row=1)
+    async def add_bot_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        game = get_game(self.channel_id)
+        if game is None:
+            await interaction.response.send_message("ไม่พบเกมในห้องนี้", ephemeral=True)
+            return
+        if game.get("started"):
+            await interaction.response.send_message("เริ่มแข่งแล้ว จึงเพิ่ม Bot ไม่ได้", ephemeral=True)
+            return
+        await interaction.response.send_message(
+            f"เพิ่ม Bot ลงสนาม: {game.get('stage_name', 'สนาม')}",
+            view=AddBotView(self.channel_id),
+            ephemeral=True,
+        )
+
     @discord.ui.button(label="เริ่มเกม", style=discord.ButtonStyle.primary, emoji="▶️")
     async def start_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         game = get_game(self.channel_id)
@@ -229,7 +257,7 @@ class LobbyView(discord.ui.View):
             await interaction.followup.send(embed=passive_embed)
 
         for user_id, player in game["players"].items():
-            if player.get("is_mob"):
+            if player.get("is_mob") or player.get("bot_auto"):
                 success, payload = process_mob_turn(self.channel_id, user_id)
                 if not success:
                     print(f"Mob turn failed for {user_id}: {payload.get('message', payload)}")

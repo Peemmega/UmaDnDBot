@@ -49,6 +49,13 @@ class TurnEngine:
         game["awaiting_turn_confirm"] = True
         game["turn_confirmation_turn"] = game.get("turn")
         game["turn_confirmation_token"] = int(game.get("turn_confirmation_token", 0)) + 1
+        game["turn_confirmations"].update(
+            player_id
+            for player_id, player in game.get("players", {}).items()
+            if player.get("is_mob")
+            or player.get("bot_auto")
+            or player.get("auto_control_turn") == game.get("turn")
+        )
         schedule_next_wet_lanes(game)
 
         if game.get("next_wet_lanes") and revise_mob_lanes is not None:
@@ -90,6 +97,8 @@ class TurnEngine:
             player_id
             for player_id, info in game.get("players", {}).items()
             if not info.get("is_mob")
+            and not info.get("bot_auto")
+            and info.get("auto_control_turn") != current_turn
         }
         confirmed_count = len(game["turn_confirmations"] & required_confirmations)
         return TurnEngineResult(
@@ -137,6 +146,8 @@ class TurnEngine:
                 player_id
                 for player_id, info in game.get("players", {}).items()
                 if not info.get("is_mob")
+                and not info.get("bot_auto")
+                and info.get("auto_control_turn") != current_turn
             }
             if (
                 not game.get("awaiting_turn_confirm")

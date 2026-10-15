@@ -3,6 +3,7 @@ import os
 from discord.ext import commands
 from discord import app_commands
 import random
+from types import SimpleNamespace
 
 from utils.race_dice_preview import create_race_dice_preview
 from utils.image_encoding import encode_png
@@ -93,8 +94,8 @@ from utils.game_manager import (
     refresh_player_profile_snapshot,
     format_player_reference,
     set_race_record_type,
-    set_game_rule,
     get_game_rule,
+    add_player,
 )
 
 def build_race_log_embed(game: dict, ranked_players):
@@ -368,7 +369,7 @@ class GameCog(commands.GroupCog, name="game"):
         """Finish unrolled Mobs so the player's roll can close the turn."""
         current_turn = game.get("turn")
         for user_id, player in list(game.get("players", {}).items()):
-            if not player.get("is_mob") or player.get("last_roll_turn") == current_turn:
+            if not (player.get("is_mob") or player.get("bot_auto")) or player.get("last_roll_turn") == current_turn:
                 continue
 
             success, payload = process_mob_turn(interaction.channel_id, user_id)
@@ -403,6 +404,41 @@ class GameCog(commands.GroupCog, name="game"):
                         path_label=payload["path_effect"]["label"],
                     )
                 )
+
+    async def _send_automated_roll_result(
+        self,
+        interaction: discord.Interaction,
+        user_id,
+        player: dict,
+        payload: dict,
+    ) -> None:
+        if payload.get("zone_preview"):
+            await interaction.followup.send(embed=payload["zone_preview"])
+        for skill_embed in payload.get("skill_embeds", []):
+            await interaction.followup.send(embed=skill_embed)
+
+        game = get_game(interaction.channel_id)
+        if should_render_mob_preview(game):
+            card = await create_race_dice_preview(
+                game_player=player,
+                result=payload["result"],
+                payload=payload,
+                path_label=payload["path_effect"]["label"],
+                character_image_url=resolve_player_render_image(player),
+            )
+            await interaction.followup.send(
+                content=f"Admin ทอยแทน <@{user_id}>",
+                file=discord.File(await encode_png(card), filename="race_dice_preview.png"),
+            )
+        else:
+            await interaction.followup.send(
+                f"Admin ทอยแทน <@{user_id}>\n" + build_mob_fast_roll_text(
+                    game_player=player,
+                    result=payload["result"],
+                    payload=payload,
+                    path_label=payload["path_effect"]["label"],
+                )
+            )
 
     async def handle_after_roll(self, interaction: discord.Interaction, game: dict):
         if not game.get("awaiting_turn_confirm"):
@@ -522,6 +558,129 @@ class GameCog(commands.GroupCog, name="game"):
             ephemeral=True,
         )
 
+    def _is_server_admin(self, ctx: commands.Context) -> bool:
+        return bool(ctx.guild and ctx.author.guild_permissions.administrator)
+
+    def _prefix_interaction_adapter(self, ctx: commands.Context):
+        return SimpleNamespace(
+            channel_id=ctx.channel.id,
+            followup=SimpleNamespace(send=ctx.send),
+        )
+
+    @commands.command(name="race_add", aliases=["raceadd"])
+    async def race_add(self, ctx: commands.Context, target: discord.Member, style: str):
+        if not self._is_server_admin(ctx):
+            await ctx.send("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์")
+            return
+        style = style.strip().capitalize()
+        if style not in {"Front", "Pace", "Late", "End"}:
+            await ctx.send("ระบุสายวิ่งเป็น Front, Pace, Late หรือ End เช่น `!race_add @สมาชิก Pace`")
+            return
+        success, message = add_player(ctx.channel.id, target.id, target.display_name, target.display_avatar.url, style)
+        if not success:
+            await ctx.send(message)
+            return
+        game = get_game(ctx.channel.id)
+        await ctx.send(f"เพิ่ม {target.mention} ลงทะเบียนลำดับที่ {len(game['players'])} แล้ว (สาย {style})")
+
+    @commands.command(name="race_auto", aliases=["raceauto"])
+    async def race_auto(self, ctx: commands.Context, target: discord.Member, mode: str):
+        if not self._is_server_admin(ctx):
+            await ctx.send("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์")
+            return
+        mode = mode.strip().lower()
+        if mode not in {"on", "off", "เปิด", "ปิด"}:
+            await ctx.send("ระบุ on หรือ off เช่น `!race_auto @สมาชิก on`")
+            return
+        enabled = mode in {"on", "เปิด"}
+        game = get_game(ctx.channel.id)
+        player = game.get("players", {}).get(target.id) if game else None
+        if player is None or player.get("is_mob"):
+            await ctx.send("ไม่พบผู้เข้าแข่งขันคนนี้ในห้อง")
+            return
+        player["bot_auto"] = enabled
+        if enabled and game.get("started") and player.get("last_roll_turn") != game.get("turn"):
+            player["auto_control_turn"] = game.get("turn")
+            success, payload = process_mob_turn(ctx.channel.id, target.id)
+            if not success:
+                await ctx.send(payload.get("message", "บอทเล่นแทนไม่สำเร็จ"))
+                return
+            adapter = self._prefix_interaction_adapter(ctx)
+            await self._send_automated_roll_result(adapter, target.id, player, payload)
+            await self.handle_after_roll(adapter, game)
+            return
+        await ctx.send(f"ตั้งค่าเล่นอัตโนมัติของ {target.mention}: **{'เปิด' if enabled else 'ปิด'}**")
+
+    @commands.command(name="race_roll", aliases=["raceroll", "roll_for"])
+    async def race_roll(self, ctx: commands.Context, target: discord.Member):
+        if not self._is_server_admin(ctx):
+            await ctx.send("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์")
+            return
+        game = get_game(ctx.channel.id)
+        player = game.get("players", {}).get(target.id) if game else None
+        if player is None or player.get("is_mob"):
+            await ctx.send("ไม่พบผู้เข้าแข่งขันคนนี้ในห้อง")
+            return
+        if not game.get("started"):
+            await ctx.send("เกมยังไม่เริ่ม")
+            return
+        player["auto_control_turn"] = game.get("turn")
+        success, payload = process_mob_turn(ctx.channel.id, target.id)
+        if not success:
+            await ctx.send(payload.get("message", "ทอยแทนไม่สำเร็จ"))
+            return
+        adapter = self._prefix_interaction_adapter(ctx)
+        await self._send_automated_roll_result(adapter, target.id, player, payload)
+        await self.handle_after_roll(adapter, game)
+
+    @app_commands.command(name="roster", description="แสดงรายชื่อและลำดับผู้เข้าแข่งขันในห้องนี้")
+    async def roster(self, interaction: discord.Interaction):
+        game = get_game(interaction.channel_id)
+        if game is None:
+            await interaction.response.send_message("ห้องนี้ยังไม่มีเกม", ephemeral=True)
+            return
+        lines = []
+        current_turn = game.get("turn")
+        for number, (user_id, player) in enumerate(game.get("players", {}).items(), start=1):
+            if player.get("is_mob"):
+                name = player.get("display_name") or player.get("username") or "Mob"
+                status = "Mob"
+            else:
+                name = f"<@{user_id}>"
+                status = "เล่นอัตโนมัติ" if player.get("bot_auto") else "ผู้เล่น"
+                if game.get("started"):
+                    status += " · ทอยแล้ว" if player.get("last_roll_turn") == current_turn else " · รอทอย"
+            lines.append(f"**{number}.** {name} — {player.get('style', '-')}, {status}")
+        await interaction.response.send_message(
+            f"**รายชื่อผู้เข้าแข่งขัน · {game.get('stage_name', 'สนาม')}**\n" + ("\n".join(lines) or "ยังไม่มีผู้เข้าแข่งขัน")
+        )
+
+    @commands.command(name="race_remove", aliases=["raceremove", "remove_player"])
+    async def race_remove(self, ctx: commands.Context, number: int):
+        if not self._is_server_admin(ctx):
+            await ctx.send("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์")
+            return
+        game = get_game(ctx.channel.id)
+        if game is None:
+            await ctx.send("ห้องนี้ยังไม่มีเกม")
+            return
+        if game.get("started"):
+            await ctx.send("นำผู้เล่นออกได้เฉพาะก่อนเริ่มแข่ง")
+            return
+        if number < 1:
+            await ctx.send("ลำดับต้องเริ่มที่ 1")
+            return
+        roster = list(game.get("players", {}).items())
+        if number > len(roster):
+            await ctx.send("ไม่มีผู้เข้าแข่งขันตามลำดับนี้")
+            return
+        user_id, player = roster[number - 1]
+        if player.get("is_mob"):
+            await ctx.send("ลำดับนี้เป็น Mob; ใช้คำสั่งลบ Mob ที่เกี่ยวข้องแทน")
+            return
+        game["players"].pop(user_id, None)
+        await ctx.send(f"นำ <@{user_id}> (ลำดับ {number}) ออกจากห้องแล้ว")
+
     @app_commands.command(
         name="official",
         description="ตั้งการแข่งขันในห้องนี้เป็น Official ก่อนเริ่มเกม"
@@ -550,67 +709,6 @@ class GameCog(commands.GroupCog, name="game"):
 
         await interaction.response.send_message(
             "✅ ห้องนี้ถูกตั้งเป็น **Official** แล้ว ผลการแข่งขันจะถูกนับใน Leaderboard เมื่อแข่งจบ",
-            ephemeral=False,
-        )
-
-    @app_commands.command(
-        name="set_rule",
-        description="ตั้งค่า Game Rule ของห้องก่อนเริ่มเกม",
-    )
-    @app_commands.describe(rule="กฎที่ต้องการตั้งค่า", value="ค่าของกฎ")
-    @app_commands.choices(rule=[
-        app_commands.Choice(name="AllowSkill — อนุญาต Skill / Zone", value="AllowSkill"),
-        app_commands.Choice(name="DreamMode — ค่าสเตตัสพื้นฐาน 8", value="DreamMode"),
-        app_commands.Choice(name="NoDebuff — ห้ามใช้สกิล Debuff", value="NoDebuff"),
-        app_commands.Choice(name="Weather — สภาพอากาศ", value="Weather"),
-    ], value=[
-        app_commands.Choice(name="true", value="true"),
-        app_commands.Choice(name="false", value="false"),
-        app_commands.Choice(name="none — ไม่มีสภาพอากาศ", value="none"),
-        app_commands.Choice(name="random — สุ่ม", value="random"),
-        app_commands.Choice(name="warm — อบอุ่น", value="warm"),
-        app_commands.Choice(name="rainy — ฝนตก", value="rainy"),
-        app_commands.Choice(name="sunny — แดดจัด", value="sunny"),
-    ])
-    async def set_rule(
-        self,
-        interaction: discord.Interaction,
-        rule: app_commands.Choice[str],
-        value: app_commands.Choice[str],
-    ):
-        game = get_game(interaction.channel_id)
-        if game is None:
-            await interaction.response.send_message(
-                "ต้องสร้างห้องด้วย `/game create` ก่อนตั้งค่า Game Rule",
-                ephemeral=True,
-            )
-            return
-
-        if not is_owner(interaction.channel_id, interaction.user.id):
-            await interaction.response.send_message(
-                "เฉพาะเจ้าของห้องเท่านั้นที่ตั้งค่า Game Rule ได้",
-                ephemeral=True,
-            )
-            return
-
-        success, result = set_game_rule(
-            interaction.channel_id,
-            rule.value,
-            value.value if rule.value == "Weather" else value.value == "true",
-        )
-        if not success:
-            await interaction.response.send_message(result, ephemeral=True)
-            return
-
-        descriptions = {
-            "AllowSkill": "อนุญาตให้ใช้ Skill และ Zone",
-            "DreamMode": "กำหนด Speed / Stamina / Power / Gut / Wit เป็น 8 ตอนเริ่มแข่ง",
-            "NoDebuff": "ห้ามใช้สกิลที่มีประเภท Debuff",
-            "Weather": "เลือก none, random, warm, rainy หรือ sunny ก่อนเริ่มการแข่งขัน",
-        }
-        status = result if rule.value == "Weather" else ("เปิด" if result else "ปิด")
-        await interaction.response.send_message(
-            f"✅ ตั้งค่า **{rule.value}** เป็น **{status}**\n{descriptions[rule.value]}",
             ephemeral=False,
         )
 
@@ -679,7 +777,7 @@ class GameCog(commands.GroupCog, name="game"):
 
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="add_rookies", description="เพิ่ม rookie ทั้ง 4 ตัวลงสนาม")
+    @app_commands.command(name="add_rookies", description="เพิ่ม rookie ทั้ง 8 ตัวลงสนาม")
     @app_commands.describe(level="ระดับ mob 1-8")
     @app_commands.choices(level=[
         app_commands.Choice(name="Level 1", value=1),
@@ -723,7 +821,7 @@ class GameCog(commands.GroupCog, name="game"):
             added.append(message)
 
         await interaction.response.send_message(
-            "เพิ่ม Rookie ทั้ง 4 ตัวเรียบร้อย\n" + "\n".join(added)
+            "เพิ่ม Rookie ทั้ง 8 ตัวเรียบร้อย\n" + "\n".join(added)
         )
 
     @app_commands.command(name="join_as_mob", description="เข้าร่วมโดยใช้ mob preset")
@@ -927,7 +1025,7 @@ class GameCog(commands.GroupCog, name="game"):
 
         game = get_game(channel_id)
         for user_id, player in game["players"].items():
-            if player.get("is_mob"):
+            if player.get("is_mob") or player.get("bot_auto"):
                 success, payload = process_mob_turn(channel_id, user_id)
                 if not success:
                     print(f"Mob turn failed for {user_id}: {payload.get('message', payload)}")
@@ -1076,33 +1174,6 @@ class GameCog(commands.GroupCog, name="game"):
 
     #     await interaction.response.send_message(embed=embed)
 
-
-    @app_commands.command(name="mob_fast_mode", description="Enable or disable compact Mob dice output")
-    @app_commands.describe(enabled="True: text-only Mob dice output; False: show dice images")
-    @app_commands.default_permissions(administrator=True)
-    async def mob_fast_mode(self, interaction: discord.Interaction, enabled: bool):
-        """Set the Mob output mode for the active game in this channel."""
-        if interaction.guild is None or not interaction.user.guild_permissions.administrator:
-            await interaction.response.send_message(
-                "Only server administrators can change Mob Fast Mode.",
-                ephemeral=True,
-            )
-            return
-
-        game = get_game(interaction.channel_id)
-        if game is None:
-            await interaction.response.send_message(
-                "Create a game in this channel before changing Mob Fast Mode.",
-                ephemeral=True,
-            )
-            return
-
-        game["mob_render_mode"] = "compact" if enabled else "detailed"
-        status = "ON (text-only Mob dice output)" if enabled else "OFF (dice images enabled)"
-        await interaction.response.send_message(
-            f"Mob Fast Mode: **{status}**",
-            ephemeral=True,
-        )
 
     @app_commands.command(name="close", description="ลบหรือจบเกมในห้องนี้")
     async def close(self, interaction: discord.Interaction):
