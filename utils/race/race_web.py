@@ -1112,6 +1112,7 @@ class RaceWebManager:
             "base_total": result.get("base_total"),
             "bonus_display": result.get("bonus_display"),
             "blocked_count": result.get("blocked_count", 0),
+            "blocked_runner_ids": result.get("blocked_runner_ids", []),
             "blocking_penalty": result.get("blocking_penalty", 0.0),
             "drafting_active": result.get("drafting_active", False),
         }
@@ -1135,6 +1136,7 @@ class RaceWebManager:
                 "blocked",
                 {
                     "blocked_count": result.get("blocked_count"),
+                    "blocked_runner_ids": result.get("blocked_runner_ids", []),
                     "penalty": result.get("blocking_penalty", 0.0),
                     "after_reroll": True,
                 },
@@ -1336,6 +1338,13 @@ def _roll_summary_payload(payload: dict) -> dict:
         "blocked_count": int(
             result.get("blocked_count", player.get("blocked_count", 0)) or 0
         ),
+        "blocked_runner_ids": [
+            str(value)
+            for value in (
+                result.get("blocked_runner_ids", player.get("blocked_runner_ids", []))
+                or []
+            )
+        ],
         "blocking_penalty": float(
             result.get("blocking_penalty", player.get("blocking_penalty", 0.0)) or 0.0
         ),

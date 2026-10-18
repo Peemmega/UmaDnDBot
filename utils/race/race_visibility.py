@@ -154,6 +154,9 @@ def serialize_player(
         ),
         "lane_changed": bool(player.get("lane_changed")),
         "blocked_count": int(player.get("blocked_count", 0) or 0),
+        "blocked_runner_ids": [
+            str(value) for value in (player.get("blocked_runner_ids") or [])
+        ],
         "blocking_penalty": float(player.get("blocking_penalty", 0.0) or 0.0),
         "drafting_active": bool(player.get("drafting_active")),
         "last_stamina_drain": int(player.get("last_stamina_drain", 0) or 0),

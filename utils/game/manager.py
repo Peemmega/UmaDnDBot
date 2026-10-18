@@ -153,16 +153,28 @@ def _ensure_lane_state(player: dict, entry_number: int | None = None) -> None:
     player.setdefault("pending_lane", None)
     player.setdefault("lane_changed", False)
     player.setdefault("blocked_count", 0)
+    player.setdefault("blocked_runner_ids", [])
     player.setdefault("blocking_penalty", 0.0)
     player.setdefault("drafting_active", False)
     player.setdefault("last_stamina_drain", 0)
 
 
 def _clone_lane_players_with_scores(game: dict, score_map: dict) -> dict:
+    def snapshot_score(player_id, info: dict) -> int:
+        if player_id in score_map:
+            return int(score_map[player_id] or 0)
+        string_id = str(player_id)
+        if string_id in score_map:
+            return int(score_map[string_id] or 0)
+        for candidate_id, value in score_map.items():
+            if str(candidate_id) == string_id:
+                return int(value or 0)
+        return int(info.get("score", 0) or 0)
+
     cloned: dict = {}
     for player_id, info in game.get("players", {}).items():
         clone = {
-            "score": int(score_map.get(player_id, info.get("score", 0)) or 0),
+            "score": snapshot_score(player_id, info),
             "current_lane": info.get("current_lane"),
         }
         cloned[player_id] = clone
@@ -193,6 +205,7 @@ def apply_lane_tactics_to_result(
     base_total = int(result.get("total", 0) or 0)
     final_total = base_total
     blocked_count = 0
+    blocked_runner_ids: list[str] = []
     blocking_penalty = 0.0
     drafting_active = False
     lane_cost = 0
@@ -202,7 +215,19 @@ def apply_lane_tactics_to_result(
     wet_lane_active = is_wet_lane(game, game_player.get("current_lane"))
 
     working_players = _clone_lane_players_with_scores(game, score_map)
-    temp_player = working_players.get(user_id, {"score": 0, "current_lane": game_player.get("current_lane", 1)})
+    temp_player = working_players.get(user_id)
+    if temp_player is None:
+        temp_player = next(
+            (
+                candidate
+                for player_id, candidate in working_players.items()
+                if str(player_id) == str(user_id)
+            ),
+            {
+                "score": int(game_player.get("score", 0) or 0),
+                "current_lane": game_player.get("current_lane", 1),
+            },
+        )
 
     race_profile = game_player.get("race_profile") or {}
     effective_stats = game_player.get("effective_race_stats") or {}
@@ -217,6 +242,9 @@ def apply_lane_tactics_to_result(
             power_stat=power_stat,
         )
         blocked_count = int(block_info["blocked_count"])
+        blocked_runner_ids = [
+            str(value) for value in block_info.get("blocked_runner_ids", [])
+        ]
         blocking_penalty = float(block_info["blocking_penalty"])
         final_total = int(block_info["final_score"])
         drafting_active = has_drafting_bonus(temp_player, working_players)
@@ -270,6 +298,7 @@ def apply_lane_tactics_to_result(
     result["total"] = final_total
     result["total_display"] = str(final_total)
     result["blocked_count"] = blocked_count
+    result["blocked_runner_ids"] = blocked_runner_ids
     result["blocking_penalty"] = blocking_penalty
     result["drafting_active"] = drafting_active
     result["lane_cost"] = lane_cost
@@ -280,6 +309,7 @@ def apply_lane_tactics_to_result(
     result["previous_lane"] = game_player.get("previous_lane")
 
     game_player["blocked_count"] = blocked_count
+    game_player["blocked_runner_ids"] = blocked_runner_ids
     game_player["blocking_penalty"] = blocking_penalty
     game_player["drafting_active"] = drafting_active
     game_player["last_stamina_drain"] = stamina_drain
@@ -306,6 +336,7 @@ def apply_lane_tactics_to_result(
         "stamina_drain": stamina_drain,
         "drafting_active": drafting_active,
         "blocked_count": blocked_count,
+        "blocked_runner_ids": blocked_runner_ids,
         "blocking_penalty": blocking_penalty,
     }
 
@@ -541,13 +572,18 @@ def execute_roll_core(
         "stamina": get_runtime_stamina_snapshot(game_player),
         "stamina_note": stamina_note,
         "blocked_count": result.get("blocked_count", 0),
+        "blocked_runner_ids": result.get("blocked_runner_ids", []),
         "blocking_penalty": result.get("blocking_penalty", 0.0),
         "drafting_active": result.get("drafting_active", False),
     }
     if result.get("blocked_count", 0):
         record_race_action(
             game, user_id, "blocked",
-            {"blocked_count": result.get("blocked_count"), "penalty": result.get("blocking_penalty", 0.0)},
+            {
+                "blocked_count": result.get("blocked_count"),
+                "blocked_runner_ids": result.get("blocked_runner_ids", []),
+                "penalty": result.get("blocking_penalty", 0.0),
+            },
         )
     if result.get("drafting_active"):
         record_race_action(game, user_id, "draft", {"summary": "Drafting bonus applied"})
@@ -1720,6 +1756,7 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
         "pending_lane": None,
         "lane_changed": False,
         "blocked_count": 0,
+        "blocked_runner_ids": [],
         "blocking_penalty": 0.0,
         "drafting_active": False,
         "last_stamina_drain": 0,
@@ -1815,6 +1852,7 @@ def add_player_as_mob_preset(
         "pending_lane": None,
         "lane_changed": False,
         "blocked_count": 0,
+        "blocked_runner_ids": [],
         "blocking_penalty": 0.0,
         "drafting_active": False,
         "last_stamina_drain": 0,
@@ -2000,6 +2038,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         "pending_lane": None,
         "lane_changed": False,
         "blocked_count": 0,
+        "blocked_runner_ids": [],
         "blocking_penalty": 0.0,
         "drafting_active": False,
         "last_stamina_drain": 0,

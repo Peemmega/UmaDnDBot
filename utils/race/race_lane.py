@@ -60,6 +60,12 @@ def calculate_lane_block_penalty(
     base_score: int,
     power_stat: int = 0,
 ) -> dict:
+    """Apply the lane penalty for runners passed during this roll.
+
+    The comparison intentionally uses the turn-start snapshot.  A runner can
+    therefore be counted even when the final field shows nobody ahead: that
+    runner was in front at the start and was passed during the movement.
+    """
     my_lane = get_player_lane(player)
     my_position = int(player.get("score", 0) or 0)
     projected_position = my_position + int(base_score or 0)

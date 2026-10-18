@@ -8,6 +8,7 @@ from utils.race.runtime_stamina import (
     format_runtime_stamina,
     get_runtime_stamina_snapshot,
 )
+from utils.race.race_history import record_race_action
 from utils.icon_presets import Status_Icon_Type
 
 
@@ -150,9 +151,40 @@ async def execute_reroll(
         "stamina": get_runtime_stamina_snapshot(game_player),
         "stamina_note": staminaNote or format_runtime_stamina(game_player),
         "blocked_count": result.get("blocked_count", 0),
+        "blocked_runner_ids": result.get("blocked_runner_ids", []),
         "blocking_penalty": result.get("blocking_penalty", 0.0),
         "drafting_active": result.get("drafting_active", False),
     }
+
+    # A reroll replaces the previous roll's lane effects in race history.
+    game["race_action_logs"] = [
+        action
+        for action in game.get("race_action_logs", [])
+        if not (
+            str(action.get("player_id")) == str(interaction.user.id)
+            and int(action.get("turn", 0) or 0) == int(game.get("turn", 0) or 0)
+            and action.get("action_type") in {"blocked", "draft"}
+        )
+    ]
+    if result.get("blocked_count", 0):
+        record_race_action(
+            game,
+            interaction.user.id,
+            "blocked",
+            {
+                "blocked_count": result.get("blocked_count"),
+                "blocked_runner_ids": result.get("blocked_runner_ids", []),
+                "penalty": result.get("blocking_penalty", 0.0),
+                "after_reroll": True,
+            },
+        )
+    if result.get("drafting_active"):
+        record_race_action(
+            game,
+            interaction.user.id,
+            "draft",
+            {"summary": "Drafting bonus applied", "after_reroll": True},
+        )
 
     embed = build_run_embed(
         game_player=game_player,

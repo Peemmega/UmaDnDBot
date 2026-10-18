@@ -256,6 +256,7 @@ class TurnEngine:
             player.pop("turn_stamina_before_roll", None)
             player["used_skills_this_turn"] = []
             player["blocked_count"] = 0
+            player["blocked_runner_ids"] = []
             player["blocking_penalty"] = 0.0
             player["drafting_active"] = False
             player["last_stamina_drain"] = 0
