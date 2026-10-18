@@ -116,6 +116,28 @@ ASSETS_DIR = BASE_DIR / "assets"
 app = FastAPI()
 
 
+ALL_SKILLS_ROLE_IDS = {1560585849685409822, 1561300248461181040}
+
+
+async def _has_all_skill_access(user_id: int | str) -> bool:
+    """Check the user's current Discord roles without persisting skill ownership."""
+    bot = bot_instance.bot
+    if bot is None or not bot.is_ready():
+        return False
+
+    member_id = int(user_id)
+    for guild in bot.guilds:
+        member = guild.get_member(member_id)
+        if member is None:
+            try:
+                member = await guild.fetch_member(member_id)
+            except (discord.NotFound, discord.Forbidden):
+                continue
+        if any(role.id in ALL_SKILLS_ROLE_IDS for role in member.roles):
+            return True
+    return False
+
+
 def _cors_origins() -> list[str]:
     """Allow production, local development, and the Railway web URL for this environment."""
     origins = {
@@ -1729,8 +1751,13 @@ class SkillLoadoutPresetPayload(BaseModel):
     skill_ids: list[str | None] | None = None
 
 
+@app.get("/player/{user_id}/skill-access")
+async def api_get_player_skill_access(user_id: str):
+    return {"can_use_all": await _has_all_skill_access(user_id)}
+
+
 @app.post("/player/skill/equip")
-def api_equip_skill(payload: EquipSkillPayload):
+async def api_equip_skill(payload: EquipSkillPayload):
     user_id = int(payload.user_id)
     skill_id = payload.skill_id.strip().lower()
 
@@ -1742,8 +1769,10 @@ def api_equip_skill(payload: EquipSkillPayload):
     if skill_id not in SKILLS:
         raise HTTPException(status_code=404, detail=f"ไม่พบสกิล `{skill_id}`")
 
+    has_all_skill_access = await _has_all_skill_access(user_id)
     if (
-        get_skill_rarity(SKILLS[skill_id]) != "common"
+        not has_all_skill_access
+        and get_skill_rarity(SKILLS[skill_id]) != "common"
         and skill_id not in get_player_acquired_skills(user_id)
     ):
         raise HTTPException(status_code=403, detail="คุณยังไม่ได้รับสกิลนี้")
@@ -1827,7 +1856,7 @@ def api_get_skill_loadout_presets(user_id: str):
 
 
 @app.put("/player/{user_id}/skill-loadout-presets/{preset_slot}")
-def api_save_skill_loadout_preset(
+async def api_save_skill_loadout_preset(
     user_id: str,
     preset_slot: int,
     payload: SkillLoadoutPresetPayload,
@@ -1850,8 +1879,9 @@ def api_save_skill_loadout_preset(
         saved_skill_ids = [skill_id for skill_id in skill_ids if skill_id]
         if len(set(saved_skill_ids)) != len(saved_skill_ids):
             raise HTTPException(status_code=400, detail="Preset has duplicate skills")
+        has_all_skill_access = await _has_all_skill_access(user_id)
         acquired_ids = set(get_player_acquired_skills(int(user_id)))
-        unavailable_skills = [
+        unavailable_skills = [] if has_all_skill_access else [
             skill_id for skill_id in saved_skill_ids
             if get_skill_rarity(SKILLS[skill_id]) != "common" and skill_id not in acquired_ids
         ]
@@ -1874,7 +1904,7 @@ def api_save_skill_loadout_preset(
 
 
 @app.post("/player/{user_id}/skill-loadout-presets/{preset_slot}/apply")
-def api_apply_skill_loadout_preset(user_id: str, preset_slot: int):
+async def api_apply_skill_loadout_preset(user_id: str, preset_slot: int):
     if preset_slot not in (1, 2, 3):
         raise HTTPException(status_code=400, detail="Preset slot must be 1-3")
 
@@ -1899,8 +1929,9 @@ def api_apply_skill_loadout_preset(user_id: str, preset_slot: int):
     if len(set(skill_ids)) != len(skill_ids):
         raise HTTPException(status_code=400, detail="Preset has duplicate skills")
 
+    has_all_skill_access = await _has_all_skill_access(user_id)
     acquired_ids = set(get_player_acquired_skills(int(user_id)))
-    unavailable_skills = [
+    unavailable_skills = [] if has_all_skill_access else [
         skill_id for skill_id in skill_ids
         if get_skill_rarity(SKILLS[skill_id]) != "common" and skill_id not in acquired_ids
     ]
