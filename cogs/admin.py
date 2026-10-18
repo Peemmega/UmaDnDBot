@@ -28,10 +28,14 @@ from utils.database import (
 from utils.race.race_presets import RACE_PRESET
 from utils.skill.skill_presets import SKILLS, get_skill_rarity
 from utils.channel_config import COMMAND_LOG_CHANNEL_ID, RACE_REGISTRATION_FORUM_CHANNEL_ID
+from utils.icon_presets import USING_MAIN_EMOJIS
 
 ADMIN_IDS = {
     464058883556769793,
 }
+
+# Beta testers may use the aptitude shortcut only on the test deployment.
+BETA_TESTER_ROLE_ID = 1561300248461181040
 
 # New general administrators must not automatically receive permission to
 # permanently clear or reset stored data.
@@ -62,6 +66,13 @@ class Admin(commands.Cog):
 
     def is_data_cleanup_admin(self, user_id: int) -> bool:
         return user_id in DATA_CLEANUP_ADMIN_IDS
+
+    def can_set_all_att(self, ctx: commands.Context) -> bool:
+        if self.is_admin_user(ctx.author.id):
+            return True
+        if USING_MAIN_EMOJIS or ctx.guild is None:
+            return False
+        return any(role.id == BETA_TESTER_ROLE_ID for role in getattr(ctx.author, "roles", ()))
 
     async def silent_delete(self, message: discord.Message):
         try:
@@ -1233,7 +1244,7 @@ class Admin(commands.Cog):
         value: int,
         member: Optional[discord.Member] = None,
     ):
-        if not self.is_admin_user(ctx.author.id):
+        if not self.can_set_all_att(ctx):
             await self.silent_delete(ctx.message)
             await self.send_log_embed(
                 ctx,
