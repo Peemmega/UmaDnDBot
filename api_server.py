@@ -126,16 +126,23 @@ async def _has_all_skill_access(user_id: int | str) -> bool:
         return False
 
     member_id = int(user_id)
-    for guild in bot.guilds:
-        member = guild.get_member(member_id)
-        if member is None:
-            try:
-                member = await guild.fetch_member(member_id)
-            except (discord.NotFound, discord.Forbidden):
-                continue
-        if any(role.id in ALL_SKILLS_ROLE_IDS for role in member.roles):
-            return True
-    return False
+
+    async def check_member_roles() -> bool:
+        for guild in bot.guilds:
+            member = guild.get_member(member_id)
+            if member is None:
+                try:
+                    member = await guild.fetch_member(member_id)
+                except (discord.NotFound, discord.Forbidden):
+                    continue
+            if any(role.id in ALL_SKILLS_ROLE_IDS for role in member.roles):
+                return True
+        return False
+
+    # FastAPI runs in its own thread; Discord's HTTP session must be used on
+    # the bot's event loop, so schedule the lookup there and await its result.
+    lookup = asyncio.run_coroutine_threadsafe(check_member_roles(), bot.loop)
+    return await asyncio.wrap_future(lookup)
 
 
 def _cors_origins() -> list[str]:
