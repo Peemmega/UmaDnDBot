@@ -264,10 +264,10 @@ VELOCITY_SKILLS = {
         "icon": "velocity",
         "cooldown": 20,
         "cost": 50,
-        "trigger": {"last_corner": True},
+        "trigger": {"lastspurt": True},
         "target": {"scope": "self", "limit": 1},
         "effects": [{"type": "modify_roll_cap", "value": 6, "duration": "this_roll"}],
-        "tags": ["velocity"],
+        "tags": ["lastspurt", "velocity"],
     },
     "vel_017": {
         "name": "Daring Strike",
