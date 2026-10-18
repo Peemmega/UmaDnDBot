@@ -1111,8 +1111,41 @@ class RaceWebManager:
             "total": result.get("total"),
             "base_total": result.get("base_total"),
             "bonus_display": result.get("bonus_display"),
+            "blocked_count": result.get("blocked_count", 0),
+            "blocking_penalty": result.get("blocking_penalty", 0.0),
+            "drafting_active": result.get("drafting_active", False),
         }
         player["web_last_roll_result"] = result
+
+        # A reroll replaces the previous roll for this turn. Keep the
+        # structured action history aligned with the replacement result.
+        game["race_action_logs"] = [
+            action
+            for action in game.get("race_action_logs", [])
+            if not (
+                str(action.get("player_id")) == str(user_id)
+                and int(action.get("turn", 0) or 0) == int(game.get("turn", 0) or 0)
+                and action.get("action_type") in {"blocked", "draft"}
+            )
+        ]
+        if result.get("blocked_count", 0):
+            record_race_action(
+                game,
+                user_id,
+                "blocked",
+                {
+                    "blocked_count": result.get("blocked_count"),
+                    "penalty": result.get("blocking_penalty", 0.0),
+                    "after_reroll": True,
+                },
+            )
+        if result.get("drafting_active"):
+            record_race_action(
+                game,
+                user_id,
+                "draft",
+                {"summary": "Drafting bonus applied", "after_reroll": True},
+            )
 
         return True, {
             "game": game,

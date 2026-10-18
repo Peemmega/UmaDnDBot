@@ -259,6 +259,17 @@ class Admin(commands.Cog):
             color=discord.Color.blurple(),
         )
         embed.add_field(
+            name="การแข่งขันและควบคุมผู้เล่น",
+            value=(
+                "`!race_add @member <Front|Pace|Late|End>` — เพิ่มผู้เล่นเข้าห้องแข่ง\n"
+                "`!race_remove <ลำดับ>` — นำผู้เล่นออกก่อนเริ่มแข่ง\n"
+                "`!race_auto @member <on|off>` — ให้บอตเล่นแทนหรือกลับมาเล่นเอง\n"
+                "`!race_roll @member` — ให้บอตทอยแทนผู้เล่นหนึ่งเทิร์น\n"
+                "`/roster` — ดูรายชื่อและสถานะผู้เข้าแข่งขัน"
+            ),
+            inline=False,
+        )
+        embed.add_field(
             name="ตรวจสอบและแก้ไขข้อมูลรายคน",
             value=(
                 "`!admin_profile @member` — ดูข้อมูลและสถานะระบบของผู้เล่น\n"
@@ -305,7 +316,13 @@ class Admin(commands.Cog):
         embed.set_footer(
             text="คำสั่งล้างหรือรีเซ็ตข้อมูลใช้ได้เฉพาะ UID 464058883556769793"
         )
-        await ctx.send(embed=embed)
+        try:
+            await ctx.author.send(embed=embed)
+        except discord.Forbidden:
+            await ctx.send(
+                "ส่ง Help แบบส่วนตัวไม่ได้ กรุณาเปิดรับข้อความส่วนตัวจากสมาชิกเซิร์ฟเวอร์ก่อน",
+                delete_after=12,
+            )
 
     @commands.command(name="event_add", aliases=["addevent", "news_add"])
     async def event_add(
