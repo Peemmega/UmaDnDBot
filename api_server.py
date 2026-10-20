@@ -121,6 +121,11 @@ ALL_SKILLS_ROLE_IDS = {1560585849685409822, 1561300248461181040}
 
 async def _has_all_skill_access(user_id: int | str) -> bool:
     """Check the user's current Discord roles without persisting skill ownership."""
+    # Trainer accounts have full access to the skill library. Keep this tied to
+    # the account's selected role so the dashboard and API enforce the same rule.
+    if get_account_role(str(user_id)) == "trainer":
+        return True
+
     bot = bot_instance.bot
     if bot is None or not bot.is_ready():
         return False
