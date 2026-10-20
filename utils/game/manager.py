@@ -6,7 +6,7 @@ import random
 from datetime import datetime, timezone
 
 from utils.race.race_presets import RACE_PRESET, get_race_distance_type, get_race_turns
-from utils.skill.skill_presets import SKILLS, ICON_URL
+from utils.skill.skill_presets import SKILLS, ICON_URL, get_skill_rarity
 from utils.mob.mob_decision import decide_mob_skill_combo, decide_mob_target_lane
 
 from utils.mob.mob_presets import MOB_PRESETS
@@ -1981,6 +1981,65 @@ def apply_rookie_distance_skills(preset_key: str, skills: dict, distance: str | 
     return copy.deepcopy(loadout)
 
 
+def apply_common_mob_skills(skills: dict, style: str, distance: str | None) -> dict:
+    """Replace non-common preset skills with compatible common catalog skills."""
+    common_by_family = {}
+    icon_families = {
+        "Acceleration_rare": "acceleration",
+        "Velocity_rare": "velocity",
+        "Recovery_rare": "stamina",
+        "Navigation_rare": "navigation",
+        "DecreaseVelocity_rare": "DecreaseVelocity",
+        "ReduceSTA_rare": "ReduceSTA",
+    }
+    for skill_id, skill in SKILLS.items():
+        if get_skill_rarity(skill) != "common":
+            continue
+        common_by_family.setdefault(skill.get("icon"), []).append((skill_id, skill))
+
+    result = copy.deepcopy(skills)
+    used_ids = {skill_id for skill_id in result.values() if skill_id}
+    for slot, skill_id in result.items():
+        original = SKILLS.get(skill_id)
+        if not original or get_skill_rarity(original) == "common":
+            continue
+
+        family = icon_families.get(original.get("icon"))
+        candidates = list(common_by_family.get(family, [])) if family else []
+        if not candidates:
+            candidates = [entry for entries in common_by_family.values() for entry in entries]
+        unused_candidates = [entry for entry in candidates if entry[0] not in used_ids]
+        if unused_candidates:
+            candidates = unused_candidates
+
+        distance_key = (distance or "").lower()
+        original_tags = set(original.get("tags", []))
+
+        def suitability(entry):
+            candidate_id, candidate = entry
+            trigger = candidate.get("trigger", {})
+            candidate_style = trigger.get("style")
+            candidate_distance = str(trigger.get("distance_type", "")).lower()
+            score = len(original_tags.intersection(candidate.get("tags", []))) * 10
+            if candidate_style == style:
+                score += 5
+            elif candidate_style:
+                score -= 20
+            if candidate_distance == distance_key:
+                score += 5
+            elif candidate_distance:
+                score -= 20
+            return score
+
+        candidates.sort(key=suitability, reverse=True)
+        if candidates:
+            replacement_id = candidates[0][0]
+            result[slot] = replacement_id
+            used_ids.add(replacement_id)
+
+    return result
+
+
 def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
     game = get_game(channel_id)
     if game is None:
@@ -2008,6 +2067,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         copy.deepcopy(preset["skills"]),
         game.get("distance"),
     )
+    skills = apply_common_mob_skills(skills, preset["style"], game.get("distance"))
 
     entry_number = len(game["players"]) + 1
     default_lane = get_default_lane(entry_number)

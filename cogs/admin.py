@@ -263,7 +263,7 @@ class Admin(commands.Cog):
             value=(
                 "`!race_add @member <Front|Pace|Late|End>` — เพิ่มผู้เล่นเข้าห้องแข่ง\n"
                 "`!race_remove <ลำดับ>` — นำผู้เล่นออกก่อนเริ่มแข่ง\n"
-                "`!race_auto @member <on|off>` — ให้บอตเล่นแทนหรือกลับมาเล่นเอง\n"
+                "`!race_auto @member <on|off|legend> (legend = Lv.8)` — ให้บอตเล่นแทนหรือกลับมาเล่นเอง\n"
                 "`!race_roll @member` — ให้บอตทอยแทนผู้เล่นหนึ่งเทิร์น\n"
                 "`/roster` — ดูรายชื่อและสถานะผู้เข้าแข่งขัน"
             ),
@@ -310,6 +310,36 @@ class Admin(commands.Cog):
             value=(
                 "`!event_add <YYYY-MM-DD> <HH:MM> <name | summary | details | capacity | image_url>`\n"
                 "Example: `!event_add 2026-10-31 19:00 Halloween Night | Costume race | Join the event room | 20 | /eventBanners/halloween_converted.webp`"
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Game commands",
+            value=(
+                "`/create` — create a game; `/create_training_track` — create a training-track game\n"
+                "`/run` — take your turn; `/lane <1-6>` — choose a lane; `/skill` — open the skill menu\n"
+                "`/close` — close the game; `/roster` — show the room roster\n"
+                "`!game join_as_mob @member <preset_key>` — add a member with a mob preset\n"
+                "`!game skip_turn` — advance the turn; `!game test_bot_race` — run the bot race check"
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Other commands",
+            value=(
+                "`/dice_table` — view the dice table; `/profile_card` — show a profile card\n"
+                "`/zone_preview` — preview a Zone; `/skill my_skill` — view equipped skills\n"
+                "`!music play <music_key>` / `!music stop` — control server music"
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Additional admin commands",
+            value=(
+                "`!close_registration` — close registration from its forum post thread\n"
+                "`!add_att <aptitude> [@member]` — add one aptitude level; `!set_all_att <1-8> [@member]` — set all aptitudes\n"
+                "`!clear_race_records <all|official|practice> CONFIRM` — clear race records\n"
+                "`!clear_legacy_profile @member CONFIRM` — clear legacy profile data"
             ),
             inline=False,
         )

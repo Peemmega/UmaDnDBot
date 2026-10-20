@@ -665,16 +665,22 @@ class GameCog(commands.GroupCog, name="game"):
             await ctx.send("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์")
             return
         mode = mode.strip().lower()
-        if mode not in {"on", "off", "เปิด", "ปิด"}:
-            await ctx.send("ระบุ on หรือ off เช่น `!race_auto @สมาชิก on`")
+        if mode not in {"on", "off", "legend", "\u0e40\u0e1b\u0e34\u0e14", "\u0e1b\u0e34\u0e14"}:
+            await ctx.send("Use on, off, or legend; example: `!race_auto @member legend`.")
             return
-        enabled = mode in {"on", "เปิด"}
+        enabled = mode in {"on", "legend", "\u0e40\u0e1b\u0e34\u0e14"}
         game = get_game(ctx.channel.id)
         player = game.get("players", {}).get(target.id) if game else None
         if player is None or player.get("is_mob"):
             await ctx.send("ไม่พบผู้เข้าแข่งขันคนนี้ในห้อง")
             return
         player["bot_auto"] = enabled
+        if mode == "legend":
+            player["ai_level"] = 8
+            player["bot_auto_mode"] = "legend"
+        else:
+            player.pop("ai_level", None)
+            player["bot_auto_mode"] = "on" if enabled else "off"
         if enabled and game.get("started") and player.get("last_roll_turn") != game.get("turn"):
             player["auto_control_turn"] = game.get("turn")
             success, payload = process_mob_turn(ctx.channel.id, target.id)
@@ -685,7 +691,9 @@ class GameCog(commands.GroupCog, name="game"):
             await self._send_automated_roll_result(adapter, target.id, player, payload)
             await self.handle_after_roll(adapter, game)
             return
-        await ctx.send(f"ตั้งค่าเล่นอัตโนมัติของ {target.mention}: **{'เปิด' if enabled else 'ปิด'}**")
+        mode_label = "Legend (Lv.8)" if mode == "legend" else ("ON" if enabled else "OFF")
+        await ctx.send(f"Auto race for {target.mention}: **{mode_label}**")
+
 
     @commands.command(name="race_roll", aliases=["raceroll", "roll_for"])
     async def race_roll(self, ctx: commands.Context, target: discord.Member):

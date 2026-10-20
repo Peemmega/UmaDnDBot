@@ -234,7 +234,7 @@ MOB_PRESETS = {
             1: "acc_013",  # Early Lead
             2: "vel_032",  # Fast-Paced
             3: "acc_005",  # Groundwork
-            3: "vel_024",  # Straightaway Adept
+            4: "vel_024",  # Straightaway Adept
         },
         "zone": {
             "name": "Default Zone",
@@ -724,7 +724,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "acc_007",  # Neck and Neck
-            3: "acc_010",  # Radiant Star
+            2: "acc_010",  # Radiant Star
             3: "vel_007",  # Beeline Burst
             4: "vel_011",  # In Body and Mind
         },
@@ -1136,7 +1136,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "acc_007",  # Neck and Neck
-            3: "acc_010",  # Radiant Star
+            2: "acc_010",  # Radiant Star
             3: "vel_007",  # Beeline Burst
             4: "unique_006",  # Cacao Operation Cacao
         },
