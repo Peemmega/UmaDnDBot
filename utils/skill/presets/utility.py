@@ -35,7 +35,7 @@ UTILITY_SKILLS = {
     },
     "utl_003": {
         "name": "Go with the Flow",
-        "icon": "Navigation_rare",
+        "icon": "navigation",
         "cooldown": 8,
         "cost": 40,
         "trigger": {"phase_min": 4, "phase_max": 4},
@@ -47,7 +47,7 @@ UTILITY_SKILLS = {
         "name": "Lane Legerdemain",
         "icon": "Navigation_rare",
         "cooldown": 8,
-        "cost": 80,
+        "cost": 60,
         "trigger": {"phase_min": 4, "phase_max": 4},
         "target": {"scope": "self", "limit": 1},
         "effects": [
