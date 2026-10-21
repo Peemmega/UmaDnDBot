@@ -82,7 +82,7 @@ MOB_PRESETS = {
             1: "acc_013",  # Early Lead
             2: "vel_014",  # Ramp Up
             3: "vel_024",  # Straightaway Adept
-            4: "acc_005",  # Groundwork
+            4: "acc_005",  # Groundwork.
         },
         "zone": {
             "name": "Default Zone",
