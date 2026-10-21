@@ -235,7 +235,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 30,
                 "duration": "this_roll",
             }
         ],
@@ -263,7 +263,7 @@ VELOCITY_SKILLS = {
         "name": "Homestretch Haste",
         "icon": "velocity",
         "cooldown": 20,
-        "cost": 50,
+        "cost": 60,
         "trigger": {"lastspurt": True},
         "target": {"scope": "self", "limit": 1},
         "effects": [{"type": "modify_roll_cap", "value": 6, "duration": "this_roll"}],
@@ -443,23 +443,11 @@ VELOCITY_SKILLS = {
         ],
         "tags": ["sprint", "late_race", "middle", "velocity", "positioning"],
     },
-    "vel_026": {
-        "name": "Highlander",
-        "icon": "velocity",
-        "cooldown": 8,
-        "cost": 60,
-        "trigger": {"path_type": 3},
-        "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {"type": "cap_floor", "value": 6, "duration": "this_roll"},
-        ],
-        "tags": ["uphill", "velocity"],
-    },
     "vel_027": {
         "name": "Playtime's Over!",
         "icon": "velocity",
         "cooldown": 8,
-        "cost": 60,
+        "cost": 40,
         "trigger": {
             "lastspurt": True,
             "position_group": "front",
@@ -471,7 +459,7 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 30,
                 "duration": "this_roll",
             }
         ],

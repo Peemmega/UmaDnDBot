@@ -95,7 +95,7 @@ UNIQUE_SKILLS = {
     },
     "unique_007": {
         "name": "U=ma2",
-        "icon": "UniqueAcceleration",
+        "icon": "UniqueRecovery",
         "cooldown": 8,
         "cost": 100,
         "trigger": {
@@ -109,7 +109,7 @@ UNIQUE_SKILLS = {
             {"type": "cap_floor", "value": 6, "duration": "this_roll"},
             {"type": "recover_stamina", "value": 3},
         ],
-        "tags": ["corner", "late_race", "middle", "acceleration", "recovery", "unique"],
+        "tags": ["corner", "late_race", "middle", "velocity", "recovery", "unique"],
     },
     "unique_008": {
         "name": "Budding Blossom",

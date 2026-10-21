@@ -146,6 +146,7 @@ _ICON_TO_DETAIL = {
     "acceleration": "acceleration", "UniqueAcceleration": "acceleration",
     "Velocity": "velocity", "Velocity_rare": "velocity", "velocity": "velocity",
     "UniqueVelocity": "velocity", "Recovery": "recovery", "Recovery_rare": "recovery",
+    "UniqueRecovery": "recovery",
     "stamina": "recovery", "Passive": "passive", "Passive_rare": "passive",
     "Concentration": "concentration", "Concentration_rare": "concentration",
     "LookUp": "vision", "LookUp_rare": "vision",

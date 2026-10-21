@@ -259,4 +259,16 @@ ACCELERATION_SKILLS = {
         "effects": [{"type": "add_dkh", "value": 2, "duration": "this_roll"}],
         "tags": ["front", "final_corner", "acceleration", "burst"],
     },
+    "acc_020": {
+        "name": "Highlander",
+        "icon": "acceleration",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {"path_type": 3},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "modify_current_speed", "value": 2, "duration": "this_roll"}
+        ],
+        "tags": ["uphill", "acceleration"],
+    },
 }

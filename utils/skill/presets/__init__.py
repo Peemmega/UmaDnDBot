@@ -52,6 +52,7 @@ _ICON_TAGS = {
     "Velocity": {"velocity"}, "Velocity_rare": {"velocity"}, "velocity": {"velocity"},
     "UniqueVelocity": {"unique", "velocity"},
     "Recovery": {"recovery"}, "Recovery_rare": {"recovery"}, "stamina": {"recovery"},
+    "UniqueRecovery": {"unique", "recovery"},
     "Passive": {"passive"}, "Passive_rare": {"passive"},
     "Concentration": {"concentration"}, "Concentration_rare": {"concentration"},
     "LookUp": {"vision", "positioning"}, "LookUp_rare": {"vision", "positioning"},
