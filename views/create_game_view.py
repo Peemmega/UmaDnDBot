@@ -19,6 +19,8 @@ TRAINING_TRACK_STAGE_KEYS = (
     "Training Track Long",
 )
 
+STAGE_PAGE_SIZE = 25
+
 
 def get_preview_rankings(stage_key: str) -> list[dict]:
     try:
@@ -166,13 +168,59 @@ def build_training_track_menu_embed() -> discord.Embed:
 
 
 class StageSelectView(discord.ui.View):
-    def __init__(self, channel_id, owner_id, distance):
+    def __init__(self, channel_id, owner_id, distance, page=0):
         super().__init__(timeout=300)
         self.channel_id = channel_id
         self.owner_id = owner_id
         self.distance = distance
+        self.page = page
+        self.stage_keys = list(get_stages_by_distance(distance))
+        self.page_count = max(1, (len(self.stage_keys) + STAGE_PAGE_SIZE - 1) // STAGE_PAGE_SIZE)
 
-        self.add_item(StageDropdown(distance))
+        start = page * STAGE_PAGE_SIZE
+        page_stage_keys = self.stage_keys[start : start + STAGE_PAGE_SIZE]
+        self.add_item(StageDropdown(page_stage_keys))
+        self.add_item(StagePageButton("ก่อนหน้า", page - 1, disabled=page <= 0, row=1))
+        self.add_item(StagePageButton(f"หน้า {page + 1}/{self.page_count}", page, disabled=True, row=1))
+        self.add_item(StagePageButton("ถัดไป", page + 1, disabled=page + 1 >= self.page_count, row=1))
+        self.add_item(StagePageButton("เลือกระยะใหม่", None, row=1, back=True))
+
+    def build_embed(self):
+        start = self.page * STAGE_PAGE_SIZE
+        page_keys = self.stage_keys[start : start + STAGE_PAGE_SIZE]
+        page_names = [RACE_PRESET[key]["name"] for key in page_keys]
+        embed = discord.Embed(
+            title=f"📍 ระยะ: {self.distance.title()} · หน้า {self.page + 1}/{self.page_count}",
+            description="\n".join(f"• {name}" for name in page_names),
+            color=discord.Color.blue(),
+        )
+        if self.page_count > 1:
+            embed.set_footer(text=f"มีสนามทั้งหมด {len(self.stage_keys)} แห่ง ใช้ปุ่มก่อนหน้า/ถัดไปเพื่อดูหน้าอื่น")
+        return embed
+
+
+class StagePageButton(discord.ui.Button):
+    def __init__(self, label, target_page, *, disabled=False, row=1, back=False):
+        super().__init__(label=label, style=discord.ButtonStyle.secondary, disabled=disabled, row=row)
+        self.target_page = target_page
+        self.back = back
+
+    async def callback(self, interaction: discord.Interaction):
+        current_view: StageSelectView = self.view
+        if self.back:
+            await interaction.response.edit_message(
+                embed=build_create_menu_embed(),
+                view=CreateGameView(current_view.channel_id, current_view.owner_id),
+            )
+            return
+
+        new_view = StageSelectView(
+            current_view.channel_id,
+            current_view.owner_id,
+            current_view.distance,
+            page=self.target_page,
+        )
+        await interaction.response.edit_message(embed=new_view.build_embed(), view=new_view)
 
 
 class ConfirmCreateView(discord.ui.View):
@@ -224,12 +272,10 @@ class ConfirmCreateView(discord.ui.View):
 
 
 class StageDropdown(discord.ui.Select):
-    def __init__(self, distance):
-        stages = get_stages_by_distance(distance)
-
+    def __init__(self, stage_keys):
         options = [
-            discord.SelectOption(label=stage["name"], value=key)
-            for key, stage in stages.items()
+            discord.SelectOption(label=RACE_PRESET[key]["name"], value=key)
+            for key in stage_keys
         ]
 
         if not options:
@@ -237,7 +283,7 @@ class StageDropdown(discord.ui.Select):
 
         super().__init__(
             placeholder="เลือกสนาม",
-            options=options[:25],
+            options=options,
             disabled=(options[0].value == "__empty__"),
         )
 
@@ -318,14 +364,8 @@ class CreateGameView(discord.ui.View):
             )
             return
 
-        embed = discord.Embed(
-            title=f"📍 ระยะ: {distance.title()}",
-            description="\n".join([f"• {stage['name']}" for stage in stages.values()]),
-            color=discord.Color.blue(),
-        )
-
         view = StageSelectView(self.channel_id, self.owner_id, distance)
-        await interaction.response.edit_message(embed=embed, view=view)
+        await interaction.response.edit_message(embed=view.build_embed(), view=view)
 
     @discord.ui.button(label="Sprint", style=discord.ButtonStyle.primary)
     async def sprint(self, interaction: discord.Interaction, button: discord.ui.Button):
