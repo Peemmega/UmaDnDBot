@@ -283,7 +283,8 @@ def describe_effect(effect: dict) -> str:
         return f"เพิ่มจำนวนลูกที่เลือก +{value}" + (f" ({dur})" if dur else "")
 
     if effect_type in ["recover_stamina"]:
-        return f"ฟื้นฟู {Status_Icon_Type['STA']} +{value}{condition_text}"
+        percentage = float(value or 0) * 10
+        return f"ฟื้นฟู {Status_Icon_Type['STA']} +{percentage:g}%{condition_text}"
 
     if effect_type in ["modify_current_speed"]:
         return f"เร่งความเร็วปัจจุบัน {value} ระดับ"
@@ -297,7 +298,8 @@ def describe_effect(effect: dict) -> str:
             "ข้ามและไม่ทำให้ติด CD, ข้ามเงื่อนไข และไม่รวมสกิลนี้เอง)"
         )
     if effect_type == "self_heal_stamina":
-        return f"ฟื้นฟู {Status_Icon_Type['STA']} ให้ตัวเอง +{value}"
+        percentage = float(value or 0) * 10
+        return f"ฟื้นฟู {Status_Icon_Type['STA']} ให้ตัวเอง +{percentage:g}%"
     if effect_type == "reduce_stamina":
         return f"ลด {Status_Icon_Type['STA']} เป้าหมาย -{value}"
     if effect_type == "force_rush":

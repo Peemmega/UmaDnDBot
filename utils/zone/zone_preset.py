@@ -32,7 +32,7 @@ ZONE_VALUE = {
     "flat": 20,
     "add_dkh": 1,
     "cap_floor": 3,
-    "self_heal_stamina": 1,
+    "self_heal_stamina": 10,
     "modify_current_speed": 1,
     "race_speed": 1,
 }

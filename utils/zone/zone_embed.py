@@ -50,7 +50,7 @@ def build_zone_manage_embed_from_zone(
         "flat": f"{ICONS['Aoharu']} เพิ่มคะแนนรวม",
         "add_dkh": f"{ICONS['Aoharu']} เพิ่มลูกเต๋า d/kh",
         "cap_floor": f"{ICONS['Aoharu']} เพิ่มแต้มลูกเต๋าขั้นต่ำ/สูงสุด",
-        "self_heal_stamina": f"{ICONS['Aoharu']} ฟื้นฟู Stamina",
+        "self_heal_stamina": f"{ICONS['Aoharu']} ฟื้นฟู Stamina (+10% ต่อระดับ)",
         "modify_current_speed": f"{ICONS['Aoharu']} เพิ่มความเร่ง",
         "race_speed": f"{ICONS['Aoharu']} เพิ่ม Speed ในรัน",
     }
@@ -68,7 +68,7 @@ def build_zone_manage_embed_from_zone(
     if preview["cap_floor"]:
         preview_lines.append(f"🧱📈 เพิ่มแต้มขั้นต่ำ/สูงสุด **+{preview['cap_floor']}**")
     if preview["self_heal_stamina"]:
-        preview_lines.append(f"{Status_Icon_Type['STA']} ฟื้นฟู STA ตัวเอง +{preview['self_heal_stamina']}")
+        preview_lines.append(f"{Status_Icon_Type['STA']} ฟื้นฟู STA ตัวเอง +{preview['self_heal_stamina']}%")
     if preview["modify_current_speed"]:
         preview_lines.append(f"👟 เพิ่มความเร่งขึ้น {preview['modify_current_speed']} ระดับ")
     if preview["race_speed"]:

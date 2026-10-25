@@ -11,8 +11,8 @@ from utils.database import get_player, set_player_zone_build
 from utils.race.race_history import record_race_action
 from utils.in_game_manager import incrase_speed_by_acceleration
 from utils.race.race_aptitude import calculate_effective_race_stats
+from utils.race.stamina_rules import calculate_percent_stamina_amount
 from utils.race.runtime_stamina import (
-    runtime_stamina_effect_units,
     set_runtime_stamina,
     sync_runtime_stamina,
 )
@@ -128,7 +128,7 @@ def get_zone_effect(zone: dict) -> tuple[bool, str]:
     if effects["cap_floor"]:
         lines.append(f"🧱📈 เพิ่มแต้มขั้นต่ำและสูงสุด +{effects['cap_floor']}")
     if heal_value:
-        lines.append(f"❤️ ฟื้นฟู STA ตัวเอง +{heal_value}")
+        lines.append(f"❤️ ฟื้นฟู STA ตัวเอง +{heal_value}%")
     if modify_current_speed:
         lines.append(f"👟 เพิ่มความเร่ง {modify_current_speed} ระดับ")
     if race_speed:
@@ -161,12 +161,16 @@ def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
     player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + effects["cap"]
 
     heal_value = effects.get("self_heal_stamina", 0)
+    gain = 0
     if heal_value > 0:
-        sync_runtime_stamina(player)
+        snapshot = sync_runtime_stamina(player)
+        gain = calculate_percent_stamina_amount(
+            snapshot["max_stamina"], heal_value / 10
+        )
         set_runtime_stamina(
             player,
             player.get("stamina_stat", 0),
-            player.get("stamina_left", 0) + runtime_stamina_effect_units(heal_value),
+            player.get("stamina_left", 0) + gain,
         )
         
     modify_current_speed = effects.get("modify_current_speed", 0)
@@ -204,7 +208,7 @@ def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
             {
                 "zone_name": zone.get("name") or zone.get("zone_name"),
                 "effects": effects,
-                "stamina_heal": heal_value,
+                "stamina_heal": gain,
                 "speed_increase": modify_current_speed,
                 "race_speed_increase": race_speed,
                 "summary": zone_effect,

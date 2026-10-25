@@ -2637,7 +2637,7 @@ def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int) -
         + int(effects.get("race_speed", 0) or 0) * 20
     )
     if stamina_ratio < 0.65:
-        value += int(effects.get("self_heal_stamina", 0) or 0) * 30
+        value += (int(effects.get("self_heal_stamina", 0) or 0) / 10) * 30
 
     if value < 20:
         return False
