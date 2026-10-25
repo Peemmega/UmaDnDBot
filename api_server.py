@@ -36,6 +36,7 @@ from utils.database import (
     create_team_invitation,
     respond_to_team_invitation,
     save_profile_preset,
+    get_profile_preset,
     set_profile_preset_image,
     list_uploaded_profile_summaries,
     get_account_role,
@@ -637,6 +638,28 @@ class ProfilePresetPayload(BaseModel):
     profile_type: str
     name: str
     image_url: str = ""
+
+
+@app.get("/profiles/preset/{user_id}")
+def api_get_profile_preset(user_id: str, profile_type: str | None = None):
+    selected_type = profile_type or get_account_role(user_id) or "trainee"
+    if selected_type not in {"trainee", "trainer", "npc"}:
+        raise HTTPException(status_code=400, detail="Choose a valid profile type")
+
+    if selected_type == "trainee":
+        player = get_player(user_id)
+        if player is None:
+            return {"profile": None}
+        profile = {
+            "user_id": str(user_id),
+            "profile_type": "trainee",
+            "name": player.get("username") or "Trainee",
+            "image_url": player.get("profile_image_url") or "",
+        }
+    else:
+        profile = get_profile_preset(user_id, selected_type)
+
+    return {"profile": profile}
 
 
 @app.post("/profiles/preset")

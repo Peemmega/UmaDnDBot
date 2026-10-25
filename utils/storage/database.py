@@ -1565,6 +1565,28 @@ def save_profile_preset(user_id: str, profile_type: str, name: str, image_url: s
         """, (str(user_id), profile_type, name.strip() or profile_type.title(), image_url or ""))
 
 
+def get_profile_preset(user_id: str, profile_type: str) -> Optional[dict]:
+    if profile_type not in {"trainer", "npc"}:
+        raise ValueError("Only trainer and npc presets are supported")
+    with database_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT name, image_url
+            FROM profile_presets
+            WHERE user_id = ? AND profile_type = ?
+            """,
+            (str(user_id), profile_type),
+        ).fetchone()
+    if row is None:
+        return None
+    return {
+        "user_id": str(user_id),
+        "profile_type": profile_type,
+        "name": row["name"],
+        "image_url": resolve_public_url(row["image_url"]),
+    }
+
+
 def get_character_basic_profile(user_id: str, profile_type: str = "trainee") -> Optional[dict]:
     if profile_type not in {"trainee", "trainer", "npc"}:
         raise ValueError("Profile type must be trainee, trainer, or npc")

@@ -6,16 +6,21 @@ from utils.database import (
 from utils.display_helpers import get_stat_emoji, get_stat_icon
 from utils.icon_presets import USING_MAIN_EMOJIS
 from utils.profile_images import resolve_player_avatar_url
+from utils.profile_identity import get_profile_identity
 STATS_CAP = 8 if USING_MAIN_EMOJIS else 12
 
 
 def build_stat_embed(user: discord.User | discord.Member, player: dict, title_text: str = "จัดการค่าสเตตัส") -> discord.Embed:
+    display_player = {
+        **player,
+        **get_profile_identity(user.id, user.display_name),
+    }
     embed = discord.Embed(
-        title=f"{title_text}ของ {player['username']}",
+        title=f"{title_text}ของ {display_player['username']}",
         color=discord.Color.blurple()
     )
 
-    embed.set_thumbnail(url=resolve_player_avatar_url(player, user.display_avatar.url))
+    embed.set_thumbnail(url=resolve_player_avatar_url(display_player, user.display_avatar.url))
 
     embed.add_field(
         name="ค่าสเตตัส",
