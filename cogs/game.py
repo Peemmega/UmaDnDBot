@@ -72,6 +72,7 @@ from utils.mob.mob_presets import (MOB_PRESETS)
 
 from utils.game_manager import (
     get_game,
+    get_unconfirmed_turn_players,
     is_owner,
     claim_turn_advance,
     next_turn,
@@ -737,6 +738,51 @@ class GameCog(commands.GroupCog, name="game"):
             lines.append(f"**{number}.** {name} — {player.get('style', '-')}, {status}")
         await interaction.response.send_message(
             f"**รายชื่อผู้เข้าแข่งขัน · {game.get('stage_name', 'สนาม')}**\n" + ("\n".join(lines) or "ยังไม่มีผู้เข้าแข่งขัน")
+        )
+
+    @app_commands.command(
+        name="unconfirmed",
+        description="ดูว่าใครยังไม่ยืนยันเทิร์นปัจจุบัน",
+    )
+    async def unconfirmed(self, interaction: discord.Interaction):
+        game = get_game(interaction.channel_id)
+        if game is None:
+            await interaction.response.send_message(
+                "ห้องนี้ยังไม่มีเกม",
+                ephemeral=True,
+            )
+            return
+        if (
+            not game.get("awaiting_turn_confirm")
+            or game.get("turn_confirmation_turn") != game.get("turn")
+        ):
+            await interaction.response.send_message(
+                "ตอนนี้ยังไม่อยู่ในช่วงยืนยันเทิร์น",
+                ephemeral=True,
+            )
+            return
+
+        pending_players = get_unconfirmed_turn_players(interaction.channel_id) or []
+        if not pending_players:
+            await interaction.response.send_message(
+                f"✅ ผู้เล่นยืนยันครบแล้วสำหรับเทิร์น {game.get('turn')}",
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+            return
+
+        lines = []
+        for user_id, player in pending_players:
+            roll_status = (
+                "ทอยแล้ว · รอยืนยัน"
+                if player.get("last_roll_turn") == game.get("turn")
+                else "ยังไม่ทอย"
+            )
+            lines.append(f"• <@{user_id}> — {roll_status}")
+
+        await interaction.response.send_message(
+            f"**ผู้เล่นที่ยังไม่ยืนยันเทิร์น {game.get('turn')}**\n"
+            + "\n".join(lines),
+            allowed_mentions=discord.AllowedMentions.none(),
         )
 
     @commands.command(name="race_remove", aliases=["raceremove", "remove_player"])

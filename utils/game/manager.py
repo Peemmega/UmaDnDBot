@@ -694,6 +694,29 @@ def start_turn_confirmation(channel_id: int):
 
     return TurnEngine.start_confirmation(game, revise_mob_lanes=revise_mob_lanes)
 
+
+def get_unconfirmed_turn_players(channel_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return None
+    if (
+        not game.get("awaiting_turn_confirm")
+        or game.get("turn_confirmation_turn") != game.get("turn")
+    ):
+        return []
+
+    turn = game.get("turn")
+    confirmed_ids = {str(user_id) for user_id in game.get("turn_confirmations", set())}
+    return [
+        (user_id, player)
+        for user_id, player in game.get("players", {}).items()
+        if not player.get("is_mob")
+        and not player.get("bot_auto")
+        and player.get("auto_control_turn") != turn
+        and str(user_id) not in confirmed_ids
+    ]
+
+
 def confirm_turn(
     channel_id: int,
     user_id: int,
