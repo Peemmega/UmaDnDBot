@@ -2914,6 +2914,8 @@ def execute_skill_core(
     # =====================================
 
     if queued_effects:
+        queued_target_refs = []
+        queued_target_ids = set()
         for effect in queued_effects:
             effect_target = effect.get("target")
             target_skill = skill
@@ -2925,12 +2927,25 @@ def execute_skill_core(
                 }
 
             queued_targets = resolve_skill_targets(channel_id, user_id, target_skill)
-            for _, target_player in queued_targets:
+            for target_id, target_player in queued_targets:
                 apply_next_roll_effects_to_player(target_player, [effect])
+                if target_id not in queued_target_ids:
+                    queued_target_ids.add(target_id)
+                    queued_target_refs.append(
+                        format_player_reference(target_id, target_player)
+                    )
 
-        result_texts.append(
-            "บัฟถูกสะสมไว้สำหรับการวิ่งครั้งถัดไป"
-        )
+        if queued_target_refs:
+            result_texts.append(
+                "เตรียมผลสำหรับการวิ่งครั้งถัดไปให้: "
+                + ", ".join(queued_target_refs)
+            )
+        else:
+            if not instant_effects:
+                return False, {
+                    "message": "ไม่มีเป้าหมายที่ตรงเงื่อนไขสำหรับผลครั้งถัดไป"
+                }
+            result_texts.append("ไม่มีเป้าหมายที่ตรงเงื่อนไขสำหรับผลครั้งถัดไป")
 
     if not instant_effects and not queued_effects:
         return False, {
