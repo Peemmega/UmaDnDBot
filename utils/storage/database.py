@@ -7,6 +7,11 @@ import json
 from utils.profile_images import resolve_public_url
 from utils.icon_presets import USING_MAIN_EMOJIS
 from utils.skill.skill_ids import LEGACY_SKILL_ID_MAP
+from utils.skill.skill_evolution import (
+    find_incompatible_skill_pair,
+    normalize_skill_slots,
+    skill_conflict_message,
+)
 
 DB_PATH = os.getenv("PLAYER_DB_PATH", "/app/data/player.db")
 DEFAULT_PLAYER_SKILL_SLOTS = (
@@ -1882,6 +1887,21 @@ def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
     conn = get_connection()
     cursor = conn.cursor()
 
+    row = cursor.execute(
+        "SELECT skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4 FROM players WHERE user_id = ?",
+        (user_id,),
+    ).fetchone()
+    if row is None:
+        conn.close()
+        return False, "ไม่พบข้อมูลผู้เล่น"
+
+    candidate_ids = [row[index] for index in range(4)]
+    candidate_ids[slot - 1] = skill_id
+    conflict = find_incompatible_skill_pair(candidate_ids)
+    if conflict:
+        conn.close()
+        return False, skill_conflict_message(conflict)
+
     column = f"skill_slot_{slot}"
     cursor.execute(
         f"UPDATE players SET {column} = ? WHERE user_id = ?",
@@ -1925,12 +1945,12 @@ def get_player_skill_slots(user_id: int):
     if row is None:
         return None
 
-    return {
+    return normalize_skill_slots({
         "slot_1": row[0],
         "slot_2": row[1],
         "slot_3": row[2],
         "slot_4": row[3],
-    }
+    })
 
 
 def get_player_acquired_skills(user_id: int | str) -> list[str]:
@@ -2027,6 +2047,9 @@ def save_player_skill_loadout_preset(
 
     current_skill_ids = [row[0], row[1], row[2], row[3]]
     safe_skill_ids = list(skill_ids) if skill_ids is not None else current_skill_ids
+    if find_incompatible_skill_pair(safe_skill_ids):
+        conn.close()
+        return None
     conn.execute(
         """
         INSERT INTO skill_loadout_presets (
@@ -2246,6 +2269,9 @@ def apply_player_skill_loadout_preset(user_id: int, preset_slot: int) -> dict | 
         return None
 
     preset = _build_skill_loadout_preset(row)
+    if find_incompatible_skill_pair(preset["skill_ids"]):
+        conn.close()
+        return None
     conn.execute(
         """
         UPDATE players

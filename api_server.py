@@ -80,6 +80,10 @@ from utils.skill.skill_presets import (
     get_skill_category_groups,
 )
 from utils.skill.skill_manager import describe_trigger, describe_target, describe_effect, get_skill_display
+from utils.skill.skill_evolution import (
+    find_incompatible_skill_pair,
+    skill_conflict_message,
+)
 from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
 from utils.channel_config import RACE_REGISTRATION_FORUM_CHANNEL_ID
@@ -1891,6 +1895,9 @@ async def api_save_skill_loadout_preset(
         saved_skill_ids = [skill_id for skill_id in skill_ids if skill_id]
         if len(set(saved_skill_ids)) != len(saved_skill_ids):
             raise HTTPException(status_code=400, detail="Preset has duplicate skills")
+        conflict = find_incompatible_skill_pair(saved_skill_ids)
+        if conflict:
+            raise HTTPException(status_code=400, detail=skill_conflict_message(conflict))
         has_all_skill_access = await _has_all_skill_access(user_id)
         acquired_ids = set(get_player_acquired_skills(int(user_id)))
         unavailable_skills = [] if has_all_skill_access else [
@@ -1902,6 +1909,9 @@ async def api_save_skill_loadout_preset(
                 status_code=403,
                 detail=f"You have not acquired skill: {unavailable_skills[0]}",
             )
+
+    if skill_ids is None:
+        skill_ids = list((get_player_skill_slots(int(user_id)) or {}).values())
 
     preset = save_player_skill_loadout_preset(
         int(user_id),
@@ -1940,6 +1950,9 @@ async def api_apply_skill_loadout_preset(user_id: str, preset_slot: int):
         )
     if len(set(skill_ids)) != len(skill_ids):
         raise HTTPException(status_code=400, detail="Preset has duplicate skills")
+    conflict = find_incompatible_skill_pair(skill_ids)
+    if conflict:
+        raise HTTPException(status_code=400, detail=skill_conflict_message(conflict))
 
     has_all_skill_access = await _has_all_skill_access(user_id)
     acquired_ids = set(get_player_acquired_skills(int(user_id)))
