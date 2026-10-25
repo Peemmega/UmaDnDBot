@@ -215,8 +215,15 @@ DEBUFF_SKILLS = {
             "target_distance_min": -150,
             "target_distance_max": -1,
         },
-        "target": {"scope": "all_back", "limit": 20, "same_lane_only": False},
-        "effects": [{"type": "modify_velocity", "value": -3, "duration": "this_roll"}],
+        "target": {"scope": "all_back", "limit": 5, "same_lane_only": False},
+        "effects": [
+            {"type": "modify_current_speed_delta", "value": -0.15},
+            {
+                "type": "modify_current_speed_delta",
+                "value": 0.15,
+                "target": {"scope": "self", "limit": 1},
+            },
+        ],
         "tags": ["mile", "mid_race", "front", "debuff", "velocity"],
     },
 }

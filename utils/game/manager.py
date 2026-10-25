@@ -46,7 +46,12 @@ from utils.race.runtime_stamina import (
 )
 from utils.race.stamina_rules import calculate_roll_stamina_cost
 from utils.race.result_display import format_bonus_display, format_pack_status, format_stamina_line
-from utils.race.rank_display import get_gold_range_value, get_player_lane, is_in_gold_range_against
+from utils.race.rank_display import (
+    get_gold_lane_tolerance,
+    get_gold_range_value,
+    get_player_lane,
+    is_in_gold_range_against,
+)
 from utils.race.race_lane import (
     clamp_lane,
     calculate_lane_block_penalty,
@@ -66,6 +71,7 @@ from utils.skill.skill_effect_registry import (
     SkillEffectContext,
     apply_registered_skill_effects,
 )
+from utils.skill.skill_manager import describe_effect
 from utils.dice.dice_presets import (
     MAX_SPEED_PHASE
 )
@@ -2290,6 +2296,14 @@ def _distance_in_bounds(distance: int, min_distance, max_distance) -> bool:
     return lower <= distance <= upper
 
 
+def _skill_target_lane_tolerance(game: dict, player: dict, target_cfg: dict) -> int:
+    if not _supports_lane_system(game):
+        return 6
+    if target_cfg.get("same_lane_only"):
+        return 0
+    return get_gold_lane_tolerance(player)
+
+
 def _iter_target_distances(game: dict, user_id):
     scores = _get_score_map(game)
     if user_id not in scores:
@@ -2318,10 +2332,24 @@ def get_nearest_target_distance(game, user_id):
     return min(distances, key=lambda d: abs(d))
 
 
-def has_target_in_distance(game, user_id, min_distance, max_distance) -> bool:
+def has_target_in_distance(
+    game, user_id, min_distance, max_distance, target_cfg=None
+) -> bool:
+    player = game.get("players", {}).get(user_id)
+    if player is None:
+        return False
+
+    lane_tolerance = _skill_target_lane_tolerance(
+        game, player, target_cfg or {}
+    )
+    player_lane = get_player_lane(player)
+    players = game.get("players", {})
+
     return any(
         _distance_in_bounds(distance, min_distance, max_distance)
-        for _, distance in _iter_target_distances(game, user_id)
+        and other_id in players
+        and abs(player_lane - get_player_lane(players[other_id])) <= lane_tolerance
+        for other_id, distance in _iter_target_distances(game, user_id)
     )
 
 
@@ -2477,6 +2505,7 @@ def check_skill_trigger(
             user_id,
             target_distance_min,
             target_distance_max,
+            skill.get("target", {}),
         ):
             return False, "No target in range"
 
@@ -2914,8 +2943,7 @@ def execute_skill_core(
     # =====================================
 
     if queued_effects:
-        queued_target_refs = []
-        queued_target_ids = set()
+        queued_target_effects = {}
         for effect in queued_effects:
             effect_target = effect.get("target")
             target_skill = skill
@@ -2927,18 +2955,29 @@ def execute_skill_core(
                 }
 
             queued_targets = resolve_skill_targets(channel_id, user_id, target_skill)
+            effect_description = describe_effect({**effect, "duration": None})
             for target_id, target_player in queued_targets:
                 apply_next_roll_effects_to_player(target_player, [effect])
-                if target_id not in queued_target_ids:
-                    queued_target_ids.add(target_id)
-                    queued_target_refs.append(
-                        format_player_reference(target_id, target_player)
-                    )
+                target_entry = queued_target_effects.setdefault(
+                    target_id,
+                    {
+                        "reference": format_player_reference(
+                            target_id, target_player
+                        ),
+                        "effects": [],
+                    },
+                )
+                if effect_description not in target_entry["effects"]:
+                    target_entry["effects"].append(effect_description)
 
-        if queued_target_refs:
+        if queued_target_effects:
+            target_lines = [
+                f"• {entry['reference']}: {'; '.join(entry['effects'])}"
+                for entry in queued_target_effects.values()
+            ]
             result_texts.append(
-                "เตรียมผลสำหรับการวิ่งครั้งถัดไปให้: "
-                + ", ".join(queued_target_refs)
+                "เตรียมผลสำหรับการวิ่งครั้งถัดไป:\n"
+                + "\n".join(target_lines)
             )
         else:
             if not instant_effects:
@@ -3152,20 +3191,25 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
     front.sort(key=lambda x: x[0])
     back.sort(key=lambda x: x[0])
 
-    def _same_lane_only(candidates):
-        my_lane = clamp_lane(player.get("current_lane"))
+    has_target_distance = (
+        target_distance_min is not None or target_distance_max is not None
+    )
+    lane_tolerance = (
+        _skill_target_lane_tolerance(game, player, target_cfg)
+        if has_target_distance or target_cfg.get("same_lane_only")
+        else 6
+    )
+    my_lane = get_player_lane(player)
+
+    def _visible_lanes_only(candidates):
         return [
             item
             for item in candidates
-            if clamp_lane(item[2].get("current_lane")) == my_lane
+            if abs(my_lane - get_player_lane(item[2])) <= lane_tolerance
         ]
 
-    restrict_same_lane = target_cfg.get(
-        "same_lane_only", "debuff" in set(skill.get("tags", []))
-    )
-    if restrict_same_lane:
-        front = _same_lane_only(front)
-        back = _same_lane_only(back)
+    front = _visible_lanes_only(front)
+    back = _visible_lanes_only(back)
 
     def _target_pairs(candidates):
         return [

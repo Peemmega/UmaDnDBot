@@ -226,7 +226,7 @@ def describe_trigger(trigger: dict) -> str:
 
     if "target_distance_min" in trigger and "target_distance_max" in trigger:
         parts.append(
-            f"เมื่อมีเป้าหมายอยู่ในระยะ {trigger['target_distance_min']} ถึง {trigger['target_distance_max']}"
+            f"เมื่อมีเป้าหมายอยู่ในระยะ {trigger['target_distance_min']} ถึง {trigger['target_distance_max']} และอยู่ในระยะเลนที่ใช้ตรวจ In Pack"
         )
 
     if "position_group" in trigger:
@@ -288,6 +288,14 @@ def describe_effect(effect: dict) -> str:
 
     if effect_type in ["modify_current_speed"]:
         return f"เร่งความเร็วปัจจุบัน {value} ระดับ"
+
+    if effect_type == "modify_current_speed_delta":
+        amount = abs(float(value or 0))
+        if float(value or 0) < 0:
+            return f"ลด CurrentSpeed ของเป้าหมาย {amount:g}"
+        if effect.get("target", {}).get("scope") == "self":
+            return f"เพิ่ม CurrentSpeed ให้ตัวเอง {amount:g}"
+        return f"เพิ่ม CurrentSpeed ของเป้าหมาย {amount:g}"
 
     if effect_type == "resolve_pending_lane_now":
         return "ย้ายไป Lane ที่ตั้งรอไว้ทันที"

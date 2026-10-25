@@ -64,6 +64,7 @@ _ICON_TAGS = {
 _EFFECT_TAGS = {
     "modify_velocity": {"velocity"},
     "modify_current_speed": {"acceleration"},
+    "modify_current_speed_delta": {"velocity", "debuff"},
     "recover_stamina": {"recovery", "stamina"},
     "self_heal_stamina": {"recovery", "stamina"},
     "reduce_stamina": {"debuff", "stamina"},

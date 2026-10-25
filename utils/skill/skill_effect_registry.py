@@ -17,6 +17,7 @@ from utils.race.runtime_stamina import (
     sync_runtime_stamina,
 )
 from utils.race.stamina_rules import calculate_percent_stamina_amount
+from utils.race.web_timing_balance import refresh_web_timing_player
 
 
 @dataclass
@@ -112,6 +113,50 @@ def _modify_current_speed(context: SkillEffectContext, effect: dict) -> SkillEff
     value = effect.get("value", 0)
     context.increase_speed(context.game, context.player, value)
     return SkillEffectResult([f"เร่งความเร็วขึ้น {value} ระดับ"])
+
+
+@SKILL_EFFECTS.register("modify_current_speed_delta")
+def _modify_current_speed_delta(
+    context: SkillEffectContext, effect: dict
+) -> SkillEffectResult:
+    value = float(effect.get("value", 0) or 0)
+    if effect.get("target", {}).get("scope") == "self":
+        targets = [(context.user_id, context.player)]
+    else:
+        targets = context.targets
+
+    if not targets:
+        return SkillEffectResult()
+
+    texts = []
+    for target_id, target in targets:
+        if (
+            context.game.get("race_mode") == "web_timing"
+            and "web_timing_current_speed" in target
+        ):
+            finish_distance = int(context.game.get("finish_distance") or 2000)
+            refresh_web_timing_player(
+                target, finish_distance, increase_speed=False
+            )
+            speed = float(target.get("web_timing_current_speed", 0) or 0)
+            speed_cap = float(target.get("web_timing_speed_cap", speed) or 0)
+            target["web_timing_current_speed"] = min(
+                speed_cap, max(0.0, speed + value)
+            )
+            refresh_web_timing_player(
+                target, finish_distance, increase_speed=False
+            )
+        else:
+            target["current_max_speed"] = max(
+                0.0,
+                float(target.get("current_max_speed", 0) or 0) + value,
+            )
+
+        reference = context.format_player_reference(target_id, target)
+        action = "เพิ่ม" if value > 0 else "ลด"
+        texts.append(f"{action} CurrentSpeed ของ {reference} {abs(value):g}")
+
+    return SkillEffectResult(texts)
 
 
 @SKILL_EFFECTS.register("modify_race_stats")
