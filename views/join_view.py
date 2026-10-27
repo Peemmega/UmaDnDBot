@@ -124,17 +124,19 @@ class StyleSelectView(discord.ui.View):
 
         game = get_game(self.channel_id)
         db_player = get_player(interaction.user.id)
+        race_player = game["players"].get(interaction.user.id, {})
+        race_display_name = race_player.get("display_name") or interaction.user.display_name
         
         embed = build_join_embed(
             game=game,
-            display_name=interaction.user.display_name,
-            display_image=resolve_player_avatar_url(db_player, interaction.user.display_avatar.url),
+            display_name=race_display_name,
+            display_image=resolve_player_avatar_url(race_player, interaction.user.display_avatar.url),
             style=style,
             aptitude_source=db_player,
             title="🏇 ผู้เล่นเข้าร่วม!",
             color=discord.Color.green(),
             name_field="ผู้เล่น",
-            name_value= db_player["username"] or interaction.user.mention,
+            name_value=race_display_name,
         )
 
         await interaction.followup.send(embed=embed)

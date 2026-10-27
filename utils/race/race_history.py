@@ -121,6 +121,10 @@ def _participant_snapshot(player: dict) -> dict:
     selected_skills = [_skill_snapshot(skill) for skill in skills.values() if skill]
     return {
         "display_name": player.get("display_name") or player.get("username"),
+        "profile_role": player.get("profile_role") or "trainee",
+        "profile_image_url": player.get("profile_image_url") or "",
+        "avatar_url": player.get("avatar") or "",
+        "thumbnail": player.get("thumbnail") or player.get("thumnail") or "",
         "base_stats": {
             key: profile.get(key) for key in ("speed", "stamina", "power", "gut", "wit")
         },

@@ -49,7 +49,11 @@ def serialize_player(
     # Snapshot output must not refresh database/timing/stamina state on the
     # live player object. Several display helpers normalize fields in place.
     player = copy.deepcopy(player)
-    if not str(user_id).startswith("mob_") and not player.get("is_mob"):
+    if (
+        not str(user_id).startswith("mob_")
+        and not player.get("is_mob")
+        and player.get("profile_role") != "trainer"
+    ):
         db_player = get_player(user_id)
         if db_player:
             player["username"] = db_player.get("username") or player.get("username")

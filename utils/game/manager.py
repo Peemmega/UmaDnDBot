@@ -14,6 +14,8 @@ from utils.database import (
     ensure_player,
     get_player,
     get_player_skill_slots,
+    get_account_role,
+    get_profile_preset,
 )
 from utils.race.race_history import ensure_race_history_id, record_race_action, record_turn_snapshot
 from utils.profile_images import resolve_player_avatar_url, resolve_public_url
@@ -358,13 +360,40 @@ def refresh_player_profile_snapshot(user_id, player: dict | None) -> dict | None
     if not db_player:
         return player
 
-    player["username"] = db_player.get("username") or player.get("username")
-    player["profile_image_url"] = db_player.get("profile_image_url") or ""
+    apply_active_profile_identity(user_id, player)
+    if player.get("profile_role") != "trainer":
+        player["username"] = db_player.get("username") or player.get("username")
+        player["profile_image_url"] = db_player.get("profile_image_url") or ""
+    return player
+
+
+def apply_active_profile_identity(
+    user_id, player: dict, fallback_name: str = "", fallback_avatar: str = ""
+) -> dict:
+    """Use the configured Trainer identity for race presentation when selected."""
+    role = get_account_role(str(user_id)) or "trainee"
+    player["profile_role"] = role
+    if role != "trainer":
+        return player
+
+    preset = get_profile_preset(str(user_id), "trainer") or {}
+    display_name = preset.get("name") or fallback_name or player.get("display_name")
+    trainer_image = preset.get("image_url") or ""
+    player["display_name"] = display_name or player.get("username") or str(user_id)
+    player["username"] = player["display_name"]
+    player["profile_image_url"] = trainer_image
+    player["avatar"] = trainer_image or fallback_avatar or ""
+    # Keep any character thumbnail from falling through when Trainer has no
+    # custom image; the Discord avatar remains the fallback in that case.
+    player["thumbnail"] = trainer_image
+    player["thumnail"] = trainer_image
     return player
 
 
 def format_player_reference(user_id, player: dict | None = None) -> str:
     player = player or {}
+    if player.get("profile_role") == "trainer":
+        return player.get("display_name") or player.get("username") or str(user_id)
     if str(user_id).startswith("mob_") or player.get("is_mob"):
         return (
             player.get("display_name")
@@ -1823,6 +1852,12 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
             "build": db_player["zone"]["build"],
         }
     }
+    apply_active_profile_identity(
+        user_id,
+        game["players"][user_id],
+        fallback_name=display_name,
+        fallback_avatar=display_avatar,
+    )
     set_runtime_stamina(game["players"][user_id], db_player.get("stamina", 1))
     apply_web_timing_player_defaults(game["players"][user_id])
 
