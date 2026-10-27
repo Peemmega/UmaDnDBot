@@ -124,9 +124,9 @@ def get_stages_by_distance(distance):
     }
 
 
-def build_stage_preview_embed(stage):
+def build_stage_preview_embed(stage, *, is_legend=False):
     embed = discord.Embed(
-        title=f"🏟️ {stage['name']}",
+        title=f"🏟️ {'Legend Race · ' if is_legend else ''}{stage['name']}",
         description="เตรียมตัวเข้าสู่สนามแข่ง 🏇",
         color=discord.Color.green(),
     )
@@ -152,6 +152,15 @@ def build_create_menu_embed() -> discord.Embed:
     return embed
 
 
+def build_legend_create_menu_embed() -> discord.Embed:
+    embed = build_create_menu_embed()
+    embed.title = "🏟️ Create Legend Race"
+    embed.description = "เลือกสนามปกติเพื่อใช้สร้าง Legend Race\n\n" + embed.description.split("\n\n", 1)[-1]
+    embed.color = discord.Color.gold()
+    embed.set_footer(text="สนามที่เลือกจะถูกบันทึกในประวัติเป็น Legend Race")
+    return embed
+
+
 def build_training_track_menu_embed() -> discord.Embed:
     embed = discord.Embed(
         title="🏟️ Create Training Track",
@@ -168,10 +177,11 @@ def build_training_track_menu_embed() -> discord.Embed:
 
 
 class StageSelectView(discord.ui.View):
-    def __init__(self, channel_id, owner_id, distance, page=0):
+    def __init__(self, channel_id, owner_id, distance, page=0, *, is_legend=False):
         super().__init__(timeout=300)
         self.channel_id = channel_id
         self.owner_id = owner_id
+        self.is_legend = is_legend
         self.distance = distance
         self.page = page
         self.stage_keys = list(get_stages_by_distance(distance))
@@ -184,6 +194,12 @@ class StageSelectView(discord.ui.View):
         self.add_item(StagePageButton(f"หน้า {page + 1}/{self.page_count}", page, disabled=True, row=1))
         self.add_item(StagePageButton("ถัดไป", page + 1, disabled=page + 1 >= self.page_count, row=1))
         self.add_item(StagePageButton("เลือกระยะใหม่", None, row=1, back=True))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if self.is_legend and interaction.user.id != self.owner_id:
+            await interaction.response.send_message("เมนู Legend Race นี้ใช้ได้เฉพาะผู้สร้างคำสั่ง", ephemeral=True)
+            return False
+        return True
 
     def build_embed(self):
         start = self.page * STAGE_PAGE_SIZE
@@ -209,8 +225,8 @@ class StagePageButton(discord.ui.Button):
         current_view: StageSelectView = self.view
         if self.back:
             await interaction.response.edit_message(
-                embed=build_create_menu_embed(),
-                view=CreateGameView(current_view.channel_id, current_view.owner_id),
+                embed=build_legend_create_menu_embed() if current_view.is_legend else build_create_menu_embed(),
+                view=CreateGameView(current_view.channel_id, current_view.owner_id, is_legend=current_view.is_legend),
             )
             return
 
@@ -219,17 +235,25 @@ class StagePageButton(discord.ui.Button):
             current_view.owner_id,
             current_view.distance,
             page=self.target_page,
+            is_legend=current_view.is_legend,
         )
         await interaction.response.edit_message(embed=new_view.build_embed(), view=new_view)
 
 
 class ConfirmCreateView(discord.ui.View):
-    def __init__(self, channel_id, owner_id, stage_key, *, training_tracks_only=False):
+    def __init__(self, channel_id, owner_id, stage_key, *, training_tracks_only=False, is_legend=False):
         super().__init__(timeout=300)
         self.channel_id = channel_id
         self.owner_id = owner_id
         self.stage_key = stage_key
         self.training_tracks_only = training_tracks_only
+        self.is_legend = is_legend
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if self.is_legend and interaction.user.id != self.owner_id:
+            await interaction.response.send_message("เมนู Legend Race นี้ใช้ได้เฉพาะผู้สร้างคำสั่ง", ephemeral=True)
+            return False
+        return True
 
     @discord.ui.button(label="สร้าง", style=discord.ButtonStyle.success)
     async def create(self, interaction: discord.Interaction, button):
@@ -237,7 +261,7 @@ class ConfirmCreateView(discord.ui.View):
         owner_id = interaction.user.id
         stage_key = self.stage_key
 
-        success = create_game(channel_id, stage_key, owner_id)
+        success = create_game(channel_id, stage_key, owner_id, is_legend=self.is_legend)
         if not success:
             await interaction.response.send_message("สร้างไม่สำเร็จ", ephemeral=True)
             return
@@ -266,8 +290,8 @@ class ConfirmCreateView(discord.ui.View):
             return
 
         await interaction.response.edit_message(
-            embed=build_create_menu_embed(),
-            view=CreateGameView(self.channel_id, self.owner_id),
+            embed=build_legend_create_menu_embed() if self.is_legend else build_create_menu_embed(),
+            view=CreateGameView(self.channel_id, self.owner_id, is_legend=self.is_legend),
         )
 
 
@@ -297,9 +321,9 @@ class StageDropdown(discord.ui.Select):
             return
 
         stage = RACE_PRESET[stage_key]
-        embed = build_stage_preview_embed(stage)
+        embed = build_stage_preview_embed(stage, is_legend=self.view.is_legend)
 
-        view = ConfirmCreateView(interaction.channel_id, interaction.user.id, stage_key)
+        view = ConfirmCreateView(interaction.channel_id, self.view.owner_id, stage_key, is_legend=self.view.is_legend)
 
         await interaction.response.edit_message(embed=embed, view=view)
 
@@ -340,12 +364,19 @@ class TrainingTrackSelectView(discord.ui.View):
 
 
 class CreateGameView(discord.ui.View):
-    def __init__(self, channel_id: int, owner_id: int):
+    def __init__(self, channel_id: int, owner_id: int, *, is_legend=False):
         super().__init__(timeout=300)
         self.channel_id = channel_id
         self.owner_id = owner_id
+        self.is_legend = is_legend
         self.selected_distance = None
         self.selected_stage = None
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if self.is_legend and interaction.user.id != self.owner_id:
+            await interaction.response.send_message("เมนู Legend Race นี้ใช้ได้เฉพาะผู้สร้างคำสั่ง", ephemeral=True)
+            return False
+        return True
 
     async def select_distance(self, interaction, distance):
         self.selected_distance = distance
@@ -360,11 +391,11 @@ class CreateGameView(discord.ui.View):
             )
 
             await interaction.response.edit_message(
-                embed=embed, view=CreateGameView(self.channel_id, self.owner_id)
+                embed=embed, view=CreateGameView(self.channel_id, self.owner_id, is_legend=self.is_legend)
             )
             return
 
-        view = StageSelectView(self.channel_id, self.owner_id, distance)
+        view = StageSelectView(self.channel_id, self.owner_id, distance, is_legend=self.is_legend)
         await interaction.response.edit_message(embed=view.build_embed(), view=view)
 
     @discord.ui.button(label="Sprint", style=discord.ButtonStyle.primary)

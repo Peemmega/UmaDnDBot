@@ -628,7 +628,7 @@ def execute_roll_core(
         "title_prefix": title_prefix,
     }
 
-def create_game(channel_id: int, stage_key: str, owner_id: int):
+def create_game(channel_id: int, stage_key: str, owner_id: int, *, is_legend: bool = False):
     if channel_id in games:
         return False
 
@@ -641,6 +641,7 @@ def create_game(channel_id: int, stage_key: str, owner_id: int):
         "channel_id": channel_id,
         "stage_key": stage_key,
         "stage_name": stage['name'],
+        "is_legend": bool(is_legend),
         "max_turn": get_race_turns(stage),
         "track": stage["track"],
         "distance": get_race_distance_type(stage),
@@ -2468,6 +2469,12 @@ def check_skill_trigger(
             return False, (
                 f"ต้องใช้สกิลแล้วอย่างน้อย {skill_use_count_min} ครั้งในการแข่งขันนี้"
             )
+
+    required_rush_used = trigger.get("used_rush")
+    if required_rush_used is not None and bool(player.get("used_rush")) != required_rush_used:
+        if required_rush_used:
+            return False, "ต้องใช้ Rush ก่อน"
+        return False, "ต้องยังไม่เคยใช้ Rush ในการแข่งขันนี้"
 
     # last spurt
     required_lastspurt = trigger.get("lastspurt")

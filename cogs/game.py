@@ -14,6 +14,7 @@ from views.use_skill_view import UseSkillView
 from views.create_game_view import (
     CreateGameView,
     TrainingTrackSelectView,
+    build_legend_create_menu_embed,
     build_training_track_menu_embed,
 )
 
@@ -612,6 +613,22 @@ class GameCog(commands.GroupCog, name="game"):
             embed=embed,
             view=CreateGameView(channel_id, owner_id),
             ephemeral=True
+        )
+
+    @app_commands.command(name="legend_race", description="สร้าง Legend Race โดยเลือกสนามปกติ (Admin เท่านั้น)")
+    async def legend_race(self, interaction: discord.Interaction):
+        if not interaction.guild or not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์", ephemeral=True)
+            return
+
+        if get_game(interaction.channel_id) is not None:
+            await interaction.response.send_message("ห้องนี้มีเกมอยู่แล้ว", ephemeral=True)
+            return
+
+        await interaction.response.send_message(
+            embed=build_legend_create_menu_embed(),
+            view=CreateGameView(interaction.channel_id, interaction.user.id, is_legend=True),
+            ephemeral=True,
         )
 
     @app_commands.command(

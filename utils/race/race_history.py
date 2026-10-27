@@ -378,24 +378,25 @@ def save_completed_race(game: dict, ranked_players) -> str:
             """
             INSERT INTO race_history (
                 race_id, stage_key, stage_name, track, distance, total_turns,
-                race_mode, record_type, room_id, started_at, finished_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                race_mode, record_type, is_legend, room_id, started_at, finished_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(race_id) DO UPDATE SET
                 stage_key=excluded.stage_key, stage_name=excluded.stage_name,
                 track=excluded.track, distance=excluded.distance,
                 total_turns=excluded.total_turns, race_mode=excluded.race_mode,
-                record_type=excluded.record_type, room_id=excluded.room_id,
+                record_type=excluded.record_type, is_legend=excluded.is_legend, room_id=excluded.room_id,
                 finished_at=excluded.finished_at
             """,
             (
                 race_id,
                 str(game.get("stage_key") or "unknown"),
-                str(game.get("stage_name") or "Unknown"),
+                "Legend Race" if game.get("is_legend") else str(game.get("stage_name") or "Unknown"),
                 game.get("track"),
                 game.get("distance"),
                 int(game.get("max_turn", 0) or 0),
                 str(game.get("race_mode") or "discord_classic"),
                 classify_record_type(game),
+                1 if game.get("is_legend") else 0,
                 str(game.get("room_id") or game.get("channel_id") or "") or None,
                 game.get("race_started_at"),
                 now,

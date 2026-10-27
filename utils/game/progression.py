@@ -22,16 +22,26 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
 
     if phase == 4:
         speed_cap_base = style_rule["last_spurt"]
-        if style == "End":
-            scale_up = 0.14
+        if style == "Front":
+            scale_up = 0.08
+        elif style == "Late":
+            scale_up = 0.12
+        elif style == "End":
+            scale_up = 0.16
     elif phase == 3:
         speed_cap_base = style_rule["late"]
         if style == "Late":
+            scale_up = 0.14
+        elif style == "End":
             scale_up = 0.12
     else:
         speed_cap_base = style_rule["mid"]
-        if phase == 1 and style == "Front":
-            scale_up = 0.12
+        if style == "Front":
+            scale_up = 0.14 if phase == 1 else 0.12
+        elif style == "Late" and phase == 1:
+            scale_up = 0.08
+        elif style == "End":
+            scale_up = 0.08
 
     if style == "Pace":
         scale_up = 0.11

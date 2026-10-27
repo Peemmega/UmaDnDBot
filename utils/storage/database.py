@@ -545,6 +545,7 @@ def init_db():
         total_turns INTEGER NOT NULL DEFAULT 0,
         race_mode TEXT NOT NULL DEFAULT 'discord_classic',
         record_type TEXT NOT NULL CHECK(record_type IN ('official', 'practice')),
+        is_legend INTEGER NOT NULL DEFAULT 0,
         source TEXT NOT NULL DEFAULT 'race_engine',
         room_id TEXT,
         started_at TEXT,
@@ -553,6 +554,11 @@ def init_db():
         schema_version INTEGER NOT NULL DEFAULT 1
     )
     """)
+    race_history_columns = {
+        row["name"] for row in cursor.execute("PRAGMA table_info(race_history)").fetchall()
+    }
+    if "is_legend" not in race_history_columns:
+        cursor.execute("ALTER TABLE race_history ADD COLUMN is_legend INTEGER NOT NULL DEFAULT 0")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS race_participants (
         race_id TEXT NOT NULL,

@@ -106,7 +106,7 @@ DEBUFF_SKILLS = {
         "name": "All-Seeing Eyes",
         "icon": "ReduceSTA_rare",
         "cooldown": 10,
-        "cost": 50,
+        "cost": 70,
         "trigger": {
             "style": "Late",
             "phase_min": 3,
@@ -186,7 +186,7 @@ DEBUFF_SKILLS = {
         "name": "Stamina Eater",
         "icon": "ReduceSTA",
         "cooldown": 10,
-        "cost": 60,
+        "cost": 50,
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
@@ -195,7 +195,7 @@ DEBUFF_SKILLS = {
             "target_distance_min": 1,
             "target_distance_max": 999,
         },
-        "target": {"scope": "nearest_front", "limit": 20},
+        "target": {"scope": "all_front", "limit": 5},
         "effects": [
             {"type": "reduce_stamina", "value": 0.3},
             {"type": "self_heal_stamina", "value": 0.75},
@@ -206,7 +206,7 @@ DEBUFF_SKILLS = {
         "name": "Speed Eater",
         "icon": "DecreaseVelocity",
         "cooldown": 10,
-        "cost": 60,
+        "cost": 50,
         "trigger": {
             "distance_type": "Mile",
             "phase_min": 2,
@@ -225,5 +225,21 @@ DEBUFF_SKILLS = {
             },
         ],
         "tags": ["mile", "mid_race", "front", "debuff", "velocity"],
+    },
+    "debuff_013": {
+        "name": "Sharp Gaze",
+        "icon": "ReduceSTA",
+        "cooldown": 10,
+        "cost": 50,
+        "trigger": {
+            "style": "Late",
+            "phase_min": 3,
+            "phase_max": 4,
+            "target_distance_min": 1,
+            "target_distance_max": 999,
+        },
+        "target": {"scope": "all_front", "limit": 20},
+        "effects": [{"type": "reduce_stamina", "value": 0.35}],
+        "tags": ["late", "debuff", "stamina", "all_front"],
     },
 }

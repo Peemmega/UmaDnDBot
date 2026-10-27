@@ -56,4 +56,40 @@ UTILITY_SKILLS = {
         ],
         "tags": ["late_race", "positioning"],
     },
+    "vel_003": {
+        "name": "Lightning Step",
+        "icon": "Navigation_rare",
+        "cooldown": 8,
+        "cost": 80,
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "back",
+            "distance_type": "Medium",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "resolve_pending_lane_now"},
+            {"type": "modify_current_speed", "value": 1.5},
+        ],
+        "tags": ["medium", "acceleration", "positioning", "back"],
+    },
+    "vel_038": {
+        "name": "Thunderbolt Step",
+        "icon": "navigation",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "back",
+            "distance_type": "Medium",
+        },
+        "target": {"scope": "self", "limit": 1},
+        "effects": [
+            {"type": "resolve_pending_lane_now"},
+            {"type": "modify_current_speed", "value": 0.5},
+        ],
+        "tags": ["medium", "acceleration", "positioning", "back"],
+    },
 }

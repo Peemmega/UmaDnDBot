@@ -227,6 +227,7 @@ TRIGGER_SCHEMA = {
     "front_blocked": None,
     "nearby_uma_count": None,
     "skill_use_count_min": None,
+    "used_rush": None,
     "base_stats_min": None,
 }
 

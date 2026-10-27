@@ -217,6 +217,11 @@ def describe_trigger(trigger: dict) -> str:
             f"ใช้สกิลแล้วอย่างน้อย {trigger['skill_use_count_min']} ครั้งในการแข่งขันนี้"
         )
 
+    if trigger.get("used_rush") is False:
+        parts.append("ยังไม่เคยใช้ Rush ในการแข่งขันนี้")
+    elif trigger.get("used_rush") is True:
+        parts.append("หลังจากใช้ Rush ในการแข่งขัน")
+
     if trigger.get("base_stats_min"):
         stat_text = ", ".join(
             f"{stat.title()} ≥ {value}"

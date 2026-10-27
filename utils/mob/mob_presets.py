@@ -24,6 +24,7 @@ thumnails = {
     "TMOperaO": "https://media.discordapp.net/attachments/697810514448744448/1522305957273796691/tm_opera_o.png?ex=6a47fd67&is=6a46abe7&hm=c3b17823dad2baf8e02bfc83648ca009c751ce38649d589791057618cbcb1c75&=&format=webp&quality=lossless&width=492&height=515",
     "AdmireVega": "https://media.discordapp.net/attachments/697810514448744448/1522305957722325244/admire_vega.png?ex=6a47fd67&is=6a46abe7&hm=d4e64cde381980479b1391603f6dc1f9cdf5b3c93da1c68e7121d23278e0d813&=&format=webp&quality=lossless&width=690&height=707",
     "JunglePocket": "https://media.discordapp.net/attachments/697810514448744448/1522305958297075852/jungle_pocket.png?ex=6a47fd67&is=6a46abe7&hm=e41dcb29a8cf4cabdf9f3cdcb399a251958d699d0e61731de29319efdbf8c3ec&=&format=webp&quality=lossless&width=837&height=870",
+    "TamamoCross": "/app/assets/characters/tamamo_cross.webp",
     "SakuraBakushinO": "/app/assets/characters/sakura_bakushin_o.png",
     "SymboliRudolf": "/app/assets/characters/symboli_rudolf.png",
     "NaritaBrian": "/app/assets/characters/narita_brain.png",
@@ -358,6 +359,45 @@ MOB_PRESETS = {
             "build": {
                 "flat": 3,
                 "modify_current_speed": 2,
+            },
+        },
+    },
+    # Legend Race
+    "tamamo_cross": {
+        "name": "Tamamo Cross",
+        "avatar": CHARACTER_DIR / "tamamo_cross.webp",
+        "thumnail": thumnails["TamamoCross"],
+        "style": "Pace",
+        "race_profile": {
+            "speed": 4,
+            "stamina": 4,
+            "power": 5,
+            "gut": 2,
+            "wit": 2,
+            "turf": 1,
+            "dirt": 1,
+            "sprint": 1,
+            "mile": 1,
+            "medium": 1,
+            "long": 1,
+            "front": 1,
+            "pace": 1,
+            "late": 1,
+            "end_style": 1,
+        },
+        "skills": {
+            1: "acc_003",  # Slick Surge
+            2: "vel_024",  # Straightaway Adept
+            3: "vel_016",  # Homestretch Haste
+            4: "vel_031",  # Outer Swell
+        },
+        "zone": {
+            "name": "Now That's White Lightning!",
+            "image_url": "https://cdn.discordapp.com/attachments/1562167495920455773/1564578103546617876/tamamo-cross-umamusume_1.gif?ex=6ae1c668&is=6ae074e8&hm=eb70be3ba7a2014de7b621857021d712234ab0635136dc5ab021ac12aa8add0d",
+            "points": 0,
+            "build": {
+                "add_dkh": 3,
+                "cap_floor": 2,
             },
         },
     },
@@ -1035,7 +1075,7 @@ MOB_PRESETS = {
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1521266934841348117/almond-eye-umamusume.gif?ex=6a4435bd&is=6a42e43d&hm=c58f901c38d17e9078c8fbdd0c8cf357432814b33ddd2aeedc3bc47545ed27e6&=&width=747&height=422",
             "build": {
                 "add_dkh": 4,
-                "modify_current_speed": 2,
+                "modify_current_speed": 1,
             },
         },
     },

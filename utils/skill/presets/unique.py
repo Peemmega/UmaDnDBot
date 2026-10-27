@@ -48,7 +48,12 @@ UNIQUE_SKILLS = {
         "icon": "UniqueAcceleration",
         "cooldown": 8,
         "cost": 120,
-        "trigger": {"phase_min": 3, "phase_max": 4, "position_group": "middle"},
+        "trigger": {
+            "phase_min": 3,
+            "phase_max": 4,
+            "position_group": "middle",
+            "used_rush": False,
+        },
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "add_dkh", "value": 3, "duration": "this_roll"},
