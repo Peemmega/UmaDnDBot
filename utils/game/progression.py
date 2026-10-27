@@ -6,6 +6,13 @@ from utils.dice.dice_presets import (
 )
 from utils.race.race_weather import is_wet_lane
 
+ACCELERATION_SCALE = {
+    "End": (0.06, 0.08, 0.10, 0.14),
+    "Front": (0.12, 0.10, 0.08, 0.08),
+    "Pace": (0.10, 0.10, 0.10, 0.10),
+    "Late": (0.08, 0.08, 0.12, 0.10),
+}
+
 def incrase_speed_by_acceleration(game ,player: dict, multiple):
     race_profile = player.get("race_profile", {})
     effective_stats = player.get("effective_race_stats") or {}
@@ -18,33 +25,14 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
     phase = get_phase_from_turn(game["turn"], game["max_turn"])
 
     style_rule = MAX_SPEED_PHASE[style]
-    scale_up = 0.1
+    scale_up = ACCELERATION_SCALE[style][phase - 1]
 
     if phase == 4:
         speed_cap_base = style_rule["last_spurt"]
-        if style == "Front":
-            scale_up = 0.08
-        elif style == "Late":
-            scale_up = 0.12
-        elif style == "End":
-            scale_up = 0.16
     elif phase == 3:
         speed_cap_base = style_rule["late"]
-        if style == "Late":
-            scale_up = 0.14
-        elif style == "End":
-            scale_up = 0.12
     else:
         speed_cap_base = style_rule["mid"]
-        if style == "Front":
-            scale_up = 0.14 if phase == 1 else 0.12
-        elif style == "Late" and phase == 1:
-            scale_up = 0.08
-        elif style == "End":
-            scale_up = 0.08
-
-    if style == "Pace":
-        scale_up = 0.11
 
     max_speed_cap = (
         speed_cap_base
