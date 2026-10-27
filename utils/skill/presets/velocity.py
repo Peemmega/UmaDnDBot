@@ -198,7 +198,7 @@ VELOCITY_SKILLS = {
         "cost": 50,
         "trigger": {"phase_min": 2, "phase_max": 3},
         "target": {"scope": "self", "limit": 1},
-        "effects": [{"type": "modify_roll_cap", "value": 10, "duration": "this_roll"}],
+        "effects": [{"type": "cap_floor", "value": 10, "duration": "this_roll"}],
         "tags": ["mid_race", "velocity", "cap_boost"],
     },
     "vel_014": {
@@ -231,7 +231,7 @@ VELOCITY_SKILLS = {
         "trigger": {"nearby_uma_count": 2},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 3, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -248,7 +248,7 @@ VELOCITY_SKILLS = {
         "cost": 60,
         "trigger": {"lastspurt": True},
         "target": {"scope": "self", "limit": 1},
-        "effects": [{"type": "modify_roll_cap", "value": 6, "duration": "this_roll"}],
+        "effects": [{"type": "cap_floor", "value": 6, "duration": "this_roll"}],
         "tags": ["lastspurt", "velocity"],
     },
     "vel_017": {
@@ -588,7 +588,7 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 3, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
