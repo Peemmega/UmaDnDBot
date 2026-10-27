@@ -183,6 +183,131 @@ def _hydrate_participant_snapshot(snapshot: Any) -> dict:
     return snapshot
 
 
+def _aptitude_modifier(value: Any) -> float:
+    ranks = {"G": 1.0, "F": 1.05, "E": 1.1, "D": 1.15, "C": 1.2, "B": 1.25, "A": 1.3, "S": 1.35}
+    normalized = str(value or "").strip().upper()
+    if normalized.isdigit():
+        index = int(normalized) - 1
+        normalized = ("G", "F", "E", "D", "C", "B", "A", "S")[index] if 0 <= index < 8 else ""
+    return ranks.get(normalized, 1.0)
+
+
+def _participant_replay_states(participant: dict, turns: list[dict], actions: list[dict], total_turns: int) -> dict:
+    """Derive per-phase Wit and skill state from the same race rules used in play."""
+    participant_id = str(participant.get("participant_id") or "")
+    snapshot = participant.get("snapshot") or {}
+    base_stats = snapshot.get("base_stats") or {}
+    aptitudes = snapshot.get("aptitudes") or {}
+    effective_stats = snapshot.get("effective_race_stats") or {}
+    base_wit = int(base_stats.get("wit") or 0)
+    style_key = {
+        "front": "front", "pace": "pace", "late": "late", "end": "end_style",
+    }.get(str(snapshot.get("running_style") or participant.get("running_style") or "pace").strip().lower(), "pace")
+    wit_gain = effective_stats.get("effective_wit_gain")
+    if wit_gain is None:
+        wit_gain = round((10 + base_wit * 2) * _aptitude_modifier(aptitudes.get(style_key)))
+    wit_gain = int(wit_gain)
+
+    skills_by_id = {}
+    for skill in snapshot.get("skills") or []:
+        normalized = _skill_snapshot(skill)
+        if normalized.get("id"):
+            skills_by_id[normalized["id"]] = normalized
+
+    snapshot_uses: dict[str, dict[int, dict]] = {}
+    action_uses: dict[str, dict[int, dict]] = {}
+
+    def add_use(destination: dict, skill_id: Any, turn_number: Any, cost: Any = None, cooldown: Any = None) -> None:
+        skill_id = str(skill_id or "")
+        try:
+            turn_number = int(turn_number)
+        except (TypeError, ValueError):
+            return
+        if not skill_id or turn_number < 1:
+            return
+        definition = SKILLS.get(skill_id) or {}
+        use = destination.setdefault(skill_id, {}).setdefault(turn_number, {
+            "cost": 0,
+            "count": 0,
+            "cooldown": int(cooldown if cooldown is not None else definition.get("cooldown", 0) or 0),
+        })
+        use["cost"] += int(cost if cost is not None else definition.get("cost", 0) or 0)
+        use["count"] += 1
+
+    for turn in turns:
+        if str(turn.get("participant_id")) != participant_id:
+            continue
+        data = turn.get("turn_data") or {}
+        for skill in data.get("skills") or []:
+            if isinstance(skill, dict):
+                add_use(snapshot_uses, skill.get("id") or skill.get("skill_id"), turn.get("turn_number"), skill.get("cost"), skill.get("cooldown"))
+            else:
+                add_use(snapshot_uses, skill, turn.get("turn_number"))
+
+    for action in actions:
+        if str(action.get("participant_id")) != participant_id or str(action.get("action_type") or "").lower() != "skill":
+            continue
+        data = action.get("action_data") or {}
+        add_use(action_uses, data.get("skill_id") or data.get("id"), action.get("turn_number"), data.get("cost"), data.get("cooldown"))
+
+    # Action records include actual costs and repetitions; turn snapshots are a fallback for older races.
+    uses_by_skill = {skill_id: dict(turn_uses) for skill_id, turn_uses in snapshot_uses.items()}
+    for skill_id, turn_uses in action_uses.items():
+        uses_by_skill.setdefault(skill_id, {}).update(turn_uses)
+
+    # Include a skill seen in history even if an older race snapshot omitted it.
+    for skill_id in uses_by_skill:
+        skills_by_id.setdefault(skill_id, _skill_snapshot(skill_id))
+
+    replay_states = {}
+    recorded_wit_by_turn = {
+        int(turn.get("turn_number") or 0): (turn.get("turn_data") or {})
+        for turn in turns
+        if str(turn.get("participant_id")) == participant_id
+    }
+    for turn_number in range(1, max(0, int(total_turns)) + 1):
+        replay_states[str(turn_number)] = {}
+        for phase in ("lane", "run"):
+            eligible = {}
+            for skill_id, turn_uses in uses_by_skill.items():
+                for used_turn, use in turn_uses.items():
+                    is_prior = used_turn < turn_number
+                    is_current_use = used_turn == turn_number and (
+                        phase == "run" or (SKILLS.get(skill_id) or {}).get("activation", "active") == "passive"
+                    )
+                    if is_prior or is_current_use:
+                        eligible.setdefault(skill_id, {})[used_turn] = use
+
+            spent_wit = sum(use["cost"] for turn_uses in eligible.values() for use in turn_uses.values())
+            skill_states = {}
+            for skill_id, skill in skills_by_id.items():
+                uses = eligible.get(skill_id) or {}
+                latest_turn = max(uses) if uses else None
+                cooldown = uses[latest_turn]["cooldown"] if latest_turn is not None else int((SKILLS.get(skill_id) or {}).get("cooldown", 0) or 0)
+                elapsed = max(0, turn_number - latest_turn) if latest_turn is not None else 0
+                skill_states[skill_id] = {
+                    "used": bool(uses),
+                    "use_count": sum(use["count"] for use in uses.values()),
+                    "cooldown_remaining": max(0, cooldown - elapsed) if latest_turn is not None else 0,
+                }
+            turn_data = recorded_wit_by_turn.get(turn_number) or {}
+            wit_keys = ("wit_mana_after", "wit_after") if phase == "run" else ("wit_mana_before", "wit_before")
+            recorded_candidates = [turn_data.get(key) for key in wit_keys]
+            recorded_candidates.append((turn_data.get("roll") or {}).get(wit_keys[0]))
+            recorded_wit = next((value for value in recorded_candidates if value is not None), None)
+            try:
+                wit_value = int(recorded_wit) if recorded_wit is not None else None
+            except (TypeError, ValueError):
+                wit_value = None
+            replay_states[str(turn_number)][phase] = {
+                "wit": wit_value if wit_value is not None else 100 + base_wit * 10 + wit_gain * (turn_number - 1) - spent_wit,
+                "wit_gain": wit_gain,
+                "skills": skill_states,
+                "source": "recorded" if wit_value is not None else "simulated",
+            }
+    return replay_states
+
+
 def _turn_rows(game: dict) -> list[dict]:
     rows_by_key: dict[tuple[str, int], dict] = {}
     for log in game.get("turn_score_logs", []):
@@ -401,6 +526,14 @@ def get_race_by_id(race_id: str) -> dict | None:
         _decode(row, "turn_data_json")
     for row in actions:
         _decode(row, "action_data_json")
+    total_turns = max(
+        int((dict(race) if race else {}).get("total_turns") or 0),
+        max((int(row.get("turn_number") or 0) for row in turns), default=0),
+    )
+    for participant in participants:
+        participant["replay_states"] = _participant_replay_states(
+            participant, turns, actions, total_turns
+        )
     return {
         "race": dict(race),
         "participants": participants,
