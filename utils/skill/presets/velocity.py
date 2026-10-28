@@ -430,7 +430,6 @@ VELOCITY_SKILLS = {
         "cooldown": 8,
         "cost": 40,
         "trigger": {
-            "lastspurt": True,
             "position_group": "front",
             "target_distance_min": -20,
             "target_distance_max": -1,

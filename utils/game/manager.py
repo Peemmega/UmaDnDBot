@@ -17,21 +17,21 @@ from utils.database import (
     get_account_role,
     get_profile_preset,
 )
-from utils.race.race_history import ensure_race_history_id, record_race_action, record_turn_snapshot
+from utils.race.race_history import (
+    ensure_race_history_id,
+    record_race_action,
+    record_turn_snapshot,
+)
 from utils.profile_images import resolve_player_avatar_url, resolve_public_url
 from utils.zone.zone_manager import apply_zone_in_game, get_zone_effects_from_build
 from utils.zone.zone_preset import normalize_zone_build
 from utils.race.race_presets import (
     get_path_effect,
-    get_current_path_type, 
+    get_current_path_type,
 )
 from utils.zone.zone_embed import build_zone_used_preview_embed
 
-from utils.race.race_dice import (
-    roll_race_dice,
-    get_distance_color,
-    get_phase_from_turn
-)
+from utils.race.race_dice import roll_race_dice, get_distance_color, get_phase_from_turn
 from utils.race.race_aptitude import (
     build_aptitude_debug_lines,
     calculate_effective_race_stats,
@@ -47,7 +47,11 @@ from utils.race.runtime_stamina import (
     sync_runtime_stamina,
 )
 from utils.race.stamina_rules import calculate_roll_stamina_cost
-from utils.race.result_display import format_bonus_display, format_pack_status, format_stamina_line
+from utils.race.result_display import (
+    format_bonus_display,
+    format_pack_status,
+    format_stamina_line,
+)
 from utils.race.rank_display import (
     get_gold_lane_tolerance,
     get_gold_range_value,
@@ -74,9 +78,7 @@ from utils.skill.skill_effect_registry import (
     apply_registered_skill_effects,
 )
 from utils.skill.skill_manager import describe_effect
-from utils.dice.dice_presets import (
-    MAX_SPEED_PHASE
-)
+from utils.dice.dice_presets import MAX_SPEED_PHASE
 from utils.in_game_manager import incrase_speed_by_acceleration
 
 from utils.icon_presets import Status_Icon_Type, ICONS
@@ -239,7 +241,9 @@ def apply_lane_tactics_to_result(
 
     race_profile = game_player.get("race_profile") or {}
     effective_stats = game_player.get("effective_race_stats") or {}
-    power_stat = int(effective_stats.get("effective_power", race_profile.get("power", 0)) or 0)
+    power_stat = int(
+        effective_stats.get("effective_power", race_profile.get("power", 0)) or 0
+    )
     stamina_debuff_percent = get_stamina_debuff_percent(game_player)
 
     if supports_lane:
@@ -271,7 +275,10 @@ def apply_lane_tactics_to_result(
     weather_stamina_cost = stamina_cost.weather_cost
     stamina_drain = stamina_cost.total
 
-    reference_stamina = int(game_player.get("turn_stamina_before_roll", game_player.get("stamina_left", 0)) or 0)
+    reference_stamina = int(
+        game_player.get("turn_stamina_before_roll", game_player.get("stamina_left", 0))
+        or 0
+    )
     stamina_penalty_active = (
         apply_stamina_penalty
         and stamina_drain > 0
@@ -287,9 +294,7 @@ def apply_lane_tactics_to_result(
         if include_in_preview:
             preview_current = result.get("dice_preview_bonus_display", "-")
             result["dice_preview_bonus_display"] = (
-                label
-                if preview_current == "-"
-                else f"{preview_current} {label}"
+                label if preview_current == "-" else f"{preview_current} {label}"
             )
 
     if blocking_penalty > 0:
@@ -496,10 +501,9 @@ def apply_race_stat_changes(player: dict, game: dict, effect: dict) -> dict[str,
     new_stamina_stat = int(race_profile.get("stamina", 1) or 1)
     new_stamina_max = runtime_stamina_from_stat(new_stamina_stat)
     stamina_increase = max(0, int(changes.get("stamina", 0) or 0))
-    new_stamina_current = (
-        round(new_stamina_max * old_stamina_percent / 100)
-        + runtime_stamina_effect_units(stamina_increase)
-    )
+    new_stamina_current = round(
+        new_stamina_max * old_stamina_percent / 100
+    ) + runtime_stamina_effect_units(stamina_increase)
     set_runtime_stamina(player, new_stamina_stat, new_stamina_current)
     refresh_player_race_aptitudes(player, game)
     return changes
@@ -529,6 +533,7 @@ def get_last_corner_index(path: list[int]) -> int:
             return i + 1
     return -1
 
+
 def is_last_corner(game: dict) -> bool:
     path = game["path"]
     turn_index = game["turn"]
@@ -537,10 +542,12 @@ def is_last_corner(game: dict) -> bool:
 
     return turn_index == last_corner_index
 
+
 def is_lastspurt(game: dict) -> bool:
     phase = get_phase_from_turn(game["turn"], game["max_turn"])
-    path_type = get_current_path_type(game)
-    return path_type == 1 and phase == 4
+    # path_type = get_current_path_type(game)
+    return phase == 4  # path_type == 1 and
+
 
 def execute_roll_core(
     *,
@@ -569,7 +576,9 @@ def execute_roll_core(
 
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, game_player, race_player)
-    game_player["turn_stamina_before_roll"] = int(game_player.get("stamina_left", 0) or 0)
+    game_player["turn_stamina_before_roll"] = int(
+        game_player.get("stamina_left", 0) or 0
+    )
 
     result = roll_race_dice(
         game_player=game_player,
@@ -613,7 +622,9 @@ def execute_roll_core(
     }
     if result.get("blocked_count", 0):
         record_race_action(
-            game, user_id, "blocked",
+            game,
+            user_id,
+            "blocked",
             {
                 "blocked_count": result.get("blocked_count"),
                 "blocked_runner_ids": result.get("blocked_runner_ids", []),
@@ -621,7 +632,9 @@ def execute_roll_core(
             },
         )
     if result.get("drafting_active"):
-        record_race_action(game, user_id, "draft", {"summary": "Drafting bonus applied"})
+        record_race_action(
+            game, user_id, "draft", {"summary": "Drafting bonus applied"}
+        )
 
     game_player["lastedBuff"] = merged_stats
 
@@ -636,11 +649,7 @@ def execute_roll_core(
     game_player["gold_lane_bonus_this_turn"] = 0
     game_player["enemy_gold_lane_penalty_next_turn"] = 0
 
-    success, new_score = update_player_score(
-        channel_id,
-        user_id,
-        result["total"]
-    )
+    success, new_score = update_player_score(channel_id, user_id, result["total"])
     if not success:
         return False, {"message": "ไม่สามารถอัปเดตคะแนนได้"}
 
@@ -657,7 +666,10 @@ def execute_roll_core(
         "title_prefix": title_prefix,
     }
 
-def create_game(channel_id: int, stage_key: str, owner_id: int, *, is_legend: bool = False):
+
+def create_game(
+    channel_id: int, stage_key: str, owner_id: int, *, is_legend: bool = False
+):
     if channel_id in games:
         return False
 
@@ -669,7 +681,7 @@ def create_game(channel_id: int, stage_key: str, owner_id: int, *, is_legend: bo
     games[channel_id] = {
         "channel_id": channel_id,
         "stage_key": stage_key,
-        "stage_name": stage['name'],
+        "stage_name": stage["name"],
         "is_legend": bool(is_legend),
         "max_turn": get_race_turns(stage),
         "track": stage["track"],
@@ -686,7 +698,6 @@ def create_game(channel_id: int, stage_key: str, owner_id: int, *, is_legend: bo
         # explicitly confirms the race as Official before starting it.
         "record_type": "practice",
         "game_rules": GAME_RULE_DEFAULTS.copy(),
-
         "turn_confirmations": set(),
         "awaiting_turn_confirm": False,
         "turn_confirmation_turn": None,
@@ -699,6 +710,7 @@ def create_game(channel_id: int, stage_key: str, owner_id: int, *, is_legend: bo
 
     return True
 
+
 def reset_turn_confirmations(channel_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -706,6 +718,7 @@ def reset_turn_confirmations(channel_id: int):
 
     TurnEngine.reset_confirmations(game)
     return True
+
 
 def start_turn_confirmation(channel_id: int):
     game = get_game(channel_id)
@@ -729,10 +742,9 @@ def get_unconfirmed_turn_players(channel_id: int):
     game = get_game(channel_id)
     if game is None:
         return None
-    if (
-        not game.get("awaiting_turn_confirm")
-        or game.get("turn_confirmation_turn") != game.get("turn")
-    ):
+    if not game.get("awaiting_turn_confirm") or game.get(
+        "turn_confirmation_turn"
+    ) != game.get("turn"):
         return []
 
     turn = game.get("turn")
@@ -774,6 +786,7 @@ def confirm_turn(
     }
     return result.ok, result.payload if result.ok else messages[result.code]
 
+
 def claim_turn_advance(
     channel_id: int,
     *,
@@ -812,10 +825,10 @@ def refresh_turn_snapshot(channel_id: int):
         return False
 
     game["turn_snapshot_scores"] = {
-        user_id: info["score"]
-        for user_id, info in game["players"].items()
+        user_id: info["score"] for user_id, info in game["players"].items()
     }
     return True
+
 
 def get_game(channel_id: int):
     return games.get(channel_id)
@@ -828,6 +841,7 @@ def delete_game(channel_id: int) -> bool:
     del games[channel_id]
     return True
 
+
 def end_game(channel_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -835,6 +849,7 @@ def end_game(channel_id: int):
 
     complete_race(game)
     return True, "จบเกมแล้ว"
+
 
 def is_owner(channel_id: int, user_id: int):
     game = get_game(channel_id)
@@ -864,6 +879,7 @@ def is_game_started(channel_id: int):
     if game is None:
         return False
     return game["started"]
+
 
 def have_all_players_rolled(channel_id: int):
     game = get_game(channel_id)
@@ -899,11 +915,9 @@ def start_game(channel_id: int):
     shuffled_players = _randomize_starting_positions(game)
 
     game["turn_snapshot_scores"] = {
-        user_id: info["score"]
-        for user_id, info in game["players"].items()
+        user_id: info["score"] for user_id, info in game["players"].items()
     }
 
-    
     for index, (user_id, player) in enumerate(shuffled_players, start=1):
         _ensure_lane_state(player, index)
         player["blocked_count"] = 0
@@ -912,7 +926,7 @@ def start_game(channel_id: int):
         player["last_stamina_drain"] = 0
         is_mob = player.get("is_mob", False)
         using_mob_preset = player.get("using_mob_preset", False)
-        
+
         if is_mob:
             # mob ใช้ค่า preset ที่มีอยู่ใน player อยู่แล้ว
             base_player = player.get("race_profile", {}).copy()
@@ -945,12 +959,15 @@ def start_game(channel_id: int):
             player["takeStaminaDebuff"] = False
 
             # mob ใช้ skills จาก preset เดิม ไม่ต้องโหลดจาก DB
-            player["skills"] = player.get("skills", {
-                1: None,
-                2: None,
-                3: None,
-                4: None,
-            })
+            player["skills"] = player.get(
+                "skills",
+                {
+                    1: None,
+                    2: None,
+                    3: None,
+                    4: None,
+                },
+            )
 
         elif using_mob_preset:
             base_player = player.get("race_profile", {}).copy()
@@ -961,12 +978,15 @@ def start_game(channel_id: int):
             player["race_profile"] = base_player.copy()
 
             # สำคัญ: ใช้ skills เดิมจาก preset ห้ามทับด้วย DB
-            player["skills"] = player.get("skills", {
-                1: None,
-                2: None,
-                3: None,
-                4: None,
-            })
+            player["skills"] = player.get(
+                "skills",
+                {
+                    1: None,
+                    2: None,
+                    3: None,
+                    4: None,
+                },
+            )
 
             player["zone"] = copy.deepcopy(player.get("zone", {}))
         else:
@@ -1015,7 +1035,7 @@ def start_game(channel_id: int):
             # zone ของผู้เล่นจริง ถ้ายังใช้ในเกม
             if "zone" not in player and "zone" in db_player:
                 player["zone"] = {
-                    "name": db_player["zone"]['name'],
+                    "name": db_player["zone"]["name"],
                     "image_url": db_player["zone"]["image_url"],
                     "points": db_player["zone"]["points"],
                     "build": db_player["zone"]["build"],
@@ -1091,10 +1111,7 @@ def build_join_embed(
         },
     )
 
-    embed = discord.Embed(
-        title=title,
-        color=color
-    )
+    embed = discord.Embed(title=title, color=color)
 
     embed.add_field(name=name_field, value=name_value, inline=True)
     embed.add_field(name="Style", value=style, inline=True)
@@ -1102,18 +1119,16 @@ def build_join_embed(
     embed.add_field(
         name="📊 Aptitude Bonus",
         value="\n".join(build_aptitude_debug_lines(effective_stats)),
-        inline=False
+        inline=False,
     )
 
     embed.set_thumbnail(url=display_image)
     return embed
 
+
 def build_mob_join_embed(game: dict, mob: dict):
     mob_name = (
-        mob.get("display_name")
-        or mob.get('username') 
-        or mob.get("name")
-        or "Mob"
+        mob.get("display_name") or mob.get("username") or mob.get("name") or "Mob"
     )
 
     style = mob.get("style", "Unknown")
@@ -1131,6 +1146,7 @@ def build_mob_join_embed(game: dict, mob: dict):
         name_field="ชื่อ",
         name_value=mob_name,
     )
+
 
 def get_player_skill_cd(channel_id: int, user_id: int, skill_id: str) -> int:
     game = get_game(channel_id)
@@ -1201,6 +1217,7 @@ def initialize_player_skills(channel_id: int):
         # optional (ไว้ใช้ต่อ)
         player["skill_cooldowns"] = {}
 
+
 def use_player_stamina(channel_id: int, user_id: int, amount: int = 1):
     game = get_game(channel_id)
     if game is None:
@@ -1222,6 +1239,7 @@ def use_player_stamina(channel_id: int, user_id: int, amount: int = 1):
     )
     return True, player["stamina_left"]
 
+
 def apply_stamina_cost(channel_id: int, user_id: int, turn: int):
     game = get_game(channel_id)
     if game is None:
@@ -1232,11 +1250,7 @@ def apply_stamina_cost(channel_id: int, user_id: int, turn: int):
         return {"used": False, "penalty": 0, "stamina_left": None}
 
     if turn <= 8:
-        return {
-            "used": False,
-            "penalty": 0,
-            "stamina_left": player["stamina_left"]
-        }
+        return {"used": False, "penalty": 0, "stamina_left": player["stamina_left"]}
 
     sync_runtime_stamina(player)
     if player["stamina_left"] > 0:
@@ -1245,17 +1259,10 @@ def apply_stamina_cost(channel_id: int, user_id: int, turn: int):
             player.get("stamina_stat", 0),
             player["stamina_left"] - 100,
         )
-        return {
-            "used": True,
-            "penalty": 0,
-            "stamina_left": player["stamina_left"]
-        }
+        return {"used": True, "penalty": 0, "stamina_left": player["stamina_left"]}
 
-    return {
-        "used": False,
-        "penalty": 30,
-        "stamina_left": player["stamina_left"]
-    }
+    return {"used": False, "penalty": 30, "stamina_left": player["stamina_left"]}
+
 
 def get_player_stamina_left(channel_id: int, user_id: int):
     game = get_game(channel_id)
@@ -1329,6 +1336,7 @@ def apply_pending_lane_change_now(channel_id: int, user_id: int):
         "lane_changed": player["lane_changed"],
     }
 
+
 def get_players_ahead(channel_id: int, user_id: int):
     game = get_game(channel_id)
     if game is None or user_id not in game["players"]:
@@ -1345,6 +1353,7 @@ def get_players_ahead(channel_id: int, user_id: int):
             result.append((uid, gap, info))
 
     return sorted(result, key=lambda x: x[1])
+
 
 def get_players_behind(channel_id: int, user_id: int):
     game = get_game(channel_id)
@@ -1363,6 +1372,7 @@ def get_players_behind(channel_id: int, user_id: int):
 
     return sorted(result, key=lambda x: x[1])
 
+
 def apply_next_roll_effects_to_player(player: dict, effects: list[dict]):
     for effect in effects:
         effect_type = effect.get("type")
@@ -1373,28 +1383,37 @@ def apply_next_roll_effects_to_player(player: dict, effects: list[dict]):
         #     continue
 
         if effect_type == "modify_velocity":
-            player["next_roll_flat_bonus"] = player.get("next_roll_flat_bonus", 0) + value
+            player["next_roll_flat_bonus"] = (
+                player.get("next_roll_flat_bonus", 0) + value
+            )
 
         elif effect_type == "add_d":
             player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + value
 
         elif effect_type == "add_kh":
             player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + value
-            
+
         elif effect_type == "add_dkh":
             player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + value
             player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + value
 
         elif effect_type == "modify_roll_floor":
-            player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + value
-            
+            player["next_roll_floor_bonus"] = (
+                player.get("next_roll_floor_bonus", 0) + value
+            )
+
         elif effect_type == "modify_roll_cap":
             player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + value
 
         elif effect_type in {"modify_roll_cap_floor", "cap_floor"}:
-            player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + effect.get("cap", value)
-            player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + effect.get("floor", value)
-            
+            player["next_roll_cap_bonus"] = player.get(
+                "next_roll_cap_bonus", 0
+            ) + effect.get("cap", value)
+            player["next_roll_floor_bonus"] = player.get(
+                "next_roll_floor_bonus", 0
+            ) + effect.get("floor", value)
+
+
 def use_block(channel_id: int, user_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -1418,7 +1437,10 @@ def use_block(channel_id: int, user_id: int):
         if gold_range < gap <= gold_range + 20
     ]
     if not valid_targets:
-        return False, "ไม่มีเป้าหมายด้านหลังในเลนเดียวกันหรือเลนติดกันที่ถอยเข้า In Pack ได้ไม่เกิน 20"
+        return (
+            False,
+            "ไม่มีเป้าหมายด้านหลังในเลนเดียวกันหรือเลนติดกันที่ถอยเข้า In Pack ได้ไม่เกิน 20",
+        )
 
     target_id, gap, target_info = valid_targets[0]
     move_back = gap - gold_range
@@ -1507,7 +1529,9 @@ def use_rush(channel_id: int, user_id: int):
     }
 
 
-def can_force_rush_targets(channel_id: int, targets: list[tuple[int, dict]]) -> tuple[bool, str | None]:
+def can_force_rush_targets(
+    channel_id: int, targets: list[tuple[int, dict]]
+) -> tuple[bool, str | None]:
     if not targets:
         return False, "ไม่มีเป้าหมายสำหรับบังคับ Rush"
 
@@ -1530,10 +1554,11 @@ def can_force_rush_targets(channel_id: int, targets: list[tuple[int, dict]]) -> 
 
 def build_aptitude_stat_bonus(att):
     return {
-        "power": att["track"],      # Track → Power
-        "speed": att["distance"],   # Distance → Speed
-        "wit": att["style"],        # Style → Wit
+        "power": att["track"],  # Track → Power
+        "speed": att["distance"],  # Distance → Speed
+        "wit": att["style"],  # Style → Wit
     }
+
 
 def build_pending_effects_from_player(
     player: dict,
@@ -1562,67 +1587,61 @@ def build_pending_effects_from_player(
     pending_effects = []
 
     if flat != 0:
-        pending_effects.append({
-            "type": "modify_velocity",
-            "value": flat,
-            "duration": "this_roll"
-        })
+        pending_effects.append(
+            {"type": "modify_velocity", "value": flat, "duration": "this_roll"}
+        )
 
     if add_d != 0:
-        pending_effects.append({
-            "type": "add_d",
-            "value": add_d,
-            "duration": "this_roll"
-        })
+        pending_effects.append(
+            {"type": "add_d", "value": add_d, "duration": "this_roll"}
+        )
 
     if add_kh != 0:
-        pending_effects.append({
-            "type": "add_kh",
-            "value": add_kh,
-            "duration": "this_roll"
-        })
+        pending_effects.append(
+            {"type": "add_kh", "value": add_kh, "duration": "this_roll"}
+        )
 
     if floor != 0:
-        pending_effects.append({
-            "type": "modify_roll_floor",
-            "value": floor,
-            "duration": "this_roll"
-        })
+        pending_effects.append(
+            {"type": "modify_roll_floor", "value": floor, "duration": "this_roll"}
+        )
 
     if cap != 0:
-        pending_effects.append({
-            "type": "modify_roll_cap",
-            "value": cap,
-            "duration": "this_roll"
-        })
+        pending_effects.append(
+            {"type": "modify_roll_cap", "value": cap, "duration": "this_roll"}
+        )
 
     if gold_range != 0:
-        pending_effects.append({
-            "type": "modify_gold_range",
-            "value": gold_range,
-            "duration": "this_roll"
-        })
+        pending_effects.append(
+            {"type": "modify_gold_range", "value": gold_range, "duration": "this_roll"}
+        )
 
     if enemy_gold_range_penalty != 0:
-        pending_effects.append({
-            "type": "modify_enemy_gold_range",
-            "value": enemy_gold_range_penalty,
-            "duration": "this_roll"
-        })
+        pending_effects.append(
+            {
+                "type": "modify_enemy_gold_range",
+                "value": enemy_gold_range_penalty,
+                "duration": "this_roll",
+            }
+        )
 
     if gold_lane_bonus != 0:
-        pending_effects.append({
-            "type": "modify_gold_lane_range",
-            "value": gold_lane_bonus,
-            "duration": "this_roll"
-        })
+        pending_effects.append(
+            {
+                "type": "modify_gold_lane_range",
+                "value": gold_lane_bonus,
+                "duration": "this_roll",
+            }
+        )
 
     if enemy_gold_lane_penalty != 0:
-        pending_effects.append({
-            "type": "modify_enemy_gold_lane_range",
-            "value": enemy_gold_lane_penalty,
-            "duration": "this_roll"
-        })
+        pending_effects.append(
+            {
+                "type": "modify_enemy_gold_lane_range",
+                "value": enemy_gold_lane_penalty,
+                "duration": "this_roll",
+            }
+        )
 
     merged_stats = {
         "flat": flat,
@@ -1630,7 +1649,7 @@ def build_pending_effects_from_player(
         "add_kh": add_kh,
         "floor": floor,
         "cap": cap,
-        "gold_range": gold_range,  
+        "gold_range": gold_range,
         "enemy_gold_range_penalty": enemy_gold_range_penalty,
         "gold_lane_bonus": gold_lane_bonus,
         "enemy_gold_lane_penalty": enemy_gold_lane_penalty,
@@ -1655,11 +1674,13 @@ def use_reroll(channel_id: int, user_id: int):
     record_race_action(game, user_id, "reroll", {"rerolls_left": player["reroll_left"]})
     return True, player["reroll_left"]
 
+
 def build_single_wit_regen_text(game_player: dict) -> str:
     effective_stats = game_player.get("effective_race_stats") or {}
     regen = int(effective_stats.get("effective_wit_gain", 10))
     current_mana = game_player.get("wit_mana", 0)
-    return f"{current_mana} → {current_mana + regen}" #{Status_Icon_Type['WIT']} 
+    return f"{current_mana} → {current_mana + regen}"  # {Status_Icon_Type['WIT']}
+
 
 def build_run_embed(
     game_player: dict,
@@ -1674,7 +1695,7 @@ def build_run_embed(
 
     embed = discord.Embed(
         title=f"{name_part} ช่วงที่ {result['phase']} เทิร์นที่ {result['turn']} : {path_effect['label']} สาย {game_player['style']}",
-        color=discord.Color.gold()
+        color=discord.Color.gold(),
     )
 
     avatar = resolve_player_avatar_url(game_player) or game_player.get("avatar", "0")
@@ -1682,40 +1703,50 @@ def build_run_embed(
     current_max_speed = math.floor(game_player.get("current_max_speed", 0))
     wit_reroll = game_player.get("wit_reroll_left", 0)
 
-    bonus_display = format_bonus_display(result.get("bonus_display", "-"), block_label="🚫")
-    embed.add_field(name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {format_pack_status(result['distance_color'])}", value= f"{result['display']} {bonus_display}" , inline=False)
-    
+    bonus_display = format_bonus_display(
+        result.get("bonus_display", "-"), block_label="🚫"
+    )
+    embed.add_field(
+        name=f"🏇 ความเร็วปัจจุบัน {current_max_speed} รูปแบบ {format_pack_status(result['distance_color'])}",
+        value=f"{result['display']} {bonus_display}",
+        inline=False,
+    )
+
     if stamina_note == None:
         stamina_note = format_runtime_stamina(game_player)
     stamina_line = format_stamina_line(
         stamina_note,
-        drafting_active=bool(result.get("drafting_active", game_player.get("drafting_active", False))),
+        drafting_active=bool(
+            result.get("drafting_active", game_player.get("drafting_active", False))
+        ),
     )
 
     embed.add_field(
-        name= f"🏁 Score รวม: **{new_score}** ({result['total']})",
+        name=f"🏁 Score รวม: **{new_score}** ({result['total']})",
         value=(
             f"{Status_Icon_Type['STA']} : **{stamina_line}**　"
             f"{Status_Icon_Type['WIT']} : **{build_single_wit_regen_text(game_player)}** "
         ),
-        inline=False
+        inline=False,
     )
 
     embed.add_field(
-        name= f"{ICONS['AlarmClock']} : **{reroll}** {Status_Icon_Type['WIT']} Reroll: **{wit_reroll}**",
+        name=f"{ICONS['AlarmClock']} : **{reroll}** {Status_Icon_Type['WIT']} Reroll: **{wit_reroll}**",
         value="",
-        inline=False
+        inline=False,
     )
 
     embed.set_thumbnail(url=avatar)
 
     return embed
 
+
 def has_real_player(game: dict) -> bool:
-        return any(
-            not player.get("is_mob", False) and not player.get("bot_auto", False)
-            for player in game["players"].values()
-        )
+    return any(
+        not player.get("is_mob", False) and not player.get("bot_auto", False)
+        for player in game["players"].values()
+    )
+
 
 def next_turn(channel_id: int):
     game = get_game(channel_id)
@@ -1739,13 +1770,14 @@ def next_turn(channel_id: int):
         after_advance=after_advance,
     )
 
+
 def incrase_speed_by_acceleration_turn(channel_id: int):
     game = get_game(channel_id)
     if game is None:
         return
 
     for _, player in game["players"].items():
-        incrase_speed_by_acceleration(game ,player, 1)
+        incrase_speed_by_acceleration(game, player, 1)
 
 
 def apply_wit_regen(channel_id: int):
@@ -1754,9 +1786,12 @@ def apply_wit_regen(channel_id: int):
         return
 
     for _, player in game["players"].items():
-        effective_stats = player.get("effective_race_stats") or refresh_player_race_aptitudes(player, game)
+        effective_stats = player.get(
+            "effective_race_stats"
+        ) or refresh_player_race_aptitudes(player, game)
         regen = int(effective_stats.get("effective_wit_gain", 10))
         player["wit_mana"] = player.get("wit_mana", 0) + regen
+
 
 def get_ranked_players(channel_id: int):
     game = get_game(channel_id)
@@ -1764,10 +1799,9 @@ def get_ranked_players(channel_id: int):
         return []
 
     return sorted(
-        game["players"].items(),
-        key=lambda item: item[1]["score"],
-        reverse=True
+        game["players"].items(), key=lambda item: item[1]["score"], reverse=True
     )
+
 
 def add_player(channel_id, user_id, display_name: str, display_avatar: str, style):
     game = get_game(channel_id)
@@ -1782,7 +1816,7 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
 
     if user_id in game["players"]:
         return False, "คุณเข้าร่วมเกมนี้แล้ว"
-    
+
     # A Discord user can open the lobby before visiting the web profile/API.
     # Create the default record here so joining a game never dereferences None.
     db_player = ensure_player(user_id, display_name)
@@ -1844,13 +1878,12 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
         "no_reroll_this_turn": False,
         "no_reroll_next_turn": False,
         "zone_left": 1,
-
         "zone": {
-            "name": db_player["zone"]['name'],
+            "name": db_player["zone"]["name"],
             "image_url": db_player["zone"]["image_url"],
             "points": db_player["zone"]["points"],
             "build": db_player["zone"]["build"],
-        }
+        },
     }
     apply_active_profile_identity(
         user_id,
@@ -1863,12 +1896,10 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
 
     return True, "เข้าร่วมเกมสำเร็จ"
 
+
 def add_player_as_mob_preset(
-        channel_id: int, 
-        user_id: int, 
-        display_name: str, 
-        preset_key: str
-        ):
+    channel_id: int, user_id: int, display_name: str, preset_key: str
+):
     game = get_game(channel_id)
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
@@ -1884,7 +1915,9 @@ def add_player_as_mob_preset(
         return False, "ไม่พบ preset"
 
     race_profile = copy.deepcopy(preset["race_profile"])
-    race_profile = apply_rookie_distance_stats(preset_key, race_profile, game.get("distance"))
+    race_profile = apply_rookie_distance_stats(
+        preset_key, race_profile, game.get("distance")
+    )
 
     skills = apply_rookie_distance_skills(
         preset_key,
@@ -1896,8 +1929,8 @@ def add_player_as_mob_preset(
     zone["build"] = normalize_zone_build(zone.get("build"))
 
     game["players"][user_id] = {
-        "username": preset['name'],
-        "display_name": preset['name'],
+        "username": preset["name"],
+        "display_name": preset["name"],
         "avatar": preset["avatar"],
         "thumnail": preset["thumnail"],
         "profile_image_url": "",
@@ -1950,15 +1983,23 @@ def add_player_as_mob_preset(
 
     return True, "เข้าร่วมสำเร็จ"
 
+
 def apply_mob_level(race_profile: dict, level: int):
     level = max(1, min(level, 8))
 
     bonus = level - 1
 
     aptitude_fields = [
-        "turf", "dirt",
-        "sprint", "mile", "medium", "long",
-        "front", "pace", "late", "end_style",
+        "turf",
+        "dirt",
+        "sprint",
+        "mile",
+        "medium",
+        "long",
+        "front",
+        "pace",
+        "late",
+        "end_style",
     ]
 
     for field in aptitude_fields:
@@ -2004,7 +2045,9 @@ ROOKIE_DISTANCE_SKILL_LOADOUTS = {
 }
 
 
-def apply_rookie_distance_stats(preset_key: str, race_profile: dict, distance: str | None):
+def apply_rookie_distance_stats(
+    preset_key: str, race_profile: dict, distance: str | None
+):
     if not preset_key.startswith("rookie_"):
         return race_profile
 
@@ -2072,7 +2115,9 @@ def apply_common_mob_skills(skills: dict, style: str, distance: str | None) -> d
         family = icon_families.get(original.get("icon"))
         candidates = list(common_by_family.get(family, [])) if family else []
         if not candidates:
-            candidates = [entry for entries in common_by_family.values() for entry in entries]
+            candidates = [
+                entry for entries in common_by_family.values() for entry in entries
+            ]
         unused_candidates = [entry for entry in candidates if entry[0] not in used_ids]
         if unused_candidates:
             candidates = unused_candidates
@@ -2123,7 +2168,9 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
 
     race_profile = copy.deepcopy(preset["race_profile"])
     race_profile = apply_mob_level(race_profile, level)
-    race_profile = apply_rookie_distance_stats(preset_key, race_profile, game.get("distance"))
+    race_profile = apply_rookie_distance_stats(
+        preset_key, race_profile, game.get("distance")
+    )
 
     zone = copy.deepcopy(preset["zone"])
     zone["build"] = normalize_zone_build(zone.get("build"))
@@ -2137,7 +2184,7 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
     entry_number = len(game["players"]) + 1
     default_lane = get_default_lane(entry_number)
     game["players"][mob_id] = {
-        "username": preset['name'],
+        "username": preset["name"],
         "display_name": f"{preset['name']} Lv.{level}",
         "avatar": preset["avatar"],
         "thumnail": preset.get("thumnail", preset.get("avatar")),
@@ -2147,7 +2194,6 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         "ai_level": level,
         "mob_preset_key": preset_key,
         "style": preset["style"],
-
         "score": 0,
         "last_roll_turn": -1,
         "reroll_left": 0,
@@ -2170,16 +2216,13 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         "gold_lane_bonus_this_turn": 0,
         "enemy_gold_lane_penalty_next_turn": 0,
         "wit_mana": 100,
-
         "skills": skills,
         "skill_cooldowns": {},
         "race_profile": race_profile,
-
         "used_rush": False,
         "used_block": False,
         "action_locked": False,
         "takeStaminaDebuff": False,
-
         "next_roll_flat_bonus": 0,
         "next_roll_add_d": 0,
         "next_roll_add_kh": 0,
@@ -2189,13 +2232,13 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         "no_reroll_this_turn": False,
         "no_reroll_next_turn": False,
         "zone_left": 1,
-
         "zone": zone,
     }
     set_runtime_stamina(game["players"][mob_id], race_profile.get("stamina", 1))
     apply_web_timing_player_defaults(game["players"][mob_id])
 
     return True, f"เพิ่ม mob `{preset['name']}` Lv.{level} เรียบร้อย"
+
 
 def grant_start_rerolls(channel_id: int, amount: int = 2):
     game = get_game(channel_id)
@@ -2206,6 +2249,7 @@ def grant_start_rerolls(channel_id: int, amount: int = 2):
         player["reroll_left"] = 2
 
     return True, f"แจก reroll คนละ {amount} ครั้งแล้ว"
+
 
 def get_player_in_game(channel_id: int, user_id: int):
     game = get_game(channel_id)
@@ -2233,6 +2277,7 @@ def update_player_score(channel_id: int, user_id: int, amount: int):
     player["score"] += amount
     return True, player["score"]
 
+
 def can_use_wit_reroll(game_player: dict, base_total: int) -> bool:
     effective_stats = game_player.get("effective_race_stats") or {}
     threshold = int(effective_stats.get("effective_wit_requirement", 0))
@@ -2241,6 +2286,7 @@ def can_use_wit_reroll(game_player: dict, base_total: int) -> bool:
         return False
 
     return base_total < threshold
+
 
 def can_player_roll(channel_id: int, user_id: int):
     game = get_game(channel_id)
@@ -2272,11 +2318,13 @@ def mark_player_rolled(channel_id: int, user_id: int):
     player["last_roll_turn"] = game["turn"]
     return True, "บันทึกการทอยแล้ว"
 
-#----------------------------------------------------------------------
+
+# ----------------------------------------------------------------------
 # SKILL SYSTEM
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 def has_position(position_groups, *targets):
     return any(t in position_groups for t in targets)
+
 
 def get_position_groups(channel_id: int, user_id: int) -> set[str]:
     game = get_game(channel_id)
@@ -2284,15 +2332,10 @@ def get_position_groups(channel_id: int, user_id: int) -> set[str]:
         return {"middle"}
 
     scores = game.get("turn_snapshot_scores") or {
-        uid: p["score"]
-        for uid, p in game["players"].items()
+        uid: p["score"] for uid, p in game["players"].items()
     }
 
-    ranked = sorted(
-        scores.items(),
-        key=lambda item: item[1],
-        reverse=True
-    )
+    ranked = sorted(scores.items(), key=lambda item: item[1], reverse=True)
 
     total = len(ranked)
 
@@ -2335,10 +2378,10 @@ def get_position_groups(channel_id: int, user_id: int) -> set[str]:
 
     return {"middle"}
 
+
 def _get_score_map(game: dict) -> dict:
     return game.get("turn_snapshot_scores") or {
-        uid: p["score"]
-        for uid, p in game["players"].items()
+        uid: p["score"] for uid, p in game["players"].items()
     }
 
 
@@ -2398,9 +2441,7 @@ def has_target_in_distance(
     if player is None:
         return False
 
-    lane_tolerance = _skill_target_lane_tolerance(
-        game, player, target_cfg or {}
-    )
+    lane_tolerance = _skill_target_lane_tolerance(game, player, target_cfg or {})
     player_lane = get_player_lane(player)
     players = game.get("players", {})
 
@@ -2429,6 +2470,7 @@ def is_front_blocked(game, user_id):
             return True
 
     return False
+
 
 def check_skill_trigger(
     channel_id: int,
@@ -2506,7 +2548,10 @@ def check_skill_trigger(
             )
 
     required_rush_used = trigger.get("used_rush")
-    if required_rush_used is not None and bool(player.get("used_rush")) != required_rush_used:
+    if (
+        required_rush_used is not None
+        and bool(player.get("used_rush")) != required_rush_used
+    ):
         if required_rush_used:
             return False, "ต้องใช้ Rush ก่อน"
         return False, "ต้องยังไม่เคยใช้ Rush ในการแข่งขันนี้"
@@ -2595,12 +2640,10 @@ def check_skill_trigger(
         )
 
         if nearby_count < required_nearby_count:
-            return False, (
-                f"ต้องมีคนในระยะทองอย่างน้อย "
-                f"{required_nearby_count} คน"
-            )
+            return False, (f"ต้องมีคนในระยะทองอย่างน้อย " f"{required_nearby_count} คน")
 
     return True, "ใช้สกิลได้"
+
 
 def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
     player = game["players"].get(user_id)
@@ -2654,6 +2697,7 @@ def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
 
     return usable
 
+
 def run_bot_race_test(channel_id: int):
     game = get_game(channel_id)
     if game is None:
@@ -2667,9 +2711,7 @@ def run_bot_race_test(channel_id: int):
     game = get_game(channel_id)
 
     mob_ids = [
-        user_id
-        for user_id, player in game["players"].items()
-        if player.get("is_mob")
+        user_id for user_id, player in game["players"].items() if player.get("is_mob")
     ]
 
     if not mob_ids:
@@ -2705,9 +2747,8 @@ def run_bot_race_test(channel_id: int):
 def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int) -> bool:
     """Let Pace/Late Mobs spend a valuable Zone during their endgame windows."""
     style = player.get("style")
-    eligible_phase = (
-        (style == "Late" and phase in {3, 4})
-        or (style == "Pace" and phase == 4)
+    eligible_phase = (style == "Late" and phase in {3, 4}) or (
+        style == "Pace" and phase == 4
     )
     if not eligible_phase:
         return False
@@ -2736,13 +2777,18 @@ def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int) -
     if value < 20:
         return False
 
-    turns_remaining = max(1, int(game.get("max_turn", 1) or 1) - int(game.get("turn", 1) or 1))
-    chance = min(0.85, 0.18 + min(0.42, value / 180) + (0.15 if turns_remaining <= 1 else 0))
+    turns_remaining = max(
+        1, int(game.get("max_turn", 1) or 1) - int(game.get("turn", 1) or 1)
+    )
+    chance = min(
+        0.85, 0.18 + min(0.42, value / 180) + (0.15 if turns_remaining <= 1 else 0)
+    )
 
     # Keep the chance stable for this Mob and turn, while giving each eligible
     # endgame turn a distinct opportunity to use the Zone.
     seed = f"zone:{game.get('channel_id', '')}:{user_id}:{game.get('turn', 0)}"
     return random.Random(seed).random() < chance
+
 
 def process_mob_turn(channel_id: int, user_id: str):
     game = get_game(channel_id)
@@ -2753,7 +2799,11 @@ def process_mob_turn(channel_id: int, user_id: str):
     if player is None:
         return False, {"message": "ไม่พบ mob"}
 
-    if not player.get("is_mob") and not player.get("bot_auto") and player.get("auto_control_turn") != game.get("turn"):
+    if (
+        not player.get("is_mob")
+        and not player.get("bot_auto")
+        and player.get("auto_control_turn") != game.get("turn")
+    ):
         return False, {"message": "ผู้เล่นนี้ไม่ใช่ mob"}
 
     # This function can be reached from both the turn-start flow and the
@@ -2761,7 +2811,10 @@ def process_mob_turn(channel_id: int, user_id: str):
     # player can roll while the turn-start loop is still in progress.  Make
     # the mob turn idempotent to prevent a second score roll in that case.
     if player.get("last_roll_turn") == game.get("turn"):
-        return False, {"message": "Mob already rolled this turn", "already_rolled": True}
+        return False, {
+            "message": "Mob already rolled this turn",
+            "already_rolled": True,
+        }
 
     if _supports_lane_system(game):
         target_lane = decide_mob_target_lane(game, user_id)
@@ -2772,21 +2825,12 @@ def process_mob_turn(channel_id: int, user_id: str):
     used_skill_payloads = []
     skill_embeds = []
 
-    phase = get_phase_from_turn(
-        game["turn"],
-        game["max_turn"]
-    )
+    phase = get_phase_from_turn(game["turn"], game["max_turn"])
 
     turn_trigger = (
         game["turn"] == game["max_turn"]
-        or (
-            game["turn"] == 1
-            and player.get("style", "Front") == "Front"
-        )
-        or (
-            phase == 4
-            and player.get("style") == "End"
-        )
+        or (game["turn"] == 1 and player.get("style", "Front") == "Front")
+        or (phase == 4 and player.get("style") == "End")
         or should_mob_use_endgame_zone(game, user_id, player, phase)
     )
 
@@ -2848,14 +2892,13 @@ def process_mob_turn(channel_id: int, user_id: str):
 
     if used_skill_payloads:
         payload["used_skills"] = used_skill_payloads
-        payload["used_skill_ids"] = [
-            item["skill_id"] for item in used_skill_payloads
-        ]
+        payload["used_skill_ids"] = [item["skill_id"] for item in used_skill_payloads]
 
     if skill_embeds:
         payload["skill_embeds"] = skill_embeds
 
     return True, payload
+
 
 def execute_skill_core(
     channel_id: int,
@@ -2889,16 +2932,10 @@ def execute_skill_core(
     # Cooldown
     # =====================================
 
-    on_cd, cd_left = is_skill_on_cooldown(
-        channel_id,
-        user_id,
-        skill_id
-    )
+    on_cd, cd_left = is_skill_on_cooldown(channel_id, user_id, skill_id)
 
     if on_cd and not ignore_cooldown:
-        return False, {
-            "message": f"สกิลติด cooldown {cd_left}"
-        }
+        return False, {"message": f"สกิลติด cooldown {cd_left}"}
 
     # =====================================
     # Trigger
@@ -2906,17 +2943,10 @@ def execute_skill_core(
 
     path_type = get_current_path_type(game)
 
-    phase = get_phase_from_turn(
-        game["turn"],
-        game["max_turn"]
-    )
+    phase = get_phase_from_turn(game["turn"], game["max_turn"])
 
     ok, reason = check_skill_trigger(
-        channel_id,
-        user_id,
-        skill,
-        path_type=path_type,
-        phase=phase
+        channel_id, user_id, skill, path_type=path_type, phase=phase
     )
 
     if not ok and not ignore_trigger:
@@ -2930,9 +2960,7 @@ def execute_skill_core(
 
     if consume_cost:
         if player.get("wit_mana", 0) < cost:
-            return False, {
-                "message": f"Wit ไม่พอ ({cost})"
-            }
+            return False, {"message": f"Wit ไม่พอ ({cost})"}
 
     # =====================================
     # Split effects
@@ -2962,7 +2990,8 @@ def execute_skill_core(
         duration = effect.get("duration")
 
         if (
-            effect_type in [
+            effect_type
+            in [
                 "modify_velocity",
                 "modify_roll_floor",
                 "modify_roll_cap",
@@ -2990,11 +3019,7 @@ def execute_skill_core(
         temp_skill = skill.copy()
         temp_skill["effects"] = instant_effects
 
-        success, result_text = apply_skill(
-            channel_id,
-            user_id,
-            temp_skill
-        )
+        success, result_text = apply_skill(channel_id, user_id, temp_skill)
 
         if not success:
             return False, {"message": result_text}
@@ -3026,9 +3051,7 @@ def execute_skill_core(
                 target_entry = queued_target_effects.setdefault(
                     target_id,
                     {
-                        "reference": format_player_reference(
-                            target_id, target_player
-                        ),
+                        "reference": format_player_reference(target_id, target_player),
                         "effects": [],
                     },
                 )
@@ -3041,8 +3064,7 @@ def execute_skill_core(
                 for entry in queued_target_effects.values()
             ]
             result_texts.append(
-                "เตรียมผลสำหรับการวิ่งครั้งถัดไป:\n"
-                + "\n".join(target_lines)
+                "เตรียมผลสำหรับการวิ่งครั้งถัดไป:\n" + "\n".join(target_lines)
             )
         else:
             if not instant_effects:
@@ -3052,9 +3074,7 @@ def execute_skill_core(
             result_texts.append("ไม่มีเป้าหมายที่ตรงเงื่อนไขสำหรับผลครั้งถัดไป")
 
     if not instant_effects and not queued_effects:
-        return False, {
-            "message": "ยังไม่มี effect รองรับ"
-        }
+        return False, {"message": "ยังไม่มี effect รองรับ"}
 
     # =====================================
     # Consume resource
@@ -3064,10 +3084,12 @@ def execute_skill_core(
         player["wit_mana"] -= cost
 
     player.setdefault("used_skills_this_turn", [])
-    player["used_skills_this_turn"].append({
-        "id": skill_id,
-        "name": skill.get("name", skill_id),
-    })
+    player["used_skills_this_turn"].append(
+        {
+            "id": skill_id,
+            "name": skill.get("name", skill_id),
+        }
+    )
     player["skill_use_count"] = int(player.get("skill_use_count", 0) or 0) + 1
     record_race_action(
         game,
@@ -3081,12 +3103,7 @@ def execute_skill_core(
     # =====================================
 
     if apply_cooldown:
-        set_player_skill_cd(
-            channel_id,
-            user_id,
-            skill_id,
-            skill.get("cooldown", 0)
-        )
+        set_player_skill_cd(channel_id, user_id, skill_id, skill.get("cooldown", 0))
 
     return True, {
         "skill_id": skill_id,
@@ -3162,7 +3179,9 @@ def drain_pending_passive_skill_embeds(channel_id: int) -> list[discord.Embed]:
 
         embeds.append(
             build_skill_use_embed(
-                player_name=player.get("display_name") or player.get("username") or "Player",
+                player_name=player.get("display_name")
+                or player.get("username")
+                or "Player",
                 player=player,
                 skill=skill,
                 payload=payload,
@@ -3170,6 +3189,7 @@ def drain_pending_passive_skill_embeds(channel_id: int) -> list[discord.Embed]:
         )
 
     return embeds
+
 
 def apply_skill(channel_id: int, user_id: int, skill: dict):
     game = get_game(channel_id)
@@ -3206,7 +3226,10 @@ def apply_skill(channel_id: int, user_id: int, skill: dict):
         return False, "สกิลนี้ยังไม่มีผลที่รองรับในระบบตอนนี้"
     return True, "\n".join(result)
 
-def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tuple[int, dict]]:
+
+def resolve_skill_targets(
+    channel_id: int, user_id: int, skill: dict
+) -> list[tuple[int, dict]]:
     game = get_game(channel_id)
     if game is None or user_id not in game["players"]:
         return []
@@ -3277,10 +3300,7 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
     back = _visible_lanes_only(back)
 
     def _target_pairs(candidates):
-        return [
-            (tid, info)
-            for _, tid, info in candidates
-        ]
+        return [(tid, info) for _, tid, info in candidates]
 
     if scope == "nearest_front":
         return _target_pairs(front[:1])
@@ -3301,6 +3321,7 @@ def resolve_skill_targets(channel_id: int, user_id: int, skill: dict) -> list[tu
 
     return []
 
+
 def build_skill_use_embed(
     *,
     player_name: str,
@@ -3313,10 +3334,8 @@ def build_skill_use_embed(
     activation_suffix = " (Passive)" if skill.get("activation") == "passive" else ""
     embed = discord.Embed(
         title=f"{player_name} ใช้สกิล {skill['name']}{activation_suffix}",
-        description="\n".join(
-            payload.get("result_texts", [])
-        ),
-        color=discord.Color.green()
+        description="\n".join(payload.get("result_texts", [])),
+        color=discord.Color.green(),
     )
     if icon_url:
         embed.set_thumbnail(url=icon_url)
@@ -3324,22 +3343,19 @@ def build_skill_use_embed(
     embed.add_field(
         name=f"{Status_Icon_Type['WIT']} คงเหลือ",
         value=str(player.get("wit_mana", 0)),
-        inline=True
+        inline=True,
     )
 
     embed.add_field(
-        name="⏳ Cooldown",
-        value=f"{skill.get('cooldown', 0)} เทิร์น",
-        inline=True
+        name="⏳ Cooldown", value=f"{skill.get('cooldown', 0)} เทิร์น", inline=True
     )
 
     embed.add_field(
-        name="✨ บัพรวมทั้งหมด",
-        value=build_next_roll_buff_text(player),
-        inline=False
+        name="✨ บัพรวมทั้งหมด", value=build_next_roll_buff_text(player), inline=False
     )
 
     return embed
+
 
 def build_next_roll_buff_text(player: dict) -> str:
     lines = []
