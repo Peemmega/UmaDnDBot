@@ -66,7 +66,12 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
-from utils.game_config import MAX_APTITUDE_LEVEL, MAX_CORE_STAT
+from utils.game_config import (
+    MAX_APTITUDE_LEVEL,
+    MAX_CORE_STAT,
+    STAMINA_PENALTY_BASE_PERCENT,
+    STAMINA_PENALTY_GUTS_REDUCTION,
+)
 from utils.race.race_presets import (
     RACE_SCHEDULE,
     RACE_PRESET,
@@ -812,7 +817,12 @@ def update_player_stats(payload: UpdateStatsPayload):
 
 @app.get("/game-config")
 def api_game_config():
-    return {"max_core_stat": MAX_CORE_STAT, "max_aptitude_level": MAX_APTITUDE_LEVEL}
+    return {
+        "max_core_stat": MAX_CORE_STAT,
+        "max_aptitude_level": MAX_APTITUDE_LEVEL,
+        "stamina_penalty_base_percent": STAMINA_PENALTY_BASE_PERCENT,
+        "stamina_penalty_guts_reduction": STAMINA_PENALTY_GUTS_REDUCTION,
+    }
 
 
 @app.post("/internal/admin-data")
