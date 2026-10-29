@@ -91,8 +91,8 @@ def calculate_lane_block_penalty(
     raw_blocking_penalty = blocked_count * LANE_BLOCK_PENALTY_STEP
     power_reduction = max(0.0, float(power_stat) / 100.0)
     power_adjusted_penalty = max(0.0, raw_blocking_penalty - power_reduction)
-    capped_penalty = min(LANE_BLOCK_PENALTY_CAP, power_adjusted_penalty)
-    blocking_penalty = max(0.0, capped_penalty - max(0, block_reduction_levels) * 0.10)
+    reduced_penalty = max(0.0, power_adjusted_penalty - max(0, block_reduction_levels) * 0.10)
+    blocking_penalty = min(LANE_BLOCK_PENALTY_CAP, reduced_penalty)
     final_score = int(round(int(base_score or 0) * (1 - blocking_penalty)))
 
     return {
