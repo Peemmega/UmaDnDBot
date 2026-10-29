@@ -421,11 +421,7 @@ VELOCITY_SKILLS = {
         "icon": "velocity",
         "cooldown": 8,
         "cost": 40,
-        "trigger": {
-            "position_group": "front",
-            "target_distance_min": -20,
-            "target_distance_max": -1,
-        },
+        "trigger": {"position_group": "front", "front_blocked": True},
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {
