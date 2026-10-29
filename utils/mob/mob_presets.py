@@ -362,6 +362,44 @@ MOB_PRESETS = {
             },
         },
     },
+    # Test
+    "test_Front": {
+        "name": "Front Monster",
+        "avatar": CHARACTER_DIR / "tamamo_cross.webp",
+        "thumnail": thumnails["TamamoCross"],
+        "style": "Pace",
+        "race_profile": {
+            "speed": 3,
+            "stamina": 4,
+            "power": 8,
+            "gut": 1,
+            "wit": 1,
+            "turf": 1,
+            "dirt": 1,
+            "sprint": 1,
+            "mile": 1,
+            "medium": 1,
+            "long": 1,
+            "front": 1,
+            "pace": 1,
+            "late": 1,
+            "end_style": 1,
+        },
+        "skills": {
+            1: "acc_013",  # Early Lead
+            2: "acc_019",  # Final Push
+            3: "vel_016",  # Homestretch Haste
+            4: "rec_015",  # Moxie
+        },
+        "zone": {
+            "name": "Now That's White Lightning!",
+            "image_url": "https://cdn.discordapp.com/attachments/1562167495920455773/1564578103546617876/tamamo-cross-umamusume_1.gif?ex=6ae1c668&is=6ae074e8&hm=eb70be3ba7a2014de7b621857021d712234ab0635136dc5ab021ac12aa8add0d",
+            "points": 0,
+            "build": {
+                "race_speed": 5,
+            },
+        },
+    },
     # Legend Race
     "tamamo_cross": {
         "name": "Tamamo Cross",
