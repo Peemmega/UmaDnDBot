@@ -47,6 +47,7 @@ from utils.race.runtime_stamina import (
     sync_runtime_stamina,
 )
 from utils.race.stamina_rules import calculate_roll_stamina_cost
+from utils.game_config import STAMINA_PENALTY_BASE_PERCENT, STAMINA_PENALTY_GUTS_REDUCTION
 from utils.race.result_display import (
     format_bonus_display,
     format_pack_status,
@@ -194,7 +195,7 @@ def _clone_lane_players_with_scores(game: dict, score_map: dict) -> dict:
 def get_stamina_debuff_percent(game_player: dict) -> int:
     race_profile = game_player.get("race_profile") or {}
     gut_stat = int(race_profile.get("gut", 0) or 0)
-    return max(0, 25 - gut_stat)
+    return max(0, STAMINA_PENALTY_BASE_PERCENT - gut_stat * STAMINA_PENALTY_GUTS_REDUCTION)
 
 
 def apply_lane_tactics_to_result(
