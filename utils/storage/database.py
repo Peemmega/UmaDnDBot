@@ -2,7 +2,12 @@ import os
 import sqlite3
 from contextlib import contextmanager
 from typing import Iterator, Optional
-from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_COST, normalize_zone_build
+from utils.zone.zone_preset import (
+    ZONE_FIELDS,
+    DEFAULT_ZONE_IMAGE,
+    ZONE_POINT_COST,
+    normalize_zone_build,
+)
 import json
 from utils.profile_images import resolve_public_url
 from utils.icon_presets import USING_MAIN_EMOJIS
@@ -21,6 +26,7 @@ DEFAULT_PLAYER_SKILL_SLOTS = (
     "vel_023",  # Corner Adept
     "vel_024",  # Straightaway Adept
 )
+
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH, timeout=10)  # ⬅️ เพิ่ม timeout
@@ -133,12 +139,12 @@ def init_db():
         zone_build TEXT DEFAULT ('{{}}')
     )
     """)
-    
+
     zone_columns = [
         ("zone_name", "TEXT DEFAULT 'Default Zone'"),
         ("zone_image_url", f"TEXT DEFAULT '{DEFAULT_ZONE_IMAGE}'"),
         ("zone_points", "INTEGER NOT NULL DEFAULT 5"),
-        ("zone_build", "TEXT DEFAULT ('{}')")
+        ("zone_build", "TEXT DEFAULT ('{}')"),
     ]
 
     for col, col_type in zone_columns:
@@ -174,8 +180,7 @@ def init_db():
         """,
         DEFAULT_PLAYER_SKILL_SLOTS,
     )
-    cursor.execute(
-        """
+    cursor.execute("""
         UPDATE players
         SET default_skill_loadout_seeded = 1
         WHERE default_skill_loadout_seeded = 0
@@ -183,8 +188,7 @@ def init_db():
             skill_slot_1 IS NOT NULL OR skill_slot_2 IS NOT NULL
             OR skill_slot_3 IS NOT NULL OR skill_slot_4 IS NOT NULL
           )
-        """
-    )
+        """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS skill_loadout_presets (
@@ -218,7 +222,8 @@ def init_db():
     """)
 
     preset_columns = {
-        row["name"] for row in cursor.execute("PRAGMA table_info(skill_loadout_presets)").fetchall()
+        row["name"]
+        for row in cursor.execute("PRAGMA table_info(skill_loadout_presets)").fetchall()
     }
     if "zone_name" in preset_columns:
         cursor.execute("""
@@ -243,7 +248,9 @@ def init_db():
         FROM skill_loadout_presets
         """)
         cursor.execute("DROP TABLE skill_loadout_presets")
-        cursor.execute("ALTER TABLE skill_loadout_presets_new RENAME TO skill_loadout_presets")
+        cursor.execute(
+            "ALTER TABLE skill_loadout_presets_new RENAME TO skill_loadout_presets"
+        )
 
     for col, col_type in [
         ("profile_image_url", "TEXT"),
@@ -256,19 +263,19 @@ def init_db():
 
     # Uma Coin was replaced by Fans. Keep the legacy column untouched for
     # SQLite compatibility, but expose and maintain only the new column.
-    player_columns = {row["name"] for row in cursor.execute("PRAGMA table_info(players)").fetchall()}
+    player_columns = {
+        row["name"] for row in cursor.execute("PRAGMA table_info(players)").fetchall()
+    }
     if "fans" not in player_columns:
         cursor.execute("ALTER TABLE players ADD COLUMN fans INTEGER NOT NULL DEFAULT 1")
         if "uma_coin" in player_columns:
-            cursor.execute(
-                """
+            cursor.execute("""
                 UPDATE players
                 SET fans = CASE
                     WHEN COALESCE(uma_coin, 0) > 0 THEN uma_coin
                     ELSE 1
                 END
-                """
-            )
+                """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS mailbox (
@@ -355,13 +362,21 @@ def init_db():
     """)
     role_basic_profile_columns = {
         row["name"]
-        for row in cursor.execute("PRAGMA table_info(character_role_basic_profiles)").fetchall()
+        for row in cursor.execute(
+            "PRAGMA table_info(character_role_basic_profiles)"
+        ).fetchall()
     }
-    role_basic_profile_needs_class_dorm_migration = not {"division", "dorm"}.issubset(role_basic_profile_columns)
+    role_basic_profile_needs_class_dorm_migration = not {"division", "dorm"}.issubset(
+        role_basic_profile_columns
+    )
     if "division" not in role_basic_profile_columns:
-        cursor.execute("ALTER TABLE character_role_basic_profiles ADD COLUMN division TEXT NOT NULL DEFAULT ''")
+        cursor.execute(
+            "ALTER TABLE character_role_basic_profiles ADD COLUMN division TEXT NOT NULL DEFAULT ''"
+        )
     if "dorm" not in role_basic_profile_columns:
-        cursor.execute("ALTER TABLE character_role_basic_profiles ADD COLUMN dorm TEXT NOT NULL DEFAULT ''")
+        cursor.execute(
+            "ALTER TABLE character_role_basic_profiles ADD COLUMN dorm TEXT NOT NULL DEFAULT ''"
+        )
     cursor.execute("""
     INSERT OR IGNORE INTO character_role_basic_profiles (
         user_id, profile_type, self_intro, name_th, name_en, division, birthday_day,
@@ -393,9 +408,13 @@ def init_db():
     )
     """)
 
-    mailbox_columns = {row["name"] for row in cursor.execute("PRAGMA table_info(mailbox)").fetchall()}
+    mailbox_columns = {
+        row["name"] for row in cursor.execute("PRAGMA table_info(mailbox)").fetchall()
+    }
     if "profile_type" not in mailbox_columns:
-        cursor.execute("ALTER TABLE mailbox ADD COLUMN profile_type TEXT NOT NULL DEFAULT 'trainee'")
+        cursor.execute(
+            "ALTER TABLE mailbox ADD COLUMN profile_type TEXT NOT NULL DEFAULT 'trainee'"
+        )
     if "invitation_id" not in mailbox_columns:
         cursor.execute("ALTER TABLE mailbox ADD COLUMN invitation_id INTEGER")
     if "action_type" not in mailbox_columns:
@@ -455,11 +474,20 @@ def init_db():
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
     """)
-    forum_post_columns = {row["name"] for row in cursor.execute("PRAGMA table_info(race_registration_forum_posts)").fetchall()}
+    forum_post_columns = {
+        row["name"]
+        for row in cursor.execute(
+            "PRAGMA table_info(race_registration_forum_posts)"
+        ).fetchall()
+    }
     if "closed_at" not in forum_post_columns:
-        cursor.execute("ALTER TABLE race_registration_forum_posts ADD COLUMN closed_at TEXT")
+        cursor.execute(
+            "ALTER TABLE race_registration_forum_posts ADD COLUMN closed_at TEXT"
+        )
     if "closed_by" not in forum_post_columns:
-        cursor.execute("ALTER TABLE race_registration_forum_posts ADD COLUMN closed_by TEXT")
+        cursor.execute(
+            "ALTER TABLE race_registration_forum_posts ADD COLUMN closed_by TEXT"
+        )
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS race_registration_forum_entries (
         registration_id INTEGER PRIMARY KEY,
@@ -556,10 +584,13 @@ def init_db():
     )
     """)
     race_history_columns = {
-        row["name"] for row in cursor.execute("PRAGMA table_info(race_history)").fetchall()
+        row["name"]
+        for row in cursor.execute("PRAGMA table_info(race_history)").fetchall()
     }
     if "is_legend" not in race_history_columns:
-        cursor.execute("ALTER TABLE race_history ADD COLUMN is_legend INTEGER NOT NULL DEFAULT 0")
+        cursor.execute(
+            "ALTER TABLE race_history ADD COLUMN is_legend INTEGER NOT NULL DEFAULT 0"
+        )
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS race_participants (
         race_id TEXT NOT NULL,
@@ -611,17 +642,28 @@ def init_db():
           REFERENCES race_participants(race_id, participant_id)
     )
     """)
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_history_stage_type ON race_history (stage_key, record_type, finished_at)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_participants_uma ON race_participants (uma_id, race_id)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_participants_trainer ON race_participants (trainer_id, race_id)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_turns_race_participant ON race_participant_turns (race_id, participant_id, turn_number)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_race_actions_race_participant ON race_participant_actions (race_id, participant_id, turn_number)")
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_race_history_stage_type ON race_history (stage_key, record_type, finished_at)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_race_participants_uma ON race_participants (uma_id, race_id)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_race_participants_trainer ON race_participants (trainer_id, race_id)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_race_turns_race_participant ON race_participant_turns (race_id, participant_id, turn_number)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_race_actions_race_participant ON race_participant_actions (race_id, participant_id, turn_number)"
+    )
 
     # Legacy rankings contain only a name, personal-best score and style, so
     # they cannot represent a complete race. Remove both the source rows and
     # any synthetic migrated records so incomplete results are never shown.
     legacy_race_ids = [
-        row[0] for row in cursor.execute(
+        row[0]
+        for row in cursor.execute(
             "SELECT race_id FROM race_history "
             "WHERE source = 'legacy_race_rankings' OR race_id LIKE 'legacy-ranking:%'"
         ).fetchall()
@@ -669,6 +711,7 @@ def init_db():
 def _registration_now():
     from datetime import datetime
     from zoneinfo import ZoneInfo
+
     return datetime.now(ZoneInfo("Asia/Bangkok"))
 
 
@@ -677,7 +720,9 @@ def race_registration_window(race_date: str, race_time: str, now=None) -> dict:
     from datetime import datetime, timedelta
     from zoneinfo import ZoneInfo
 
-    event_at = datetime.fromisoformat(f"{race_date}T{race_time}").replace(tzinfo=ZoneInfo("Asia/Bangkok"))
+    event_at = datetime.fromisoformat(f"{race_date}T{race_time}").replace(
+        tzinfo=ZoneInfo("Asia/Bangkok")
+    )
     now = now or _registration_now()
     opens_at = event_at - timedelta(days=7)
     closes_at = event_at - timedelta(days=2)
@@ -689,7 +734,15 @@ def race_registration_window(race_date: str, race_time: str, now=None) -> dict:
     }
 
 
-def _registration_mail(conn, user_id: str, profile_type: str, registration_id: int, title: str, message: str, action_type: str):
+def _registration_mail(
+    conn,
+    user_id: str,
+    profile_type: str,
+    registration_id: int,
+    title: str,
+    message: str,
+    action_type: str,
+):
     conn.execute(
         """INSERT INTO mailbox (user_id, profile_type, title, message, action_type, action_id)
            VALUES (?, ?, ?, ?, ?, ?)""",
@@ -709,6 +762,7 @@ def _archive_registration_action_mail(conn, registration_id: int, user_id: str) 
 
 def _ensure_registration_cooldown(conn, actor_user_id: str) -> None:
     from datetime import datetime, timedelta
+
     last = conn.execute(
         "SELECT requested_at FROM race_registration_requests WHERE actor_user_id = ? ORDER BY rowid DESC LIMIT 1",
         (str(actor_user_id),),
@@ -720,18 +774,24 @@ def _ensure_registration_cooldown(conn, actor_user_id: str) -> None:
             last_at = last_at.replace(tzinfo=now.tzinfo)
         remaining = (last_at + timedelta(minutes=1) - now).total_seconds()
         if remaining > 0:
-            raise ValueError(f"กรุณารออีก {max(1, int(remaining))} วินาทีก่อนส่งคำขอใหม่")
+            raise ValueError(
+                f"กรุณารออีก {max(1, int(remaining))} วินาทีก่อนส่งคำขอใหม่"
+            )
     conn.execute(
         "INSERT INTO race_registration_requests (actor_user_id, requested_at) VALUES (?, ?)",
         (str(actor_user_id), now.isoformat(timespec="seconds")),
     )
 
 
-def create_race_registration_request(event: dict, actor_user_id: str, actor_role: str, trainee_user_id: str) -> dict:
+def create_race_registration_request(
+    event: dict, actor_user_id: str, actor_role: str, trainee_user_id: str
+) -> dict:
     """Create the appropriate approval mail for a trainer or trainee initiated request."""
     event_window = race_registration_window(event["date"], event["time"])
     if not event_window["is_open"]:
-        raise ValueError("ยังไม่อยู่ในช่วงลงทะเบียน (เปิดก่อนแข่ง 7 วัน และปิดก่อนแข่ง 2 วัน)")
+        raise ValueError(
+            "ยังไม่อยู่ในช่วงลงทะเบียน (เปิดก่อนแข่ง 7 วัน และปิดก่อนแข่ง 2 วัน)"
+        )
     if actor_role not in {"trainer", "trainee"}:
         raise ValueError("เฉพาะ Trainer หรือ Umamusume เท่านั้นที่ลงทะเบียนได้")
 
@@ -750,9 +810,15 @@ def create_race_registration_request(event: dict, actor_user_id: str, actor_role
         ).fetchone()
         if not trainee:
             raise ValueError("ไม่พบข้อมูลสาวม้า")
-        required_fans = int((event.get("requirements") or {}).get("fans_required") or event.get("fans_required") or 0)
+        required_fans = int(
+            (event.get("requirements") or {}).get("fans_required")
+            or event.get("fans_required")
+            or 0
+        )
         if trainee["fans"] < required_fans:
-            raise ValueError(f"ต้องมีอย่างน้อย {required_fans:,} fans จึงจะลงรายการนี้ได้")
+            raise ValueError(
+                f"ต้องมีอย่างน้อย {required_fans:,} fans จึงจะลงรายการนี้ได้"
+            )
 
         trainer_user_id = None
         if actor_role == "trainer":
@@ -784,16 +850,31 @@ def create_race_registration_request(event: dict, actor_user_id: str, actor_role
             raise ValueError("มีคำขอลงทะเบียนของสาวม้าคนนี้สำหรับรายการนี้อยู่แล้ว")
 
         values = (
-            event["id"], event["name"], event["date"], event["time"], event.get("venue") or "",
-            trainer_user_id, str(trainee_user_id), actor_role, status,
+            event["id"],
+            event["name"],
+            event["date"],
+            event["time"],
+            event.get("venue") or "",
+            trainer_user_id,
+            str(trainee_user_id),
+            actor_role,
+            status,
         )
         if existing:
             conn.execute(
                 """UPDATE race_registrations SET race_name=?, race_date=?, race_time=?, venue=?, trainer_user_id=?,
                    initiated_by=?, status=?, availability=NULL, confirmed_at=NULL, updated_at=CURRENT_TIMESTAMP
                    WHERE id=?""",
-                (event["name"], event["date"], event["time"], event.get("venue") or "", trainer_user_id,
-                 actor_role, status, existing["id"]),
+                (
+                    event["name"],
+                    event["date"],
+                    event["time"],
+                    event.get("venue") or "",
+                    trainer_user_id,
+                    actor_role,
+                    status,
+                    existing["id"],
+                ),
             )
             registration_id = existing["id"]
         else:
@@ -807,13 +888,25 @@ def create_race_registration_request(event: dict, actor_user_id: str, actor_role
 
         event_label = f"{event['name']} ({event['date']} {event['time']})"
         if status == "trainee_pending":
-            _registration_mail(conn, trainee_user_id, "trainee", registration_id,
-                "คำขอลงทะเบียนการแข่งขัน", f"Trainer ส่งคำขอลงทะเบียน {event_label} ให้คุณ โปรดยืนยันหรือปฏิเสธ.",
-                "race_registration_trainee")
+            _registration_mail(
+                conn,
+                trainee_user_id,
+                "trainee",
+                registration_id,
+                "คำขอลงทะเบียนการแข่งขัน",
+                f"Trainer ส่งคำขอลงทะเบียน {event_label} ให้คุณ โปรดยืนยันหรือปฏิเสธ.",
+                "race_registration_trainee",
+            )
         else:
-            _registration_mail(conn, trainer_user_id, "trainer", registration_id,
-                "คำขอลงทะเบียนจากสาวม้า", f"{trainee['username']} ขอเข้าร่วม {event_label} โปรดอนุมัติหรือปฏิเสธ.",
-                "race_registration_trainer")
+            _registration_mail(
+                conn,
+                trainer_user_id,
+                "trainer",
+                registration_id,
+                "คำขอลงทะเบียนจากสาวม้า",
+                f"{trainee['username']} ขอเข้าร่วม {event_label} โปรดอนุมัติหรือปฏิเสธ.",
+                "race_registration_trainer",
+            )
         return get_race_registration(registration_id, conn=conn)
 
 
@@ -834,7 +927,9 @@ def get_race_registration(registration_id: int, conn=None) -> dict | None:
     if not row:
         return None
     data = dict(row)
-    data["window"] = _serialise_registration_window(race_registration_window(data["race_date"], data["race_time"]))
+    data["window"] = _serialise_registration_window(
+        race_registration_window(data["race_date"], data["race_time"])
+    )
     return data
 
 
@@ -850,15 +945,16 @@ def delete_expired_pending_race_registrations(now=None) -> int:
     """Delete unanswered race registration requests after their response window closes."""
     now = now or _registration_now()
     with database_connection() as conn:
-        rows = conn.execute(
-            """SELECT id, race_date, race_time
+        rows = conn.execute("""SELECT id, race_date, race_time
                FROM race_registrations
-               WHERE status IN ('trainer_pending', 'trainee_pending')"""
-        ).fetchall()
+               WHERE status IN ('trainer_pending', 'trainee_pending')""").fetchall()
         expired_ids = [
             row["id"]
             for row in rows
-            if now >= race_registration_window(row["race_date"], row["race_time"], now)["closes_at"]
+            if now
+            >= race_registration_window(row["race_date"], row["race_time"], now)[
+                "closes_at"
+            ]
         ]
         if not expired_ids:
             return 0
@@ -877,14 +973,27 @@ def delete_expired_pending_race_registrations(now=None) -> int:
         return cursor.rowcount
 
 
-def respond_to_race_registration(registration_id: int, actor_user_id: str, actor_role: str, accepted: bool, availability: str | None = None) -> dict:
+def respond_to_race_registration(
+    registration_id: int,
+    actor_user_id: str,
+    actor_role: str,
+    accepted: bool,
+    availability: str | None = None,
+) -> dict:
     with database_connection() as conn:
         registration = get_race_registration(registration_id, conn=conn)
-        if registration and conn.execute(
-            """SELECT 1 FROM race_registration_forum_posts
+        if (
+            registration
+            and conn.execute(
+                """SELECT 1 FROM race_registration_forum_posts
                WHERE race_name = ? AND race_date = ? AND race_time = ? AND closed_at IS NOT NULL LIMIT 1""",
-            (registration["race_name"], registration["race_date"], registration["race_time"]),
-        ).fetchone():
+                (
+                    registration["race_name"],
+                    registration["race_date"],
+                    registration["race_time"],
+                ),
+            ).fetchone()
+        ):
             raise ValueError("การลงทะเบียนสำหรับสนามนี้ปิดแล้ว")
         if not registration:
             raise ValueError("ไม่พบคำขอลงทะเบียน")
@@ -892,23 +1001,46 @@ def respond_to_race_registration(registration_id: int, actor_user_id: str, actor
             raise ValueError("หมดช่วงเวลาลงทะเบียนแล้ว")
 
         if registration["status"] == "trainer_pending":
-            if actor_role != "trainer" or str(actor_user_id) != str(registration["trainer_user_id"]):
+            if actor_role != "trainer" or str(actor_user_id) != str(
+                registration["trainer_user_id"]
+            ):
                 raise ValueError("เฉพาะ Trainer ของสาวม้าคนนี้เท่านั้นที่ตอบคำขอได้")
             if not accepted:
-                conn.execute("UPDATE race_registrations SET status='declined', updated_at=CURRENT_TIMESTAMP WHERE id=?", (registration_id,))
+                conn.execute(
+                    "UPDATE race_registrations SET status='declined', updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                    (registration_id,),
+                )
             else:
-                conn.execute("UPDATE race_registrations SET status='trainee_pending', updated_at=CURRENT_TIMESTAMP WHERE id=?", (registration_id,))
-                _archive_registration_action_mail(conn, registration_id, registration["trainer_user_id"])
-                _registration_mail(conn, registration["trainee_user_id"], "trainee", registration_id,
-                    "Trainer อนุมัติคำขอลงแข่ง", f"Trainer อนุมัติ {registration['race_name']} แล้ว โปรดยืนยันความพร้อมในการแข่ง.",
-                    "race_registration_trainee")
+                conn.execute(
+                    "UPDATE race_registrations SET status='trainee_pending', updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                    (registration_id,),
+                )
+                _archive_registration_action_mail(
+                    conn, registration_id, registration["trainer_user_id"]
+                )
+                _registration_mail(
+                    conn,
+                    registration["trainee_user_id"],
+                    "trainee",
+                    registration_id,
+                    "Trainer อนุมัติคำขอลงแข่ง",
+                    f"Trainer อนุมัติ {registration['race_name']} แล้ว โปรดยืนยันความพร้อมในการแข่ง.",
+                    "race_registration_trainee",
+                )
             if not accepted:
-                _archive_registration_action_mail(conn, registration_id, registration["trainer_user_id"])
+                _archive_registration_action_mail(
+                    conn, registration_id, registration["trainer_user_id"]
+                )
         elif registration["status"] == "trainee_pending":
-            if actor_role != "trainee" or str(actor_user_id) != str(registration["trainee_user_id"]):
+            if actor_role != "trainee" or str(actor_user_id) != str(
+                registration["trainee_user_id"]
+            ):
                 raise ValueError("เฉพาะสาวม้าที่ได้รับคำขอเท่านั้นที่ตอบได้")
             if not accepted:
-                conn.execute("UPDATE race_registrations SET status='declined', updated_at=CURRENT_TIMESTAMP WHERE id=?", (registration_id,))
+                conn.execute(
+                    "UPDATE race_registrations SET status='declined', updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                    (registration_id,),
+                )
             else:
                 if availability not in {"self", "bot_auto"}:
                     raise ValueError("กรุณาเลือกความพร้อมในการแข่ง")
@@ -917,7 +1049,9 @@ def respond_to_race_registration(registration_id: int, actor_user_id: str, actor
                        updated_at=CURRENT_TIMESTAMP WHERE id=?""",
                     (availability, registration_id),
                 )
-            _archive_registration_action_mail(conn, registration_id, registration["trainee_user_id"])
+            _archive_registration_action_mail(
+                conn, registration_id, registration["trainee_user_id"]
+            )
         else:
             raise ValueError("คำขอนี้ถูกตอบแล้ว")
         return get_race_registration(registration_id, conn=conn)
@@ -935,10 +1069,15 @@ def list_race_registration_roster(race_id: str) -> list[dict]:
                         COALESCE(player.fans, 0) DESC, registration.confirmed_at ASC, registration.id ASC""",
             (race_id,),
         ).fetchall()
-    return [{**dict(row), "placement": index + 1, "is_confirmed": index < 18} for index, row in enumerate(rows)]
+    return [
+        {**dict(row), "placement": index + 1, "is_confirmed": index < 18}
+        for index, row in enumerate(rows)
+    ]
 
 
-def list_race_registration_forum_roster(race_name: str, race_date: str, race_time: str) -> list[dict]:
+def list_race_registration_forum_roster(
+    race_name: str, race_date: str, race_time: str
+) -> list[dict]:
     """Return confirmed entries sharing the same race name, date, and time, in registration priority order."""
     with database_connection() as conn:
         rows = conn.execute(
@@ -952,7 +1091,10 @@ def list_race_registration_forum_roster(race_name: str, race_date: str, race_tim
                         COALESCE(player.fans, 0) DESC, registration.confirmed_at ASC, registration.id ASC""",
             (race_name, race_date, race_time),
         ).fetchall()
-    return [{**dict(row), "placement": index + 1, "is_confirmed": index < 18} for index, row in enumerate(rows)]
+    return [
+        {**dict(row), "placement": index + 1, "is_confirmed": index < 18}
+        for index, row in enumerate(rows)
+    ]
 
 
 def get_race_registration_forum_post(event_key: str) -> dict | None:
@@ -1004,8 +1146,12 @@ def close_race_registration_forum_post(thread_id: int, closed_by: str) -> dict |
                 "UPDATE race_registrations SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 (registration["id"],),
             )
-            _archive_registration_action_mail(conn, registration["id"], registration["trainer_user_id"])
-            _archive_registration_action_mail(conn, registration["id"], registration["trainee_user_id"])
+            _archive_registration_action_mail(
+                conn, registration["id"], registration["trainer_user_id"]
+            )
+            _archive_registration_action_mail(
+                conn, registration["id"], registration["trainee_user_id"]
+            )
         conn.execute(
             "UPDATE race_registrations SET reported_at = COALESCE(reported_at, CURRENT_TIMESTAMP) WHERE race_id = ?",
             (post["race_id"],),
@@ -1033,9 +1179,13 @@ def save_race_registration_forum_post(
                    thread_id=excluded.thread_id, summary_message_id=excluded.summary_message_id,
                    updated_at=CURRENT_TIMESTAMP""",
             (
-                event_key, registration["race_id"], registration["race_name"],
-                registration["race_date"], registration["race_time"],
-                int(thread_id), int(summary_message_id),
+                event_key,
+                registration["race_id"],
+                registration["race_name"],
+                registration["race_date"],
+                registration["race_time"],
+                int(thread_id),
+                int(summary_message_id),
             ),
         )
 
@@ -1049,7 +1199,9 @@ def get_race_registration_forum_entry(registration_id: int) -> int | None:
     return int(row["message_id"]) if row else None
 
 
-def save_race_registration_forum_entry(registration_id: int, event_key: str, message_id: int) -> bool:
+def save_race_registration_forum_entry(
+    registration_id: int, event_key: str, message_id: int
+) -> bool:
     with database_connection() as conn:
         cursor = conn.execute(
             """INSERT OR IGNORE INTO race_registration_forum_entries
@@ -1083,20 +1235,31 @@ def list_unposted_race_registration_forum_groups() -> list[dict]:
 
 def list_registration_reports_due() -> list[dict]:
     with database_connection() as conn:
-        rows = conn.execute(
-            """SELECT race_id, race_name, race_date, race_time, venue
+        rows = conn.execute("""SELECT race_id, race_name, race_date, race_time, venue
                FROM race_registrations
                WHERE reported_at IS NULL
-               GROUP BY race_id, race_name, race_date, race_time, venue"""
-        ).fetchall()
+               GROUP BY race_id, race_name, race_date, race_time, venue""").fetchall()
     now = _registration_now()
-    return [dict(row) for row in rows if now >= race_registration_window(row["race_date"], row["race_time"], now)["closes_at"]]
+    return [
+        dict(row)
+        for row in rows
+        if now
+        >= race_registration_window(row["race_date"], row["race_time"], now)[
+            "closes_at"
+        ]
+    ]
 
 
 def mark_registration_reported(race_id: str) -> None:
     with database_connection() as conn:
-        conn.execute("UPDATE race_registrations SET reported_at=CURRENT_TIMESTAMP WHERE race_id=?", (race_id,))
-        conn.execute("INSERT OR IGNORE INTO race_registration_reports (race_id) VALUES (?)", (race_id,))
+        conn.execute(
+            "UPDATE race_registrations SET reported_at=CURRENT_TIMESTAMP WHERE race_id=?",
+            (race_id,),
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO race_registration_reports (race_id) VALUES (?)",
+            (race_id,),
+        )
 
 
 def list_registration_report_ids() -> set[str]:
@@ -1115,15 +1278,23 @@ def list_community_events() -> list[dict]:
 
 def create_community_event(event: dict) -> dict:
     with database_connection() as conn:
-        conn.execute("""
+        conn.execute(
+            """
             INSERT INTO community_events (
                 id, name, description, event_date, event_time, image_url, details, capacity
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            event["id"], event["name"], event.get("description", ""), event["date"],
-            event["time"], event.get("image_url") or None, event.get("details", ""),
-            event.get("capacity", ""),
-        ))
+        """,
+            (
+                event["id"],
+                event["name"],
+                event.get("description", ""),
+                event["date"],
+                event["time"],
+                event.get("image_url") or None,
+                event.get("details", ""),
+                event.get("capacity", ""),
+            ),
+        )
     return event
 
 
@@ -1131,25 +1302,31 @@ def upsert_race_ranking(stage_key: str, user_id, score: int, style: str) -> bool
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     SELECT best_score
     FROM race_rankings
     WHERE stage_key = ? AND user_id = ?
-    """, (stage_key, str(user_id)))
+    """,
+        (stage_key, str(user_id)),
+    )
     row = cursor.fetchone()
 
     if row is not None and int(row["best_score"]) >= int(score):
         conn.close()
         return False
 
-    cursor.execute("""
+    cursor.execute(
+        """
     INSERT INTO race_rankings (stage_key, user_id, best_score, style, updated_at)
     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(stage_key, user_id) DO UPDATE SET
         best_score = excluded.best_score,
         style = excluded.style,
         updated_at = CURRENT_TIMESTAMP
-    """, (stage_key, str(user_id), int(score), str(style)))
+    """,
+        (stage_key, str(user_id), int(score), str(style)),
+    )
 
     conn.commit()
     conn.close()
@@ -1185,6 +1362,7 @@ def record_race_turn_positions(game: dict, turn_number: int) -> str | None:
     event_id = game.get("race_event_id")
     if not event_id:
         import uuid
+
         event_id = uuid.uuid4().hex
         game["race_event_id"] = event_id
 
@@ -1238,7 +1416,11 @@ def record_race_turn_positions(game: dict, turn_number: int) -> str | None:
                     event_id,
                     int(turn_number),
                     player_key,
-                    str(player.get("display_name") or player.get("username") or player_key),
+                    str(
+                        player.get("display_name")
+                        or player.get("username")
+                        or player_key
+                    ),
                     int(bool(player.get("is_mob"))),
                     position,
                     score,
@@ -1266,14 +1448,18 @@ def record_race_action(
     event_id = game.get("race_event_id")
     if not event_id:
         import uuid
+
         event_id = uuid.uuid4().hex
         game["race_event_id"] = event_id
 
-    target = (game.get("players") or {}).get(target_id) if target_id is not None else None
+    target = (
+        (game.get("players") or {}).get(target_id) if target_id is not None else None
+    )
     player_name = str(player.get("display_name") or player.get("username") or player_id)
     target_name = (
         str(target.get("display_name") or target.get("username") or target_id)
-        if target is not None else None
+        if target is not None
+        else None
     )
     action_details = dict(details or {})
     action_details.setdefault("summary", action_type)
@@ -1457,7 +1643,9 @@ def clear_legacy_profile_data(user_id: str) -> dict[str, int]:
     with database_connection() as conn:
         cursor = conn.cursor()
         for table_name in ("profile_presets", "account_roles"):
-            cursor.execute(f"DELETE FROM {table_name} WHERE user_id = ?", (target_user_id,))
+            cursor.execute(
+                f"DELETE FROM {table_name} WHERE user_id = ?", (target_user_id,)
+            )
             deleted_counts[table_name] = cursor.rowcount
 
     return deleted_counts
@@ -1496,21 +1684,29 @@ def get_race_rankings(stage_key: str, limit: int = 10) -> list[dict]:
     # Kept for compatibility with the lobby preview. Results must come from
     # completed Centralized Race History records only.
     from utils.race.race_history import get_course_leaderboard
+
     return get_course_leaderboard(stage_key, limit=limit)
+
 
 def add_mail(conn, user_id, title, message, reward_type, reward_amount):
     cur = conn.cursor()
-    cur.execute("""
+    cur.execute(
+        """
         INSERT INTO mailbox (user_id, title, message, reward_type, reward_amount)
         VALUES (?, ?, ?, ?, ?)
-    """, (str(user_id), title, message, reward_type, reward_amount))
+    """,
+        (str(user_id), title, message, reward_type, reward_amount),
+    )
 
 
 def get_available_trainees(trainer_user_id: str) -> list[dict]:
     conn = get_connection()
-    same_account_filter = "AND CAST(p.user_id AS TEXT) <> ?" if USING_MAIN_EMOJIS else ""
+    same_account_filter = (
+        "AND CAST(p.user_id AS TEXT) <> ?" if USING_MAIN_EMOJIS else ""
+    )
     params = (str(trainer_user_id),) if USING_MAIN_EMOJIS else ()
-    rows = conn.execute(f"""
+    rows = conn.execute(
+        f"""
         SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url, p.fans
         FROM players p
         JOIN account_roles ar ON CAST(ar.user_id AS TEXT) = CAST(p.user_id AS TEXT)
@@ -1520,28 +1716,50 @@ def get_available_trainees(trainer_user_id: str) -> list[dict]:
           AND t.trainee_user_id IS NULL
           {same_account_filter}
         ORDER BY p.username COLLATE NOCASE
-    """, params).fetchall()
+    """,
+        params,
+    ).fetchall()
     conn.close()
-    return [{"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"]), "fans": row["fans"]} for row in rows]
+    return [
+        {
+            "user_id": row["user_id"],
+            "username": row["username"],
+            "image_url": resolve_public_url(row["profile_image_url"]),
+            "fans": row["fans"],
+        }
+        for row in rows
+    ]
 
 
 def get_trainer_team(trainer_user_id: str) -> list[dict]:
     conn = get_connection()
-    rows = conn.execute("""
+    rows = conn.execute(
+        """
         SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url, p.fans
         FROM trainer_teams t JOIN players p ON CAST(p.user_id AS TEXT) = t.trainee_user_id
         JOIN account_roles ar
           ON CAST(ar.user_id AS TEXT) = CAST(p.user_id AS TEXT) AND ar.role = 'trainee'
         WHERE t.trainer_user_id = ?
         ORDER BY t.joined_at ASC
-    """, (str(trainer_user_id),)).fetchall()
+    """,
+        (str(trainer_user_id),),
+    ).fetchall()
     conn.close()
-    return [{"user_id": row["user_id"], "username": row["username"], "image_url": resolve_public_url(row["profile_image_url"]), "fans": row["fans"]} for row in rows]
+    return [
+        {
+            "user_id": row["user_id"],
+            "username": row["username"],
+            "image_url": resolve_public_url(row["profile_image_url"]),
+            "fans": row["fans"],
+        }
+        for row in rows
+    ]
 
 
 def get_trainee_trainer(trainee_user_id: str) -> Optional[dict]:
     conn = get_connection()
-    row = conn.execute("""
+    row = conn.execute(
+        """
         SELECT t.trainer_user_id AS user_id, preset.name, preset.image_url
         FROM trainer_teams t
         JOIN profile_presets preset
@@ -1549,7 +1767,9 @@ def get_trainee_trainer(trainee_user_id: str) -> Optional[dict]:
         JOIN account_roles ar
           ON CAST(ar.user_id AS TEXT) = t.trainee_user_id AND ar.role = 'trainee'
         WHERE t.trainee_user_id = ?
-    """, (str(trainee_user_id),)).fetchone()
+    """,
+        (str(trainee_user_id),),
+    ).fetchone()
     conn.close()
     if not row:
         return None
@@ -1560,16 +1780,26 @@ def get_trainee_trainer(trainee_user_id: str) -> Optional[dict]:
     }
 
 
-def save_profile_preset(user_id: str, profile_type: str, name: str, image_url: str) -> None:
+def save_profile_preset(
+    user_id: str, profile_type: str, name: str, image_url: str
+) -> None:
     if profile_type not in {"trainer", "npc"}:
         raise ValueError("Only trainer and npc presets are supported")
     with database_connection() as conn:
-        conn.execute("""
+        conn.execute(
+            """
             INSERT INTO profile_presets (user_id, profile_type, name, image_url, updated_at)
             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(user_id, profile_type) DO UPDATE SET
               name = excluded.name, image_url = excluded.image_url, updated_at = CURRENT_TIMESTAMP
-        """, (str(user_id), profile_type, name.strip() or profile_type.title(), image_url or ""))
+        """,
+            (
+                str(user_id),
+                profile_type,
+                name.strip() or profile_type.title(),
+                image_url or "",
+            ),
+        )
 
 
 def get_profile_preset(user_id: str, profile_type: str) -> Optional[dict]:
@@ -1594,7 +1824,9 @@ def get_profile_preset(user_id: str, profile_type: str) -> Optional[dict]:
     }
 
 
-def get_character_basic_profile(user_id: str, profile_type: str = "trainee") -> Optional[dict]:
+def get_character_basic_profile(
+    user_id: str, profile_type: str = "trainee"
+) -> Optional[dict]:
     if profile_type not in {"trainee", "trainer", "npc"}:
         raise ValueError("Profile type must be trainee, trainer, or npc")
     with database_connection() as conn:
@@ -1604,16 +1836,33 @@ def get_character_basic_profile(user_id: str, profile_type: str = "trainee") -> 
         ).fetchone()
     if row is None:
         return None
-    return {key: row[key] for key in row.keys() if key not in {"user_id", "profile_type", "updated_at"}}
+    return {
+        key: row[key]
+        for key in row.keys()
+        if key not in {"user_id", "profile_type", "updated_at"}
+    }
 
 
-def save_character_basic_profile(user_id: str, profile_type: str, profile: dict) -> None:
+def save_character_basic_profile(
+    user_id: str, profile_type: str, profile: dict
+) -> None:
     if profile_type not in {"trainee", "trainer", "npc"}:
         raise ValueError("Profile type must be trainee, trainer, or npc")
     fields = (
-        "self_intro", "name_th", "name_en", "division", "age", "birthday_day",
-        "birthday_month", "height_cm", "dorm", "likes", "dislikes",
-        "personality", "biography", "additional",
+        "self_intro",
+        "name_th",
+        "name_en",
+        "division",
+        "age",
+        "birthday_day",
+        "birthday_month",
+        "height_cm",
+        "dorm",
+        "likes",
+        "dislikes",
+        "personality",
+        "biography",
+        "additional",
     )
     values = [profile.get(field) for field in fields]
     columns_sql = ", ".join(fields)
@@ -1708,13 +1957,25 @@ def list_uploaded_profile_summaries() -> list[dict]:
         ORDER BY preset.name COLLATE NOCASE
     """).fetchall()
     conn.close()
-    return [{"id": f"{row['user_id']}:{row['profile_type']}", "name": row["name"], "image_url": row["image_url"], "type": row["profile_type"].title()} for row in rows]
+    return [
+        {
+            "id": f"{row['user_id']}:{row['profile_type']}",
+            "name": row["name"],
+            "image_url": row["image_url"],
+            "type": row["profile_type"].title(),
+        }
+        for row in rows
+    ]
 
 
 def create_team_invitation(trainer_user_id: str, trainee_user_id: str) -> int:
     with database_connection() as conn:
-        trainee = conn.execute("SELECT username FROM players WHERE CAST(user_id AS TEXT) = ?", (str(trainee_user_id),)).fetchone()
-        trainer = conn.execute("""
+        trainee = conn.execute(
+            "SELECT username FROM players WHERE CAST(user_id AS TEXT) = ?",
+            (str(trainee_user_id),),
+        ).fetchone()
+        trainer = conn.execute(
+            """
             SELECT COALESCE(
                 (
                     SELECT NULLIF(name, '')
@@ -1727,31 +1988,76 @@ def create_team_invitation(trainer_user_id: str, trainee_user_id: str) -> int:
                     WHERE CAST(user_id AS TEXT) = ?
                 )
             ) AS username
-        """, (str(trainer_user_id), str(trainer_user_id))).fetchone()
+        """,
+            (str(trainer_user_id), str(trainer_user_id)),
+        ).fetchone()
         if not trainee or not trainer or not trainer["username"]:
             raise ValueError("Profile not found")
-        if conn.execute("SELECT 1 FROM trainer_teams WHERE trainee_user_id = ?", (str(trainee_user_id),)).fetchone():
+        if conn.execute(
+            "SELECT 1 FROM trainer_teams WHERE trainee_user_id = ?",
+            (str(trainee_user_id),),
+        ).fetchone():
             raise ValueError("Trainee already has a trainer")
-        existing = conn.execute("SELECT id FROM team_invitations WHERE trainer_user_id = ? AND trainee_user_id = ? AND status = 'pending'", (str(trainer_user_id), str(trainee_user_id))).fetchone()
+        existing = conn.execute(
+            "SELECT id FROM team_invitations WHERE trainer_user_id = ? AND trainee_user_id = ? AND status = 'pending'",
+            (str(trainer_user_id), str(trainee_user_id)),
+        ).fetchone()
         if existing:
             raise ValueError("Invitation is already pending")
-        cur = conn.execute("INSERT INTO team_invitations (trainer_user_id, trainee_user_id) VALUES (?, ?)", (str(trainer_user_id), str(trainee_user_id)))
+        cur = conn.execute(
+            "INSERT INTO team_invitations (trainer_user_id, trainee_user_id) VALUES (?, ?)",
+            (str(trainer_user_id), str(trainee_user_id)),
+        )
         invitation_id = cur.lastrowid
-        conn.execute("INSERT INTO mailbox (user_id, profile_type, invitation_id, title, message) VALUES (?, 'trainee', ?, ?, ?)", (str(trainee_user_id), invitation_id, "Team invitation", f"{trainer['username']} invited you to join their team."))
+        conn.execute(
+            "INSERT INTO mailbox (user_id, profile_type, invitation_id, title, message) VALUES (?, 'trainee', ?, ?, ?)",
+            (
+                str(trainee_user_id),
+                invitation_id,
+                "Team invitation",
+                f"{trainer['username']} เชิญคุณเข้าร่วมทีม.",
+            ),
+        )
         return invitation_id
 
 
-def respond_to_team_invitation(invitation_id: int, trainee_user_id: str, accepted: bool) -> None:
+def respond_to_team_invitation(
+    invitation_id: int, trainee_user_id: str, accepted: bool
+) -> None:
     with database_connection() as conn:
-        invite = conn.execute("SELECT trainer_user_id, trainee_user_id, status FROM team_invitations WHERE id = ?", (invitation_id,)).fetchone()
-        if not invite or invite["trainee_user_id"] != str(trainee_user_id) or invite["status"] != "pending":
+        invite = conn.execute(
+            "SELECT trainer_user_id, trainee_user_id, status FROM team_invitations WHERE id = ?",
+            (invitation_id,),
+        ).fetchone()
+        if (
+            not invite
+            or invite["trainee_user_id"] != str(trainee_user_id)
+            or invite["status"] != "pending"
+        ):
             raise ValueError("Invitation is no longer available")
         status = "accepted" if accepted else "declined"
-        conn.execute("UPDATE team_invitations SET status = ?, responded_at = CURRENT_TIMESTAMP WHERE id = ?", (status, invitation_id))
+        conn.execute(
+            "UPDATE team_invitations SET status = ?, responded_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (status, invitation_id),
+        )
         if accepted:
-            conn.execute("INSERT INTO trainer_teams (trainer_user_id, trainee_user_id) VALUES (?, ?)", (invite["trainer_user_id"], str(trainee_user_id)))
-        trainee_name = conn.execute("SELECT username FROM players WHERE CAST(user_id AS TEXT) = ?", (str(trainee_user_id),)).fetchone()["username"]
-        conn.execute("INSERT INTO mailbox (user_id, profile_type, title, message) VALUES (?, 'trainer', ?, ?)", (invite["trainer_user_id"], "Team invitation response", f"{trainee_name} {'joined your team' if accepted else 'declined your invitation'}."))
+            conn.execute(
+                "INSERT INTO trainer_teams (trainer_user_id, trainee_user_id) VALUES (?, ?)",
+                (invite["trainer_user_id"], str(trainee_user_id)),
+            )
+        trainee_name = conn.execute(
+            "SELECT username FROM players WHERE CAST(user_id AS TEXT) = ?",
+            (str(trainee_user_id),),
+        ).fetchone()["username"]
+        conn.execute(
+            "INSERT INTO mailbox (user_id, profile_type, title, message) VALUES (?, 'trainer', ?, ?)",
+            (
+                invite["trainer_user_id"],
+                "Team invitation response",
+                f"{trainee_name} {'joined your team' if accepted else 'declined your invitation'}.",
+            ),
+        )
+
 
 def reset_all_zone_data():
     conn = get_connection()
@@ -1765,20 +2071,31 @@ def reset_all_zone_data():
         "modify_current_speed": 0,
     }
 
-    cursor.execute("""
+    cursor.execute(
+        """
     UPDATE players
     SET zone_build = ?,
         zone_points = 5
-    """, (json.dumps(default_build),))
+    """,
+        (json.dumps(default_build),),
+    )
 
     conn.commit()
     conn.close()
 
+
 def add_player_aptitude(user_id, aptitude_field, amount):
     valid_fields = {
-        "turf", "dirt",
-        "sprint", "mile", "medium", "long",
-        "front", "pace", "late", "end_style",
+        "turf",
+        "dirt",
+        "sprint",
+        "mile",
+        "medium",
+        "long",
+        "front",
+        "pace",
+        "late",
+        "end_style",
     }
 
     if aptitude_field not in valid_fields:
@@ -1787,11 +2104,14 @@ def add_player_aptitude(user_id, aptitude_field, amount):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(f"""
+    cursor.execute(
+        f"""
     UPDATE players
     SET {aptitude_field} = COALESCE({aptitude_field}, 0) + ?
     WHERE user_id = ? AND COALESCE({aptitude_field}, 0) + ? BETWEEN 1 AND ?
-    """, (amount, user_id, amount, MAX_APTITUDE_LEVEL))
+    """,
+        (amount, user_id, amount, MAX_APTITUDE_LEVEL),
+    )
 
     if cursor.rowcount == 0:
         conn.close()
@@ -1803,31 +2123,35 @@ def add_player_aptitude(user_id, aptitude_field, amount):
         "เลื่อนความถนัด",
         f"คุณได้รับการเลื่อนระดับ {aptitude_field}",
         "aptitude",
-        1
+        1,
     )
 
     conn.commit()
     conn.close()
     return True, f"เพิ่ม {aptitude_field} +{amount} สำเร็จ"
 
+
 def add_player_stats_point(user_id: int, amount: int):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     UPDATE players
     SET stats_point = COALESCE(stats_point, 0) + ?
     WHERE user_id = ?
-    """, (amount, user_id))
+    """,
+        (amount, user_id),
+    )
 
-    if (amount > 0):
+    if amount > 0:
         add_mail(
             conn,
             user_id,
             "ได้รับ Stats Point",
             "คุณได้รับ stat points",
             "stats_point",
-            amount
+            amount,
         )
     else:
         add_mail(
@@ -1836,26 +2160,31 @@ def add_player_stats_point(user_id: int, amount: int):
             "ได้รับ Stats Point",
             "คุณถูดลด stat points",
             "stats_point",
-            amount
+            amount,
         )
 
     conn.commit()
     conn.close()
     return True, f"เพิ่ม stats_point +{amount} สำเร็จ"
 
+
 def add_player_skill_point(user_id: int, amount: int):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     UPDATE players
     SET skill_point = COALESCE(skill_point, 0) + ?
     WHERE user_id = ?
-    """, (amount, user_id))
+    """,
+        (amount, user_id),
+    )
 
     conn.commit()
     conn.close()
     return True, f"เพิ่ม skill_point +{amount} สำเร็จ"
+
 
 def set_player_zone_build(user_id: int, build: dict) -> None:
     conn = get_connection()
@@ -1863,55 +2192,72 @@ def set_player_zone_build(user_id: int, build: dict) -> None:
 
     safe_build = normalize_zone_build(build)
 
-    cursor.execute("""
+    cursor.execute(
+        """
     UPDATE players
     SET zone_build = ?
     WHERE user_id = ?
-    """, (json.dumps(safe_build), user_id))
+    """,
+        (json.dumps(safe_build), user_id),
+    )
 
     conn.commit()
     conn.close()
+
 
 def set_player_zone_name(user_id: int, zone_name: str) -> None:
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     UPDATE players
     SET zone_name = ?
     WHERE user_id = ?
-    """, (zone_name, user_id))
+    """,
+        (zone_name, user_id),
+    )
 
     conn.commit()
     conn.close()
+
 
 def set_player_zone_image_url(user_id: int, image_url: str) -> None:
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     UPDATE players
     SET zone_image_url = ?
     WHERE user_id = ?
-    """, (image_url, user_id))
+    """,
+        (image_url, user_id),
+    )
 
     conn.commit()
     conn.close()
 
 
-def set_player_profile_image(user_id: int | str, profile_image_url: str, updated_at: int) -> None:
+def set_player_profile_image(
+    user_id: int | str, profile_image_url: str, updated_at: int
+) -> None:
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     UPDATE players
     SET profile_image_url = ?,
         profile_image_updated_at = ?
     WHERE CAST(user_id AS TEXT) = ?
-    """, (profile_image_url, updated_at, str(user_id)))
+    """,
+        (profile_image_url, updated_at, str(user_id)),
+    )
 
     conn.commit()
     conn.close()
+
 
 def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
     if slot not in (1, 2, 3, 4):
@@ -1937,13 +2283,13 @@ def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
 
     column = f"skill_slot_{slot}"
     cursor.execute(
-        f"UPDATE players SET {column} = ? WHERE user_id = ?",
-        (skill_id, user_id)
+        f"UPDATE players SET {column} = ? WHERE user_id = ?", (skill_id, user_id)
     )
 
     conn.commit()
     conn.close()
     return True, f"ติดตั้งสกิล {skill_id} ลงช่อง {slot} เรียบร้อย"
+
 
 def clear_player_skill_slot(user_id: int, slot: int):
     if slot not in (1, 2, 3, 4):
@@ -1953,24 +2299,25 @@ def clear_player_skill_slot(user_id: int, slot: int):
     cursor = conn.cursor()
 
     column = f"skill_slot_{slot}"
-    cursor.execute(
-        f"UPDATE players SET {column} = NULL WHERE user_id = ?",
-        (user_id,)
-    )
+    cursor.execute(f"UPDATE players SET {column} = NULL WHERE user_id = ?", (user_id,))
 
     conn.commit()
     conn.close()
     return True, f"ลบสกิลในช่อง {slot} เรียบร้อย"
 
+
 def get_player_skill_slots(user_id: int):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     SELECT skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4
     FROM players
     WHERE user_id = ?
-    """, (user_id,))
+    """,
+        (user_id,),
+    )
     row = cursor.fetchone()
 
     conn.close()
@@ -1978,12 +2325,14 @@ def get_player_skill_slots(user_id: int):
     if row is None:
         return None
 
-    return normalize_skill_slots({
-        "slot_1": row[0],
-        "slot_2": row[1],
-        "slot_3": row[2],
-        "slot_4": row[3],
-    })
+    return normalize_skill_slots(
+        {
+            "slot_1": row[0],
+            "slot_2": row[1],
+            "slot_3": row[2],
+            "slot_4": row[3],
+        }
+    )
 
 
 def get_player_acquired_skills(user_id: int | str) -> list[str]:
@@ -2097,7 +2446,9 @@ def save_player_skill_loadout_preset(
             skill_slot_4 = excluded.skill_slot_4
         """,
         (
-            user_id, preset_slot, preset_name,
+            user_id,
+            preset_slot,
+            preset_name,
             *safe_skill_ids,
         ),
     )
@@ -2105,7 +2456,18 @@ def save_player_skill_loadout_preset(
     conn.close()
 
 
-APTITUDE_FIELDS = ("turf", "dirt", "sprint", "mile", "medium", "long", "front", "pace", "late", "end_style")
+APTITUDE_FIELDS = (
+    "turf",
+    "dirt",
+    "sprint",
+    "mile",
+    "medium",
+    "long",
+    "front",
+    "pace",
+    "late",
+    "end_style",
+)
 
 
 def update_trainer_aptitudes(user_id: str, aptitudes: dict) -> dict:
@@ -2116,27 +2478,52 @@ def update_trainer_aptitudes(user_id: str, aptitudes: dict) -> dict:
     ):
         raise ValueError("All aptitude ranks must be integers between 1 and 8")
     with database_connection() as conn:
-        role = conn.execute("SELECT role FROM account_roles WHERE user_id = ?", (str(user_id),)).fetchone()
+        role = conn.execute(
+            "SELECT role FROM account_roles WHERE user_id = ?", (str(user_id),)
+        ).fetchone()
         if not role or role["role"] != "trainer":
             raise PermissionError("Trainer role required")
-        row = conn.execute(f"SELECT {', '.join(APTITUDE_FIELDS)} FROM players WHERE CAST(user_id AS TEXT) = ?", (str(user_id),)).fetchone()
+        row = conn.execute(
+            f"SELECT {', '.join(APTITUDE_FIELDS)} FROM players WHERE CAST(user_id AS TEXT) = ?",
+            (str(user_id),),
+        ).fetchone()
         if row is None:
             raise LookupError("Player not found")
-        if any(aptitudes[field] > MAX_APTITUDE_LEVEL and aptitudes[field] != row[field] for field in APTITUDE_FIELDS):
+        if any(
+            aptitudes[field] > MAX_APTITUDE_LEVEL and aptitudes[field] != row[field]
+            for field in APTITUDE_FIELDS
+        ):
             raise ValueError(f"Aptitude level cannot exceed {MAX_APTITUDE_LEVEL}")
         assignments = ", ".join(f"{field} = ?" for field in APTITUDE_FIELDS)
-        cursor = conn.execute(f"UPDATE players SET {assignments} WHERE CAST(user_id AS TEXT) = ?",
-                              (*[aptitudes[field] for field in APTITUDE_FIELDS], str(user_id)))
+        cursor = conn.execute(
+            f"UPDATE players SET {assignments} WHERE CAST(user_id AS TEXT) = ?",
+            (*[aptitudes[field] for field in APTITUDE_FIELDS], str(user_id)),
+        )
         if not cursor.rowcount:
             raise LookupError("Player not found")
     return get_player(user_id)
 
 
 ADMIN_EDITABLE_FIELDS = {
-    "speed", "stamina", "power", "gut", "wit",
-    "turf", "dirt", "sprint", "mile", "medium", "long",
-    "front", "pace", "late", "end_style",
-    "stats_point", "skill_point", "fans", "zone_points",
+    "speed",
+    "stamina",
+    "power",
+    "gut",
+    "wit",
+    "turf",
+    "dirt",
+    "sprint",
+    "mile",
+    "medium",
+    "long",
+    "front",
+    "pace",
+    "late",
+    "end_style",
+    "stats_point",
+    "skill_point",
+    "fans",
+    "zone_points",
 }
 
 
@@ -2151,8 +2538,16 @@ def set_admin_player_value(user_id: int | str, field: str, value: int) -> int:
         if not 1 <= value <= MAX_CORE_STAT:
             raise ValueError(f"Core stats must be between 1 and {MAX_CORE_STAT}")
     elif normalized_field in {
-        "turf", "dirt", "sprint", "mile", "medium", "long",
-        "front", "pace", "late", "end_style",
+        "turf",
+        "dirt",
+        "sprint",
+        "mile",
+        "medium",
+        "long",
+        "front",
+        "pace",
+        "late",
+        "end_style",
     }:
         if not 1 <= value <= MAX_APTITUDE_LEVEL:
             raise ValueError(f"Aptitude must be between 1 and {MAX_APTITUDE_LEVEL}")
@@ -2258,7 +2653,10 @@ def remove_player_from_team(trainee_user_id: int | str) -> dict[str, int]:
             "DELETE FROM team_invitations WHERE trainee_user_id = ? AND status = 'pending'",
             (str(trainee_user_id),),
         )
-    return {"trainer_teams": team_cursor.rowcount, "pending_invitations": invite_cursor.rowcount}
+    return {
+        "trainer_teams": team_cursor.rowcount,
+        "pending_invitations": invite_cursor.rowcount,
+    }
 
 
 def clear_player_mailbox(user_id: int | str) -> int:
@@ -2361,11 +2759,13 @@ def delete_player_skill_loadout_preset(user_id: int, preset_slot: int) -> bool:
     conn.close()
     return cursor.rowcount > 0
 
+
 def create_player(user_id: int, username: str):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     INSERT OR IGNORE INTO players (
         user_id, username,
         speed, stamina, power, gut, wit,
@@ -2386,10 +2786,13 @@ def create_player(user_id: int, username: str):
         ?, ?, ?, ?,
         1
     )
-    """, (user_id, username, *DEFAULT_PLAYER_SKILL_SLOTS))
+    """,
+        (user_id, username, *DEFAULT_PLAYER_SKILL_SLOTS),
+    )
 
     conn.commit()
     conn.close()
+
 
 def remove_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     valid_stats = {"speed", "stamina", "power", "gut", "wit"}
@@ -2416,13 +2819,14 @@ def remove_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
         SET {stat_name} = ?, stats_point = ?
         WHERE user_id = ?
         """,
-        (new_stat_value, new_stats_point, user_id)
+        (new_stat_value, new_stats_point, user_id),
     )
 
     conn.commit()
     conn.close()
 
     return get_player(user_id)
+
 
 def add_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
     valid_stats = {"speed", "stamina", "power", "gut", "wit"}
@@ -2452,13 +2856,14 @@ def add_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
         SET {stat_name} = ?, stats_point = ?
         WHERE user_id = ?
         """,
-        (new_stat_value, new_stats_point, user_id)
+        (new_stat_value, new_stats_point, user_id),
     )
 
     conn.commit()
     conn.close()
 
     return get_player(user_id)
+
 
 def get_player_skill_in_slot(user_id: int, slot: int):
     if slot not in (1, 2, 3, 4):
@@ -2468,10 +2873,7 @@ def get_player_skill_in_slot(user_id: int, slot: int):
     cursor = conn.cursor()
 
     column = f"skill_slot_{slot}"
-    cursor.execute(
-        f"SELECT {column} FROM players WHERE user_id = ?",
-        (user_id,)
-    )
+    cursor.execute(f"SELECT {column} FROM players WHERE user_id = ?", (user_id,))
     row = cursor.fetchone()
     conn.close()
 
@@ -2480,11 +2882,13 @@ def get_player_skill_in_slot(user_id: int, slot: int):
 
     return row[0]
 
+
 def get_player(user_id: int) -> Optional[dict]:
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     SELECT
         user_id, username,
         speed, stamina, power, gut, wit,
@@ -2497,7 +2901,9 @@ def get_player(user_id: int) -> Optional[dict]:
         skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4
     FROM players
     WHERE CAST(user_id AS TEXT) = ?
-    """, (str(user_id),))
+    """,
+        (str(user_id),),
+    )
 
     row = cursor.fetchone()
 
@@ -2524,26 +2930,21 @@ def get_player(user_id: int) -> Optional[dict]:
     return {
         "user_id": row[0],
         "username": row[1],
-
         "speed": row[2],
         "stamina": row[3],
         "power": row[4],
         "gut": row[5],
         "wit": row[6],
-
         "turf": row[7],
         "dirt": row[8],
-
         "sprint": row[9],
         "mile": row[10],
         "medium": row[11],
         "long": row[12],
-
         "front": row[13],
         "pace": row[14],
         "late": row[15],
         "end_style": row[16],
-
         "stats_point": row[17],
         "fans": row[18],
         "skill_point": row[19],
@@ -2553,20 +2954,21 @@ def get_player(user_id: int) -> Optional[dict]:
         "skill_slot_4": row[29],
         "profile_image_url": resolve_public_url(row[20]),
         "profile_image_updated_at": row[21],
-
         "zone": {
             "name": row[22],
             "image_url": resolve_public_url(row[23]),
             "points": row[24],
             "build": zone_build,
-        }
+        },
     }
 
 
 def get_player_summary(user_id: int | str) -> Optional[dict]:
     conn = get_connection()
     cursor = conn.cursor()
-    columns = {row["name"] for row in cursor.execute("PRAGMA table_info(players)").fetchall()}
+    columns = {
+        row["name"] for row in cursor.execute("PRAGMA table_info(players)").fetchall()
+    }
     has_profile_image = "profile_image_url" in columns
 
     if has_profile_image:
@@ -2596,7 +2998,9 @@ def get_player_summary(user_id: int | str) -> Optional[dict]:
     return {
         "id": str(row["user_id"]),
         "name": row["username"],
-        "image_url": resolve_public_url(row["profile_image_url"]) if has_profile_image else "",
+        "image_url": (
+            resolve_public_url(row["profile_image_url"]) if has_profile_image else ""
+        ),
         "type": "Player",
     }
 
@@ -2604,12 +3008,13 @@ def get_player_summary(user_id: int | str) -> Optional[dict]:
 def list_player_summaries() -> list[dict]:
     conn = get_connection()
     cursor = conn.cursor()
-    columns = {row["name"] for row in cursor.execute("PRAGMA table_info(players)").fetchall()}
+    columns = {
+        row["name"] for row in cursor.execute("PRAGMA table_info(players)").fetchall()
+    }
     has_profile_image = "profile_image_url" in columns
 
     if has_profile_image:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT player.user_id, player.username, player.profile_image_url
             FROM players AS player
             LEFT JOIN account_roles AS account_role
@@ -2617,11 +3022,9 @@ def list_player_summaries() -> list[dict]:
             WHERE player.username IS NOT NULL AND TRIM(player.username) <> ''
               AND COALESCE(account_role.role, 'trainee') = 'trainee'
             ORDER BY player.username COLLATE NOCASE ASC, player.user_id ASC
-            """
-        )
+            """)
     else:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT player.user_id, player.username
             FROM players AS player
             LEFT JOIN account_roles AS account_role
@@ -2629,8 +3032,7 @@ def list_player_summaries() -> list[dict]:
             WHERE player.username IS NOT NULL AND TRIM(player.username) <> ''
               AND COALESCE(account_role.role, 'trainee') = 'trainee'
             ORDER BY player.username COLLATE NOCASE ASC, player.user_id ASC
-            """
-        )
+            """)
     rows = cursor.fetchall()
     conn.close()
 
@@ -2638,11 +3040,16 @@ def list_player_summaries() -> list[dict]:
         {
             "id": str(row["user_id"]),
             "name": row["username"],
-            "image_url": resolve_public_url(row["profile_image_url"]) if has_profile_image else "",
+            "image_url": (
+                resolve_public_url(row["profile_image_url"])
+                if has_profile_image
+                else ""
+            ),
             "type": "Player",
         }
         for row in rows
     ]
+
 
 def set_all_aptitude(user_id: int, value: int):
     if type(value) is not int or not 1 <= value <= MAX_APTITUDE_LEVEL:
@@ -2650,7 +3057,8 @@ def set_all_aptitude(user_id: int, value: int):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     UPDATE players
     SET
         turf = ?,
@@ -2664,15 +3072,13 @@ def set_all_aptitude(user_id: int, value: int):
         late = ?,
         end_style = ?
     WHERE user_id = ?
-    """, (
-        value, value,
-        value, value, value, value,
-        value, value, value, value,
-        user_id
-    ))
+    """,
+        (value, value, value, value, value, value, value, value, value, value, user_id),
+    )
 
     conn.commit()
     conn.close()
+
 
 def reset_zone_build(zone: dict) -> None:
     if "build" not in zone or not isinstance(zone["build"], dict):
@@ -2684,6 +3090,7 @@ def reset_zone_build(zone: dict) -> None:
     for legacy_key in ("floor", "cap"):
         zone["build"].pop(legacy_key, None)
 
+
 def ensure_player(user_id: int, username: str) -> dict:
     player = get_player(user_id)
     if player is None:
@@ -2692,19 +3099,23 @@ def ensure_player(user_id: int, username: str) -> dict:
 
     return player
 
+
 def update_player_username(user_id: str, username: str):
     player = get_player(user_id)
     if player is None:
         raise ValueError("Player not found")
-    
+
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     UPDATE players
     SET username = ?
     WHERE CAST(user_id AS TEXT) = ?
-    """, (username, str(user_id)))
+    """,
+        (username, str(user_id)),
+    )
 
     if cursor.rowcount == 0:
         conn.close()
@@ -2715,9 +3126,13 @@ def update_player_username(user_id: str, username: str):
 
 
 CORE_STAT_FIELDS = ("speed", "stamina", "power", "gut", "wit")
+
+
 # The main community uses the established S cap, while Test is where the
 # extended grade ladder (Sp through UG) is available for balancing.
-def update_player_stat_pool(user_id: int | str, *, stats: dict[str, int], stats_point: int) -> dict:
+def update_player_stat_pool(
+    user_id: int | str, *, stats: dict[str, int], stats_point: int
+) -> dict:
     """Replace core stats while preserving the player's total stat-point pool.
 
     Keeping this rule next to the persistence code ensures every future caller
@@ -2725,7 +3140,10 @@ def update_player_stat_pool(user_id: int | str, *, stats: dict[str, int], stats_
     """
     if set(stats) != set(CORE_STAT_FIELDS):
         raise ValueError("Stats must contain speed, stamina, power, gut, and wit")
-    if any(not isinstance(value, int) or not 1 <= value <= MAX_CORE_STAT for value in stats.values()):
+    if any(
+        not isinstance(value, int) or not 1 <= value <= MAX_CORE_STAT
+        for value in stats.values()
+    ):
         raise ValueError(f"Each stat must be an integer from 1 to {MAX_CORE_STAT}")
     if not isinstance(stats_point, int) or stats_point < 0:
         raise ValueError("Stats point must be a non-negative integer")
@@ -2758,6 +3176,7 @@ def update_player_stat_pool(user_id: int | str, *, stats: dict[str, int], stats_
 
     return {**stats, "stats_point": stats_point}
 
+
 def update_player_stats(
     user_id: int,
     *,
@@ -2766,20 +3185,16 @@ def update_player_stats(
     power: Optional[int] = None,
     gut: Optional[int] = None,
     wit: Optional[int] = None,
-
     turf: Optional[int] = None,
     dirt: Optional[int] = None,
-
     sprint: Optional[int] = None,
     mile: Optional[int] = None,
     medium: Optional[int] = None,
     long: Optional[int] = None,
-
     front: Optional[int] = None,
     pace: Optional[int] = None,
     late: Optional[int] = None,
     end_style: Optional[int] = None,
-
     stats_point: Optional[int] = None,
     fans: Optional[int] = None,
     skill_point: Optional[int] = None,
@@ -2798,7 +3213,10 @@ def update_player_stats(
     new_gut = current["gut"] if gut is None else gut
     new_wit = current["wit"] if wit is None else wit
 
-    if any(not isinstance(value, int) or not 1 <= value <= MAX_CORE_STAT for value in (new_speed, new_stamina, new_power, new_gut, new_wit)):
+    if any(
+        not isinstance(value, int) or not 1 <= value <= MAX_CORE_STAT
+        for value in (new_speed, new_stamina, new_power, new_gut, new_wit)
+    ):
         conn.close()
         raise ValueError(f"Core stats must be integers from 1 to {MAX_CORE_STAT}")
 
@@ -2819,7 +3237,8 @@ def update_player_stats(
     new_fans = current["fans"] if fans is None else fans
     new_skill_point = current["skill_point"] if skill_point is None else skill_point
 
-    cursor.execute("""
+    cursor.execute(
+        """
     UPDATE players
     SET
         speed = ?,
@@ -2841,27 +3260,29 @@ def update_player_stats(
         fans = ?,
         skill_point = ?
     WHERE user_id = ?
-    """, (
-        new_speed,
-        new_stamina,
-        new_power,
-        new_gut,
-        new_wit,
-        new_turf,
-        new_dirt,
-        new_sprint,
-        new_mile,
-        new_medium,
-        new_long,
-        new_front,
-        new_pace,
-        new_late,
-        new_end_style,
-        new_stats_point,
-        new_fans,
-        new_skill_point,
-        user_id
-    ))
+    """,
+        (
+            new_speed,
+            new_stamina,
+            new_power,
+            new_gut,
+            new_wit,
+            new_turf,
+            new_dirt,
+            new_sprint,
+            new_mile,
+            new_medium,
+            new_long,
+            new_front,
+            new_pace,
+            new_late,
+            new_end_style,
+            new_stats_point,
+            new_fans,
+            new_skill_point,
+            user_id,
+        ),
+    )
 
     conn.commit()
     conn.close()
