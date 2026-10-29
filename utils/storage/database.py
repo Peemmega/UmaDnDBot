@@ -2054,7 +2054,7 @@ def respond_to_team_invitation(
             (
                 invite["trainer_user_id"],
                 "Team invitation response",
-                f"{trainee_name} {'joined your team' if accepted else 'declined your invitation'}.",
+                f"{trainee_name} {'ตอบรับคำเชิญของคุณ' if accepted else 'ปฏิเสธคำเชิญของคุณ'}.",
             ),
         )
 
