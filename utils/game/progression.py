@@ -5,10 +5,10 @@ from utils.dice.dice_presets import MAX_SPEED_PHASE
 from utils.race.race_weather import is_wet_lane
 
 ACCELERATION_SCALE = {
-    "Front": (0.1, 0.11, 0.11, 0.08),
+    "Front": (0.12, 0.1, 0.08, 0.08),
     "Pace": (0.10, 0.10, 0.10, 0.10),
     "Late": (0.08, 0.08, 0.12, 0.10),
-    "End": (0.06, 0.08, 0.12, 0.12),
+    "End": (0.06, 0.08, 0.11, 0.11),
 }
 
 
@@ -35,9 +35,11 @@ def incrase_speed_by_acceleration(game, player: dict, multiple):
     else:
         speed_cap_base = style_rule["mid"]
 
-    max_speed_cap = speed_cap_base + effective_stats.get(
-        "effective_speed", race_profile.get("speed", 0)
-    ) + max(0, int(player.get("zone_speed_cap_bonus", 0) or 0))
+    max_speed_cap = (
+        speed_cap_base
+        + effective_stats.get("effective_speed", race_profile.get("speed", 0))
+        + max(0, int(player.get("zone_speed_cap_bonus", 0) or 0))
+    )
 
     increase_speed = 0.3 + (scale_up * power_stat * multiple)
     if is_wet_lane(game, player.get("current_lane")):
