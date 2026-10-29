@@ -165,4 +165,14 @@ RECOVERY_SKILLS = {
         "effects": [{"type": "recover_stamina", "value": 1.5}],
         "tags": ["front", "uphill", "recovery"],
     },
+    "rec_016": {
+        "name": "A Small Breather",
+        "icon": "Recovery_rare",
+        "cooldown": 8,
+        "cost": 40,
+        "trigger": {"style": "Late", "phase_min": 2, "phase_max": 3},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [{"type": "recover_stamina", "value": 1.5}],
+        "tags": ["late", "recovery", "late_race"],
+    },
 }

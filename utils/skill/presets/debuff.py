@@ -15,7 +15,7 @@ DEBUFF_SKILLS = {
             "target_distance_max": 999,
         },
         "target": {"scope": "all_front", "limit": 20},
-        "effects": [{"type": "modify_roll_cap", "value": -5, "duration": "this_roll"}],
+        "effects": {"type": "modify_current_speed_delta", "value": -0.75},
         "tags": ["debuff", "mile", "early_race"],
     },
     "debuff_002": {
@@ -52,7 +52,7 @@ DEBUFF_SKILLS = {
             "target_distance_max": 999,
         },
         "target": {"scope": "all_front", "limit": 20},
-        "effects": [{"type": "modify_roll_cap", "value": -5, "duration": "this_roll"}],
+        "effects": {"type": "modify_current_speed_delta", "value": -0.75},
         "tags": ["debuff", "medium", "late_race"],
     },
     "debuff_004": {
