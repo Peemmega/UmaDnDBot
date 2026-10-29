@@ -1,25 +1,26 @@
 from utils.race.race_dice import (
     get_phase_from_turn,
 )
-from utils.dice.dice_presets import (
-    MAX_SPEED_PHASE
-)
+from utils.dice.dice_presets import MAX_SPEED_PHASE
 from utils.race.race_weather import is_wet_lane
 
 ACCELERATION_SCALE = {
-    "End": (0.06, 0.08, 0.10, 0.14),
-    "Front": (0.12, 0.10, 0.08, 0.08),
+    "Front": (0.1, 0.11, 0.11, 0.08),
     "Pace": (0.10, 0.10, 0.10, 0.10),
     "Late": (0.08, 0.08, 0.12, 0.10),
+    "End": (0.06, 0.08, 0.12, 0.12),
 }
 
-def incrase_speed_by_acceleration(game ,player: dict, multiple):
+
+def incrase_speed_by_acceleration(game, player: dict, multiple):
     race_profile = player.get("race_profile", {})
     effective_stats = player.get("effective_race_stats") or {}
     style = player["style"]
     current_max_speed = player.get("current_max_speed", 0)
 
-    power_stat = effective_stats.get("effective_power", race_profile.get("power", 1)) * 1.5
+    power_stat = (
+        effective_stats.get("effective_power", race_profile.get("power", 1)) * 1.5
+    )
 
     speed_cap_base = 0
     phase = get_phase_from_turn(game["turn"], game["max_turn"])
@@ -34,9 +35,8 @@ def incrase_speed_by_acceleration(game ,player: dict, multiple):
     else:
         speed_cap_base = style_rule["mid"]
 
-    max_speed_cap = (
-        speed_cap_base
-        + effective_stats.get("effective_speed", race_profile.get("speed", 0))
+    max_speed_cap = speed_cap_base + effective_stats.get(
+        "effective_speed", race_profile.get("speed", 0)
     )
 
     increase_speed = 0.3 + (scale_up * power_stat * multiple)
