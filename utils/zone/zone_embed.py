@@ -17,7 +17,7 @@ ZONE_LABELS = {
     "cap_floor": "Cap/Floor",
     "self_heal_stamina": "Self Heal STA",
     "modify_current_speed": "Acceleration",
-    "race_speed": "Race Speed",
+    "race_speed": "Speed Cap",
 }
 
 
@@ -52,7 +52,7 @@ def build_zone_manage_embed_from_zone(
         "cap_floor": f"{ICONS['Aoharu']} เพิ่มแต้มลูกเต๋าขั้นต่ำ/สูงสุด",
         "self_heal_stamina": f"{ICONS['Aoharu']} ฟื้นฟู Stamina (+10% ต่อระดับ)",
         "modify_current_speed": f"{ICONS['Aoharu']} เพิ่มความเร่ง",
-        "race_speed": f"{ICONS['Aoharu']} เพิ่ม Speed ในรัน",
+        "race_speed": f"{ICONS['Aoharu']} เพิ่มเพดานความเร็วสูงสุด",
         "reduce_block_penalty": f"{ICONS['Aoharu']} ลดโทษ Blocked (10% ต่อระดับ)",
     }
 
@@ -73,7 +73,7 @@ def build_zone_manage_embed_from_zone(
     if preview["modify_current_speed"]:
         preview_lines.append(f"👟 เพิ่มความเร่งขึ้น {preview['modify_current_speed']} ระดับ")
     if preview["race_speed"]:
-        preview_lines.append(f"🏇 เพิ่ม Speed ในรัน +{preview['race_speed']}")
+        preview_lines.append(f"🏇 เพิ่มเพดานความเร็วสูงสุด +{preview['race_speed']}")
     if preview["reduce_block_penalty"]:
         preview_lines.append(f"🛡️ ลดโทษ Blocked {preview['reduce_block_penalty']}% สำหรับ Run ถัดไป")
 

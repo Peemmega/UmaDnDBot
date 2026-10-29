@@ -36,7 +36,7 @@ ZONE_VALUE = {
     "cap_floor": 3,
     "self_heal_stamina": 10,
     "modify_current_speed": 1,
-    "race_speed": 1,
+    "race_speed": 2,
     "reduce_block_penalty": 10,
 }
 

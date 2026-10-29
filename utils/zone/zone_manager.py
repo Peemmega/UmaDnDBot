@@ -10,7 +10,6 @@ from utils.zone.zone_preset import (
 from utils.database import get_player, set_player_zone_build
 from utils.race.race_history import record_race_action
 from utils.in_game_manager import incrase_speed_by_acceleration
-from utils.race.race_aptitude import calculate_effective_race_stats
 from utils.race.stamina_rules import calculate_percent_stamina_amount
 from utils.race.runtime_stamina import (
     set_runtime_stamina,
@@ -133,7 +132,7 @@ def get_zone_effect(zone: dict) -> tuple[bool, str]:
     if modify_current_speed:
         lines.append(f"👟 เพิ่มความเร่ง {modify_current_speed} ระดับ")
     if race_speed:
-        lines.append(f"🏇 เพิ่ม Speed ในรัน +{race_speed}")
+        lines.append(f"🏇 เพิ่มเพดานความเร็วสูงสุด +{race_speed}")
     if effects["reduce_block_penalty"]:
         lines.append(f"🛡️ ลดโทษ Blocked {effects['reduce_block_penalty']}% สำหรับ Run ถัดไป")
     if not lines:
@@ -177,19 +176,14 @@ def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
             player.get("stamina_left", 0) + gain,
         )
         
+    # Apply the cap before acceleration so both Zone effects work together.
+    race_speed = effects.get("race_speed", 0)
+    if race_speed > 0:
+        player["zone_speed_cap_bonus"] = player.get("zone_speed_cap_bonus", 0) + race_speed
+
     modify_current_speed = effects.get("modify_current_speed", 0)
     if modify_current_speed > 0:
         incrase_speed_by_acceleration(game, player, modify_current_speed)
-
-    race_speed = effects.get("race_speed", 0)
-    if race_speed > 0:
-        race_profile = player.setdefault("race_profile", {})
-        race_profile["speed"] = max(1, int(race_profile.get("speed", 1) or 1) + race_speed)
-        player["effective_race_stats"] = calculate_effective_race_stats(player, game)
-        zone_race_stat_changes.append({
-            "target_name": "ตัวเอง",
-            "changes": {"speed": race_speed},
-        })
 
     player["zone_left"] = zone_left - 1
     player["_last_zone_race_stat_changes"] = zone_race_stat_changes
@@ -214,7 +208,7 @@ def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
                 "effects": effects,
                 "stamina_heal": gain,
                 "speed_increase": modify_current_speed,
-                "race_speed_increase": race_speed,
+                "speed_cap_increase": race_speed,
                 "summary": zone_effect,
             },
         )

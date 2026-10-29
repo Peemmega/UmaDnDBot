@@ -1075,6 +1075,7 @@ def start_game(channel_id: int):
         player["next_roll_selected_die_bonus"] = 0
         player["next_roll_cap_bonus"] = 0
         player["next_roll_block_reduction"] = 0
+        player["zone_speed_cap_bonus"] = 0
         player["last_roll_block_reduction"] = 0
         player["gold_range_bonus_this_turn"] = 0
         player["enemy_gold_range_penalty_next_turn"] = 0

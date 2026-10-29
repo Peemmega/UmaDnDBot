@@ -37,7 +37,7 @@ def incrase_speed_by_acceleration(game, player: dict, multiple):
 
     max_speed_cap = speed_cap_base + effective_stats.get(
         "effective_speed", race_profile.get("speed", 0)
-    )
+    ) + max(0, int(player.get("zone_speed_cap_bonus", 0) or 0))
 
     increase_speed = 0.3 + (scale_up * power_stat * multiple)
     if is_wet_lane(game, player.get("current_lane")):
