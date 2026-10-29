@@ -263,6 +263,9 @@ def describe_effect(effect: dict) -> str:
 
     dur = normalize_duration(duration)
 
+    if effect_type == "reduce_block_penalty":
+        return f"ลดโทษ Blocked {value * 10}% สำหรับ Run ถัดไป"
+
     if effect_type == "modify_velocity":
         return (
             f"เพิ่มผลรวมการวิ่ง +{value}"

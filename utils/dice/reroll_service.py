@@ -123,6 +123,7 @@ async def execute_reroll(
     game_player["next_roll_floor_bonus"] = 0
     game_player["next_roll_selected_die_bonus"] = 0
     game_player["next_roll_cap_bonus"] = 0
+    game_player["next_roll_block_reduction"] = 0
     game_player["gold_range_bonus_this_turn"] = 0
     game_player["enemy_gold_range_penalty_next_turn"] = 0
     game_player["gold_lane_bonus_this_turn"] = 0

@@ -59,6 +59,7 @@ def calculate_lane_block_penalty(
     players: dict | Iterable[dict],
     base_score: int,
     power_stat: int = 0,
+    block_reduction_levels: int = 0,
 ) -> dict:
     """Apply the lane penalty for runners passed during this roll.
 
@@ -90,7 +91,8 @@ def calculate_lane_block_penalty(
     raw_blocking_penalty = blocked_count * LANE_BLOCK_PENALTY_STEP
     power_reduction = max(0.0, float(power_stat) / 100.0)
     power_adjusted_penalty = max(0.0, raw_blocking_penalty - power_reduction)
-    blocking_penalty = min(LANE_BLOCK_PENALTY_CAP, power_adjusted_penalty)
+    capped_penalty = min(LANE_BLOCK_PENALTY_CAP, power_adjusted_penalty)
+    blocking_penalty = max(0.0, capped_penalty - max(0, block_reduction_levels) * 0.10)
     final_score = int(round(int(base_score or 0) * (1 - blocking_penalty)))
 
     return {

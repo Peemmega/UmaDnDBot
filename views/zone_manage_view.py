@@ -19,6 +19,7 @@ ZONE_OPTIONS = [
     discord.SelectOption(label="ฟื้นฟู Stamina +10%", value="self_heal_stamina", description="ฟื้น 10% ของ Max STA ต่อระดับ | cost 1"),
     discord.SelectOption(label="เพิ่มอัตราเร่ง", value="modify_current_speed", description="เพิ่มอัตราเร่ง 1 ระดับ | cost 1"),
     discord.SelectOption(label="เพิ่ม Speed ในรัน", value="race_speed", description="เพิ่ม Speed +1 เฉพาะการแข่งขันนี้ | cost 1"),
+    discord.SelectOption(label="ลดโทษ Blocked", value="reduce_block_penalty", description="ลด 10% ต่อระดับ สำหรับ Run ถัดไป | cost 1"),
 ]
 
 

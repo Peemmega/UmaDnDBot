@@ -5,6 +5,7 @@ ZONE_FIELDS = (
     "self_heal_stamina",
     "modify_current_speed",
     "race_speed",
+    "reduce_block_penalty",
 )
 
 DEFAULT_ZONE_IMAGE = "https://media.discordapp.net/attachments/697810514448744448/1495378081085657162/tm_zone.gif"
@@ -26,6 +27,7 @@ ZONE_POINT_COST = {
     "self_heal_stamina": 1,
     "modify_current_speed": 1,
     "race_speed": 1,
+    "reduce_block_penalty": 1,
 }
 
 ZONE_VALUE = {
@@ -35,6 +37,7 @@ ZONE_VALUE = {
     "self_heal_stamina": 10,
     "modify_current_speed": 1,
     "race_speed": 1,
+    "reduce_block_penalty": 10,
 }
 
 DEFAULT_ZONE = {
@@ -48,6 +51,7 @@ DEFAULT_ZONE = {
         "self_heal_stamina": 0,
         "modify_current_speed": 0,
         "race_speed": 0,
+        "reduce_block_penalty": 0,
     }
 }
 

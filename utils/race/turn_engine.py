@@ -253,6 +253,7 @@ class TurnEngine:
                 player["debuffPower"] = False
             player.pop("lastedBuff", None)
             player.pop("last_roll_log", None)
+            player.pop("last_roll_block_reduction", None)
             player.pop("turn_stamina_before_roll", None)
             player["used_skills_this_turn"] = []
             player["blocked_count"] = 0

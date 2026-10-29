@@ -88,6 +88,13 @@ class SkillEffectRegistry:
 SKILL_EFFECTS = SkillEffectRegistry()
 
 
+@SKILL_EFFECTS.register("reduce_block_penalty")
+def _reduce_block_penalty(context: SkillEffectContext, effect: dict) -> SkillEffectResult:
+    levels = max(0, int(effect.get("value", 0)))
+    context.player["next_roll_block_reduction"] = context.player.get("next_roll_block_reduction", 0) + levels
+    return SkillEffectResult([f"ลดโทษ Blocked {levels * 10}% สำหรับ Run ถัดไป"])
+
+
 def _self_or_targets(context: SkillEffectContext) -> list[tuple[object, dict]]:
     return context.targets or [(context.user_id, context.player)]
 

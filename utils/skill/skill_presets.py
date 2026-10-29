@@ -84,6 +84,7 @@ EFFECT_TYPES = {
     "block_reroll",  # ห้าม reroll
     "force_path_bonus",  # เปลี่ยนผลของ path
     "modify_current_speed",  # เพิ่ม current speed โดยตรง
+    "reduce_block_penalty",
     "modify_current_speed_delta",  # ปรับ current speed แบบเพิ่ม/ลดตรง ๆ
     "modify_race_stats",  # ปรับ stat เฉพาะการแข่งขันนี้
     "resolve_pending_lane_now",

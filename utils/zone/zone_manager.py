@@ -105,6 +105,7 @@ def get_zone_effects_from_build(zone_build: dict) -> dict:
         "self_heal_stamina": int(normalized_build.get("self_heal_stamina", 0)) * ZONE_VALUE["self_heal_stamina"],
         "modify_current_speed": int(normalized_build.get("modify_current_speed", 0)) * ZONE_VALUE["modify_current_speed"],
         "race_speed": int(normalized_build.get("race_speed", 0)) * ZONE_VALUE["race_speed"],
+        "reduce_block_penalty": int(normalized_build.get("reduce_block_penalty", 0)) * ZONE_VALUE["reduce_block_penalty"],
     }
 
 def get_zone_effect(zone: dict) -> tuple[bool, str]:
@@ -133,6 +134,8 @@ def get_zone_effect(zone: dict) -> tuple[bool, str]:
         lines.append(f"👟 เพิ่มความเร่ง {modify_current_speed} ระดับ")
     if race_speed:
         lines.append(f"🏇 เพิ่ม Speed ในรัน +{race_speed}")
+    if effects["reduce_block_penalty"]:
+        lines.append(f"🛡️ ลดโทษ Blocked {effects['reduce_block_penalty']}% สำหรับ Run ถัดไป")
     if not lines:
         lines.append("Zone ทำงาน แต่ยังไม่มีค่าที่อัปไว้")   
 
@@ -159,6 +162,7 @@ def apply_zone_in_game(game, player: dict) -> tuple[bool, str]:
     player["next_roll_add_kh"] = player.get("next_roll_add_kh", 0) + effects["add_dkh"]
     player["next_roll_floor_bonus"] = player.get("next_roll_floor_bonus", 0) + effects["floor"]
     player["next_roll_cap_bonus"] = player.get("next_roll_cap_bonus", 0) + effects["cap"]
+    player["next_roll_block_reduction"] = player.get("next_roll_block_reduction", 0) + effects["reduce_block_penalty"] // 10
 
     heal_value = effects.get("self_heal_stamina", 0)
     gain = 0

@@ -247,11 +247,16 @@ def apply_lane_tactics_to_result(
     stamina_debuff_percent = get_stamina_debuff_percent(game_player)
 
     if supports_lane:
+        block_reduction_levels = max(0, int(game_player.get("next_roll_block_reduction", 0) or 0))
+        if not consume_stamina:
+            block_reduction_levels += max(0, int(game_player.get("last_roll_block_reduction", 0) or 0))
+        game_player["last_roll_block_reduction"] = block_reduction_levels
         block_info = calculate_lane_block_penalty(
             temp_player,
             working_players,
             base_total,
             power_stat=power_stat,
+            block_reduction_levels=block_reduction_levels,
         )
         blocked_count = int(block_info["blocked_count"])
         blocked_runner_ids = [
@@ -644,6 +649,7 @@ def execute_roll_core(
     game_player["next_roll_floor_bonus"] = 0
     game_player["next_roll_selected_die_bonus"] = 0
     game_player["next_roll_cap_bonus"] = 0
+    game_player["next_roll_block_reduction"] = 0
     game_player["gold_range_bonus_this_turn"] = 0
     game_player["enemy_gold_range_penalty_next_turn"] = 0
     game_player["gold_lane_bonus_this_turn"] = 0
@@ -1067,6 +1073,8 @@ def start_game(channel_id: int):
         player["next_roll_floor_bonus"] = 0
         player["next_roll_selected_die_bonus"] = 0
         player["next_roll_cap_bonus"] = 0
+        player["next_roll_block_reduction"] = 0
+        player["last_roll_block_reduction"] = 0
         player["gold_range_bonus_this_turn"] = 0
         player["enemy_gold_range_penalty_next_turn"] = 0
         player["gold_lane_bonus_this_turn"] = 0
@@ -1386,6 +1394,9 @@ def apply_next_roll_effects_to_player(player: dict, effects: list[dict]):
             player["next_roll_flat_bonus"] = (
                 player.get("next_roll_flat_bonus", 0) + value
             )
+
+        elif effect_type == "reduce_block_penalty":
+            player["next_roll_block_reduction"] = player.get("next_roll_block_reduction", 0) + max(0, int(value))
 
         elif effect_type == "add_d":
             player["next_roll_add_d"] = player.get("next_roll_add_d", 0) + value

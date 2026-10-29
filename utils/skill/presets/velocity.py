@@ -433,7 +433,8 @@ VELOCITY_SKILLS = {
                 "mode": "flat_total",
                 "value": 30,
                 "duration": "this_roll",
-            }
+            },
+            {"type": "reduce_block_penalty", "value": 1, "duration": "this_roll"},
         ],
         "tags": ["front", "lastspurt", "followed", "velocity"],
     },
@@ -602,7 +603,7 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "cap_floor", "value": 4, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 5, "duration": "this_roll"},
             {"type": "modify_current_speed", "value": 0.5},
         ],
         "tags": ["late", "middle", "late_race", "acceleration", "stability"],
@@ -686,8 +687,8 @@ VELOCITY_SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "reduce_stamina", "value": 0.5},
-            {"type": "flat_total", "value": 20},
-            {"type": "cap_floor", "value": 5, "duration": "this_roll"},
+            {"type": "flat_total", "value": 30},
+            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
         ],
         "tags": ["velocity", "stamina_cost"],
     },
