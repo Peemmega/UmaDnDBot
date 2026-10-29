@@ -290,10 +290,10 @@ def describe_effect(effect: dict) -> str:
         sign = "+" if value >= 0 else ""
         return f"ปรับแต้มสูงสุดลูกเต๋า {sign}{value}" + (f" ({dur})" if dur else "")
     if effect_type in {"modify_roll_cap_floor", "cap_floor"}:
-        cap = effect.get("cap", value)
+        # cap = effect.get("cap", value)
         floor = effect.get("floor", value)
         return (
-            f"ปรับแต้มสูงสุดลูกเต๋า {cap}, เพิ่มแต้มขั้นต่ำของลูกเต๋า {floor}"
+            f"เพิ่มแต้มสูงสุดลูกเต๋าและขั้นต่ำของลูกเต๋า {floor}"
             + (f" ({dur})" if dur else "")
             + condition_text
         )
