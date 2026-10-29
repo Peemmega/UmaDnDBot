@@ -145,7 +145,7 @@ DEBUFF_SKILLS = {
             "target_distance_max": 150,
         },
         "target": {"scope": "all_front", "limit": 20, "same_lane_only": False},
-        "effects": [{"type": "modify_roll_cap", "value": -3, "duration": "this_roll"}],
+        "effects": {"type": "modify_current_speed_delta", "value": -0.75},
         "tags": ["medium", "late_race", "back", "debuff", "velocity"],
     },
     "debuff_009": {
@@ -162,7 +162,7 @@ DEBUFF_SKILLS = {
             "target_distance_max": -1,
         },
         "target": {"scope": "all_back", "limit": 20, "same_lane_only": False},
-        "effects": [{"type": "modify_roll_cap", "value": -5, "duration": "this_roll"}],
+        "effects": {"type": "modify_current_speed_delta", "value": -0.75},
         "tags": ["sprint", "early_race", "front", "debuff", "velocity", "rare"],
     },
     "debuff_010": {
@@ -179,7 +179,7 @@ DEBUFF_SKILLS = {
             "target_distance_max": -1,
         },
         "target": {"scope": "all_back", "limit": 3, "same_lane_only": False},
-        "effects": [{"type": "modify_roll_cap", "value": -3, "duration": "this_roll"}],
+        "effects": {"type": "modify_current_speed_delta", "value": -0.75},
         "tags": ["sprint", "early_race", "front", "debuff", "velocity"],
     },
     "debuff_011": {
@@ -217,10 +217,10 @@ DEBUFF_SKILLS = {
         },
         "target": {"scope": "all_back", "limit": 5, "same_lane_only": False},
         "effects": [
-            {"type": "modify_current_speed_delta", "value": -0.15},
+            {"type": "modify_current_speed_delta", "value": -0.35},
             {
                 "type": "modify_current_speed_delta",
-                "value": 0.15,
+                "value": 0.35,
                 "target": {"scope": "self", "limit": 1},
             },
         ],
