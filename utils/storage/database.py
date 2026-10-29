@@ -6,6 +6,7 @@ from utils.zone.zone_preset import ZONE_FIELDS, DEFAULT_ZONE_IMAGE, ZONE_POINT_C
 import json
 from utils.profile_images import resolve_public_url
 from utils.icon_presets import USING_MAIN_EMOJIS
+from utils.game_config import MAX_CORE_STAT, MAX_APTITUDE_LEVEL
 from utils.skill.skill_ids import LEGACY_SKILL_ID_MAP
 from utils.skill.skill_evolution import (
     find_incompatible_skill_pair,
@@ -1789,8 +1790,12 @@ def add_player_aptitude(user_id, aptitude_field, amount):
     cursor.execute(f"""
     UPDATE players
     SET {aptitude_field} = COALESCE({aptitude_field}, 0) + ?
-    WHERE user_id = ?
-    """, (amount, user_id))
+    WHERE user_id = ? AND COALESCE({aptitude_field}, 0) + ? BETWEEN 1 AND ?
+    """, (amount, user_id, amount, MAX_APTITUDE_LEVEL))
+
+    if cursor.rowcount == 0:
+        conn.close()
+        return False, f"ไม่พบผู้เล่นหรือค่า Aptitude อยู่นอกช่วง 1–{MAX_APTITUDE_LEVEL}"
 
     add_mail(
         conn,
@@ -2114,6 +2119,11 @@ def update_trainer_aptitudes(user_id: str, aptitudes: dict) -> dict:
         role = conn.execute("SELECT role FROM account_roles WHERE user_id = ?", (str(user_id),)).fetchone()
         if not role or role["role"] != "trainer":
             raise PermissionError("Trainer role required")
+        row = conn.execute(f"SELECT {', '.join(APTITUDE_FIELDS)} FROM players WHERE CAST(user_id AS TEXT) = ?", (str(user_id),)).fetchone()
+        if row is None:
+            raise LookupError("Player not found")
+        if any(aptitudes[field] > MAX_APTITUDE_LEVEL and aptitudes[field] != row[field] for field in APTITUDE_FIELDS):
+            raise ValueError(f"Aptitude level cannot exceed {MAX_APTITUDE_LEVEL}")
         assignments = ", ".join(f"{field} = ?" for field in APTITUDE_FIELDS)
         cursor = conn.execute(f"UPDATE players SET {assignments} WHERE CAST(user_id AS TEXT) = ?",
                               (*[aptitudes[field] for field in APTITUDE_FIELDS], str(user_id)))
@@ -2144,8 +2154,8 @@ def set_admin_player_value(user_id: int | str, field: str, value: int) -> int:
         "turf", "dirt", "sprint", "mile", "medium", "long",
         "front", "pace", "late", "end_style",
     }:
-        if not 1 <= value <= 8:
-            raise ValueError("Aptitude must be between 1 and 8")
+        if not 1 <= value <= MAX_APTITUDE_LEVEL:
+            raise ValueError(f"Aptitude must be between 1 and {MAX_APTITUDE_LEVEL}")
     elif value < 0:
         raise ValueError("Points and fans cannot be negative")
 
@@ -2635,6 +2645,8 @@ def list_player_summaries() -> list[dict]:
     ]
 
 def set_all_aptitude(user_id: int, value: int):
+    if type(value) is not int or not 1 <= value <= MAX_APTITUDE_LEVEL:
+        raise ValueError(f"Aptitude must be between 1 and {MAX_APTITUDE_LEVEL}")
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -2705,9 +2717,6 @@ def update_player_username(user_id: str, username: str):
 CORE_STAT_FIELDS = ("speed", "stamina", "power", "gut", "wit")
 # The main community uses the established S cap, while Test is where the
 # extended grade ladder (Sp through UG) is available for balancing.
-MAX_CORE_STAT = 8 if USING_MAIN_EMOJIS else 12
-
-
 def update_player_stat_pool(user_id: int | str, *, stats: dict[str, int], stats_point: int) -> dict:
     """Replace core stats while preserving the player's total stat-point pool.
 

@@ -148,7 +148,11 @@ ACCELERATION_SKILLS = {
         "icon": "acceleration",
         "cooldown": 8,
         "cost": 60,
-        "trigger": {"phase_min": 1, "phase_max": 2},
+        "trigger": {
+            "phase_min": 1,
+            "phase_max": 2,
+            "distance_type": "Medium",
+        },
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_current_speed", "value": 1},

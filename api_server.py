@@ -66,6 +66,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
+from utils.game_config import MAX_APTITUDE_LEVEL, MAX_CORE_STAT
 from utils.race.race_presets import (
     RACE_SCHEDULE,
     RACE_PRESET,
@@ -808,6 +809,11 @@ def update_player_stats(payload: UpdateStatsPayload):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return {"success": True, "message": "Stats updated successfully", "player": player}
+
+@app.get("/game-config")
+def api_game_config():
+    return {"max_core_stat": MAX_CORE_STAT, "max_aptitude_level": MAX_APTITUDE_LEVEL}
+
 
 @app.post("/internal/trainer-aptitudes")
 async def api_update_trainer_aptitudes(request: Request):

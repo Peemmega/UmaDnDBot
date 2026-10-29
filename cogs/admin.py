@@ -29,6 +29,7 @@ from utils.race.race_presets import RACE_PRESET
 from utils.skill.skill_presets import SKILLS, get_skill_rarity
 from utils.channel_config import COMMAND_LOG_CHANNEL_ID, RACE_REGISTRATION_FORUM_CHANNEL_ID
 from utils.icon_presets import USING_MAIN_EMOJIS
+from utils.game_config import MAX_APTITUDE_LEVEL, MAX_CORE_STAT
 
 ADMIN_IDS = {
     464058883556769793,
@@ -273,7 +274,7 @@ class Admin(commands.Cog):
             name="ตรวจสอบและแก้ไขข้อมูลรายคน",
             value=(
                 "`!admin_profile @member` — ดูข้อมูลและสถานะระบบของผู้เล่น\n"
-                "`!set_stat <speed|stamina|power|gut|wit> <1-8> [@member]` — ตั้งค่าสเตตัส\n"
+                f"`!set_stat <speed|stamina|power|gut|wit> <1-{MAX_CORE_STAT}> [@member]` — ตั้งค่าสเตตัส\n"
                 "`!set_point <stats|skill|fans|zone> <จำนวน> [@member]` — ตั้งค่าแต้ม/แฟน\n"
                 "`!remove_skill <1-4|all> @member CONFIRM` — ล้างสกิลที่ติดตั้ง\n"
                 "`!grant_skill @member <skill_id>` — มอบสกิล Rare/Unique ให้ผู้เล่น\n"
@@ -288,7 +289,7 @@ class Admin(commands.Cog):
             name="เพิ่มหรือปรับค่าผู้เล่น",
             value=(
                 "`!add_att <aptitude> [@member]` — เพิ่ม aptitude 1 ระดับ\n"
-                "`!set_all_att <1-8> [@member]` — ตั้ง aptitude ทุกค่า\n"
+                f"`!set_all_att <1-{MAX_APTITUDE_LEVEL}> [@member]` — ตั้ง aptitude ทุกค่า\n"
                 "`!add_stats_pt <amount> [@member]` — เพิ่ม/ลด Stats Point\n"
                 "`!add_skill_pt <amount> [@member]` — เพิ่ม/ลด Event Point"
             ),
@@ -337,7 +338,7 @@ class Admin(commands.Cog):
             name="Additional admin commands",
             value=(
                 "`!close_registration` — close registration from its forum post thread\n"
-                "`!add_att <aptitude> [@member]` — add one aptitude level; `!set_all_att <1-8> [@member]` — set all aptitudes\n"
+                f"`!add_att <aptitude> [@member]` — add one aptitude level; `!set_all_att <1-{MAX_APTITUDE_LEVEL}> [@member]` — set all aptitudes\n"
                 "`!clear_race_records <all|official|practice> CONFIRM` — clear race records\n"
                 "`!clear_legacy_profile @member CONFIRM` — clear legacy profile data"
             ),
@@ -1304,8 +1305,8 @@ class Admin(commands.Cog):
 
         await self.silent_delete(ctx.message)
 
-        if value < 1 or value > 8:
-            error_text = "ค่าต้องอยู่ระหว่าง `1-8`"
+        if value < 1 or value > MAX_APTITUDE_LEVEL:
+            error_text = f"ค่าต้องอยู่ระหว่าง `1-{MAX_APTITUDE_LEVEL}`"
             await self.send_result_embed(
                 ctx,
                 title="ตั้งค่า Aptitude ไม่สำเร็จ",
