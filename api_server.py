@@ -3,6 +3,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 import json
+import hmac
+import hashlib
 import asyncio
 import base64
 import io
@@ -30,6 +32,7 @@ from utils.database import (
     init_db,
     set_player_profile_image,
     update_player_stat_pool,
+    update_trainer_aptitudes,
     get_available_trainees,
     get_trainer_team,
     get_trainee_trainer,
@@ -805,6 +808,35 @@ def update_player_stats(payload: UpdateStatsPayload):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return {"success": True, "message": "Stats updated successfully", "player": player}
+
+@app.post("/internal/trainer-aptitudes")
+async def api_update_trainer_aptitudes(request: Request):
+    secret = os.getenv("APTITUDE_SYNC_SECRET", "")
+    if not secret:
+        raise HTTPException(status_code=503, detail="Aptitude sync is not configured")
+    body = await request.body()
+    timestamp = request.headers.get("x-aptitude-timestamp", "")
+    signature = request.headers.get("x-aptitude-signature", "")
+    try:
+        valid_time = abs(time.time() - int(timestamp)) <= 60
+    except ValueError:
+        valid_time = False
+    expected = hmac.new(secret.encode(), timestamp.encode() + b"." + body, hashlib.sha256).hexdigest()
+    if not valid_time or not hmac.compare_digest(signature, expected):
+        raise HTTPException(status_code=403, detail="Invalid authorization")
+    try:
+        payload = json.loads(body)
+        if not isinstance(payload, dict) or not isinstance(payload.get("user_id"), str) or not isinstance(payload.get("aptitudes"), dict):
+            raise ValueError("Invalid payload")
+        player = update_trainer_aptitudes(payload["user_id"], payload["aptitudes"])
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return {"player": player}
+
 
 @app.get("/mailbox/{user_id}")
 def get_mailbox(user_id: str, profile_type: str = "trainee"):

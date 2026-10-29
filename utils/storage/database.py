@@ -2100,6 +2100,28 @@ def save_player_skill_loadout_preset(
     conn.close()
 
 
+APTITUDE_FIELDS = ("turf", "dirt", "sprint", "mile", "medium", "long", "front", "pace", "late", "end_style")
+
+
+def update_trainer_aptitudes(user_id: str, aptitudes: dict) -> dict:
+    """Update all aptitude ranks atomically in the player record used by Discord."""
+    if set(aptitudes) != set(APTITUDE_FIELDS) or any(
+        type(aptitudes[field]) is not int or not 1 <= aptitudes[field] <= 8
+        for field in APTITUDE_FIELDS
+    ):
+        raise ValueError("All aptitude ranks must be integers between 1 and 8")
+    with database_connection() as conn:
+        role = conn.execute("SELECT role FROM account_roles WHERE user_id = ?", (str(user_id),)).fetchone()
+        if not role or role["role"] != "trainer":
+            raise PermissionError("Trainer role required")
+        assignments = ", ".join(f"{field} = ?" for field in APTITUDE_FIELDS)
+        cursor = conn.execute(f"UPDATE players SET {assignments} WHERE CAST(user_id AS TEXT) = ?",
+                              (*[aptitudes[field] for field in APTITUDE_FIELDS], str(user_id)))
+        if not cursor.rowcount:
+            raise LookupError("Player not found")
+    return get_player(user_id)
+
+
 ADMIN_EDITABLE_FIELDS = {
     "speed", "stamina", "power", "gut", "wit",
     "turf", "dirt", "sprint", "mile", "medium", "long",
