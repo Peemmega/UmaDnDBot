@@ -887,7 +887,14 @@ async def admin_data(request: Request):
                 count = db.execute('SELECT COUNT(*) FROM ' + q(table) + where, params).fetchone()[0]
                 page = max(1, min(int(data.get('page', 1)), 100000))
                 rows = db.execute('SELECT * FROM ' + q(table) + where + ' LIMIT 50 OFFSET ?', params + [(page - 1) * 50]).fetchall()
-                return {"columns": columns, "rows": [{k: ({"binary_bytes": len(v)} if isinstance(v, bytes) else v) for k, v in dict(row).items()} for row in rows], "total": count, "page": page}
+                def json_value(value):
+                    if isinstance(value, bytes):
+                        return {"binary_bytes": len(value)}
+                    # JavaScript cannot represent Discord snowflakes exactly as numbers.
+                    if isinstance(value, int) and abs(value) > 2**53 - 1:
+                        return str(value)
+                    return value
+                return {"columns": columns, "rows": [{k: json_value(v) for k, v in dict(row).items()} for row in rows], "total": count, "page": page}
             if operation == "update":
                 original, changes = data.get('original'), data.get('changes')
                 if not isinstance(original, dict) or not isinstance(changes, dict) or not changes or set(original) != set(names) or not set(changes) <= set(names) or not any(c['pk'] for c in columns):
