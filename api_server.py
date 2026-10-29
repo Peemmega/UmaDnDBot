@@ -815,6 +815,95 @@ def api_game_config():
     return {"max_core_stat": MAX_CORE_STAT, "max_aptitude_level": MAX_APTITUDE_LEVEL}
 
 
+@app.post("/internal/admin-data")
+async def admin_data(request: Request):
+    import sqlite3
+    from contextlib import closing
+    from utils.storage.database import DB_PATH
+
+    secret = os.getenv("ADMIN_DATA_SECRET", "")
+    guild_id = os.getenv("DISCORD_GUILD_ID", "")
+    role_id = os.getenv("ADMIN_ROLE_ID", "")
+    if not secret or not guild_id.isdigit() or role_id not in {"1526245809459298417", "1494752623683834038"}:
+        raise HTTPException(503, "Admin data service is not configured")
+    body = await request.body()
+    if len(body) > 1024 * 1024:
+        raise HTTPException(413, "Request too large")
+    timestamp = request.headers.get("x-admin-timestamp", "")
+    signature = request.headers.get("x-admin-signature", "")
+    try:
+        valid_time = abs(time.time() - int(timestamp)) <= 30
+    except ValueError:
+        valid_time = False
+    expected = hmac.new(secret.encode(), timestamp.encode() + b"." + body, hashlib.sha256).hexdigest()
+    if not valid_time or not hmac.compare_digest(signature, expected):
+        raise HTTPException(403, "Invalid authorization")
+    try:
+        data = json.loads(body)
+        user_id = str(data["user_id"])
+        if not user_id.isdigit():
+            raise ValueError("Invalid user")
+    except (ValueError, TypeError, KeyError):
+        raise HTTPException(400, "Invalid request")
+    bot = bot_instance.bot
+    if bot is None or not bot.is_ready():
+        raise HTTPException(503, "Discord bot is not ready")
+    async def check_role():
+        guild = bot.get_guild(int(guild_id))
+        if guild is None:
+            return False
+        try:
+            member = await guild.fetch_member(int(user_id))
+        except discord.NotFound:
+            return False
+        return any(str(role.id) == role_id for role in member.roles)
+    try:
+        authorized = await asyncio.wait_for(asyncio.wrap_future(asyncio.run_coroutine_threadsafe(check_role(), bot.loop)), timeout=10)
+    except (discord.HTTPException, asyncio.TimeoutError):
+        raise HTTPException(503, "Discord role check unavailable")
+    if not authorized:
+        raise HTTPException(403, "Admin role required")
+    def q(name):
+        return '"' + name.replace('"', '""') + '"'
+    try:
+        with closing(sqlite3.connect(f"{Path(DB_PATH).resolve().as_uri()}?mode=rw", uri=True, timeout=5)) as db, db:
+            db.row_factory = sqlite3.Row
+            db.execute("PRAGMA foreign_keys=ON")
+            operation = data.get("operation")
+            if operation == "check":
+                return {"ok": True}
+            if operation == "tables":
+                names = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")]
+                return {"tables": [{"name": n, "count": db.execute("SELECT COUNT(*) FROM " + q(n)).fetchone()[0]} for n in names]}
+            table = data.get("table", "")
+            if not isinstance(table, str) or not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=? AND name NOT LIKE 'sqlite_%'", (table,)).fetchone():
+                raise ValueError("Table not found")
+            columns = [dict(r) for r in db.execute("PRAGMA table_info(" + q(table) + ")")]
+            names = [c["name"] for c in columns]
+            if operation == "rows":
+                term = str(data.get("query", ""))[:200]
+                where = ' WHERE ' + ' OR '.join('CAST(' + q(n) + ' AS TEXT) LIKE ?' for n in names) if term else ''
+                params = ['%' + term + '%'] * len(names) if term else []
+                count = db.execute('SELECT COUNT(*) FROM ' + q(table) + where, params).fetchone()[0]
+                page = max(1, min(int(data.get('page', 1)), 100000))
+                rows = db.execute('SELECT * FROM ' + q(table) + where + ' LIMIT 50 OFFSET ?', params + [(page - 1) * 50]).fetchall()
+                return {"columns": columns, "rows": [{k: ({"binary_bytes": len(v)} if isinstance(v, bytes) else v) for k, v in dict(row).items()} for row in rows], "total": count, "page": page}
+            if operation == "update":
+                original, changes = data.get('original'), data.get('changes')
+                if not isinstance(original, dict) or not isinstance(changes, dict) or not changes or set(original) != set(names) or not set(changes) <= set(names) or not any(c['pk'] for c in columns):
+                    raise ValueError("Invalid update")
+                if any(isinstance(v, (dict, list)) for v in list(original.values()) + list(changes.values())):
+                    raise ValueError("Binary data is not editable")
+                sql = 'UPDATE ' + q(table) + ' SET ' + ', '.join(q(n) + ' = ?' for n in changes) + ' WHERE ' + ' AND '.join(q(n) + ' IS ?' for n in names)
+                result = db.execute(sql, list(changes.values()) + [original[n] for n in names])
+                if result.rowcount != 1:
+                    raise ValueError("Data changed; refresh before saving")
+                return {"ok": True}
+            raise ValueError("Invalid operation")
+    except (ValueError, TypeError, sqlite3.Error, OSError) as exc:
+        raise HTTPException(400, str(exc))
+
+
 @app.post("/internal/trainer-aptitudes")
 async def api_update_trainer_aptitudes(request: Request):
     secret = os.getenv("APTITUDE_SYNC_SECRET", "")
