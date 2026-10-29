@@ -431,10 +431,10 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 30,
+                "value": 25,
                 "duration": "this_roll",
             },
-            {"type": "reduce_block_penalty", "value": 1, "duration": "this_roll"},
+            {"type": "reduce_block_penalty", "value": 0.5, "duration": "this_roll"},
         ],
         "tags": ["front", "lastspurt", "followed", "velocity"],
     },
