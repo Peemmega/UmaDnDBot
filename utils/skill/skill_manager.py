@@ -148,7 +148,9 @@ def build_skill_card_text(skill_id: str | None) -> str:
     name = skill["name"]
     cooldown = skill.get("cooldown", 0)
     cost = skill.get("cost", 0)
-    activation_text = "🟣 Passive: ทำงานอัตโนมัติ\n" if skill.get("activation") == "passive" else ""
+    activation_text = (
+        "🟣 Passive: ทำงานอัตโนมัติ\n" if skill.get("activation") == "passive" else ""
+    )
 
     trigger_text = describe_trigger(skill.get("trigger", {}))
     target_text = describe_target(skill.get("target", {}))
@@ -176,17 +178,17 @@ POSITION_GROUP_TEXT = {
 def describe_trigger(trigger: dict) -> str:
     parts = []
 
+    labels = []
+    for key in ("style", "distance_type"):
+        value = trigger.get(key)
+        if value:
+            values = value if isinstance(value, (list, tuple)) else (value,)
+            labels.extend(str(item).title() for item in values)
     if "path_type" in trigger:
         parts.append(f"เมื่ออยู่บน{PATH_TEXT.get(trigger['path_type'], 'สนามพิเศษ')}")
 
-    if "distance_type" in trigger:
-        parts.append(f"เมื่ออยู่ในสนามระยะ {trigger['distance_type']}")
-
     if "track" in trigger:
         parts.append(f"เมื่ออยู่บนสนาม {str(trigger['track']).title()}")
-
-    if "style" in trigger:
-        parts.append(f"สำหรับสาย {STYLE_TEXT.get(trigger['style'], trigger['style'])}")
 
     if "turn_min" in trigger and "turn_max" in trigger:
         if trigger["turn_min"] == trigger["turn_max"]:
@@ -239,6 +241,9 @@ def describe_trigger(trigger: dict) -> str:
             f"เมื่ออยู่ใน{POSITION_GROUP_TEXT.get(trigger['position_group'], trigger['position_group'])}"
         )
 
+    if labels:
+        parts.append(f"({','.join(labels)})")
+
     return " • ".join(parts) if parts else "ไม่มีเงื่อนไขพิเศษ"
 
 
@@ -251,22 +256,28 @@ def describe_effect(effect: dict) -> str:
     value = effect.get("value")
     duration = effect.get("duration")
     condition = effect.get("condition")
-    condition_text = (
-        f" (เฉพาะเมื่อ {describe_trigger(condition)})" if condition else ""
-    )
+    condition_text = f" (เฉพาะเมื่อ {describe_trigger(condition)})" if condition else ""
 
     dur = normalize_duration(duration)
 
     if effect_type == "modify_velocity":
-        return f"เพิ่มผลรวมการวิ่ง +{value}" + (f" ({dur})" if dur else "") + condition_text
+        return (
+            f"เพิ่มผลรวมการวิ่ง +{value}"
+            + (f" ({dur})" if dur else "")
+            + condition_text
+        )
     if effect_type == "modify_race_stats":
         stats = effect.get("stats", effect.get("stat", "all"))
         if stats == "all":
             return f"เพิ่มทุก Stats +{value} เฉพาะการแข่งขันนี้" + condition_text
         if isinstance(stats, dict):
-            stat_text = ", ".join(f"{stat.title()} {delta:+}" for stat, delta in stats.items())
+            stat_text = ", ".join(
+                f"{stat.title()} {delta:+}" for stat, delta in stats.items()
+            )
             return f"ปรับ Stats ({stat_text}) เฉพาะการแข่งขันนี้" + condition_text
-        return f"เพิ่ม {str(stats).title()} +{value} เฉพาะการแข่งขันนี้" + condition_text
+        return (
+            f"เพิ่ม {str(stats).title()} +{value} เฉพาะการแข่งขันนี้" + condition_text
+        )
     if effect_type == "modify_roll_floor":
         return f"เพิ่มแต้มขั้นต่ำของลูกเต๋า +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "modify_roll_cap":
@@ -275,9 +286,11 @@ def describe_effect(effect: dict) -> str:
     if effect_type in {"modify_roll_cap_floor", "cap_floor"}:
         cap = effect.get("cap", value)
         floor = effect.get("floor", value)
-        return f"ปรับแต้มสูงสุดลูกเต๋า {cap}, เพิ่มแต้มขั้นต่ำของลูกเต๋า {floor}" + (
-            f" ({dur})" if dur else ""
-        ) + condition_text
+        return (
+            f"ปรับแต้มสูงสุดลูกเต๋า {cap}, เพิ่มแต้มขั้นต่ำของลูกเต๋า {floor}"
+            + (f" ({dur})" if dur else "")
+            + condition_text
+        )
     if effect_type == "add_dkh":
         return f"เพิ่มจำนวนลูกเต๋าและจำนวนลูกที่เลือก +{value}" + (
             f" ({dur})" if dur else ""
@@ -353,7 +366,9 @@ def build_skill_description(skill_id: str) -> str:
         return f"❓ `{skill_id}`"
 
     emoji = get_skill_emoji(skill_id)
-    activation_text = "🟣 Passive: ทำงานอัตโนมัติ\n" if skill.get("activation") == "passive" else ""
+    activation_text = (
+        "🟣 Passive: ทำงานอัตโนมัติ\n" if skill.get("activation") == "passive" else ""
+    )
     trigger_text = describe_trigger(skill.get("trigger", {}))
     target_text = describe_target(skill.get("target", {}))
     effects = "\n".join(
