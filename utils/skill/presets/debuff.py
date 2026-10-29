@@ -15,7 +15,7 @@ DEBUFF_SKILLS = {
             "target_distance_max": 999,
         },
         "target": {"scope": "all_front", "limit": 20},
-        "effects": {"type": "modify_current_speed_delta", "value": -0.75},
+        "effects": [{"type": "modify_current_speed_delta", "value": -0.75}],
         "tags": ["debuff", "mile", "early_race"],
     },
     "debuff_002": {
@@ -52,7 +52,7 @@ DEBUFF_SKILLS = {
             "target_distance_max": 999,
         },
         "target": {"scope": "all_front", "limit": 20},
-        "effects": {"type": "modify_current_speed_delta", "value": -0.75},
+        "effects": [{"type": "modify_current_speed_delta", "value": -0.75}],
         "tags": ["debuff", "medium", "late_race"],
     },
     "debuff_004": {
@@ -145,7 +145,7 @@ DEBUFF_SKILLS = {
             "target_distance_max": 150,
         },
         "target": {"scope": "all_front", "limit": 20, "same_lane_only": False},
-        "effects": {"type": "modify_current_speed_delta", "value": -0.5},
+        "effects": [{"type": "modify_current_speed_delta", "value": -0.5}],
         "tags": ["medium", "late_race", "back", "debuff", "velocity"],
     },
     "debuff_009": {
@@ -162,7 +162,7 @@ DEBUFF_SKILLS = {
             "target_distance_max": -1,
         },
         "target": {"scope": "all_back", "limit": 20, "same_lane_only": False},
-        "effects": {"type": "modify_current_speed_delta", "value": -0.75},
+        "effects": [{"type": "modify_current_speed_delta", "value": -0.75}],
         "tags": ["sprint", "early_race", "front", "debuff", "velocity", "rare"],
     },
     "debuff_010": {
@@ -179,7 +179,7 @@ DEBUFF_SKILLS = {
             "target_distance_max": -1,
         },
         "target": {"scope": "all_back", "limit": 3, "same_lane_only": False},
-        "effects": {"type": "modify_current_speed_delta", "value": -0.5},
+        "effects": [{"type": "modify_current_speed_delta", "value": -0.5}],
         "tags": ["sprint", "early_race", "front", "debuff", "velocity"],
     },
     "debuff_011": {
