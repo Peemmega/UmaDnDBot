@@ -2630,7 +2630,9 @@ def check_skill_trigger(
     if required_front_blocked is not None:
         is_blocked = is_front_blocked(game, user_id)
         if is_blocked != required_front_blocked:
-            return False, "เงื่อนไขถูกบล็อกด้านหน้าไม่ตรง"
+            if required_front_blocked:
+                return False, "ต้องมีคู่แข่งอยู่ด้านหน้าในเลนเดียวกัน ห่างไม่เกิน 20 คะแนน"
+            return False, "ต้องไม่มีคู่แข่งอยู่ด้านหน้าในเลนเดียวกัน ห่างไม่เกิน 20 คะแนน"
 
     # nearby uma count
     required_nearby_count = trigger.get("nearby_uma_count")

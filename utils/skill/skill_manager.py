@@ -212,7 +212,7 @@ def describe_trigger(trigger: dict) -> str:
         parts.append("ในโค้งสุดท้าย")
 
     if trigger.get("front_blocked") is True:
-        parts.append("มีคู่แข่งในเลนเดียวกันด้านหน้าในระยะไม่เกิน 20 คะแนน")
+        parts.append("มีคู่แข่งอยู่ด้านหน้าในเลนเดียวกัน ห่างไม่เกิน 20 คะแนน")
 
     if trigger.get("nearby_uma_count") is not None:
         parts.append(f"มีคู่แข่ง {trigger['nearby_uma_count']} คนหรือมากกว่าในกลุ่ม")
