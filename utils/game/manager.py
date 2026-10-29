@@ -2528,6 +2528,9 @@ def check_skill_trigger(
     if turn_max is not None and game["turn"] > turn_max:
         return False, f"ใช้ได้ไม่เกินเทิร์น {turn_max}"
 
+    if trigger.get("last_turn") is True and game["turn"] != game["max_turn"]:
+        return False, "ยังไม่ถึงเทิร์นสุดท้าย"
+
     # phase min/max
     phase_min = trigger.get("phase_min")
     if phase_min is not None and phase < phase_min:

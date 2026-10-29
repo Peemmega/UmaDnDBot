@@ -213,6 +213,7 @@ TRIGGER_SCHEMA = {
     "path_type": None,
     "style": None,
     "turn_min": None,
+    "last_turn": None,
     "turn_max": None,
     "phase_min": None,
     "phase_max": None,

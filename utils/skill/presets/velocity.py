@@ -403,26 +403,18 @@ VELOCITY_SKILLS = {
     },
     "vel_025": {
         "name": "Countermeasure",
-        "icon": "velocity",
+        "icon": "acceleration",
         "cooldown": 8,
         "cost": 60,
         "trigger": {
             "distance_type": "Sprint",
-            "phase_min": 4,
-            "phase_max": 4,
+            "phase_min": 3,
+            "phase_max": 3,
             "position_group": "middle",
         },
         "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {
-                "type": "modify_velocity",
-                "mode": "flat_total",
-                "value": 20,
-                "duration": "this_roll",
-            },
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
-        ],
-        "tags": ["sprint", "late_race", "middle", "velocity", "positioning"],
+        "effects": [{"type": "modify_current_speed", "value": 2}],
+        "tags": ["sprint", "middle", "acceleration"],
     },
     "vel_027": {
         "name": "Playtime's Over!",

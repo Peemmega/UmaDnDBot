@@ -196,6 +196,9 @@ def describe_trigger(trigger: dict) -> str:
         else:
             parts.append(f"ในช่วงเทิร์น {trigger['turn_min']}-{trigger['turn_max']}")
 
+    if trigger.get("last_turn") is True:
+        parts.append("ในเทิร์นสุดท้าย")
+
     if "phase_min" in trigger and "phase_max" in trigger:
         if trigger["phase_min"] == trigger["phase_max"]:
             parts.append(f"ใน Phase {trigger['phase_min']}")

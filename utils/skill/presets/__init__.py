@@ -90,6 +90,8 @@ def _phase_tags(trigger: dict) -> set[str]:
             tags.add("mid_race")
         if phase_min <= 3 <= phase_max or phase_min <= 4 <= phase_max:
             tags.add("late_race")
+    elif trigger.get("last_turn"):
+        tags.add("late_race")
     elif trigger.get("turn_min") == 1:
         tags.add("early_race")
     if trigger.get("lastspurt"):

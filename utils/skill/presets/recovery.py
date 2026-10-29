@@ -100,7 +100,7 @@ RECOVERY_SKILLS = {
         "icon": "Recovery_rare",
         "cooldown": 8,
         "cost": 40,
-        "trigger": {"style": "Late", "phase_min": 4, "phase_max": 4},
+        "trigger": {"style": "Late", "phase_min": 2, "phase_max": 3},
         "target": {"scope": "self", "limit": 1},
         "effects": [{"type": "recover_stamina", "value": 2}],
         "tags": ["late", "recovery", "late_race"],

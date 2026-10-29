@@ -44,8 +44,8 @@ DEBUFF_SKILLS = {
         "cooldown": 10,
         "cost": 50,
         "trigger": {
-            "phase_min": 4,
-            "phase_max": 4,
+            "phase_min": 3,
+            "phase_max": 3,
             "position_group": "back",
             "distance_type": "Medium",
             "target_distance_min": 1,
@@ -62,8 +62,8 @@ DEBUFF_SKILLS = {
         "cost": 50,
         "trigger": {
             "style": "Pace",
-            "phase_min": 4,
-            "phase_max": 4,
+            "phase_min": 3,
+            "phase_max": 3,
             "position_group": "front",
             "target_distance_min": -150,
             "target_distance_max": 150,
@@ -85,8 +85,8 @@ DEBUFF_SKILLS = {
         "cooldown": 10,
         "cost": 50,
         "trigger": {
-            "phase_min": 4,
-            "phase_max": 4,
+            "phase_min": 3,
+            "phase_max": 3,
             "distance_type": "Long",
             "target_distance_min": 1,
             "target_distance_max": 300,

@@ -19,7 +19,7 @@ UNIQUE_SKILLS = {
         "icon": "UniqueAcceleration",
         "cooldown": 8,
         "cost": 120,
-        "trigger": {"phase_min": 4, "phase_max": 4, "position_group": "front"},
+        "trigger": {"lastspurt": True, "position_group": "front"},
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "add_dkh", "value": 2, "duration": "this_roll"},
@@ -33,11 +33,10 @@ UNIQUE_SKILLS = {
         "cooldown": 8,
         "cost": 120,
         "trigger": {
-            "phase_min": 4,
-            "phase_max": 4,
+            "last_turn": True,
             "position_group": "front",
-            "target_distance_min": 0,
-            "target_distance_max": 200,
+            "target_distance_min": -20,
+            "target_distance_max": 20,
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [{"type": "cap_floor", "value": 15, "duration": "this_roll"}],

@@ -38,7 +38,7 @@ UTILITY_SKILLS = {
         "icon": "navigation",
         "cooldown": 8,
         "cost": 40,
-        "trigger": {"phase_min": 4, "phase_max": 4},
+        "trigger": {"phase_min": 3, "phase_max": 3},
         "target": {"scope": "self", "limit": 1},
         "effects": [{"type": "resolve_pending_lane_now"}],
         "tags": ["positioning"],
@@ -48,7 +48,7 @@ UTILITY_SKILLS = {
         "icon": "Navigation_rare",
         "cooldown": 8,
         "cost": 60,
-        "trigger": {"phase_min": 4, "phase_max": 4},
+        "trigger": {"phase_min": 3, "phase_max": 3},
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "resolve_pending_lane_now"},
