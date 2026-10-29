@@ -2465,22 +2465,14 @@ def has_target_in_distance(
 
 
 def is_front_blocked(game, user_id):
-    player = game["players"].get(user_id)
-    if not player:
+    """Check for a blocker up to and including 20 points ahead."""
+    if not _supports_lane_system(game):
         return False
-
-    player_score = player.get("score", 0)
-
-    for other_id, other in game["players"].items():
-        if other_id == user_id:
-            continue
-
-        distance = other.get("score", 0) - player_score
-
-        if 0 < distance <= 20:
-            return True
-
-    return False
+    players = _clone_lane_players_with_scores(game, game.get("turn_snapshot_scores") or {})
+    player = players.get(user_id)
+    if player is None:
+        return False
+    return calculate_lane_block_penalty(player, players, base_score=20)["blocked_count"] > 0
 
 
 def check_skill_trigger(

@@ -83,7 +83,7 @@ def calculate_lane_block_penalty(
         target_position = int(target.get("score", 0) or 0)
         if target_position <= my_position:
             continue
-        if projected_position > target_position:
+        if projected_position >= target_position:
             blocked_count += 1
             if player_id is not None:
                 blocked_runner_ids.append(str(player_id))
