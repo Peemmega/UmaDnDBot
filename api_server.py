@@ -813,7 +813,7 @@ def update_player_stats(payload: UpdateStatsPayload):
 async def api_update_trainer_aptitudes(request: Request):
     secret = os.getenv("APTITUDE_SYNC_SECRET", "")
     if not secret:
-        raise HTTPException(status_code=503, detail="Aptitude sync is not configured")
+        raise HTTPException(status_code=503, detail="บริการบอตยังไม่ได้ตั้งค่า APTITUDE_SYNC_SECRET")
     body = await request.body()
     timestamp = request.headers.get("x-aptitude-timestamp", "")
     signature = request.headers.get("x-aptitude-signature", "")
