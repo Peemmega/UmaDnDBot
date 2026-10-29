@@ -1940,6 +1940,8 @@ def add_player_as_mob_preset(
     zone = copy.deepcopy(preset["zone"])
     zone["build"] = normalize_zone_build(zone.get("build"))
 
+    entry_number = len(game["players"]) + 1
+    default_lane = get_default_lane(entry_number)
     game["players"][user_id] = {
         "username": preset["name"],
         "display_name": preset["name"],
