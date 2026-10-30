@@ -443,7 +443,7 @@ MOB_PRESETS = {
         "name": "Tamamo Cross",
         "avatar": CHARACTER_DIR / "tamamo_cross.webp",
         "thumnail": thumnails["TamamoCross"],
-        "style": "Pace",
+        "style": "Late",
         "race_profile": {
             "speed": 4,
             "stamina": 4,
