@@ -14,6 +14,7 @@ from utils.mob.mob_board_state import (
 from utils.mob.mob_profiles import get_ai_profile
 from utils.race.race_dice import get_phase_from_turn, get_distance_color, get_dice_rule
 from utils.race.runtime_stamina import runtime_stamina_effect_units
+from utils.race.race_tracks import get_path_effect
 
 FUTURE_LOOKAHEAD_TURNS = 4
 MIN_FUTURE_GAIN_TO_HOLD = 40
@@ -93,7 +94,8 @@ def get_future_dice_context(game, user_id, lookahead_turns=FUTURE_LOOKAHEAD_TURN
         future_turn = min(max_turn, current_turn + offset)
         future_phase = get_phase_from_turn(future_turn, max_turn)
 
-        for color in ("White", "Gold"):
+        # Do not assume a future change of distance color is guaranteed.
+        for color in (current["distance_color"],):
             future_rule = get_dice_rule(
                 player.get("style", "Pace"),
                 color,
@@ -171,8 +173,9 @@ def _simulate_combo_gain(game, user_id, combo, samples: int) -> float:
     player = game["players"][user_id]
     context = get_current_dice_context(game, user_id)
     rule = context["rule"]
-    base_dice = int(rule.get("d", 1))
-    base_keep = rule.get("kh")
+    base_dice = max(1, int(rule.get("d", 1)) + int(player.get("next_roll_add_d", 0) or 0))
+    rule_keep = rule.get("kh")
+    base_keep = None if rule_keep is None else min(base_dice, int(rule_keep) + int(player.get("next_roll_add_kh", 0) or 0))
     extra_dice = extra_keep = floor = cap = flat = 0
 
     for item in combo:
@@ -199,9 +202,15 @@ def _simulate_combo_gain(game, user_id, combo, samples: int) -> float:
     if not any((extra_dice, extra_keep, floor, cap, flat)):
         return 0.0
 
-    max_die = max(1, int(player.get("current_max_speed", 1) or 1) + cap)
-    min_die = max(1, int(max_die * 0.25) + floor)
-    max_die = max(max_die, min_die)
+    simulated_player = player.copy()
+    path_effect = get_path_effect(get_current_path_type(game), simulated_player, player.get("race_profile") or {})
+    base_cap = int(simulated_player.get("current_max_speed", 1) or 1) + int(player.get("next_roll_cap_bonus", 0) or 0) + path_effect["extra_max_from_wit"] - path_effect["reduce_dice_value"]
+    base_floor_bonus = int(player.get("next_roll_floor_bonus", 0) or 0)
+    base_min = int(base_cap * 0.25) + base_floor_bonus + path_effect["extra_floor_from_wit"]
+    base_max = max(base_cap, base_min)
+    projected_cap = base_cap + cap
+    projected_min = int(projected_cap * 0.25) + base_floor_bonus + floor + path_effect["extra_floor_from_wit"]
+    projected_max = max(projected_cap, projected_min)
     dice_count = max(1, base_dice + extra_dice)
     keep_count = None if base_keep is None else min(dice_count, max(0, int(base_keep) + extra_keep))
     seed = f"{game.get('turn', 1)}:{user_id}:{','.join(sorted(item['skill_id'] for item in combo))}"
@@ -209,8 +218,10 @@ def _simulate_combo_gain(game, user_id, combo, samples: int) -> float:
 
     base_total = projected_total = 0.0
     for _ in range(samples):
-        base_rolls = [rng.randint(min_die, max_die) for _ in range(base_dice)]
-        projected_rolls = base_rolls + [rng.randint(min_die, max_die) for _ in range(dice_count - base_dice)]
+        # Common random numbers make differences reflect effects, not luck.
+        draws = [rng.random() for _ in range(max(base_dice, dice_count))]
+        base_rolls = [base_min + int(draw * (base_max - base_min + 1)) for draw in draws[:base_dice]]
+        projected_rolls = [projected_min + int(draw * (projected_max - projected_min + 1)) for draw in draws[:dice_count]]
         if base_keep is not None:
             base_total += sum(sorted(base_rolls, reverse=True)[:int(base_keep)])
             projected_total += sum(sorted(projected_rolls, reverse=True)[:keep_count])
@@ -750,6 +761,14 @@ def evaluate_skill_combo_score(game, user_id, combo):
     )
 
     if total_cap > 0 and total_velocity > 0:
+        score += 25
+
+    # A Zone or already committed skill can make this turn a strong combo.
+    committed_dice = int(player.get("next_roll_add_d", 0) or 0) + int(player.get("next_roll_add_kh", 0) or 0)
+    committed_cap = int(player.get("next_roll_cap_bonus", 0) or 0) + int(player.get("next_roll_floor_bonus", 0) or 0)
+    if committed_dice and (total_cap > 0 or total_floor > 0):
+        score += 25
+    if committed_cap and (total_dkh > 0 or total_add_d > 0 or total_add_kh > 0):
         score += 25
 
     if total_floor > 0 and total_cap > 0:

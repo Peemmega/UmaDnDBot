@@ -86,8 +86,11 @@ def decide_mob_target_lane(game, user_id) -> int | None:
 
     players = game.get("players", {})
     current_lane = _player_lane(player)
-    phase = get_phase_from_turn(game.get("turn", 1), game.get("max_turn", 20))
-    path_type = get_current_path_type(game)
+    # Lane changes resolve after this roll and affect the following turn.
+    next_turn = min(game.get("turn", 1) + 1, game.get("max_turn", 20))
+    phase = get_phase_from_turn(next_turn, game.get("max_turn", 20))
+    path = game.get("path") or []
+    path_type = path[min(next_turn - 1, len(path) - 1)] if path else get_current_path_type(game)
     style = str(player.get("style", "Pace"))
     estimated_gain = max(80, int(player.get("current_max_speed", 0) or 0))
     immediate_push = _immediate_push_score(player)

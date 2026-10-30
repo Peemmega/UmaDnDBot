@@ -2756,11 +2756,11 @@ def run_bot_race_test(channel_id: int):
     }
 
 
-def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int) -> bool:
-    """Let Pace/Late Mobs spend a valuable Zone during their endgame windows."""
+def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int, usable_skills=None) -> bool:
+    """Spend Zone when the current roll offers a useful endgame opportunity."""
     style = player.get("style")
     eligible_phase = (style == "Late" and phase in {3, 4}) or (
-        style == "Pace" and phase == 4
+        style in {"Pace", "End"} and phase == 4
     )
     if not eligible_phase:
         return False
@@ -2769,7 +2769,7 @@ def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int) -
 
     zone = player.get("zone") or {}
     effects = get_zone_effects_from_build(zone.get("build", {}))
-    snapshot = get_runtime_stamina_snapshot(player)
+    snapshot = get_runtime_stamina_snapshot(dict(player))
     max_stamina = max(1, int(snapshot.get("max_stamina", 0) or 0))
     stamina_ratio = int(snapshot.get("current_stamina", 0) or 0) / max_stamina
 
@@ -2789,17 +2789,50 @@ def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int) -
     if value < 20:
         return False
 
-    turns_remaining = max(
-        1, int(game.get("max_turn", 1) or 1) - int(game.get("turn", 1) or 1)
-    )
-    chance = min(
-        0.85, 0.18 + min(0.42, value / 180) + (0.15 if turns_remaining <= 1 else 0)
-    )
+    from utils.mob.mob_lane_decision import _player_lane
+    from utils.mob.mob_skill_decision import get_future_dice_context
 
-    # Keep the chance stable for this Mob and turn, while giving each eligible
-    # endgame turn a distinct opportunity to use the Zone.
-    seed = f"zone:{game.get('channel_id', '')}:{user_id}:{game.get('turn', 0)}"
-    return random.Random(seed).random() < chance
+    turns_remaining = max(0, int(game.get("max_turn", 1)) - int(game.get("turn", 1)))
+    if turns_remaining <= 1:
+        return True
+
+    # A lane selected now only takes effect next turn.  Judge the current
+    # Zone against the current lane, not that queued lane.
+    scores = game.get("turn_snapshot_scores") or {pid: p.get("score", 0) for pid, p in game.get("players", {}).items()}
+    my_score = scores.get(user_id, player.get("score", 0))
+    gaps = [scores.get(pid, other.get("score", 0)) - my_score for pid, other in game.get("players", {}).items() if pid != user_id and _player_lane(other) == _player_lane(player) and scores.get(pid, other.get("score", 0)) > my_score]
+    expected_gain = max(80, int(player.get("current_max_speed", 0) or 0))
+    blocked = _supports_lane_system(game) and bool(gaps and min(gaps) <= expected_gain)
+    healing_needed = stamina_ratio < 0.4 and effects.get("self_heal_stamina", 0) > 0
+    if blocked and not healing_needed and not effects.get("reduce_block_penalty", 0):
+        return False
+
+    future = get_future_dice_context(game, user_id)
+    dice_zone = effects.get("add_dkh", 0) or effects.get("cap", 0) or effects.get("floor", 0)
+    if dice_zone and future["has_much_better_future_dice"] and not healing_needed:
+        # Evaluate the skills the AI would actually select with the Zone's
+        # dice bonuses applied, without changing the live race or consuming it.
+        preview_player = dict(player)
+        for field, effect in (("next_roll_add_d", "add_dkh"), ("next_roll_add_kh", "add_dkh"), ("next_roll_cap_bonus", "cap"), ("next_roll_floor_bonus", "floor"), ("next_roll_flat_bonus", "flat")):
+            preview_player[field] = int(preview_player.get(field, 0) or 0) + int(effects.get(effect, 0) or 0)
+        preview_game = dict(game)
+        preview_game["players"] = {**game["players"], user_id: preview_player}
+        preview_game["_mob_ai_future_cache"] = {}
+        choices = usable_skills or []
+        selected = set(decide_mob_skill_combo(preview_game, user_id, choices))
+        selected_effects = {
+            effect.get("type")
+            for skill_id, skill in choices if skill_id in selected
+            for effect in skill.get("effects", []) if effect.get("value", 0) or effect.get("cap", 0) or effect.get("floor", 0)
+        }
+        synergizes = (
+            effects.get("add_dkh", 0) and selected_effects.intersection({"modify_roll_cap", "modify_roll_floor", "modify_roll_cap_floor", "cap_floor", "modify_selected_die"})
+        ) or (
+            (effects.get("cap", 0) or effects.get("floor", 0)) and selected_effects.intersection({"add_d", "add_kh", "add_dkh"})
+        )
+        if not synergizes:
+            return False
+    return True
 
 
 def process_mob_turn(channel_id: int, user_id: str):
@@ -2839,11 +2872,11 @@ def process_mob_turn(channel_id: int, user_id: str):
 
     phase = get_phase_from_turn(game["turn"], game["max_turn"])
 
+    usable_skills = get_mob_usable_skills(channel_id=channel_id, game=game, user_id=user_id)
     turn_trigger = (
         game["turn"] == game["max_turn"]
         or (game["turn"] == 1 and player.get("style", "Front") == "Front")
-        or (phase == 4 and player.get("style") == "End")
-        or should_mob_use_endgame_zone(game, user_id, player, phase)
+        or should_mob_use_endgame_zone(game, user_id, player, phase, usable_skills)
     )
 
     if turn_trigger and player.get("zone_left", 0) > 0:
