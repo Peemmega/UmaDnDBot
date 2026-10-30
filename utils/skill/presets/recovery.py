@@ -167,7 +167,7 @@ RECOVERY_SKILLS = {
     },
     "rec_016": {
         "name": "A Small Breather",
-        "icon": "Recovery_rare",
+        "icon": "stamina",
         "cooldown": 8,
         "cost": 40,
         "trigger": {"style": "Late", "phase_min": 2, "phase_max": 3},
