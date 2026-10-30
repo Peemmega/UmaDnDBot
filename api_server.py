@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 import json
 import hmac
@@ -828,6 +828,7 @@ def api_game_config():
 @app.post("/internal/admin-data")
 async def admin_data(request: Request):
     import sqlite3
+    import tempfile
     from contextlib import closing
     from utils.storage.database import DB_PATH
 
@@ -882,6 +883,15 @@ async def admin_data(request: Request):
             operation = data.get("operation")
             if operation == "check":
                 return {"ok": True}
+            if operation == "export":
+                # SQLite backup takes a consistent snapshot, including WAL data.
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    snapshot_path = Path(temp_dir) / "snapshot.sqlite3"
+                    with closing(sqlite3.connect(snapshot_path)) as snapshot:
+                        db.backup(snapshot)
+                        snapshot.execute("PRAGMA journal_mode=DELETE")
+                    content = snapshot_path.read_bytes()
+                return Response(content, media_type="application/vnd.sqlite3", headers={"Cache-Control": "no-store"})
             if operation == "tables":
                 names = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")]
                 return {"tables": [{"name": n, "count": db.execute("SELECT COUNT(*) FROM " + q(n)).fetchone()[0]} for n in names]}
