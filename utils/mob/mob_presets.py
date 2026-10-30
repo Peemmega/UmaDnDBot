@@ -463,7 +463,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "acc_018",  # Slick Surge
-            2: "rec_016",  # A Small Breather
+            2: "rec_010",  # Corner Recovery
             3: "vel_016",  # Homestretch Haste
             4: "vel_031",  # Outer Swell
         },
