@@ -156,7 +156,7 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "acc_003",  # Slick Surge
+            1: "acc_018",  # Slick Surge
             2: "vel_024",  # Straightaway Adept
             3: "vel_016",  # Homestretch Haste
             4: "vel_031",  # Outer Swell
@@ -309,7 +309,7 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "acc_003",  # Slick Surge
+            1: "acc_018",  # Slick Surge
             2: "vel_031",  # Outer Swell
             3: "vel_016",
             4: "acc_010",  # Nimble Navigator
@@ -447,9 +447,9 @@ MOB_PRESETS = {
         "race_profile": {
             "speed": 4,
             "stamina": 4,
-            "power": 5,
-            "gut": 2,
-            "wit": 2,
+            "power": 7,
+            "gut": 3,
+            "wit": 1,
             "turf": 1,
             "dirt": 1,
             "sprint": 1,
@@ -462,8 +462,8 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "acc_003",  # Slick Surge
-            2: "vel_024",  # Straightaway Adept
+            1: "acc_018",  # Slick Surge
+            2: "rec_016",  # A Small Breather
             3: "vel_016",  # Homestretch Haste
             4: "vel_031",  # Outer Swell
         },
