@@ -440,7 +440,7 @@ MOB_PRESETS = {
     },
     # Legend Race
     "sunday_silent": {
-        "name": "Sunday Silent",
+        "name": "-",
         "avatar": CHARACTER_DIR / "sunday_silent.webp",
         "thumnail": "/app/assets/characters/sunday_silent.webp",
         "style": "Pace",
@@ -463,7 +463,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "acc_017",  # Head-On
-            2: "vel_033",  # On the Attack
+            2: "vel_039",  # Steady Gait
             3: "vel_016",  # Homestretch Haste
             4: "vel_024",  # Straightaway Adept
         },
