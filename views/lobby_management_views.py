@@ -24,6 +24,12 @@ ROOKIE_PRESET_KEYS = (
 )
 UMA_PRESETS = [(key, data) for key, data in MOB_PRESETS.items() if key not in ROOKIE_PRESET_KEYS]
 UMA_PAGE_SIZE = 25
+
+
+def uma_page_count():
+    return max(1, (len(UMA_PRESETS) + UMA_PAGE_SIZE - 1) // UMA_PAGE_SIZE)
+
+
 RULE_LABELS = {
     "AllowSkill": "AllowSkill · Skill / Zone",
     "DreamMode": "DreamMode · ค่าสเตตัสเริ่มต้น 8",
@@ -190,7 +196,7 @@ class AddBotView(discord.ui.View):
     @discord.ui.button(label="Add Uma", style=discord.ButtonStyle.success, emoji="🏇")
     async def add_uma(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.edit_message(
-            content="เลือกหน้าและตัวละคร Uma ที่ต้องการเพิ่ม:",
+            content=f"เลือกหน้า 1/{uma_page_count()} และตัวละคร Uma ที่ต้องการเพิ่ม:",
             embed=None,
             view=UmaPageView(self.channel_id),
         )
@@ -270,7 +276,10 @@ class UmaPageView(discord.ui.View):
 class UmaPresetSelect(discord.ui.Select):
     def __init__(self, channel_id: int, entries):
         self.channel_id = channel_id
-        options = [discord.SelectOption(label=data["name"][:100], value=key) for key, data in entries]
+        options = [
+            discord.SelectOption(label=(str(data.get("name") or "").strip() or key)[:100], value=key)
+            for key, data in entries
+        ]
         super().__init__(placeholder="เลือกตัวละคร Uma", options=options or [discord.SelectOption(label="ไม่มีตัวละคร", value="__none__")], disabled=not options)
 
     async def callback(self, interaction: discord.Interaction):
@@ -303,7 +312,7 @@ class UmaPageButton(discord.ui.Button):
         if error:
             await interaction.response.send_message(error, ephemeral=True)
             return
-        page_count = max(1, (len(UMA_PRESETS) + UMA_PAGE_SIZE - 1) // UMA_PAGE_SIZE)
+        page_count = uma_page_count()
         next_page = min(page_count - 1, max(0, self.page + self.delta))
         await interaction.response.edit_message(
             content=f"เลือกหน้า {next_page + 1}/{page_count} และตัวละคร Uma ที่ต้องการเพิ่ม:",
@@ -350,7 +359,7 @@ class ReturnToUmaPageButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.edit_message(
-            content=f"เลือกหน้า {self.page + 1} และตัวละคร Uma ที่ต้องการเพิ่ม:",
+            content=f"เลือกหน้า {self.page + 1}/{uma_page_count()} และตัวละคร Uma ที่ต้องการเพิ่ม:",
             view=UmaPageView(self.channel_id, self.page),
         )
 

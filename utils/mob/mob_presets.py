@@ -440,7 +440,7 @@ MOB_PRESETS = {
     },
     # Legend Race
     "sunday_silent": {
-        "name": "",
+        "name": "Sunday Silent",
         "avatar": CHARACTER_DIR / "sunday_silent.webp",
         "thumnail": "/app/assets/characters/sunday_silent.webp",
         "style": "Pace",
