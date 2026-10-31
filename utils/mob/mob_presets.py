@@ -439,6 +439,44 @@ MOB_PRESETS = {
         },
     },
     # Legend Race
+    "sunday_silent": {
+        "name": "",
+        "avatar": CHARACTER_DIR / "sunday_silent.webp",
+        "thumnail": "/app/assets/characters/sunday_silent.webp",
+        "style": "Pace",
+        "race_profile": {
+            "speed": 6,
+            "stamina": 4,
+            "power": 6,
+            "gut": 3,
+            "wit": 1,
+            "turf": 1,
+            "dirt": 1,
+            "sprint": 1,
+            "mile": 1,
+            "medium": 1,
+            "long": 1,
+            "front": 1,
+            "pace": 1,
+            "late": 1,
+            "end_style": 1,
+        },
+        "skills": {
+            1: "acc_017",  # Head-On
+            2: "vel_033",  # On the Attack
+            3: "vel_016",  # Homestretch Haste
+            4: "vel_024",  # Straightaway Adept
+        },
+        "zone": {
+            "name": "Defiance of Fate",
+            "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1566007843793149992/manhattan-cafe-uma-musume_2.gif?ex=6ae6f9f4&is=6ae5a874&hm=a20ae7bc1c98103c46dd5ff9b7edd0a85802fd3439eee228eb5aea6e9347ebdc",
+            "points": 0,
+            "build": {
+                "add_dkh": 2,
+                "cap_floor": 3,
+            },
+        },
+    },
     "tamamo_cross": {
         "name": "Tamamo Cross",
         "avatar": CHARACTER_DIR / "tamamo_cross.webp",
