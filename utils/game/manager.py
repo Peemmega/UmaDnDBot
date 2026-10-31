@@ -198,6 +198,19 @@ def get_stamina_debuff_percent(game_player: dict) -> int:
     return max(0, STAMINA_PENALTY_BASE_PERCENT - gut_stat * STAMINA_PENALTY_GUTS_REDUCTION)
 
 
+def apply_wit_reroll_minimum(result: dict, minimum_total: int | None) -> None:
+    """Preserve the WIT guarantee after lane and stamina penalties."""
+    if minimum_total is None or result["total"] > minimum_total:
+        return
+    bonus = minimum_total + 1 - result["total"]
+    result["total"] += bonus
+    result["total_display"] = str(result["total"])
+    result["wit_guarantee_bonus"] = result.get("wit_guarantee_bonus", 0) + bonus
+    for key in ("bonus_display", "dice_preview_bonus_display"):
+        current = result.get(key) or "-"
+        result[key] = f"+{bonus}WIT" if current == "-" else f"{current} +{bonus}WIT"
+
+
 def apply_lane_tactics_to_result(
     *,
     game: dict,

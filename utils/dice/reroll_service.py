@@ -1,5 +1,5 @@
 import discord
-from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player,build_run_embed, apply_lane_tactics_to_result, get_stamina_debuff_percent
+from utils.game_manager import get_game, get_player_in_game, update_player_score, build_pending_effects_from_player, build_run_embed, apply_lane_tactics_to_result, apply_wit_reroll_minimum
 from utils.race.race_aptitude import get_roll_race_stats
 from utils.race.race_presets import get_current_path_type, get_path_effect
 from utils.race.race_dice import roll_race_dice
@@ -76,13 +76,6 @@ async def execute_reroll(
     merged_stats = {}
 
     skill_effects,merged_stats = build_pending_effects_from_player(game_player)
-    if game_player.get("takeStaminaDebuff", False):
-        skill_effects.append({
-            "type": "modify_total_percent",
-            "value": -get_stamina_debuff_percent(game_player),
-            "duration": "this_roll",
-        })
-
     path_type = get_current_path_type(game)
     path_effect = get_path_effect(path_type, game_player, race_player)
     
@@ -107,8 +100,8 @@ async def execute_reroll(
         path_effect=path_effect,
         score_map=score_map,
         consume_stamina=False,
-        apply_stamina_penalty=False,
     )
+    apply_wit_reroll_minimum(result, minimum_total)
 
     staminaNote = None
     if game_player.get("takeStaminaDebuff", False):

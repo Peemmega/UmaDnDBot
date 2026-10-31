@@ -22,7 +22,7 @@ from utils.game_manager import (
     execute_roll_core,
     execute_skill_core,
     games,
-    get_stamina_debuff_percent,
+    apply_wit_reroll_minimum,
     get_game,
     get_ranked_players,
     have_all_players_rolled,
@@ -1049,14 +1049,6 @@ class RaceWebManager:
             return False, {"message": "Could not remove old score"}
 
         pending_effects, merged_stats = build_pending_effects_from_player(player)
-        if player.get("takeStaminaDebuff", False):
-            pending_effects.append(
-                {
-                    "type": "modify_total_percent",
-                    "value": -get_stamina_debuff_percent(player),
-                    "duration": "this_roll",
-                }
-            )
         path_type = get_current_path_type(game)
         path_effect = get_path_effect(path_type, player, race_player)
         result = roll_race_dice(
@@ -1079,8 +1071,8 @@ class RaceWebManager:
             path_effect=path_effect,
             score_map=game.get("turn_snapshot_scores", {}),
             consume_stamina=False,
-            apply_stamina_penalty=False,
         )
+        apply_wit_reroll_minimum(result, minimum_total)
 
         player["lastedBuff"] = merged_stats
         player["next_roll_flat_bonus"] = 0
