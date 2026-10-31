@@ -25,10 +25,10 @@ ICON_MAP = {
 
 PATH_ICON_DIR = ASSETS_DIR / "path_icon"
 PATH_ICON_MAP = {
-    1: PATH_ICON_DIR / "path_1.png",
-    2: PATH_ICON_DIR / "path_2.png",
-    3: PATH_ICON_DIR / "path_3.png",
-    4: PATH_ICON_DIR / "path_4.png",
+    1: PATH_ICON_DIR / "straight.png",
+    2: PATH_ICON_DIR / "curve.png",
+    3: PATH_ICON_DIR / "uphill.png",
+    4: PATH_ICON_DIR / "downhill.png",
 }
 
 PATH_TYPE_LABELS = {
