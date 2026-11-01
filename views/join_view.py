@@ -5,7 +5,6 @@ from utils.game_manager import (
     add_player,
     is_game_started,
     get_game,
-    is_owner,
     start_game,
     drain_pending_passive_skill_embeds,
     get_player,
@@ -26,7 +25,7 @@ from utils.race.race_weather import weather_label
 import math
 from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
 from utils.image_encoding import encode_png
-from views.lobby_management_views import AddBotView, SettingsView
+from views.lobby_management_views import AddBotView, SettingsView, can_manage_room
 
 def build_phase_text(max_turn: int) -> str:
     phase_size = max_turn / 4
@@ -192,8 +191,8 @@ class LobbyView(discord.ui.View):
         if game is None or game.get("started"):
             await interaction.response.send_message("ไม่พบห้องรอแข่งที่แก้ Settings ได้", ephemeral=True)
             return
-        if not is_owner(self.channel_id, interaction.user.id):
-            await interaction.response.send_message("เปิดดูและแก้ Settings ได้เฉพาะผู้สร้างห้อง", ephemeral=True)
+        if not can_manage_room(interaction, game):
+            await interaction.response.send_message("เปิดดูและแก้ Settings ได้เฉพาะเจ้าของห้องหรือ Admin", ephemeral=True)
             return
         view = SettingsView(self.channel_id, interaction.user.id)
         await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
@@ -223,9 +222,9 @@ class LobbyView(discord.ui.View):
             )
             return
 
-        if not is_owner(self.channel_id, interaction.user.id):
+        if not can_manage_room(interaction, game):
             await interaction.response.send_message(
-                "มีแค่ผู้สร้างเกมเท่านั้นที่เริ่มเกมได้",
+                "เฉพาะเจ้าของห้องหรือ Admin เท่านั้นที่เริ่มเกมได้",
                 ephemeral=True
             )
             return

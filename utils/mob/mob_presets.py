@@ -500,7 +500,7 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "acc_018",  # Slick Surge
+            1: "acc_003",  # On Your Left!
             2: "rec_010",  # Corner Recovery
             3: "vel_016",  # Homestretch Haste
             4: "vel_031",  # Outer Swell
@@ -510,8 +510,8 @@ MOB_PRESETS = {
             "image_url": "https://cdn.discordapp.com/attachments/1562167495920455773/1564578103546617876/tamamo-cross-umamusume_1.gif?ex=6ae1c668&is=6ae074e8&hm=eb70be3ba7a2014de7b621857021d712234ab0635136dc5ab021ac12aa8add0d",
             "points": 0,
             "build": {
-                "add_dkh": 3,
-                "cap_floor": 2,
+                "add_dkh": 2,
+                "cap_floor": 3,
             },
         },
     },

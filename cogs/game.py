@@ -585,6 +585,10 @@ class GameCog(commands.GroupCog, name="game"):
 
     @app_commands.command(name="create", description="สร้างเกมใหม่")
     async def create(self, interaction: discord.Interaction):
+        if not interaction.guild or not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์", ephemeral=True)
+            return
+
         channel_id = interaction.channel_id
         owner_id = interaction.user.id
 
@@ -614,6 +618,23 @@ class GameCog(commands.GroupCog, name="game"):
             view=CreateGameView(channel_id, owner_id),
             ephemeral=True
         )
+
+    @app_commands.command(name="set_owner", description="Admin โอนสิทธิ์เจ้าของห้องให้สมาชิก")
+    async def set_owner(self, interaction: discord.Interaction, member: discord.Member):
+        if not interaction.guild or not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์", ephemeral=True)
+            return
+
+        game = get_game(interaction.channel_id)
+        if game is None:
+            await interaction.response.send_message("ยังไม่มีเกมในห้องนี้", ephemeral=True)
+            return
+        if member.bot:
+            await interaction.response.send_message("ไม่สามารถโอนสิทธิ์เจ้าของห้องให้บอทได้", ephemeral=True)
+            return
+
+        game["owner_id"] = member.id
+        await interaction.response.send_message(f"👑 โอนสิทธิ์เจ้าของห้องให้ {member.mention} แล้ว")
 
     @app_commands.command(name="legend_race", description="สร้าง Legend Race โดยเลือกสนามปกติ (Admin เท่านั้น)")
     async def legend_race(self, interaction: discord.Interaction):

@@ -257,6 +257,13 @@ class ConfirmCreateView(discord.ui.View):
 
     @discord.ui.button(label="สร้าง", style=discord.ButtonStyle.success)
     async def create(self, interaction: discord.Interaction, button):
+        if not self.training_tracks_only and (
+            interaction.user.id != self.owner_id
+            or not interaction.guild
+            or not interaction.user.guild_permissions.administrator
+        ):
+            await interaction.response.send_message("เฉพาะ Admin ผู้เปิดเมนูเท่านั้นที่สร้างเกมได้", ephemeral=True)
+            return
         channel_id = self.channel_id
         owner_id = interaction.user.id
         stage_key = self.stage_key

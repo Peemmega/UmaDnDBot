@@ -56,6 +56,13 @@ def _room_open(channel_id: int):
     return game, None
 
 
+def can_manage_room(interaction: discord.Interaction, game: dict) -> bool:
+    return bool(
+        interaction.user.id == game["owner_id"]
+        or (interaction.guild and interaction.user.guild_permissions.administrator)
+    )
+
+
 class SettingsView(discord.ui.View):
     def __init__(self, channel_id: int, owner_id: int, selected_rule: str = "AllowSkill"):
         super().__init__(timeout=300)
@@ -65,10 +72,10 @@ class SettingsView(discord.ui.View):
         self.refresh_components()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id != self.owner_id:
-            await interaction.response.send_message("เปิดดูและแก้ Settings ได้เฉพาะผู้สร้างห้อง", ephemeral=True)
-            return False
         game = get_game(self.channel_id)
+        if interaction.user.id != self.owner_id or not game or not can_manage_room(interaction, game):
+            await interaction.response.send_message("เปิดดูและแก้ Settings ได้เฉพาะเจ้าของห้องหรือ Admin", ephemeral=True)
+            return False
         if game is None or game.get("started"):
             await interaction.response.send_message("ห้องนี้ไม่มีอยู่แล้วหรือเริ่มแข่งไปแล้ว", ephemeral=True)
             return False
@@ -89,7 +96,7 @@ class SettingsView(discord.ui.View):
         fast_mode = str(game.get("mob_render_mode", os.getenv("MOB_RENDER_MODE", "detailed"))).lower() == "compact"
         embed = discord.Embed(
             title="Race Settings",
-            description="เมนูนี้มองเห็นและใช้งานได้เฉพาะผู้สร้างห้อง เลือกกฎและค่าที่ต้องการจาก dropdown",
+            description="เจ้าของห้องหรือ Admin สามารถเลือกกฎและค่าที่ต้องการจาก dropdown",
             color=discord.Color.blurple(),
         )
         embed.add_field(name="AllowSkill", value="เปิด" if get_game_rule(game, "AllowSkill") else "ปิด", inline=True)
