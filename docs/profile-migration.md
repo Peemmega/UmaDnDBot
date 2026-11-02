@@ -64,3 +64,12 @@ restore the checked backup together with the old application version. Restoring
 an older backup discards writes made after that backup; reconcile them first.
 SQLite backup is a consistent database snapshot, but an on-volume backup does
 not protect against loss of that volume.
+
+## Retiring the legacy profile tables
+
+After the new application is deployed and verified, use
+`scripts/prune_legacy_profiles.py --dry-run` to review row counts, then
+`scripts/prune_legacy_profiles.py --apply` to back up the database and drop
+only the two legacy profile tables. The cleanup keeps `character_profiles`,
+`profile_presets`, `account_roles`, `race_history`, and every other table.
+Both flags are explicit; the script refuses to run without exactly one.
