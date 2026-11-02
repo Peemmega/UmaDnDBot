@@ -1227,7 +1227,7 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
     try:
         cur.execute("""
             SELECT zone_points
-            FROM players
+            FROM player_skill_zone
             WHERE CAST(user_id AS TEXT) = ?
         """, (str(payload.user_id),))
 
@@ -1247,7 +1247,7 @@ def api_update_player_zone(payload: ZoneUpdatePayload):
         zone_name = payload.name.strip() or "Default Zone"
 
         cur.execute("""
-            UPDATE players
+            UPDATE player_skill_zone
             SET zone_name = ?,
                 zone_image_url = ?,
                 zone_build = ?

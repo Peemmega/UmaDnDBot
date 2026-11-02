@@ -34,6 +34,7 @@ def get_connection():
 
     conn.execute("PRAGMA journal_mode=WAL;")  # ⬅️ แก้ lock ได้ดีที่สุด
     conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA foreign_keys=ON;")
 
     return conn
 
@@ -61,7 +62,7 @@ def _migrate_legacy_skill_ids(cursor: sqlite3.Cursor) -> None:
     legacy_ids = tuple(LEGACY_SKILL_ID_MAP)
     placeholders = ", ".join("?" for _ in legacy_ids)
 
-    for table in ("players", "skill_loadout_presets"):
+    for table in ("player_skill_zone", "skill_loadout_presets"):
         columns = {
             row["name"]
             for row in cursor.execute(f"PRAGMA table_info({table})").fetchall()
@@ -101,81 +102,90 @@ def init_db():
         conn.close()
         raise RuntimeError("Profile migration required before starting this version; run scripts/migrate_profiles.py while all writers are stopped")
 
+    existing_player_columns = {
+        row[1] for row in cursor.execute("PRAGMA table_info(players)").fetchall()
+    }
+    legacy_player_data_columns = {
+        "speed", "stamina", "power", "gut", "wit", "turf", "dirt",
+        "sprint", "mile", "medium", "long", "front", "pace", "late",
+        "end_style", "stats_point", "fans", "skill_point", "skill_slot_1",
+        "skill_slot_2", "skill_slot_3", "skill_slot_4", "zone_name",
+        "zone_image_url", "zone_points", "zone_build",
+        "default_skill_loadout_seeded", "uma_coin",
+    }
+    if existing_player_columns & legacy_player_data_columns:
+        conn.close()
+        raise RuntimeError(
+            "Player data migration required before starting this version; "
+            "run scripts/migrate_playerdata.py while all writers are stopped"
+        )
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS players (
+            user_id INTEGER PRIMARY KEY,
+            username TEXT NOT NULL,
+            profile_image_url TEXT,
+            profile_image_updated_at INTEGER
+        )
+    """)
+    for column, column_type in (
+        ("profile_image_url", "TEXT"),
+        ("profile_image_updated_at", "INTEGER"),
+    ):
+        if column not in existing_player_columns and existing_player_columns:
+            cursor.execute(f"ALTER TABLE players ADD COLUMN {column} {column_type}")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS player_stats_aptitude (
+            user_id INTEGER PRIMARY KEY REFERENCES players(user_id) ON DELETE CASCADE,
+            speed INTEGER NOT NULL DEFAULT 1,
+            stamina INTEGER NOT NULL DEFAULT 1,
+            power INTEGER NOT NULL DEFAULT 1,
+            gut INTEGER NOT NULL DEFAULT 1,
+            wit INTEGER NOT NULL DEFAULT 1,
+            turf INTEGER NOT NULL DEFAULT 1,
+            dirt INTEGER NOT NULL DEFAULT 1,
+            sprint INTEGER NOT NULL DEFAULT 1,
+            mile INTEGER NOT NULL DEFAULT 1,
+            medium INTEGER NOT NULL DEFAULT 1,
+            long INTEGER NOT NULL DEFAULT 1,
+            front INTEGER NOT NULL DEFAULT 1,
+            pace INTEGER NOT NULL DEFAULT 1,
+            late INTEGER NOT NULL DEFAULT 1,
+            end_style INTEGER NOT NULL DEFAULT 1,
+            stats_point INTEGER NOT NULL DEFAULT 5
+        )
+    """)
     cursor.execute(f"""
-    CREATE TABLE IF NOT EXISTS players (
-        user_id INTEGER PRIMARY KEY,
-        username TEXT NOT NULL,
-
-        speed INTEGER NOT NULL DEFAULT 1,
-        stamina INTEGER NOT NULL DEFAULT 1,
-        power INTEGER NOT NULL DEFAULT 1,
-        gut INTEGER NOT NULL DEFAULT 1,
-        wit INTEGER NOT NULL DEFAULT 1,
-
-        turf INTEGER NOT NULL DEFAULT 1,
-        dirt INTEGER NOT NULL DEFAULT 1,
-
-        sprint INTEGER NOT NULL DEFAULT 1,
-        mile INTEGER NOT NULL DEFAULT 1,
-        medium INTEGER NOT NULL DEFAULT 1,
-        long INTEGER NOT NULL DEFAULT 1,
-
-        front INTEGER NOT NULL DEFAULT 1,
-        pace INTEGER NOT NULL DEFAULT 1,
-        late INTEGER NOT NULL DEFAULT 1,
-        end_style INTEGER NOT NULL DEFAULT 1,
-
-        stats_point INTEGER NOT NULL DEFAULT 5,
-        fans INTEGER NOT NULL DEFAULT 1,
-        skill_point INTEGER NOT NULL DEFAULT 12,
-
-        skill_slot_1 TEXT,
-        skill_slot_2 TEXT,
-        skill_slot_3 TEXT,
-        skill_slot_4 TEXT,
-
-        profile_image_url TEXT,
-        profile_image_updated_at INTEGER,
-
-        zone_name TEXT DEFAULT 'Default Zone',
-        zone_image_url TEXT DEFAULT '{DEFAULT_ZONE_IMAGE}',
-        zone_points INTEGER NOT NULL DEFAULT 5,
-        zone_build TEXT DEFAULT ('{{}}')
-    )
+        CREATE TABLE IF NOT EXISTS player_skill_zone (
+            user_id INTEGER PRIMARY KEY REFERENCES players(user_id) ON DELETE CASCADE,
+            fans INTEGER NOT NULL DEFAULT 1,
+            skill_point INTEGER NOT NULL DEFAULT 12,
+            skill_slot_1 TEXT,
+            skill_slot_2 TEXT,
+            skill_slot_3 TEXT,
+            skill_slot_4 TEXT,
+            default_skill_loadout_seeded INTEGER NOT NULL DEFAULT 0,
+            zone_name TEXT DEFAULT 'Default Zone',
+            zone_image_url TEXT DEFAULT '{DEFAULT_ZONE_IMAGE}',
+            zone_points INTEGER NOT NULL DEFAULT 5,
+            zone_build TEXT DEFAULT ('{{}}'),
+            legacy_uma_coin INTEGER
+        )
+    """)
+    cursor.execute("""
+        INSERT OR IGNORE INTO player_stats_aptitude (user_id)
+        SELECT user_id FROM players
+    """)
+    cursor.execute("""
+        INSERT OR IGNORE INTO player_skill_zone (user_id)
+        SELECT user_id FROM players
     """)
 
-    zone_columns = [
-        ("zone_name", "TEXT DEFAULT 'Default Zone'"),
-        ("zone_image_url", f"TEXT DEFAULT '{DEFAULT_ZONE_IMAGE}'"),
-        ("zone_points", "INTEGER NOT NULL DEFAULT 5"),
-        ("zone_build", "TEXT DEFAULT ('{}')"),
-    ]
-
-    for col, col_type in zone_columns:
-        try:
-            cursor.execute(f"ALTER TABLE players ADD COLUMN {col} {col_type}")
-        except Exception:
-            pass
-
-    # migration กันกรณี table เก่ามีอยู่แล้ว
-    for col in ["skill_slot_1", "skill_slot_2", "skill_slot_3", "skill_slot_4"]:
-        try:
-            cursor.execute(f"ALTER TABLE players ADD COLUMN {col} TEXT")
-        except Exception:
-            pass
-
-    try:
-        cursor.execute(
-            "ALTER TABLE players ADD COLUMN default_skill_loadout_seeded INTEGER NOT NULL DEFAULT 0"
-        )
-    except Exception:
-        pass
-
-    # Seed the starter loadout once. Existing custom or intentionally changed
-    # loadouts are never overwritten on later application starts.
+    # Seed the starter loadout once. Existing custom loadouts remain unchanged.
     cursor.execute(
         """
-        UPDATE players
+        UPDATE player_skill_zone
         SET skill_slot_1 = ?, skill_slot_2 = ?, skill_slot_3 = ?, skill_slot_4 = ?,
             default_skill_loadout_seeded = 1
         WHERE default_skill_loadout_seeded = 0
@@ -185,14 +195,26 @@ def init_db():
         DEFAULT_PLAYER_SKILL_SLOTS,
     )
     cursor.execute("""
-        UPDATE players
+        UPDATE player_skill_zone
         SET default_skill_loadout_seeded = 1
         WHERE default_skill_loadout_seeded = 0
-          AND (
-            skill_slot_1 IS NOT NULL OR skill_slot_2 IS NOT NULL
-            OR skill_slot_3 IS NOT NULL OR skill_slot_4 IS NOT NULL
-          )
-        """)
+          AND (skill_slot_1 IS NOT NULL OR skill_slot_2 IS NOT NULL
+               OR skill_slot_3 IS NOT NULL OR skill_slot_4 IS NOT NULL)
+    """)
+
+    cursor.execute("""
+        CREATE VIEW IF NOT EXISTS playerdata AS
+        SELECT p.user_id, p.username, p.profile_image_url, p.profile_image_updated_at,
+               s.speed, s.stamina, s.power, s.gut, s.wit,
+               s.turf, s.dirt, s.sprint, s.mile, s.medium, s.long,
+               s.front, s.pace, s.late, s.end_style, s.stats_point,
+               z.fans, z.skill_point, z.skill_slot_1, z.skill_slot_2,
+               z.skill_slot_3, z.skill_slot_4, z.zone_name, z.zone_image_url,
+               z.zone_points, z.zone_build
+        FROM players p
+        JOIN player_stats_aptitude s ON s.user_id = p.user_id
+        JOIN player_skill_zone z ON z.user_id = p.user_id
+    """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS skill_loadout_presets (
@@ -219,10 +241,10 @@ def init_db():
     # Common skills are available to every player and do not need inventory rows.
     cursor.execute("""
         INSERT OR IGNORE INTO player_skills (user_id, skill_id)
-        SELECT user_id, skill_slot_1 FROM players WHERE skill_slot_1 IS NOT NULL
-        UNION SELECT user_id, skill_slot_2 FROM players WHERE skill_slot_2 IS NOT NULL
-        UNION SELECT user_id, skill_slot_3 FROM players WHERE skill_slot_3 IS NOT NULL
-        UNION SELECT user_id, skill_slot_4 FROM players WHERE skill_slot_4 IS NOT NULL
+        SELECT user_id, skill_slot_1 FROM player_skill_zone WHERE skill_slot_1 IS NOT NULL
+        UNION SELECT user_id, skill_slot_2 FROM player_skill_zone WHERE skill_slot_2 IS NOT NULL
+        UNION SELECT user_id, skill_slot_3 FROM player_skill_zone WHERE skill_slot_3 IS NOT NULL
+        UNION SELECT user_id, skill_slot_4 FROM player_skill_zone WHERE skill_slot_4 IS NOT NULL
     """)
 
     preset_columns = {
@@ -255,31 +277,6 @@ def init_db():
         cursor.execute(
             "ALTER TABLE skill_loadout_presets_new RENAME TO skill_loadout_presets"
         )
-
-    for col, col_type in [
-        ("profile_image_url", "TEXT"),
-        ("profile_image_updated_at", "INTEGER"),
-    ]:
-        try:
-            cursor.execute(f"ALTER TABLE players ADD COLUMN {col} {col_type}")
-        except Exception:
-            pass
-
-    # Uma Coin was replaced by Fans. Keep the legacy column untouched for
-    # SQLite compatibility, but expose and maintain only the new column.
-    player_columns = {
-        row["name"] for row in cursor.execute("PRAGMA table_info(players)").fetchall()
-    }
-    if "fans" not in player_columns:
-        cursor.execute("ALTER TABLE players ADD COLUMN fans INTEGER NOT NULL DEFAULT 1")
-        if "uma_coin" in player_columns:
-            cursor.execute("""
-                UPDATE players
-                SET fans = CASE
-                    WHEN COALESCE(uma_coin, 0) > 0 THEN uma_coin
-                    ELSE 1
-                END
-                """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS mailbox (
@@ -742,7 +739,7 @@ def create_race_registration_request(
             raise ValueError("การลงทะเบียนสำหรับสนามนี้ปิดแล้ว")
         _ensure_registration_cooldown(conn, actor_user_id)
         trainee = conn.execute(
-            "SELECT username, COALESCE(fans, 0) AS fans FROM players WHERE CAST(user_id AS TEXT) = ?",
+            "SELECT username, COALESCE(fans, 0) AS fans FROM playerdata WHERE CAST(user_id AS TEXT) = ?",
             (str(trainee_user_id),),
         ).fetchone()
         if not trainee:
@@ -854,7 +851,7 @@ def get_race_registration(registration_id: int, conn=None) -> dict | None:
         """SELECT registration.*, trainee.username AS trainee_name, trainer.username AS trainer_name,
                   COALESCE(trainee.fans, 0) AS fans
            FROM race_registrations registration
-           JOIN players trainee ON CAST(trainee.user_id AS TEXT) = registration.trainee_user_id
+           JOIN playerdata trainee ON CAST(trainee.user_id AS TEXT) = registration.trainee_user_id
            LEFT JOIN players trainer ON CAST(trainer.user_id AS TEXT) = registration.trainer_user_id
            WHERE registration.id = ?""",
         (registration_id,),
@@ -999,7 +996,7 @@ def list_race_registration_roster(race_id: str) -> list[dict]:
         rows = conn.execute(
             """SELECT registration.*, player.username AS trainee_name, COALESCE(player.fans, 0) AS fans
                FROM race_registrations registration
-               JOIN players player ON CAST(player.user_id AS TEXT) = registration.trainee_user_id
+               JOIN playerdata player ON CAST(player.user_id AS TEXT) = registration.trainee_user_id
                WHERE registration.race_id = ? AND registration.status = 'confirmed'
                ORDER BY registration.trial_ticket DESC,
                         CASE registration.availability WHEN 'self' THEN 0 ELSE 1 END,
@@ -1020,7 +1017,7 @@ def list_race_registration_forum_roster(
         rows = conn.execute(
             """SELECT registration.*, player.username AS trainee_name, COALESCE(player.fans, 0) AS fans
                FROM race_registrations registration
-               JOIN players player ON CAST(player.user_id AS TEXT) = registration.trainee_user_id
+               JOIN playerdata player ON CAST(player.user_id AS TEXT) = registration.trainee_user_id
                WHERE registration.race_name = ? AND registration.race_date = ?
                  AND registration.race_time = ? AND registration.status = 'confirmed'
                ORDER BY registration.trial_ticket DESC,
@@ -1645,7 +1642,7 @@ def get_available_trainees(trainer_user_id: str) -> list[dict]:
     rows = conn.execute(
         f"""
         SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url, p.fans
-        FROM players p
+        FROM playerdata p
         JOIN account_roles ar ON CAST(ar.user_id AS TEXT) = CAST(p.user_id AS TEXT)
         LEFT JOIN trainer_teams t ON t.trainee_user_id = CAST(p.user_id AS TEXT)
         WHERE p.profile_image_url IS NOT NULL AND TRIM(p.profile_image_url) <> ''
@@ -1673,7 +1670,7 @@ def get_trainer_team(trainer_user_id: str) -> list[dict]:
     rows = conn.execute(
         """
         SELECT CAST(p.user_id AS TEXT) AS user_id, p.username, p.profile_image_url, p.fans
-        FROM trainer_teams t JOIN players p ON CAST(p.user_id AS TEXT) = t.trainee_user_id
+        FROM trainer_teams t JOIN playerdata p ON CAST(p.user_id AS TEXT) = t.trainee_user_id
         JOIN account_roles ar
           ON CAST(ar.user_id AS TEXT) = CAST(p.user_id AS TEXT) AND ar.role = 'trainee'
         WHERE t.trainer_user_id = ?
@@ -2010,7 +2007,7 @@ def reset_all_zone_data():
 
     cursor.execute(
         """
-    UPDATE players
+    UPDATE player_skill_zone
     SET zone_build = ?,
         zone_points = 5
     """,
@@ -2043,7 +2040,7 @@ def add_player_aptitude(user_id, aptitude_field, amount):
 
     cursor.execute(
         f"""
-    UPDATE players
+    UPDATE player_stats_aptitude
     SET {aptitude_field} = COALESCE({aptitude_field}, 0) + ?
     WHERE user_id = ? AND COALESCE({aptitude_field}, 0) + ? BETWEEN 1 AND ?
     """,
@@ -2074,7 +2071,7 @@ def add_player_stats_point(user_id: int, amount: int):
 
     cursor.execute(
         """
-    UPDATE players
+    UPDATE player_stats_aptitude
     SET stats_point = COALESCE(stats_point, 0) + ?
     WHERE user_id = ?
     """,
@@ -2111,7 +2108,7 @@ def add_player_skill_point(user_id: int, amount: int):
 
     cursor.execute(
         """
-    UPDATE players
+    UPDATE player_skill_zone
     SET skill_point = COALESCE(skill_point, 0) + ?
     WHERE user_id = ?
     """,
@@ -2131,7 +2128,7 @@ def set_player_zone_build(user_id: int, build: dict) -> None:
 
     cursor.execute(
         """
-    UPDATE players
+    UPDATE player_skill_zone
     SET zone_build = ?
     WHERE user_id = ?
     """,
@@ -2148,7 +2145,7 @@ def set_player_zone_name(user_id: int, zone_name: str) -> None:
 
     cursor.execute(
         """
-    UPDATE players
+    UPDATE player_skill_zone
     SET zone_name = ?
     WHERE user_id = ?
     """,
@@ -2165,7 +2162,7 @@ def set_player_zone_image_url(user_id: int, image_url: str) -> None:
 
     cursor.execute(
         """
-    UPDATE players
+    UPDATE player_skill_zone
     SET zone_image_url = ?
     WHERE user_id = ?
     """,
@@ -2204,7 +2201,7 @@ def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
     cursor = conn.cursor()
 
     row = cursor.execute(
-        "SELECT skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4 FROM players WHERE user_id = ?",
+        "SELECT skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4 FROM player_skill_zone WHERE user_id = ?",
         (user_id,),
     ).fetchone()
     if row is None:
@@ -2220,7 +2217,7 @@ def set_player_skill_slot(user_id: int, slot: int, skill_id: str):
 
     column = f"skill_slot_{slot}"
     cursor.execute(
-        f"UPDATE players SET {column} = ? WHERE user_id = ?", (skill_id, user_id)
+        f"UPDATE player_skill_zone SET {column} = ? WHERE user_id = ?", (skill_id, user_id)
     )
 
     conn.commit()
@@ -2236,7 +2233,7 @@ def clear_player_skill_slot(user_id: int, slot: int):
     cursor = conn.cursor()
 
     column = f"skill_slot_{slot}"
-    cursor.execute(f"UPDATE players SET {column} = NULL WHERE user_id = ?", (user_id,))
+    cursor.execute(f"UPDATE player_skill_zone SET {column} = NULL WHERE user_id = ?", (user_id,))
 
     conn.commit()
     conn.close()
@@ -2250,7 +2247,7 @@ def get_player_skill_slots(user_id: int):
     cursor.execute(
         """
     SELECT skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4
-    FROM players
+    FROM player_skill_zone
     WHERE user_id = ?
     """,
         (user_id,),
@@ -2308,7 +2305,7 @@ def remove_player_skill(user_id: int | str, skill_id: str) -> bool:
         )
         for slot in range(1, 5):
             conn.execute(
-                f"UPDATE players SET skill_slot_{slot} = NULL WHERE CAST(user_id AS TEXT) = ? AND skill_slot_{slot} = ?",
+                f"UPDATE player_skill_zone SET skill_slot_{slot} = NULL WHERE CAST(user_id AS TEXT) = ? AND skill_slot_{slot} = ?",
                 (str(user_id), skill_id),
             )
             conn.execute(
@@ -2355,7 +2352,7 @@ def save_player_skill_loadout_preset(
     row = conn.execute(
         """
         SELECT skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4
-        FROM players
+        FROM player_skill_zone
         WHERE user_id = ?
         """,
         (user_id,),
@@ -2421,7 +2418,7 @@ def update_trainer_aptitudes(user_id: str, aptitudes: dict) -> dict:
         if not role or role["role"] != "trainer":
             raise PermissionError("Trainer role required")
         row = conn.execute(
-            f"SELECT {', '.join(APTITUDE_FIELDS)} FROM players WHERE CAST(user_id AS TEXT) = ?",
+            f"SELECT {', '.join(APTITUDE_FIELDS)} FROM player_stats_aptitude WHERE CAST(user_id AS TEXT) = ?",
             (str(user_id),),
         ).fetchone()
         if row is None:
@@ -2433,7 +2430,7 @@ def update_trainer_aptitudes(user_id: str, aptitudes: dict) -> dict:
             raise ValueError(f"Aptitude level cannot exceed {MAX_APTITUDE_LEVEL}")
         assignments = ", ".join(f"{field} = ?" for field in APTITUDE_FIELDS)
         cursor = conn.execute(
-            f"UPDATE players SET {assignments} WHERE CAST(user_id AS TEXT) = ?",
+            f"UPDATE player_stats_aptitude SET {assignments} WHERE CAST(user_id AS TEXT) = ?",
             (*[aptitudes[field] for field in APTITUDE_FIELDS], str(user_id)),
         )
         if not cursor.rowcount:
@@ -2492,8 +2489,10 @@ def set_admin_player_value(user_id: int | str, field: str, value: int) -> int:
         raise ValueError("Points and fans cannot be negative")
 
     with database_connection() as conn:
+        stats_fields = set(CORE_STAT_FIELDS) | set(APTITUDE_FIELDS) | {"stats_point"}
         cursor = conn.execute(
-            f"UPDATE players SET {normalized_field} = ? WHERE CAST(user_id AS TEXT) = ?",
+            f"UPDATE {'player_stats_aptitude' if normalized_field in stats_fields else 'player_skill_zone'} "
+            f"SET {normalized_field} = ? WHERE CAST(user_id AS TEXT) = ?",
             (value, str(user_id)),
         )
         if cursor.rowcount == 0:
@@ -2515,20 +2514,24 @@ def reset_player_data_section(user_id: int | str, section: str) -> dict[str, int
         if normalized_section == "stats":
             cursor = conn.execute(
                 """
-                UPDATE players
+                UPDATE player_stats_aptitude
                 SET speed = 1, stamina = 1, power = 1, gut = 1, wit = 1,
                     turf = 1, dirt = 1, sprint = 1, mile = 1, medium = 1, long = 1,
                     front = 1, pace = 1, late = 1, end_style = 1,
-                    stats_point = 12, skill_point = 0, fans = 1
+                    stats_point = 12
                 WHERE CAST(user_id AS TEXT) = ?
                 """,
                 (user_key,),
             )
             result["players"] = cursor.rowcount
+            conn.execute(
+                "UPDATE player_skill_zone SET skill_point = 0, fans = 1 WHERE CAST(user_id AS TEXT) = ?",
+                (user_key,),
+            )
         elif normalized_section == "skills":
             cursor = conn.execute(
                 """
-                UPDATE players
+                UPDATE player_skill_zone
                 SET skill_slot_1 = NULL, skill_slot_2 = NULL,
                     skill_slot_3 = NULL, skill_slot_4 = NULL
                 WHERE CAST(user_id AS TEXT) = ?
@@ -2543,7 +2546,7 @@ def reset_player_data_section(user_id: int | str, section: str) -> dict[str, int
             result["skill_loadout_presets"] = cursor.rowcount
         else:
             cursor = conn.execute(
-                "UPDATE players SET zone_build = ?, zone_points = 5 WHERE CAST(user_id AS TEXT) = ?",
+                "UPDATE player_skill_zone SET zone_build = ?, zone_points = 5 WHERE CAST(user_id AS TEXT) = ?",
                 (default_zone_build, user_key),
             )
             result["players"] = cursor.rowcount
@@ -2562,7 +2565,7 @@ def clear_player_skills(user_id: int | str, slot: int | None = None) -> int:
         if slot is None:
             cursor = conn.execute(
                 """
-                UPDATE players
+                UPDATE player_skill_zone
                 SET skill_slot_1 = NULL, skill_slot_2 = NULL,
                     skill_slot_3 = NULL, skill_slot_4 = NULL
                 WHERE CAST(user_id AS TEXT) = ?
@@ -2571,7 +2574,7 @@ def clear_player_skills(user_id: int | str, slot: int | None = None) -> int:
             )
         else:
             cursor = conn.execute(
-                f"UPDATE players SET skill_slot_{slot} = NULL WHERE CAST(user_id AS TEXT) = ?",
+                f"UPDATE player_skill_zone SET skill_slot_{slot} = NULL WHERE CAST(user_id AS TEXT) = ?",
                 (str(user_id),),
             )
         if cursor.rowcount == 0:
@@ -2669,7 +2672,7 @@ def apply_player_skill_loadout_preset(user_id: int, preset_slot: int) -> dict | 
         return None
     conn.execute(
         """
-        UPDATE players
+        UPDATE player_skill_zone
         SET skill_slot_1 = ?, skill_slot_2 = ?, skill_slot_3 = ?, skill_slot_4 = ?
         WHERE user_id = ?
         """,
@@ -2698,37 +2701,24 @@ def delete_player_skill_loadout_preset(user_id: int, preset_slot: int) -> bool:
 
 
 def create_player(user_id: int, username: str):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-    INSERT OR IGNORE INTO players (
-        user_id, username,
-        speed, stamina, power, gut, wit,
-        turf, dirt,
-        sprint, mile, medium, long,
-        front, pace, late, end_style,
-        stats_point, fans, skill_point,
-        skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4,
-        default_skill_loadout_seeded
-    )
-    VALUES (
-        ?, ?,
-        1, 1, 1, 1, 1,
-        1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        12, 1, 0,
-        ?, ?, ?, ?,
-        1
-    )
-    """,
-        (user_id, username, *DEFAULT_PLAYER_SKILL_SLOTS),
-    )
-
-    conn.commit()
-    conn.close()
+    with database_connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO players (user_id, username) VALUES (?, ?)",
+            (user_id, username),
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO player_stats_aptitude (user_id, stats_point) VALUES (?, 12)",
+            (user_id,),
+        )
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO player_skill_zone (
+                user_id, fans, skill_point, skill_slot_1, skill_slot_2,
+                skill_slot_3, skill_slot_4, default_skill_loadout_seeded
+            ) VALUES (?, 1, 0, ?, ?, ?, ?, 1)
+            """,
+            (user_id, *DEFAULT_PLAYER_SKILL_SLOTS),
+        )
 
 
 def remove_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
@@ -2752,7 +2742,7 @@ def remove_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
 
     cursor.execute(
         f"""
-        UPDATE players
+        UPDATE player_stats_aptitude
         SET {stat_name} = ?, stats_point = ?
         WHERE user_id = ?
         """,
@@ -2789,7 +2779,7 @@ def add_player_stat(user_id: int, stat_name: str, amount: int = 1) -> dict:
 
     cursor.execute(
         f"""
-        UPDATE players
+        UPDATE player_stats_aptitude
         SET {stat_name} = ?, stats_point = ?
         WHERE user_id = ?
         """,
@@ -2810,7 +2800,7 @@ def get_player_skill_in_slot(user_id: int, slot: int):
     cursor = conn.cursor()
 
     column = f"skill_slot_{slot}"
-    cursor.execute(f"SELECT {column} FROM players WHERE user_id = ?", (user_id,))
+    cursor.execute(f"SELECT {column} FROM player_skill_zone WHERE user_id = ?", (user_id,))
     row = cursor.fetchone()
     conn.close()
 
@@ -2836,7 +2826,7 @@ def get_player(user_id: int) -> Optional[dict]:
         profile_image_url, profile_image_updated_at,
         zone_name, zone_image_url, zone_points, zone_build,
         skill_slot_1, skill_slot_2, skill_slot_3, skill_slot_4
-    FROM players
+    FROM playerdata
     WHERE CAST(user_id AS TEXT) = ?
     """,
         (str(user_id),),
@@ -2854,7 +2844,7 @@ def get_player(user_id: int) -> Optional[dict]:
     if raw_zone_build != zone_build:
         cursor.execute(
             """
-            UPDATE players
+            UPDATE player_skill_zone
             SET zone_build = ?
             WHERE CAST(user_id AS TEXT) = ?
             """,
@@ -3018,7 +3008,7 @@ def set_all_aptitude(user_id: int, value: int):
 
     cursor.execute(
         """
-    UPDATE players
+    UPDATE player_stats_aptitude
     SET
         turf = ?,
         dirt = ?,
@@ -3111,7 +3101,7 @@ def update_player_stat_pool(
         row = conn.execute(
             """
             SELECT speed, stamina, power, gut, wit, stats_point
-            FROM players
+            FROM player_stats_aptitude
             WHERE CAST(user_id AS TEXT) = ?
             """,
             (str(user_id),),
@@ -3126,7 +3116,7 @@ def update_player_stat_pool(
 
         conn.execute(
             """
-            UPDATE players
+            UPDATE player_stats_aptitude
             SET speed = ?, stamina = ?, power = ?, gut = ?, wit = ?, stats_point = ?
             WHERE CAST(user_id AS TEXT) = ?
             """,
@@ -3198,7 +3188,7 @@ def update_player_stats(
 
     cursor.execute(
         """
-    UPDATE players
+    UPDATE player_stats_aptitude
     SET
         speed = ?,
         stamina = ?,
@@ -3215,9 +3205,7 @@ def update_player_stats(
         pace = ?,
         late = ?,
         end_style = ?,
-        stats_point = ?,
-        fans = ?,
-        skill_point = ?
+        stats_point = ?
     WHERE user_id = ?
     """,
         (
@@ -3237,10 +3225,17 @@ def update_player_stats(
             new_late,
             new_end_style,
             new_stats_point,
-            new_fans,
-            new_skill_point,
             user_id,
         ),
+    )
+
+    cursor.execute(
+        """
+        UPDATE player_skill_zone
+        SET fans = ?, skill_point = ?
+        WHERE user_id = ?
+        """,
+        (new_fans, new_skill_point, user_id),
     )
 
     conn.commit()
