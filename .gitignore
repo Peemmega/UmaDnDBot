@@ -12,6 +12,9 @@ __pycache__/
 # Build / temp
 dist/
 scripts/
+!scripts/
+scripts/*
+!scripts/migrate_profiles.py
 
 # Node
 node_modules/
