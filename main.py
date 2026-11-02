@@ -1,5 +1,6 @@
 import os
 import threading
+import time
 
 import discord
 import uvicorn
@@ -11,6 +12,13 @@ from api_server import app
 from utils.database import init_db
 
 load_dotenv()
+
+# Keep every process that could touch SQLite stopped during the Test migration.
+if os.getenv("PLAYERDATA_MIGRATION_MAINTENANCE", "").strip().lower() in {"1", "true", "yes", "on"}:
+    print("PLAYERDATA_MIGRATION_MAINTENANCE is enabled; Bot and API are paused.", flush=True)
+    while True:
+        time.sleep(60)
+
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 if TOKEN is None:
