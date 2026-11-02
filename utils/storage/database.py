@@ -2864,7 +2864,7 @@ def get_player(user_id: int) -> Optional[dict]:
 
     conn.close()
 
-    return {
+    player_data = {
         "user_id": row[0],
         "username": row[1],
         "speed": row[2],
@@ -2898,6 +2898,28 @@ def get_player(user_id: int) -> Optional[dict]:
             "build": zone_build,
         },
     }
+
+    # Keep the existing flat fields for Discord, web, and race consumers while
+    # exposing the same data in cohesive sections for player-data views/APIs.
+    player_data["StatsAptitude"] = {
+        key: player_data[key]
+        for key in (
+            "speed", "stamina", "power", "gut", "wit", "stats_point",
+            "turf", "dirt", "sprint", "mile", "medium", "long",
+            "front", "pace", "late", "end_style",
+        )
+    }
+    player_data["SkillZone"] = {
+        "fans": player_data["fans"],
+        "skill_point": player_data["skill_point"],
+        "skills": [player_data[f"skill_slot_{slot}"] for slot in range(1, 5)],
+        "skill_slots": {
+            f"skill_slot_{slot}": player_data[f"skill_slot_{slot}"]
+            for slot in range(1, 5)
+        },
+        "zone": player_data["zone"],
+    }
+    return player_data
 
 
 def get_player_summary(user_id: int | str) -> Optional[dict]:

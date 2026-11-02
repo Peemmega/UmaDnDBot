@@ -439,11 +439,13 @@ class Admin(commands.Cog):
             )
             return
 
-        skills = [player.get(f"skill_slot_{slot}") for slot in range(1, 5)]
+        stats_aptitude = player["StatsAptitude"]
+        skill_zone = player["SkillZone"]
+        skills = skill_zone["skills"]
         skill_text = " • ".join(
             f"{index}: {skill or '-'}" for index, skill in enumerate(skills, start=1)
         )
-        zone = player["zone"]
+        zone = skill_zone["zone"]
         admin = player["admin"]
         team_text = (
             f"Trainer: `{admin['trainer_user_id']}`"
@@ -459,31 +461,24 @@ class Admin(commands.Cog):
             color=discord.Color.blurple(),
         )
         embed.add_field(
-            name="ค่าสเตตัส",
+            name="StatsAptitude",
             value=(
-                f"SPD `{player['speed']}` | STA `{player['stamina']}` | POW `{player['power']}`\n"
-                f"GUT `{player['gut']}` | WIT `{player['wit']}` | Stats Point `{player['stats_point']}`"
+                f"Stats: SPD `{stats_aptitude['speed']}` | STA `{stats_aptitude['stamina']}` | POW `{stats_aptitude['power']}` | "
+                f"GUT `{stats_aptitude['gut']}` | WIT `{stats_aptitude['wit']}` | Point `{stats_aptitude['stats_point']}`\n"
+                f"Track: Turf `{stats_aptitude['turf']}` / Dirt `{stats_aptitude['dirt']}`\n"
+                f"Distance: Sprint `{stats_aptitude['sprint']}` / Mile `{stats_aptitude['mile']}` / Medium `{stats_aptitude['medium']}` / Long `{stats_aptitude['long']}`\n"
+                f"Style: Front `{stats_aptitude['front']}` / Pace `{stats_aptitude['pace']}` / Late `{stats_aptitude['late']}` / End `{stats_aptitude['end_style']}`"
             ),
             inline=False,
         )
         embed.add_field(
-            name="Aptitude",
+            name="SkillZone",
             value=(
-                f"Turf/Dirt: `{player['turf']}` / `{player['dirt']}`\n"
-                f"Sprint/Mile/Medium/Long: `{player['sprint']}` / `{player['mile']}` / `{player['medium']}` / `{player['long']}`\n"
-                f"Front/Pace/Late/End: `{player['front']}` / `{player['pace']}` / `{player['late']}` / `{player['end_style']}`"
+                f"Fans `{skill_zone['fans']}` | Skill Point `{skill_zone['skill_point']}`\n"
+                f"Skills: {skill_text}\n"
+                f"Zone: {zone['name']} | Point `{zone['points']}`"
             ),
             inline=False,
-        )
-        embed.add_field(
-            name="แต้มและสกิล",
-            value=f"Fans `{player['fans']}` | Event Point `{player['skill_point']}`\n{skill_text}",
-            inline=False,
-        )
-        embed.add_field(
-            name="Zone",
-            value=f"{zone['name']} | Point `{zone['points']}`",
-            inline=True,
         )
         embed.add_field(
             name="ข้อมูลระบบ",
