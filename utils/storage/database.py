@@ -96,6 +96,10 @@ def _migrate_legacy_skill_ids(cursor: sqlite3.Cursor) -> None:
 def init_db():
     conn = get_connection()
     cursor = conn.cursor()
+    tables = {row[0] for row in cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if ("character_basic_profiles" in tables or "character_role_basic_profiles" in tables) and "character_profiles" not in tables:
+        conn.close()
+        raise RuntimeError("Profile migration required before starting this version; run scripts/migrate_profiles.py while all writers are stopped")
 
     cursor.execute(f"""
     CREATE TABLE IF NOT EXISTS players (
@@ -319,83 +323,16 @@ def init_db():
     """)
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS character_basic_profiles (
-        user_id TEXT PRIMARY KEY,
-        self_intro TEXT NOT NULL DEFAULT '',
-        name_th TEXT NOT NULL DEFAULT '',
-        name_en TEXT NOT NULL DEFAULT '',
-        division TEXT NOT NULL DEFAULT '',
-        birthday_day INTEGER,
-        birthday_month INTEGER,
-        height_cm INTEGER,
-        dorm TEXT NOT NULL DEFAULT '',
-        likes TEXT NOT NULL DEFAULT '',
-        dislikes TEXT NOT NULL DEFAULT '',
-        personality TEXT NOT NULL DEFAULT '',
-        biography TEXT NOT NULL DEFAULT '',
-        additional TEXT NOT NULL DEFAULT '',
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS character_role_basic_profiles (
+    CREATE TABLE IF NOT EXISTS character_profiles (
         user_id TEXT NOT NULL,
         profile_type TEXT NOT NULL CHECK(profile_type IN ('trainee', 'trainer', 'npc')),
-        self_intro TEXT NOT NULL DEFAULT '',
-        name_th TEXT NOT NULL DEFAULT '',
-        name_en TEXT NOT NULL DEFAULT '',
-        division TEXT NOT NULL DEFAULT '',
-        age INTEGER,
-        birthday_day INTEGER,
-        birthday_month INTEGER,
-        height_cm INTEGER,
-        dorm TEXT NOT NULL DEFAULT '',
-        likes TEXT NOT NULL DEFAULT '',
-        dislikes TEXT NOT NULL DEFAULT '',
-        personality TEXT NOT NULL DEFAULT '',
-        biography TEXT NOT NULL DEFAULT '',
-        additional TEXT NOT NULL DEFAULT '',
+        self_intro TEXT, name_th TEXT, name_en TEXT, division TEXT, age INTEGER,
+        birthday_day INTEGER, birthday_month INTEGER, height_cm INTEGER, dorm TEXT,
+        likes TEXT, dislikes TEXT, personality TEXT, biography TEXT, additional TEXT,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (user_id, profile_type)
     )
     """)
-    role_basic_profile_columns = {
-        row["name"]
-        for row in cursor.execute(
-            "PRAGMA table_info(character_role_basic_profiles)"
-        ).fetchall()
-    }
-    role_basic_profile_needs_class_dorm_migration = not {"division", "dorm"}.issubset(
-        role_basic_profile_columns
-    )
-    if "division" not in role_basic_profile_columns:
-        cursor.execute(
-            "ALTER TABLE character_role_basic_profiles ADD COLUMN division TEXT NOT NULL DEFAULT ''"
-        )
-    if "dorm" not in role_basic_profile_columns:
-        cursor.execute(
-            "ALTER TABLE character_role_basic_profiles ADD COLUMN dorm TEXT NOT NULL DEFAULT ''"
-        )
-    cursor.execute("""
-    INSERT OR IGNORE INTO character_role_basic_profiles (
-        user_id, profile_type, self_intro, name_th, name_en, division, birthday_day,
-        birthday_month, height_cm, dorm, likes, dislikes, personality, biography,
-        additional, updated_at
-    )
-    SELECT user_id, 'trainee', self_intro, name_th, name_en, division, birthday_day,
-           birthday_month, height_cm, dorm, likes, dislikes, personality, biography,
-           additional, updated_at
-    FROM character_basic_profiles
-    """)
-    if role_basic_profile_needs_class_dorm_migration:
-        cursor.execute("""
-        UPDATE character_role_basic_profiles
-        SET division = COALESCE((SELECT division FROM character_basic_profiles legacy WHERE legacy.user_id = character_role_basic_profiles.user_id), division),
-            dorm = COALESCE((SELECT dorm FROM character_basic_profiles legacy WHERE legacy.user_id = character_role_basic_profiles.user_id), dorm)
-        WHERE profile_type = 'trainee'
-          AND EXISTS (SELECT 1 FROM character_basic_profiles legacy WHERE legacy.user_id = character_role_basic_profiles.user_id)
-        """)
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS team_invitations (
@@ -1831,7 +1768,7 @@ def get_character_basic_profile(
         raise ValueError("Profile type must be trainee, trainer, or npc")
     with database_connection() as conn:
         row = conn.execute(
-            "SELECT * FROM character_role_basic_profiles WHERE user_id = ? AND profile_type = ?",
+            "SELECT * FROM character_profiles WHERE user_id = ? AND profile_type = ?",
             (str(user_id), profile_type),
         ).fetchone()
     if row is None:
@@ -1871,7 +1808,7 @@ def save_character_basic_profile(
     with database_connection() as conn:
         conn.execute(
             f"""
-            INSERT INTO character_role_basic_profiles (user_id, profile_type, {columns_sql}, updated_at)
+            INSERT INTO character_profiles (user_id, profile_type, {columns_sql}, updated_at)
             VALUES (?, ?, {placeholders_sql}, CURRENT_TIMESTAMP)
             ON CONFLICT(user_id, profile_type) DO UPDATE SET
               {updates_sql},
