@@ -15,6 +15,7 @@ scripts/
 !scripts/
 scripts/*
 !scripts/migrate_profiles.py
+!scripts/migrate_playerdata.py
 !scripts/prune_legacy_profiles.py
 
 # Node

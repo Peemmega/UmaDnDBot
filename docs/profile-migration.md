@@ -73,3 +73,30 @@ After the new application is deployed and verified, use
 only the two legacy profile tables. The cleanup keeps `character_profiles`,
 `profile_presets`, `account_roles`, `race_history`, and every other table.
 Both flags are explicit; the script refuses to run without exactly one.
+
+## Player data separation
+
+`players` keeps account identity and profile-image fields. Numeric stats and
+aptitudes move to `player_stats_aptitude`; fans, skill points, equipped skill
+slots, and zone settings move to `player_skill_zone`. `playerdata` is a
+read-only compatibility view used by older response-building code. The
+SQLite tables are the source of truth; writes go directly to the owning table.
+`skill_loadout_presets` and `player_skills` remain separate.
+
+Rehearse and apply only to a fresh copy or the intended Test database after all
+writers are stopped:
+
+```powershell
+python scripts/migrate_playerdata.py --dry-run --db-path C:\path\to\test-copy.sqlite3
+python scripts/migrate_playerdata.py --db-path C:\path\to\test-copy.sqlite3
+```
+
+The migration creates a timestamped SQLite Backup API copy, rehearses on that
+copy, checks every player's identity, stats, aptitudes, skill slots and zone
+values, and only then replaces the old `players` table. It preserves the old
+`uma_coin` value in `player_skill_zone.legacy_uma_coin` when present, while
+mapping it to `fans` only when the old schema had no `fans` column. The new
+application refuses to start against an unmigrated `players` schema. Deploy
+the migration script with old code first; stop all writers, apply the schema
+migration, then deploy the new code and verify the API, Discord commands,
+website, skills, zone edits, and race reads before resuming service.
