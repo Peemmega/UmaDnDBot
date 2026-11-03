@@ -31,7 +31,7 @@ DEBUFF_SKILLS = {
             "target_distance_min": 1,
             "target_distance_max": 999,
         },
-        "target": {"scope": "nearest_front", "limit": 20},
+        "target": {"scope": "all_front", "limit": 5},
         "effects": [
             {"type": "reduce_stamina", "value": 0.5},
             {"type": "self_heal_stamina", "value": 1},
@@ -178,7 +178,7 @@ DEBUFF_SKILLS = {
             "target_distance_min": -150,
             "target_distance_max": -1,
         },
-        "target": {"scope": "all_back", "limit": 3, "same_lane_only": False},
+        "target": {"scope": "all_back", "limit": 20, "same_lane_only": False},
         "effects": [{"type": "modify_current_speed_delta", "value": -0.5}],
         "tags": ["sprint", "early_race", "front", "debuff", "velocity"],
     },
