@@ -726,7 +726,7 @@ def create_game(
     }
 
     for preset_key in stage.get("auto_mobs", []):
-        add_mob_from_preset(channel_id, preset_key)
+        add_mob_from_preset(channel_id, preset_key, stage.get("auto_mob_level", 1))
 
     return True
 
