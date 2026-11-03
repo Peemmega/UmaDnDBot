@@ -251,7 +251,19 @@ def describe_trigger(trigger: dict) -> str:
 
 
 def describe_target(target: dict) -> str:
-    return TARGET_TEXT.get(target.get("scope", "self"), target.get("scope", "self"))
+    scope = target.get("scope", "self")
+    if scope in {"nearest_front", "nearest_back"}:
+        return f"{TARGET_TEXT[scope]} 1 คน"
+    labels = {
+        "all_front": "ผู้เล่นด้านหน้า",
+        "all_back": "ผู้เล่นด้านหลัง",
+        "random_enemy": "ศัตรูแบบสุ่ม",
+    }
+    if scope in labels:
+        limit = target.get("limit", 1)
+        count = "ทั้งหมด" if limit == 20 else f"สูงสุด {limit} คน"
+        return f"{labels[scope]} {count}"
+    return TARGET_TEXT.get(scope, scope)
 
 
 def describe_effect(effect: dict) -> str:
