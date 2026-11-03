@@ -86,7 +86,7 @@ def _participant_identity(player_id, player: dict) -> dict:
             player.get("display_name") or player.get("username") or player_id
         ),
         "trainer_id": str(trainer["user_id"]) if trainer else None,
-        "trainer_name": trainer.get("name") if trainer else None,
+        "trainer_name": (trainer.get("username") or trainer.get("name")) if trainer else None,
         "participant_type": participant_type,
         "mob_id": str(player.get("mob_preset_key") or player_id) if is_mob else None,
     }
@@ -506,7 +506,11 @@ def get_race_by_id(race_id: str) -> dict | None:
         participants = [
             dict(row)
             for row in cursor.execute(
-                "SELECT * FROM race_participants WHERE race_id = ? ORDER BY final_rank ASC, participant_id ASC",
+                """SELECT p.*, COALESCE(NULLIF(p.trainer_name, ''),
+                           (SELECT NULLIF(preset.name, '') FROM profile_presets preset
+                            WHERE preset.user_id = p.trainer_id AND preset.profile_type = 'trainer')) AS resolved_trainer_name
+                   FROM race_participants p WHERE p.race_id = ?
+                   ORDER BY p.final_rank ASC, p.participant_id ASC""",
                 (race_id,),
             ).fetchall()
         ]
@@ -525,6 +529,7 @@ def get_race_by_id(race_id: str) -> dict | None:
             ).fetchall()
         ]
     for row in participants:
+        row["trainer_name"] = row.pop("resolved_trainer_name")
         _decode(row, "snapshot_json")
         row["snapshot"] = _hydrate_participant_snapshot(row.get("snapshot"))
     for row in turns:
@@ -573,7 +578,10 @@ def list_race_history(
                          WHERE p.race_id = h.race_id
                          ORDER BY p.final_rank ASC, p.final_score DESC, p.participant_id ASC
                          LIMIT 1) AS winner_name,
-                       (SELECT p.trainer_name FROM race_participants p
+                       (SELECT COALESCE(NULLIF(p.trainer_name, ''),
+                                  (SELECT NULLIF(preset.name, '') FROM profile_presets preset
+                                   WHERE preset.user_id = p.trainer_id AND preset.profile_type = 'trainer'))
+                         FROM race_participants p
                          WHERE p.race_id = h.race_id
                          ORDER BY p.final_rank ASC, p.final_score DESC, p.participant_id ASC
                          LIMIT 1) AS winner_trainer_name,
@@ -610,7 +618,10 @@ def get_participant_history(
     with database_connection() as conn:
         rows = conn.execute(
             f"""SELECT h.*, p.participant_id, p.uma_id, p.uma_name, p.trainer_id,
-                       p.trainer_name, p.participant_type, p.running_style,
+                       COALESCE(NULLIF(p.trainer_name, ''),
+                           (SELECT NULLIF(preset.name, '') FROM profile_presets preset
+                            WHERE preset.user_id = p.trainer_id AND preset.profile_type = 'trainer')) AS trainer_name,
+                       p.participant_type, p.running_style,
                        p.final_rank, p.final_score
                 FROM race_participants p JOIN race_history h ON h.race_id = p.race_id
                 WHERE {' AND '.join(clauses)}
