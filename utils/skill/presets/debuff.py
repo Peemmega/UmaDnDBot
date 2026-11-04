@@ -5,7 +5,7 @@ DEBUFF_SKILLS = {
         "name": "Battle Formation",
         "icon": "DecreaseVelocity_rare",
         "cooldown": 10,
-        "cost": 50,
+        "cost": 60,
         "trigger": {
             "phase_min": 1,
             "phase_max": 2,
@@ -42,7 +42,7 @@ DEBUFF_SKILLS = {
         "name": "Dominator",
         "icon": "DecreaseVelocity_rare",
         "cooldown": 10,
-        "cost": 50,
+        "cost": 60,
         "trigger": {
             "phase_min": 3,
             "phase_max": 3,
@@ -59,7 +59,7 @@ DEBUFF_SKILLS = {
         "name": "Dazzling Disorientation",
         "icon": "Blind_rare",
         "cooldown": 10,
-        "cost": 50,
+        "cost": 60,
         "trigger": {
             "style": "Pace",
             "phase_min": 3,
@@ -83,7 +83,7 @@ DEBUFF_SKILLS = {
         "name": "Illusionist",
         "icon": "Blind_rare",
         "cooldown": 10,
-        "cost": 50,
+        "cost": 60,
         "trigger": {
             "phase_min": 3,
             "phase_max": 3,
@@ -122,7 +122,7 @@ DEBUFF_SKILLS = {
         "name": "Tantalizing Trick",
         "icon": "ReduceSTA_rare",
         "cooldown": 8,
-        "cost": 40,
+        "cost": 60,
         "trigger": {
             "phase_min": 2,
             "phase_max": 3,
@@ -158,13 +158,13 @@ DEBUFF_SKILLS = {
         "name": "Adored by All",
         "icon": "DecreaseVelocity_rare",
         "cooldown": 10,
-        "cost": 80,
+        "cost": 60,
         "trigger": {
             "distance_type": "Sprint",
             "phase_min": 1,
             "phase_max": 1,
             "position_group": "front",
-            "target_distance_min": -150,
+            "target_distance_min": -999,
             "target_distance_max": -1,
         },
         "target": {"scope": "all_back", "limit": 20, "same_lane_only": False},
