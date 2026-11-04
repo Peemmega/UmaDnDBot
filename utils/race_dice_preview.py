@@ -177,6 +177,24 @@ def parse_display_text(text: str):
 
     return tokens
 
+
+def combine_race_velocity_bonus(text: str) -> str:
+    """Show race and skill velocity bonuses under one icon in the run image."""
+    pattern = re.compile(r"(?<!\S)([+-]\d+)(RACE|<:Velocity:\d+>|Velocity)(?=\s|$)")
+    matches = list(pattern.finditer(text))
+    if not any(match.group(2) == "RACE" for match in matches):
+        return text
+    total = sum(int(match.group(1)) for match in matches)
+    icon = next((match.group(2) for match in matches if match.group(2) != "RACE"), "Velocity")
+    first = matches[0]
+    parts = [text[:first.start()], f"{total:+d}{icon}"]
+    last_end = first.end()
+    for match in matches[1:]:
+        parts.append(text[last_end:match.start()])
+        last_end = match.end()
+    parts.append(text[last_end:])
+    return " ".join("".join(parts).split())
+
 def draw_rich_text(card, draw, base_pos, tokens, font, color):
     x, y = base_pos
 
@@ -332,6 +350,7 @@ async def create_race_dice_preview(
         result.get("dice_preview_bonus_display", result.get("bonus_display", "")),
         block_label="Block",
     )
+    bonus = combine_race_velocity_bonus(bonus)
 
 
     draw_rich_text(
