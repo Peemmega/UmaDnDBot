@@ -235,8 +235,15 @@ def describe_trigger(trigger: dict) -> str:
         parts.append(f"Stats พื้นฐาน: {stat_text}")
 
     if "target_distance_min" in trigger and "target_distance_max" in trigger:
+        lower, upper = sorted((trigger["target_distance_min"], trigger["target_distance_max"]))
+        if lower < 0 and upper <= 0:
+            target_text = f"มีสาวม้าด้านหลังในระยะ {upper} ถึง {lower}"
+        elif lower >= 0 and upper > 0:
+            target_text = f"มีสาวม้าด้านหน้าในระยะ {lower} ถึง {upper}"
+        else:
+            target_text = f"มีสาวม้าในระยะ {lower} ถึง {upper}"
         parts.append(
-            f"เมื่อมีเป้าหมายอยู่ในระยะ {trigger['target_distance_min']} ถึง {trigger['target_distance_max']} และอยู่ในระยะเลนที่ใช้ตรวจ In Pack"
+            f"เมื่อ{target_text} และอยู่ในระยะเลนที่ใช้ตรวจ In Pack"
         )
 
     if "position_group" in trigger:

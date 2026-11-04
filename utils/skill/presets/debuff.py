@@ -66,7 +66,7 @@ DEBUFF_SKILLS = {
             "phase_max": 3,
             "position_group": "front",
             "target_distance_min": -999,
-            "target_distance_max": 0,
+            "target_distance_max": -1,
         },
         "target": {"scope": "all_back", "limit": 20},
         "effects": [
