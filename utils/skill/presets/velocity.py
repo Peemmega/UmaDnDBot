@@ -15,7 +15,8 @@ VELOCITY_SKILLS = {
                 "value": 30,
                 "duration": "this_roll",
             },
-            {"type": "cap_floor", "value": 6, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 6, "duration": "this_roll", "condition": {"phase_min": 4, "phase_max": 4}},
+            {"type": "add_race_velocity_bonus", "value": 6, "condition": {"phase_min": 1, "phase_max": 3}},
         ],
         "tags": ["corner", "velocity"],
     },
@@ -101,7 +102,8 @@ VELOCITY_SKILLS = {
         "trigger": {"path_type": 1},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 3, "duration": "this_roll", "condition": {"phase_min": 4, "phase_max": 4}},
+            {"type": "add_race_velocity_bonus", "value": 3, "condition": {"phase_min": 1, "phase_max": 3}},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -264,7 +266,7 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 5},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -285,10 +287,10 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 30,
                 "duration": "this_roll",
             },
-            {"type": "modify_roll_cap", "value": 5, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 8},
         ],
         "tags": ["front", "mid_race", "velocity"],
     },
@@ -379,7 +381,8 @@ VELOCITY_SKILLS = {
                 "value": 10,
                 "duration": "this_roll",
             },
-            {"type": "cap_floor", "value": 6, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 6, "duration": "this_roll", "condition": {"phase_min": 4, "phase_max": 4}},
+            {"type": "add_race_velocity_bonus", "value": 6, "condition": {"phase_min": 1, "phase_max": 3}},
         ],
         "tags": ["corner", "velocity"],
     },
@@ -391,7 +394,8 @@ VELOCITY_SKILLS = {
         "trigger": {"path_type": 1},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 3, "duration": "this_roll", "condition": {"phase_min": 4, "phase_max": 4}},
+            {"type": "add_race_velocity_bonus", "value": 3, "condition": {"phase_min": 1, "phase_max": 3}},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",

@@ -2725,7 +2725,19 @@ def get_mob_usable_skills(channel_id: int, game: dict, user_id: str):
         if not ok:
             continue
 
-        usable.append((skill_id, skill))
+        # Score only effects that will actually activate in this turn.
+        active_effects = []
+        for effect in skill.get("effects", []):
+            condition = effect.get("condition")
+            if condition:
+                condition_ok, _ = check_skill_trigger(
+                    channel_id, user_id, {"trigger": condition},
+                    path_type=path_type, phase=phase,
+                )
+                if not condition_ok:
+                    continue
+            active_effects.append(effect)
+        usable.append((skill_id, {**skill, "effects": active_effects}))
 
     return usable
 
