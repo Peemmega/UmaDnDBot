@@ -291,6 +291,8 @@ def describe_effect(effect: dict) -> str:
             + (f" ({dur})" if dur else "")
             + condition_text
         )
+    if effect_type == "add_race_velocity_bonus":
+        return f"เพิ่มคะแนนทอย +{value} ทุกเทิร์นจนจบการแข่งขัน (สะสมได้)" + condition_text
     if effect_type == "modify_race_stats":
         stats = effect.get("stats", effect.get("stat", "all"))
         if stats == "all":

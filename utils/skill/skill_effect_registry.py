@@ -99,6 +99,17 @@ def _self_or_targets(context: SkillEffectContext) -> list[tuple[object, dict]]:
     return context.targets or [(context.user_id, context.player)]
 
 
+@SKILL_EFFECTS.register("add_race_velocity_bonus")
+def _add_race_velocity_bonus(context: SkillEffectContext, effect: dict) -> SkillEffectResult:
+    value = effect.get("value", 0)
+    texts = []
+    for target_id, target in _self_or_targets(context):
+        target["race_velocity_bonus"] = target.get("race_velocity_bonus", 0) + value
+        reference = context.format_player_reference(target_id, target)
+        texts.append(f"{reference} ได้โบนัสคะแนนทอย +{value} ทุกเทิร์นจนจบการแข่งขัน (สะสม {target['race_velocity_bonus']})")
+    return SkillEffectResult(texts)
+
+
 def _stamina_change(player: dict, value: int | float) -> int:
     snapshot = sync_runtime_stamina(player)
     return calculate_percent_stamina_amount(snapshot["max_stamina"], value)

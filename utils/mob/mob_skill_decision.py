@@ -20,6 +20,7 @@ FUTURE_LOOKAHEAD_TURNS = 4
 MIN_FUTURE_GAIN_TO_HOLD = 40
 BIG_FUTURE_GAIN_TO_HOLD = 80
 
+
 def estimate_rule_value(rule: dict) -> float:
     dice = rule.get("d", 1)
     kh = rule.get("kh", 0)
@@ -573,6 +574,14 @@ def evaluate_skill_score(game, user_id, skill):
 
         elif phase >= 4:
             score += effect_info["current_speed"] * 12
+
+    # Persistent race bonuses apply on this roll and each remaining turn.
+    race_bonus = sum(
+        effect.get("value", 0)
+        for effect in skill.get("effects", [])
+        if effect.get("type") == "add_race_velocity_bonus"
+    )
+    score += max(0, race_bonus) * max(1, max_turn - current_turn + 1) * 3
 
     # =====================================================
     # recovery

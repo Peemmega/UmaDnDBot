@@ -306,6 +306,9 @@ def apply_lane_tactics_to_result(
     if stamina_penalty_active:
         final_total = int(round(final_total * ((100 - stamina_debuff_percent) / 100)))
 
+    race_bonus = int(game_player.get("race_velocity_bonus", 0) or 0)
+    final_total += race_bonus
+
     def append_bonus(label: str, *, include_in_preview: bool = True) -> None:
         current = result.get("bonus_display", "-")
         result["bonus_display"] = label if current == "-" else f"{current} {label}"
@@ -325,6 +328,8 @@ def apply_lane_tactics_to_result(
         append_bonus("SUN +10STA", include_in_preview=False)
     if stamina_penalty_active and stamina_debuff_percent > 0:
         append_bonus(f"-{stamina_debuff_percent}%STA")
+    if race_bonus:
+        append_bonus(f"+{race_bonus}RACE")
 
     result["pre_lane_total"] = base_total
     result["total"] = final_total
@@ -1089,6 +1094,7 @@ def start_game(channel_id: int):
         player["next_roll_cap_bonus"] = 0
         player["next_roll_block_reduction"] = 0
         player["zone_speed_cap_bonus"] = 0
+        player["race_velocity_bonus"] = 0
         player["last_roll_block_reduction"] = 0
         player["gold_range_bonus_this_turn"] = 0
         player["enemy_gold_range_penalty_next_turn"] = 0

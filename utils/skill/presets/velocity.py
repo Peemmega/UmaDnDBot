@@ -42,7 +42,7 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "cap_floor", "value": 5, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 5},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -65,7 +65,7 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 3},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -196,9 +196,9 @@ VELOCITY_SKILLS = {
         "icon": "Velocity_rare",
         "cooldown": 8,
         "cost": 50,
-        "trigger": {"phase_min": 2, "phase_max": 3},
+        "trigger": {"phase_min": 2, "phase_max": 3, "skill_use_count_min": 2},
         "target": {"scope": "self", "limit": 1},
-        "effects": [{"type": "cap_floor", "value": 10, "duration": "this_roll"}],
+        "effects": [{"type": "add_race_velocity_bonus", "value": 10}],
         "tags": ["mid_race", "velocity", "cap_boost"],
     },
     "vel_014": {
@@ -338,7 +338,7 @@ VELOCITY_SKILLS = {
                 "value": 50,
                 "duration": "this_roll",
             },
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 3},
         ],
         "tags": ["pace", "mid_race", "velocity"],
     },
@@ -361,7 +361,7 @@ VELOCITY_SKILLS = {
                 "value": 50,
                 "duration": "this_roll",
             },
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 3},
         ],
         "tags": ["late", "mid_race", "middle", "velocity"],
     },
@@ -447,7 +447,7 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 3},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -525,7 +525,7 @@ VELOCITY_SKILLS = {
         "trigger": {"style": "Front", "phase_min": 2, "phase_max": 3},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 3},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -549,7 +549,7 @@ VELOCITY_SKILLS = {
                 "value": 25,
                 "duration": "this_roll",
             },
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 3},
         ],
         "tags": ["pace", "mid_race", "velocity"],
     },
@@ -576,7 +576,7 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 3},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
@@ -670,7 +670,7 @@ VELOCITY_SKILLS = {
         "effects": [
             {"type": "reduce_stamina", "value": 0.5},
             {"type": "flat_total", "value": 40},
-            {"type": "cap_floor", "value": 5, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 5},
         ],
         "tags": ["velocity", "stamina_cost", "rare"],
     },
@@ -684,7 +684,7 @@ VELOCITY_SKILLS = {
         "effects": [
             {"type": "reduce_stamina", "value": 0.5},
             {"type": "flat_total", "value": 30},
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 3},
         ],
         "tags": ["velocity", "stamina_cost"],
     },
