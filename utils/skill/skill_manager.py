@@ -292,7 +292,7 @@ def describe_effect(effect: dict) -> str:
             + condition_text
         )
     if effect_type == "add_race_velocity_bonus":
-        return f"เพิ่มคะแนนทอย +{value} ทุกเทิร์นจนจบการแข่งขัน (สะสมได้)" + condition_text
+        return f"เพิ่มโบนัสคะแนนทอย +{value} (สะสมได้ ลดลง 1 เมื่อเริ่มเทิร์นใหม่ ต่ำสุด 0)" + condition_text
     if effect_type == "modify_race_stats":
         stats = effect.get("stats", effect.get("stat", "all"))
         if stats == "all":

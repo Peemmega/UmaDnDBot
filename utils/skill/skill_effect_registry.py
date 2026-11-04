@@ -106,7 +106,7 @@ def _add_race_velocity_bonus(context: SkillEffectContext, effect: dict) -> Skill
     for target_id, target in _self_or_targets(context):
         target["race_velocity_bonus"] = target.get("race_velocity_bonus", 0) + value
         reference = context.format_player_reference(target_id, target)
-        texts.append(f"{reference} ได้โบนัสคะแนนทอย +{value} ทุกเทิร์นจนจบการแข่งขัน (สะสม {target['race_velocity_bonus']})")
+        texts.append(f"{reference} ได้โบนัสคะแนนทอย +{value} (สะสม {target['race_velocity_bonus']}, ลดลง 1 ต่อเทิร์น)")
     return SkillEffectResult(texts)
 
 

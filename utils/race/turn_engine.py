@@ -244,6 +244,8 @@ class TurnEngine:
         TurnEngine.reset_confirmations(game)
 
         for player in players.values():
+            if "race_velocity_bonus" in player:
+                player["race_velocity_bonus"] = max(0, player["race_velocity_bonus"] - 1)
             player["used_block"] = False
             player["no_reroll_this_turn"] = player.get("no_reroll_next_turn", False)
             player["no_reroll_next_turn"] = False

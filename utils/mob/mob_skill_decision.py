@@ -575,13 +575,18 @@ def evaluate_skill_score(game, user_id, skill):
         elif phase >= 4:
             score += effect_info["current_speed"] * 12
 
-    # Persistent race bonuses apply on this roll and each remaining turn.
+    # Value the additional points across remaining turns as the total decays.
     race_bonus = sum(
         effect.get("value", 0)
         for effect in skill.get("effects", [])
         if effect.get("type") == "add_race_velocity_bonus"
     )
-    score += max(0, race_bonus) * max(1, max_turn - current_turn + 1) * 3
+    existing_bonus = max(0, int(player.get("race_velocity_bonus", 0) or 0))
+    remaining_turns = max(1, max_turn - current_turn + 1)
+    score += 3 * sum(
+        max(0, existing_bonus + race_bonus - offset) - max(0, existing_bonus - offset)
+        for offset in range(remaining_turns)
+    )
 
     # =====================================================
     # recovery

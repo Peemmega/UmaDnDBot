@@ -2,9 +2,28 @@ import unittest
 from unittest.mock import patch
 
 from utils.game import manager
+from utils.race.turn_engine import TurnEngine
 
 
 class RaceVelocityBonusTests(unittest.TestCase):
+    def test_stacked_bonus_decays_once_per_new_turn_to_zero(self):
+        player = {"score": 0, "race_velocity_bonus": 3}
+        game = {"turn": 1, "max_turn": 8, "players": {"runner": player}}
+
+        def advance():
+            TurnEngine.advance(game, lane_system_enabled=False,
+                               record_lane_change=lambda *_: None,
+                               record_turn_snapshot=lambda *_: None,
+                               after_advance=lambda: None)
+
+        advance()
+        self.assertEqual(player["race_velocity_bonus"], 2)
+        player["race_velocity_bonus"] += 3
+        self.assertEqual(player["race_velocity_bonus"], 5)
+        for expected in (4, 3, 2, 1, 0, 0):
+            advance()
+            self.assertEqual(player["race_velocity_bonus"], expected)
+
     def test_adept_skills_choose_effect_for_phase_and_ai(self):
         for skill_id, path_type, amount, flat in (("vel_023", 2, 6, 10), ("vel_024", 1, 3, 20),
                                                   ("vel_001", 2, 6, 30), ("vel_007", 1, 3, 40)):
