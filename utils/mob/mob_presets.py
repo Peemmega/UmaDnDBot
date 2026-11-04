@@ -520,7 +520,7 @@ MOB_PRESETS = {
         "name": "Tokai Teio",
         "avatar": CHARACTER_DIR / "tokai_teio.png",
         "thumnail": thumnails["TokaiTeio"],
-        "style": "Late",
+        "style": "Pace",
         "race_profile": {
             "speed": 3,
             "stamina": 4,
