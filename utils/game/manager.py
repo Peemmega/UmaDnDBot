@@ -2207,7 +2207,8 @@ def add_mob_from_preset(channel_id: int, preset_key: str, level: int = 1):
         copy.deepcopy(preset["skills"]),
         game.get("distance"),
     )
-    skills = apply_common_mob_skills(skills, preset["style"], game.get("distance"))
+    if preset_key.startswith("rookie_"):
+        skills = apply_common_mob_skills(skills, preset["style"], game.get("distance"))
 
     entry_number = len(game["players"]) + 1
     default_lane = get_default_lane(entry_number)
