@@ -237,9 +237,10 @@ VELOCITY_SKILLS = {
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 30,
+                "value": 20,
                 "duration": "this_roll",
-            }
+            },
+            {"type": "add_race_velocity_bonus", "value": 3},
         ],
         "tags": ["mid_race", "velocity", "positioning"],
     },
