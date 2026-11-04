@@ -223,7 +223,7 @@ UNIQUE_SKILLS = {
                 "type": "modify_race_stats",
                 "stat": "speed",
                 "value": 1,
-                "condition": {"distance_type": "Medium", "skill_use_count_min": 3},
+                "condition": {"distance_type": "Medium", "skill_use_count_min": 2},
             },
         ],
         "tags": ["middle", "mid_race", "medium", "velocity", "unique"],
