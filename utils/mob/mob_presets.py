@@ -805,7 +805,7 @@ MOB_PRESETS = {
             1: "acc_001",  # Encroaching Shadow
             2: "acc_006",  # No Stopping Me!
             3: "vel_011",  # In Body and Mind
-            4: "utl_002",  # The Coast Is Clear!
+            4: "utl_002",  # Crusader
         },
         "zone": {
             "name": "Wild Joker",

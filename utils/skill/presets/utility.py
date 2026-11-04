@@ -20,11 +20,16 @@ UTILITY_SKILLS = {
         "tags": ["start", "concentration"],
     },
     "utl_002": {
-        "name": "The Coast Is Clear!",
+        "name": "Crusader",
         "icon": "LookUp_rare",
         "cooldown": 10,
         "cost": 60,
-        "trigger": {"style": "End", "phase_min": 2, "phase_max": 4},
+        "trigger": {
+            "style": "End",
+            "phase_min": 3,
+            "phase_max": 4,
+            "position_group": "back",
+        },
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_gold_range", "value": 50, "duration": "this_turn"},
