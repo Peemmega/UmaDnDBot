@@ -31,7 +31,7 @@ UNIQUE_SKILLS = {
         "name": "Triumphant Pulse",
         "icon": "UniqueVelocity",
         "cooldown": 8,
-        "cost": 120,
+        "cost": 100,
         "trigger": {
             "last_turn": True,
             "position_group": "front",
@@ -39,7 +39,15 @@ UNIQUE_SKILLS = {
             "target_distance_max": 999,
         },
         "target": {"scope": "self", "limit": 1},
-        "effects": [{"type": "cap_floor", "value": 15, "duration": "this_roll"}],
+        "effects": [
+            {
+                "type": "modify_velocity",
+                "mode": "flat_total",
+                "value": 40,
+                "duration": "this_roll",
+            },
+            {"type": "cap_floor", "value": 9, "duration": "this_roll"},
+        ],
         "tags": ["late_race", "lead", "velocity", "positioning", "unique"],
     },
     "unique_004": {
@@ -94,7 +102,11 @@ UNIQUE_SKILLS = {
                 "value": 40,
                 "duration": "this_roll",
             },
-            {"type": "modify_current_speed", "value": 2},
+            {
+                "type": "modify_race_stats",
+                "stat": "speed",
+                "value": 2,
+            },
             {"type": "recover_stamina", "value": 1},
         ],
         "tags": ["corner", "mid_race", "lead", "velocity", "recovery", "unique"],
