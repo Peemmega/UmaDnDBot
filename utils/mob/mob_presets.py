@@ -538,7 +538,7 @@ MOB_PRESETS = {
             "late": 1,
             "end_style": 1,
         },
-        "skills": {1: "unique_013", 2: "acc_002", 3: "vel_011", 4: "rec_001"},
+        "skills": {1: "unique_013", 2: "acc_007", 3: "vel_011", 4: "rec_001"},
         "zone": {
             "name": "Certain Victory",
             "image_url": "https://cdn.discordapp.com/attachments/1496027229308583986/1567435426212610178/red-teio-uma-musume_1.gif?ex=6aec2b7f&is=6aead9ff&hm=b54e329128df7cead294fe7edc164518a55f8ab36623822b0d19a1877450429c",
