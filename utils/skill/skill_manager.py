@@ -237,9 +237,9 @@ def describe_trigger(trigger: dict) -> str:
     if "target_distance_min" in trigger and "target_distance_max" in trigger:
         lower, upper = sorted((trigger["target_distance_min"], trigger["target_distance_max"]))
         if lower < 0 and upper <= 0:
-            target_text = f"มีสาวม้าด้านหลังในระยะ {upper} ถึง {lower}"
+            target_text = "มีสาวม้าด้านหลัง" if (lower, upper) == (-999, -1) else f"มีสาวม้าด้านหลังในระยะ {upper} ถึง {lower}"
         elif lower >= 0 and upper > 0:
-            target_text = f"มีสาวม้าด้านหน้าในระยะ {lower} ถึง {upper}"
+            target_text = "มีสาวม้าด้านหน้า" if (lower, upper) == (1, 999) else f"มีสาวม้าด้านหน้าในระยะ {lower} ถึง {upper}"
         else:
             target_text = f"มีสาวม้าในระยะ {lower} ถึง {upper}"
         parts.append(
