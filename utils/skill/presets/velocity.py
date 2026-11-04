@@ -75,11 +75,11 @@ VELOCITY_SKILLS = {
         },
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "add_race_velocity_bonus", "value": 3},
+            {"type": "add_race_velocity_bonus", "value": 6},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 30,
                 "duration": "this_roll",
             },
         ],
