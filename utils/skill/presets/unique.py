@@ -219,14 +219,19 @@ UNIQUE_SKILLS = {
         ],
         "tags": ["middle", "mid_race", "medium", "velocity", "unique"],
     },
-    'unique_013': {
-        "name": 'Rose of The grand meadow',
+    "unique_013": {
+        "name": "Radiant Star",
         "icon": "UniqueVelocity",
         "cooldown": 8,
-        "cost": 100,
-        "trigger": {'phase_min': 4, 'phase_max': 4, 'position_group': 'back'},
+        "cost": 120,
+        "trigger": {"phase_min": 3, "phase_max": 4},
         "target": {"scope": "self", "limit": 1},
-        "effects": [{'type': 'add_dkh', 'value': 3, 'duration': 'this_roll'}, {'type': 'reduce_block_penalty', 'value': 1.5, 'duration': 'this_roll', 'condition': {'track': 'turf'}}],
-        "tags": ['velocity', 'unique', 'last_spurt', 'back'],
+        "effects": [
+            {"type": "modify_current_speed", "value": 1},
+            {"type": "recover_stamina", "value": 1},
+            {"type": "add_dkh", "value": 1, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 6, "duration": "this_roll"},
+        ],
+        "tags": ["acceleration", "recovery", "velocity", "unique", "late_race"],
     },
 }

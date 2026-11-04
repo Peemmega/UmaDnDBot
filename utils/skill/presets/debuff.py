@@ -123,8 +123,14 @@ DEBUFF_SKILLS = {
         "icon": "ReduceSTA_rare",
         "cooldown": 8,
         "cost": 40,
-        "trigger": {"target_distance_min": 0, "target_distance_max": -30},
-        "target": {"scope": "all_back", "limit": 1},
+        "trigger": {
+            "phase_min": 2,
+            "phase_max": 3,
+            "position_group": "front",
+            "target_distance_min": -999,
+            "target_distance_max": 0,
+        },
+        "target": {"scope": "nearest_back", "limit": 1},
         "effects": [
             {"type": "reduce_stamina", "value": 1},
             {"type": "force_rush", "value": 1},
