@@ -637,6 +637,8 @@ def execute_roll_core(
         "rule": rule_text,
         "total": result.get("total"),
         "bonus_display": result.get("bonus_display"),
+        "gut_bonus": result.get("gut_bonus", 0),
+        "gut_carried_bonus": result.get("gut_carried_bonus", 0),
         "stamina": get_runtime_stamina_snapshot(game_player),
         "stamina_note": stamina_note,
         "blocked_count": result.get("blocked_count", 0),
@@ -678,6 +680,7 @@ def execute_roll_core(
     if not success:
         return False, {"message": "ไม่สามารถอัปเดตคะแนนได้"}
 
+    game_player["gut_bonus_current"] = result.get("gut_bonus", 0)
     if mark_roll:
         mark_player_rolled(channel_id, user_id)
 
@@ -1095,6 +1098,8 @@ def start_game(channel_id: int):
         player["next_roll_block_reduction"] = 0
         player["zone_speed_cap_bonus"] = 0
         player["race_velocity_bonus"] = 0
+        player["gut_bonus_current"] = 0
+        player["gut_bonus_carried"] = 0
         player["last_roll_block_reduction"] = 0
         player["gold_range_bonus_this_turn"] = 0
         player["enemy_gold_range_penalty_next_turn"] = 0

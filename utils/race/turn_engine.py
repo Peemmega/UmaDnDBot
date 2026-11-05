@@ -244,6 +244,8 @@ class TurnEngine:
         TurnEngine.reset_confirmations(game)
 
         for player in players.values():
+            previous_gut = player.pop("gut_bonus_current", player.get("gut_bonus_carried", 0))
+            player["gut_bonus_carried"] = max(0, int(previous_gut or 0) // 2)
             if "race_velocity_bonus" in player:
                 player["race_velocity_bonus"] = max(0, player["race_velocity_bonus"] - 1)
             player["used_block"] = False

@@ -205,15 +205,19 @@ def roll_by_rule(
     nearby_count = min(context.get("nearby_count", 0), 2)
     gut_scale = player_stats.get("gut", 1)
     gut_base_bonus = 0
-    gut_bonus = 0
+    gut_pack_bonus = 0
+    gut_carried_bonus = 0
 
     if context.get("phase", 1) >= 3:
         gut_base_bonus = gut_scale * 2
-        gut_bonus = (
+        gut_pack_bonus = (
             nearby_count * gut_scale * 2
             if context.get("distance_color") == "Gold"
             else 0
         )
+        gut_carried_bonus = max(0, int(game_player.get("gut_bonus_carried", 0) or 0))
+
+    total_gut_bonus = max(gut_base_bonus + gut_pack_bonus, gut_carried_bonus)
 
     total_selected_die_bonus = 0
 
@@ -232,8 +236,7 @@ def roll_by_rule(
     subtotal = (
         sum(modified_selected)
         + final_power_bonus
-        + gut_base_bonus
-        + gut_bonus
+        + total_gut_bonus
         + flat_velocity_bonus
         + speed_Bonus
         + stamina_bonus
@@ -246,7 +249,6 @@ def roll_by_rule(
     bonus_parts = []
     if speed_Bonus > 0:
         bonus_parts.append(f"+{speed_Bonus}{get_stat_icon('SPD')}")
-    total_gut_bonus = gut_base_bonus + gut_bonus
     if total_gut_bonus > 0:
         bonus_parts.append(f"+{total_gut_bonus}{get_stat_icon('GUT')}")
     if final_power_bonus > 0:
@@ -288,6 +290,10 @@ def roll_by_rule(
         "modified_selected": modified_selected,
         "display": " , ".join(display_parts),
         "base_total": base_total,
+        "gut_bonus": total_gut_bonus,
+        "gut_base_bonus": gut_base_bonus,
+        "gut_pack_bonus": gut_pack_bonus,
+        "gut_carried_bonus": gut_carried_bonus,
         "total": total,
         "total_display": total_display,
         "bonus_display": bonus_display,
@@ -353,6 +359,10 @@ def roll_race_dice(
         "modified_selected": dice_result["modified_selected"],
         "display": dice_result["display"],
         "base_total": dice_result["base_total"],
+        "gut_bonus": dice_result["gut_bonus"],
+        "gut_base_bonus": dice_result["gut_base_bonus"],
+        "gut_pack_bonus": dice_result["gut_pack_bonus"],
+        "gut_carried_bonus": dice_result["gut_carried_bonus"],
         "total": dice_result["total"],
         "total_display": dice_result["total_display"],
         "bonus_display": dice_result["bonus_display"],

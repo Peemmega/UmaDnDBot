@@ -131,6 +131,7 @@ async def execute_reroll(
     if not success:
         return False, {"message": "ไม่สามารถอัปเดตคะแนนใหม่ได้"}
 
+    game_player["gut_bonus_current"] = result.get("gut_bonus", 0)
     rule = result.get("rule", {})
     rule_text = f"{rule.get('d', 0)}d"
     if rule.get("kh") is not None:
@@ -142,6 +143,8 @@ async def execute_reroll(
         "total": result.get("total"),
         "base_total": result.get("base_total"),
         "bonus_display": result.get("bonus_display"),
+        "gut_bonus": result.get("gut_bonus", 0),
+        "gut_carried_bonus": result.get("gut_carried_bonus", 0),
         "stamina": get_runtime_stamina_snapshot(game_player),
         "stamina_note": staminaNote or format_runtime_stamina(game_player),
         "blocked_count": result.get("blocked_count", 0),

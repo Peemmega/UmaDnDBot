@@ -1093,6 +1093,7 @@ class RaceWebManager:
             update_player_score(room_id, str(user_id), old_total)
             return False, {"message": "Could not apply new score"}
 
+        player["gut_bonus_current"] = result.get("gut_bonus", 0)
         rule = result.get("rule", {})
         rule_text = f"{rule.get('d', 0)}d"
         if rule.get("kh") is not None:
@@ -1105,6 +1106,8 @@ class RaceWebManager:
             "total": result.get("total"),
             "base_total": result.get("base_total"),
             "bonus_display": result.get("bonus_display"),
+            "gut_bonus": result.get("gut_bonus", 0),
+            "gut_carried_bonus": result.get("gut_carried_bonus", 0),
             "blocked_count": result.get("blocked_count", 0),
             "blocked_runner_ids": result.get("blocked_runner_ids", []),
             "blocking_penalty": result.get("blocking_penalty", 0.0),
