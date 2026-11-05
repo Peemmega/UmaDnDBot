@@ -260,8 +260,13 @@ async def create_race_dice_preview(
     payload: dict,
     path_label: str,
     character_image_url: str,
-    sunny_overlay: bool = False,
+    sunny_overlay: bool | None = None,
 ):
+    if sunny_overlay is None:
+        sunny_overlay = (
+            (payload.get("game") or {}).get("weather") == "sunny"
+            or int(result.get("weather_stamina_cost", 0) or 0) > 0
+        )
     card = _load_local_rgba(str(BG_PATH.resolve())).copy()
     draw = ImageDraw.Draw(card)
 

@@ -244,6 +244,7 @@ class RaceWebManager:
             result=result,
             payload={
                 "new_score": preview.get("new_score", player.get("score", 0)),
+                "game": game,
             },
             path_label=preview.get("path_label")
             or PATH_TYPE_TEXT.get(get_current_path_type(game), "Straight"),

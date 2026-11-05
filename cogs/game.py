@@ -1226,7 +1226,6 @@ class GameCog(commands.GroupCog, name="game"):
             payload=payload,
             path_label=path_effect["label"],
             character_image_url=resolve_player_render_image(game_player, avatar_url),
-            sunny_overlay=payload.get("game", {}).get("weather") == "sunny",
         )
 
         buffer = await encode_png(card)

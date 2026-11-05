@@ -268,16 +268,16 @@ MOB_PRESETS = {
         "style": 'Late',
         "race_profile": {
             "speed": 3,
-            "stamina": 3,
+            "stamina": 4,
             "power": 6,
-            "gut": 3,
-            "wit": 2,
+            "gut": 1,
+            "wit": 3,
         },
         "skills": {
             1: 'acc_018',  # Slick Surge
             2: 'vel_024',  # Outer Swell
             3: 'vel_016',
-            4: 'rec_011',  # Nimble Navigator
+            4: 'vel_036',  # Nimble Navigator
         },
         "zone": {
             "name": "Default Zone",
@@ -285,10 +285,10 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 0,
-                "modify_current_speed": 2,
+                "modify_current_speed": 0,
             
                          'add_dkh': 3,
-                         'cap_floor': 0,
+                         'cap_floor': 2,
                          'self_heal_stamina': 0,
                          'race_speed': 0,
                          'reduce_block_penalty': 0,
