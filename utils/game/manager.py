@@ -1947,6 +1947,7 @@ def add_player_as_mob_preset(
         return False, "ไม่พบ preset"
 
     race_profile = copy.deepcopy(preset["race_profile"])
+    race_profile = apply_mob_level(race_profile, 1)
     race_profile = apply_rookie_distance_stats(
         preset_key, race_profile, game.get("distance")
     )
@@ -1999,6 +2000,7 @@ def add_player_as_mob_preset(
         "is_mob": False,
         "using_mob_preset": True,
         "mob_preset_key": preset_key,
+        "mob_level": 1,
         "race_profile": race_profile,
         "skill_cooldowns": {},
         "used_rush": False,
