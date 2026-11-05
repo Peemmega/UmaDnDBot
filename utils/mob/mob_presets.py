@@ -59,10 +59,10 @@ def named_low_level_zone(name: str) -> dict:
 MOB_PRESETS = {
     # Rookie
     "rookie_front": {
-        "name": "Faster than Ray",
+        "name": 'Faster than Ray',
         "avatar": CHARACTER_DIR / "mob_01.png",
         "thumnail": thumnails["Rookie1"],
-        "style": "Front",
+        "style": 'Front',
         "race_profile": {
             "speed": 5,
             "stamina": 3,
@@ -71,10 +71,10 @@ MOB_PRESETS = {
             "wit": 2,
         },
         "skills": {
-            1: "acc_013",  # Early Lead
-            2: "vel_023",  # Corner Adept
-            3: "vel_032",  # Fast Paced
-            4: "rec_011",  # Straightaway Recovery
+            1: 'acc_013',  # Early Lead
+            2: 'vel_023',  # Corner Adept
+            3: 'vel_032',  # Fast Paced
+            4: 'rec_011',  # Straightaway Recovery
         },
         "zone": {
             "name": "Default Zone",
@@ -83,35 +83,41 @@ MOB_PRESETS = {
             "build": {
                 "flat": 3,
                 "modify_current_speed": 2,
-            },
+            
+                         'add_dkh': 0,
+                         'cap_floor': 0,
+                         'self_heal_stamina': 0,
+                         'race_speed': 0,
+                         'reduce_block_penalty': 0,
+                     },
         },
     },
     "rookie_pace": {
-        "name": "Sarasate Opera",
+        "name": 'Sarasate Opera',
         "avatar": CHARACTER_DIR / "mob_02.png",
         "thumnail": thumnails["Rookie2"],
-        "style": "Pace",
+        "style": 'Pace',
         "race_profile": {
             "speed": 4,
             "stamina": 3,
             "power": 6,
-            "gut": 2,
-            "wit": 2,
+            "gut": 1,
+            "wit": 3,
         },
         "skills": {
-            1: "vel_016",
-            2: "vel_023",
-            3: "acc_017",
-            4: "vel_033",
+            1: 'vel_016',
+            2: 'vel_023',
+            3: 'acc_017',
+            4: 'rec_011',
         },
         "zone": {
             "name": "Default Zone",
             "image_url": "",
             "points": 0,
             "build": {
-                "flat": 2,
+                "flat": 0,
                 "add_dkh": 3,
-                "cap_floor": 0,
+                "cap_floor": 2,
                 "self_heal_stamina": 0,
                 "modify_current_speed": 0,
                 "race_speed": 0,
@@ -120,10 +126,10 @@ MOB_PRESETS = {
         },
     },
     "rookie_late": {
-        "name": "Hexa Canyon",
+        "name": 'Hexa Canyon',
         "avatar": CHARACTER_DIR / "mob_03.png",
         "thumnail": thumnails["Rookie3"],
-        "style": "Late",
+        "style": 'Late',
         "race_profile": {
             "speed": 4,
             "stamina": 4,
@@ -132,10 +138,10 @@ MOB_PRESETS = {
             "wit": 2,
         },
         "skills": {
-            1: "acc_018",  # Slick Surge
-            2: "vel_024",  # Straightaway Adept
-            3: "vel_016",  # Homestretch Haste
-            4: "vel_031",  # Outer Swell
+            1: 'acc_018',  # Slick Surge
+            2: 'vel_024',  # Straightaway Adept
+            3: 'vel_016',  # Homestretch Haste
+            4: 'vel_031',  # Outer Swell
         },
         "zone": {
             "name": "Default Zone",
@@ -144,26 +150,32 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "modify_current_speed": 3,
-            },
+            
+                         'add_dkh': 0,
+                         'cap_floor': 0,
+                         'self_heal_stamina': 0,
+                         'race_speed': 0,
+                         'reduce_block_penalty': 0,
+                     },
         },
     },
     "rookie_end": {
-        "name": "Sunfish Ray",
+        "name": 'Sunfish Ray',
         "avatar": CHARACTER_DIR / "mob_04.png",
         "thumnail": thumnails["Rookie4"],
-        "style": "End",
+        "style": 'End',
         "race_profile": {
-            "speed": 4,
-            "stamina": 4,
+            "speed": 3,
+            "stamina": 3,
             "power": 6,
-            "gut": 2,
-            "wit": 1,
+            "gut": 1,
+            "wit": 3,
         },
         "skills": {
-            1: "rec_014",  # After-School Stroll
-            2: "acc_010",  # Nimble Navigator
-            3: "vel_029",  # Masterful Gambit
-            4: "acc_012",  # Straightaway Spurt
+            1: 'rec_014',  # After-School Stroll
+            2: 'vel_016',  # Nimble Navigator
+            3: 'vel_029',  # Masterful Gambit
+            4: 'acc_012',  # Straightaway Spurt
         },
         "zone": {
             "name": "Default Zone",
@@ -172,42 +184,54 @@ MOB_PRESETS = {
             "build": {
                 "add_dkh": 3,
                 "cap_floor": 2,
-            },
+            
+                         'flat': 0,
+                         'self_heal_stamina': 0,
+                         'modify_current_speed': 0,
+                         'race_speed': 0,
+                         'reduce_block_penalty': 0,
+                     },
         },
     },
     "rookie_alt_front": {
-        "name": "Apple Cider",
+        "name": 'Apple Cider',
         "avatar": CHARACTER_DIR / "mob_01.png",
         "thumnail": thumnails["Rookie1"],
-        "style": "Front",
+        "style": 'Front',
         "race_profile": {
             "speed": 4,
-            "stamina": 6,
+            "stamina": 5,
             "power": 5,
             "gut": 1,
-            "wit": 1,
+            "wit": 2,
         },
         "skills": {
-            1: "acc_013",  # Early Lead
-            2: "vel_032",  # Fast-Paced
-            3: "vel_016",  # Homestretch Haste
-            4: "vel_023",  # corner Adept
+            1: 'acc_013',  # Early Lead
+            2: 'vel_032',  # Fast-Paced
+            3: 'vel_016',  # Homestretch Haste
+            4: 'vel_023',  # corner Adept
         },
         "zone": {
             "name": "Default Zone",
             "image_url": "",
             "points": 0,
             "build": {
-                "flat": 2,
-                "modify_current_speed": 3,
-            },
+                "flat": 3,
+                "modify_current_speed": 1,
+            
+                         'add_dkh': 0,
+                         'cap_floor': 0,
+                         'self_heal_stamina': 0,
+                         'race_speed': 1,
+                         'reduce_block_penalty': 0,
+                     },
         },
     },
     "rookie_alt_pace": {
-        "name": "Shindo Runrun",
+        "name": 'Shindo Runrun',
         "avatar": CHARACTER_DIR / "mob_02.png",
         "thumnail": thumnails["Rookie2"],
-        "style": "Pace",
+        "style": 'Pace',
         "race_profile": {
             "speed": 4,
             "stamina": 4,
@@ -216,10 +240,10 @@ MOB_PRESETS = {
             "wit": 1,
         },
         "skills": {
-            1: "vel_024",  # Straightaway Adept
-            2: "acc_017",  # Head-On
-            3: "vel_014",  # Ramp Up
-            4: "acc_010",  # Nimble Navigator
+            1: 'vel_024',  # Straightaway Adept
+            2: 'acc_017',  # Head-On
+            3: 'vel_014',  # Ramp Up
+            4: 'vel_016',  # Nimble Navigator
         },
         "zone": {
             "name": "Default Zone",
@@ -228,42 +252,54 @@ MOB_PRESETS = {
             "build": {
                 "flat": 2,
                 "add_dkh": 3,
-            },
+            
+                         'cap_floor': 0,
+                         'self_heal_stamina': 0,
+                         'modify_current_speed': 0,
+                         'race_speed': 0,
+                         'reduce_block_penalty': 0,
+                     },
         },
     },
     "rookie_alt_late": {
-        "name": "Dominant Power",
+        "name": 'Dominant Power',
         "avatar": CHARACTER_DIR / "mob_03.png",
         "thumnail": thumnails["Rookie3"],
-        "style": "Late",
+        "style": 'Late',
         "race_profile": {
-            "speed": 5,
-            "stamina": 4,
-            "power": 5,
-            "gut": 2,
-            "wit": 1,
+            "speed": 3,
+            "stamina": 3,
+            "power": 6,
+            "gut": 3,
+            "wit": 2,
         },
         "skills": {
-            1: "acc_018",  # Slick Surge
-            2: "vel_031",  # Outer Swell
-            3: "vel_016",
-            4: "acc_010",  # Nimble Navigator
+            1: 'acc_018',  # Slick Surge
+            2: 'vel_024',  # Outer Swell
+            3: 'vel_016',
+            4: 'rec_011',  # Nimble Navigator
         },
         "zone": {
             "name": "Default Zone",
             "image_url": "",
             "points": 0,
             "build": {
-                "flat": 2,
-                "modify_current_speed": 3,
-            },
+                "flat": 0,
+                "modify_current_speed": 2,
+            
+                         'add_dkh': 3,
+                         'cap_floor': 0,
+                         'self_heal_stamina': 0,
+                         'race_speed': 0,
+                         'reduce_block_penalty': 0,
+                     },
         },
     },
     "rookie_alt_end": {
-        "name": "Waltz of Shadow",
+        "name": 'Waltz of Shadow',
         "avatar": CHARACTER_DIR / "mob_04.png",
         "thumnail": thumnails["Rookie4"],
-        "style": "End",
+        "style": 'End',
         "race_profile": {
             "speed": 4,
             "stamina": 4,
@@ -272,19 +308,25 @@ MOB_PRESETS = {
             "wit": 2,
         },
         "skills": {
-            1: "acc_021",  # Sharp Steps
-            2: "vel_029",  # Masterful Gambit
-            3: "vel_023",  # Corner Adept
-            4: "vel_016",  # Homestretch Haste
+            1: 'acc_021',  # Sharp Steps
+            2: 'vel_029',  # Masterful Gambit
+            3: 'vel_023',  # Corner Adept
+            4: 'vel_016',  # Homestretch Haste
         },
         "zone": {
             "name": "Default Zone",
             "image_url": "",
             "points": 0,
             "build": {
-                "flat": 3,
-                "modify_current_speed": 2,
-            },
+                "flat": 0,
+                "modify_current_speed": 0,
+            
+                         'add_dkh': 3,
+                         'cap_floor': 2,
+                         'self_heal_stamina': 0,
+                         'race_speed': 0,
+                         'reduce_block_penalty': 0,
+                     },
         },
     },
     # Test
