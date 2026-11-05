@@ -26,8 +26,7 @@ COMMON_ICON_KEYS = {
 ICON = {
     **SKILL_ICONS,
     **{
-        rare_key: SKILL_ICONS[icon_key]
-        for icon_key, rare_key in RARE_ICON_KEYS.items()
+        rare_key: SKILL_ICONS[icon_key] for icon_key, rare_key in RARE_ICON_KEYS.items()
     },
     **{
         common_key: SKILL_ICONS[icon_key]
@@ -64,6 +63,7 @@ def get_skill_rarity(skill: dict) -> str:
     if icon.endswith("_rare"):
         return "rare"
     return "common"
+
 
 EFFECT_TYPES = {
     "cap_floor",
@@ -118,44 +118,84 @@ SKILL_TAG_OPTIONS = [
 # The game still evaluates the original trigger/tags fields.
 SKILL_APTITUDE_OPTIONS = [
     ("all", "All aptitudes"),
-    ("turf", "Turf"), ("dirt", "Dirt"),
-    ("sprint", "Sprint"), ("mile", "Mile"), ("medium", "Medium"), ("long", "Long"),
-    ("front", "Front"), ("pace", "Pace"), ("late", "Late"), ("end", "End"),
+    ("turf", "Turf"),
+    ("dirt", "Dirt"),
+    ("sprint", "Sprint"),
+    ("mile", "Mile"),
+    ("medium", "Medium"),
+    ("long", "Long"),
+    ("front", "Front"),
+    ("pace", "Pace"),
+    ("late", "Late"),
+    ("end", "End"),
 ]
 
 SKILL_DETAIL_OPTIONS = [
     ("all", "All details"),
-    ("acceleration", "Acceleration"), ("velocity", "Velocity"),
-    ("recovery", "Recovery"), ("debuff", "Debuff"), ("passive", "Passive"),
-    ("blind", "Blind"), ("unique", "Unique"), ("concentration", "Concentration"),
-    ("vision", "Vision"), ("positioning", "Positioning"),
-    ("corner", "Corner"), ("straight", "Straight"),
-    ("final_corner", "Final corner"), ("uphill", "Uphill"), ("downhill", "Downhill"),
-    ("early_race", "Early race"), ("mid_race", "Mid race"),
-    ("late_race", "Late race"), ("lastspurt", "Last spurt"),
-    ("front_position", "Front position"), ("middle_position", "Middle position"),
-    ("back_position", "Back position"), ("front_blocked", "Front blocked"),
-    ("target_ahead", "Target ahead"), ("target_behind", "Target behind"),
-    ("nearby_uma", "Nearby Uma"), ("followed", "Being followed"),
-    ("stability", "Stability"), ("cap_boost", "Cap boost"),
-    ("blocked", "Blocked"), ("burst", "Burst"), ("sustain", "Sustain"),
-    ("power", "Power"), ("stamina", "Stamina"), ("mindgame", "Mind game"),
+    ("acceleration", "Acceleration"),
+    ("velocity", "Velocity"),
+    ("recovery", "Recovery"),
+    ("debuff", "Debuff"),
+    ("passive", "Passive"),
+    ("blind", "Blind"),
+    # ("unique", "Unique"),
+    ("concentration", "Concentration"),
+    ("vision", "Vision"),
+    ("positioning", "Positioning"),
+    ("corner", "Corner"),
+    ("straight", "Straight"),
+    ("final_corner", "Final corner"),
+    ("uphill", "Uphill"),
+    ("downhill", "Downhill"),
+    ("early_race", "Early race"),
+    ("mid_race", "Mid race"),
+    ("late_race", "Late race"),
+    ("lastspurt", "Last spurt"),
+    # ("front_position", "Front position"),
+    # ("middle_position", "Middle position"),
+    # ("back_position", "Back position"),
+    # ("front_blocked", "Front blocked"),
+    # ("target_ahead", "Target ahead"),
+    # ("target_behind", "Target behind"),
+    # ("nearby_uma", "Nearby Uma"),
+    # ("followed", "Being followed"),
+    # ("stability", "Stability"),
+    ("cap_boost", "Cap boost"),
+    # ("blocked", "Blocked"),
+    ("burst", "Dice"),
+    # ("sustain", "Sustain"),
+    ("power", "Power"),
+    ("stamina", "Stamina"),
+    # ("mindgame", "Mind game"),
 ]
 
 _DETAIL_KEYS = {key for key, _ in SKILL_DETAIL_OPTIONS if key != "all"}
 _STYLE_TO_APTITUDE = {"Front": "front", "Pace": "pace", "Late": "late", "End": "end"}
 _ICON_TO_DETAIL = {
-    "Acceleration": "acceleration", "Acceleration_rare": "acceleration",
-    "acceleration": "acceleration", "UniqueAcceleration": "acceleration",
-    "Velocity": "velocity", "Velocity_rare": "velocity", "velocity": "velocity",
-    "UniqueVelocity": "velocity", "Recovery": "recovery", "Recovery_rare": "recovery",
+    "Acceleration": "acceleration",
+    "Acceleration_rare": "acceleration",
+    "acceleration": "acceleration",
+    "UniqueAcceleration": "acceleration",
+    "Velocity": "velocity",
+    "Velocity_rare": "velocity",
+    "velocity": "velocity",
+    "UniqueVelocity": "velocity",
+    "Recovery": "recovery",
+    "Recovery_rare": "recovery",
     "UniqueRecovery": "recovery",
-    "stamina": "recovery", "Passive": "passive", "Passive_rare": "passive",
-    "Concentration": "concentration", "Concentration_rare": "concentration",
-    "LookUp": "vision", "LookUp_rare": "vision",
-    "DecreaseVelocity": "debuff", "DecreaseVelocity_rare": "debuff",
-    "ReduceSTA": "debuff", "ReduceSTA_rare": "debuff",
-    "Blind": "debuff", "Blind_rare": "debuff",
+    "stamina": "recovery",
+    "Passive": "passive",
+    "Passive_rare": "passive",
+    "Concentration": "concentration",
+    "Concentration_rare": "concentration",
+    "LookUp": "vision",
+    "LookUp_rare": "vision",
+    "DecreaseVelocity": "debuff",
+    "DecreaseVelocity_rare": "debuff",
+    "ReduceSTA": "debuff",
+    "ReduceSTA_rare": "debuff",
+    "Blind": "debuff",
+    "Blind_rare": "debuff",
 }
 
 
@@ -197,7 +237,9 @@ def get_skill_category_groups(skill: dict) -> dict[str, list[str]]:
         normalized = detail_aliases.get(tag, tag)
         if normalized in _DETAIL_KEYS:
             detail.add(normalized)
-    path_detail = {1: "straight", 2: "corner", 3: "uphill", 4: "downhill"}.get(trigger.get("path_type"))
+    path_detail = {1: "straight", 2: "corner", 3: "uphill", 4: "downhill"}.get(
+        trigger.get("path_type")
+    )
     if path_detail:
         detail.add(path_detail)
     if trigger.get("lastspurt"):
@@ -210,6 +252,7 @@ def get_skill_category_groups(skill: dict) -> dict[str, list[str]]:
         "aptitude": [key for key, _ in SKILL_APTITUDE_OPTIONS if key in aptitude],
         "detail": [key for key, _ in SKILL_DETAIL_OPTIONS if key in detail],
     }
+
 
 TRIGGER_SCHEMA = {
     "path_type": None,
