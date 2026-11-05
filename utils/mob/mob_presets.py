@@ -64,11 +64,11 @@ MOB_PRESETS = {
         "thumnail": thumnails["Rookie1"],
         "style": "Front",
         "race_profile": {
-            "speed": 6,
-            "stamina": 5,
-            "power": 4,
+            "speed": 5,
+            "stamina": 3,
+            "power": 5,
             "gut": 1,
-            "wit": 1,
+            "wit": 2,
             "turf": 1,
             "dirt": 1,
             "sprint": 1,
@@ -82,9 +82,9 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "acc_013",  # Early Lead
-            2: "vel_014",  # Ramp Up
-            3: "vel_024",  # Straightaway Adept
-            4: "acc_005",  # Groundwork.
+            2: "vel_023",  # Corner Adept
+            3: "vel_032",  # Fast Paced
+            4: "rec_011",  # Straightaway Recovery
         },
         "zone": {
             "name": "Default Zone",
@@ -103,10 +103,10 @@ MOB_PRESETS = {
         "style": "Pace",
         "race_profile": {
             "speed": 4,
-            "stamina": 4,
+            "stamina": 3,
             "power": 6,
             "gut": 2,
-            "wit": 1,
+            "wit": 2,
             "turf": 1,
             "dirt": 1,
             "sprint": 1,
@@ -119,10 +119,10 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "vel_006",  # Speed Star
-            2: "vel_024",  # Straightaway Adept
-            3: "acc_017",  # Head-On
-            4: "vel_014",  # Ramp Up
+            1: "vel_016",
+            2: "vel_023",
+            3: "acc_017",
+            4: "vel_033",
         },
         "zone": {
             "name": "Default Zone",
@@ -235,8 +235,8 @@ MOB_PRESETS = {
         "skills": {
             1: "acc_013",  # Early Lead
             2: "vel_032",  # Fast-Paced
-            3: "acc_005",  # Groundwork
-            4: "vel_024",  # Straightaway Adept
+            3: "vel_016",  # Homestretch Haste
+            4: "vel_023",  # corner Adept
         },
         "zone": {
             "name": "Default Zone",
@@ -244,8 +244,7 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 2,
-                "cap_floor": 1,
-                "modify_current_speed": 2,
+                "modify_current_speed": 3,
             },
         },
     },
@@ -331,9 +330,9 @@ MOB_PRESETS = {
         "thumnail": thumnails["Rookie4"],
         "style": "End",
         "race_profile": {
-            "speed": 3,
+            "speed": 4,
             "stamina": 4,
-            "power": 7,
+            "power": 6,
             "gut": 1,
             "wit": 2,
             "turf": 1,
@@ -348,9 +347,9 @@ MOB_PRESETS = {
             "end_style": 1,
         },
         "skills": {
-            1: "vel_014",  # Ramp Up
+            1: "acc_021",  # Sharp Steps
             2: "vel_029",  # Masterful Gambit
-            3: "acc_012",  # Straightaway Spurt
+            3: "vel_023",  # Corner Adept
             4: "vel_016",  # Homestretch Haste
         },
         "zone": {
