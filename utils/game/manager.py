@@ -227,7 +227,9 @@ def apply_lane_tactics_to_result(
     sync_runtime_stamina(game_player)
 
     base_total = int(result.get("total", 0) or 0)
-    final_total = base_total
+    race_bonus = int(game_player.get("race_velocity_bonus", 0) or 0)
+    pre_penalty_total = base_total + race_bonus
+    final_total = pre_penalty_total
     blocked_count = 0
     blocked_runner_ids: list[str] = []
     blocking_penalty = 0.0
@@ -268,7 +270,7 @@ def apply_lane_tactics_to_result(
         block_info = calculate_lane_block_penalty(
             temp_player,
             working_players,
-            base_total,
+            pre_penalty_total,
             power_stat=power_stat,
             block_reduction_levels=block_reduction_levels,
         )
@@ -306,9 +308,6 @@ def apply_lane_tactics_to_result(
     if stamina_penalty_active:
         final_total = int(round(final_total * ((100 - stamina_debuff_percent) / 100)))
 
-    race_bonus = int(game_player.get("race_velocity_bonus", 0) or 0)
-    final_total += race_bonus
-
     def append_bonus(label: str, *, include_in_preview: bool = True) -> None:
         current = result.get("bonus_display", "-")
         result["bonus_display"] = label if current == "-" else f"{current} {label}"
@@ -331,7 +330,8 @@ def apply_lane_tactics_to_result(
     if race_bonus:
         append_bonus(f"+{race_bonus}RACE")
 
-    result["pre_lane_total"] = base_total
+    result["pre_lane_total"] = pre_penalty_total
+    result["race_velocity_bonus"] = race_bonus
     result["total"] = final_total
     result["total_display"] = str(final_total)
     result["blocked_count"] = blocked_count

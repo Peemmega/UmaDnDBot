@@ -223,6 +223,7 @@ Gut bonus ใน Phase 3–4 คือ `2×Gut` และเพิ่มอี�
 - Blocked raw penalty = `10% × จำนวนคู่แข่งที่ถูกวิ่งผ่าน − Power%`
 - Blocked final penalty = `min(20%, max(0%, raw penalty))`
 - Final after Blocked = `round(pre-lane total × (1 − final penalty))`
+- Add โบนัสความเร็วสะสม (`race_velocity_bonus`) เข้า pre-lane total ก่อน แล้วคำนวณโทษ Blocked จากยอดนี้; จากนั้นค่อยคำนวณ Fatigue เป็นขั้นท้าย ทั้งสองโทษจึงมีผลกับโบนัสที่สะสมด้วย
 - Block move-back = `gap to nearest eligible trailing runner − In Pack range`
 
 ## Centralized Race History

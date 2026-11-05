@@ -448,7 +448,7 @@ async def create_race_dice_preview(
 
     if sunny_overlay:
         # Add a light orange tint while keeping the artwork visible.
-        overlay = Image.new("RGBA", card.size, (255, 119, 0, 50))
+        overlay = Image.new("RGBA", card.size, (255, 119, 0, 35))
         card = Image.alpha_composite(card, overlay)
 
     return card
