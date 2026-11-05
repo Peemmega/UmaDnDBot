@@ -2000,7 +2000,6 @@ def add_player_as_mob_preset(
         "is_mob": False,
         "using_mob_preset": True,
         "mob_preset_key": preset_key,
-        "mob_level": 1,
         "race_profile": race_profile,
         "skill_cooldowns": {},
         "used_rush": False,
@@ -2803,6 +2802,22 @@ def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int, u
 
     zone = player.get("zone") or {}
     effects = get_zone_effects_from_build(zone.get("build", {}))
+    from utils.mob.mob_skill_decision import (
+        _effective_roll_shape,
+        get_current_dice_context,
+    )
+    dice_context = get_current_dice_context(game, user_id)
+    current_roll = _effective_roll_shape(player, dice_context["rule"])
+    zone_add_dice = int(effects.get("add_dkh", 0) or 0)
+    zone_roll = _effective_roll_shape(
+        player,
+        dice_context["rule"],
+        extra_dice=zone_add_dice,
+        extra_keep=zone_add_dice,
+    )
+    zone_cap_floor = max(0, int(effects.get("cap", 0) or 0)) + max(
+        0, int(effects.get("floor", 0) or 0)
+    )
     snapshot = get_runtime_stamina_snapshot(dict(player))
     max_stamina = max(1, int(snapshot.get("max_stamina", 0) or 0))
     stamina_ratio = int(snapshot.get("current_stamina", 0) or 0) / max_stamina
@@ -2816,6 +2831,8 @@ def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int, u
         + (int(effects.get("floor", 0) or 0) + int(effects.get("cap", 0) or 0)) * 5
         + int(effects.get("modify_current_speed", 0) or 0) * 24
         + int(effects.get("race_speed", 0) or 0) * 20
+        + zone_cap_floor * max(1, int(zone_roll["dice"])) * 2
+        + zone_cap_floor * min(max(0, zone_roll["dice"] - current_roll["dice"]), 4) * 4
     )
     if stamina_ratio < 0.65:
         value += (int(effects.get("self_heal_stamina", 0) or 0) / 10) * 30
@@ -2842,8 +2859,8 @@ def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int, u
         return False
 
     future = get_future_dice_context(game, user_id)
-    dice_zone = effects.get("add_dkh", 0) or effects.get("cap", 0) or effects.get("floor", 0)
-    if dice_zone and future["has_much_better_future_dice"] and not healing_needed:
+    dice_zone = zone_add_dice or effects.get("cap", 0) or effects.get("floor", 0)
+    if dice_zone and not healing_needed:
         # Evaluate the skills the AI would actually select with the Zone's
         # dice bonuses applied, without changing the live race or consuming it.
         preview_player = dict(player)
@@ -2864,7 +2881,8 @@ def should_mob_use_endgame_zone(game: dict, user_id, player: dict, phase: int, u
         ) or (
             (effects.get("cap", 0) or effects.get("floor", 0)) and selected_effects.intersection({"add_d", "add_kh", "add_dkh"})
         )
-        if not synergizes:
+        high_dice_cap_floor = zone_cap_floor > 0 and zone_roll["dice"] >= 3
+        if future["has_much_better_future_dice"] and not synergizes and not high_dice_cap_floor:
             return False
     return True
 

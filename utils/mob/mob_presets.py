@@ -437,7 +437,7 @@ MOB_PRESETS = {
             1: "vel_024",  # Straightaway Adept
             2: "vel_011",  # In Body and Mind
             3: "acc_007",  # Neck and Neck
-            4: "acc_010",  # Radiant Star
+            4: "rec_005",  # Radiant Star
         },
         "zone": {
             "name": "Abyssal Lament",
@@ -446,6 +446,11 @@ MOB_PRESETS = {
             "build": {
                 "add_dkh": 3,
                 "cap_floor": 2,
+                "flat": 0,
+                "self_heal_stamina": 0,
+                "modify_current_speed": 0,
+                "race_speed": 0,
+                "reduce_block_penalty": 0,
             },
         },
     },

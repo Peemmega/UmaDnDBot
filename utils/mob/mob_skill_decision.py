@@ -72,6 +72,30 @@ def get_current_dice_context(game, user_id):
     }
 
 
+def _effective_roll_shape(player: dict, rule: dict, extra_dice: int = 0, extra_keep: int = 0) -> dict:
+    """Return the dice and keep counts after pending and proposed bonuses."""
+    base_dice = max(1, int(rule.get("d", 1) or 1))
+    pending_dkh = int(player.get("next_roll_add_dkh", 0) or 0)
+    pending_dice = int(player.get("next_roll_add_d", 0) or 0) + pending_dkh
+    pending_keep = int(player.get("next_roll_add_kh", 0) or 0) + pending_dkh
+    dice_count = max(1, base_dice + pending_dice + int(extra_dice or 0))
+
+    rule_keep = rule.get("kh")
+    if rule_keep is None:
+        kept_count = dice_count
+    else:
+        kept_count = min(
+            dice_count,
+            max(1, int(rule_keep or 0) + pending_keep + int(extra_keep or 0)),
+        )
+    return {
+        "dice": dice_count,
+        "kept": kept_count,
+        "base_dice": base_dice,
+        "pending_dice": max(0, pending_dice),
+    }
+
+
 def get_future_dice_context(game, user_id, lookahead_turns=FUTURE_LOOKAHEAD_TURNS):
     cache_key = f"dice_future:{game.get('turn', 1)}:{user_id}:{lookahead_turns}"
     cache = game.setdefault("_mob_ai_future_cache", {})
@@ -285,7 +309,12 @@ def decide_mob_skill_combo(
                 f"score={score} cost={cost} wit={skill_point}"
             )
 
-        if score <= 0:
+        roll_effects = analyze_skill_effects(skill)
+        can_join_dice_combo = any(
+            roll_effects[key] > 0
+            for key in ("cap", "floor", "add_d", "add_kh", "add_dkh")
+        )
+        if score <= 0 and not can_join_dice_combo:
             continue
 
         if cost > skill_point:
@@ -296,7 +325,7 @@ def decide_mob_skill_combo(
         scored.append({
             "skill_id": skill_id,
             "skill": skill,
-            "score": score,
+            "score": max(0, score),
             "cost": cost,
         })
 
@@ -509,14 +538,24 @@ def evaluate_skill_score(game, user_id, skill):
     )
     has_recovery = effect_info["recovery"] > 0
     has_debuff = effect_info["debuff"] > 0
+    base_roll_shape = _effective_roll_shape(player, future["current_rule"])
+    skill_added_dice = max(0, effect_info["add_d"] + effect_info["add_dkh"])
+    skill_added_keep = max(0, effect_info["add_kh"] + effect_info["add_dkh"])
+    roll_shape = _effective_roll_shape(
+        player,
+        future["current_rule"],
+        extra_dice=skill_added_dice,
+        extra_keep=skill_added_keep,
+    )
+    cap_floor_strength = max(0, effect_info["cap"]) + max(0, effect_info["floor"])
 
     # =====================================================
     # dice power
     # =====================================================
 
     dice_power = (
-        future["current_dice"]
-        + future["current_kh"] * 0.6
+        roll_shape["dice"]
+        + (roll_shape["kept"] * 0.6 if future["current_rule"].get("kh") is not None else 0)
     )
 
     future_dice_power = (
@@ -533,25 +572,34 @@ def evaluate_skill_score(game, user_id, skill):
     if has_roll_scaling:
         score += effect_info["roll_scaling"]
 
+        # Cap/floor changes affect every selected die, so they are more useful
+        # when this roll has more dice and when a Zone has already added dice.
+        if cap_floor_strength:
+            score += cap_floor_strength * max(0, roll_shape["dice"] - 1) * 2
+            score += cap_floor_strength * min(base_roll_shape["pending_dice"], 3) * 4
+            score += cap_floor_strength * min(skill_added_dice, 3) * (3 + min(base_roll_shape["dice"], 4))
+
+        dice_boosted = bool(base_roll_shape["pending_dice"] or skill_added_dice)
         if dice_power <= 1.5:
-            score -= 120
+            score -= 35 if dice_boosted else 120
 
         elif dice_power <= 2.5:
-            score -= 60
+            score -= 15 if dice_boosted else 60
 
         elif dice_power >= 5:
             score += 60
 
         # future better dice
         if phase < 4:
+            hold_scale = 0.4 if cap_floor_strength and (base_roll_shape["pending_dice"] or skill_added_dice) else 1.0
             if future_dice_power >= dice_power + 3:
-                score -= 130
+                score -= 130 * hold_scale
 
             elif future_dice_power >= dice_power + 2:
-                score -= 85
+                score -= 85 * hold_scale
 
             elif future_dice_power >= dice_power + 1:
-                score -= 35
+                score -= 35 * hold_scale
 
     # =====================================================
     # speed
@@ -777,12 +825,27 @@ def evaluate_skill_combo_score(game, user_id, combo):
     if total_cap > 0 and total_velocity > 0:
         score += 25
 
-    # A Zone or already committed skill can make this turn a strong combo.
-    committed_dice = int(player.get("next_roll_add_d", 0) or 0) + int(player.get("next_roll_add_kh", 0) or 0)
-    committed_cap = int(player.get("next_roll_cap_bonus", 0) or 0) + int(player.get("next_roll_floor_bonus", 0) or 0)
-    if committed_dice and (total_cap > 0 or total_floor > 0):
-        score += 25
+    # Reward cap/floor effects in proportion to how many dice this combo uses.
+    base_shape = _effective_roll_shape(player, future["current_rule"])
+    combo_shape = _effective_roll_shape(
+        player,
+        future["current_rule"],
+        extra_dice=total_add_d + total_dkh,
+        extra_keep=total_add_kh + total_dkh,
+    )
+    cap_floor_strength = max(0, total_cap) + max(0, total_floor)
+    combo_added_dice = max(0, combo_shape["dice"] - base_shape["dice"])
+    committed_dice = base_shape["pending_dice"]
+    committed_cap = max(0, int(player.get("next_roll_cap_bonus", 0) or 0)) + max(0, int(player.get("next_roll_floor_bonus", 0) or 0))
+    if cap_floor_strength:
+        score += cap_floor_strength * max(0, combo_shape["dice"] - 1) * 1.5
+        if combo_added_dice:
+            score += cap_floor_strength * min(combo_added_dice, 4) * (3 + min(base_shape["dice"], 4))
+        if committed_dice:
+            score += 25 + cap_floor_strength * min(committed_dice, 3) * 4
     if committed_cap and (total_dkh > 0 or total_add_d > 0 or total_add_kh > 0):
+        score += 25 + min(committed_cap, 24) * min(total_add_d + total_dkh + total_add_kh, 3) * 1.5
+    elif committed_cap and combo_added_dice and (total_cap > 0 or total_floor > 0):
         score += 25
 
     if total_floor > 0 and total_cap > 0:
@@ -840,23 +903,25 @@ def evaluate_skill_combo_score(game, user_id, combo):
         score += 20
 
     future_gain = future["future_gain"]
+    current_dice_synergy = cap_floor_strength > 0 and bool(committed_dice or combo_added_dice)
+    hold_penalty_scale = 0.4 if current_dice_synergy else 1.0
 
     if phase < 4:
         if future["has_much_better_future_dice"]:
             if has_big_roll_scaling:
-                score -= 120
+                score -= 120 * hold_penalty_scale
             if has_burst_tag or has_late_tag:
-                score -= 120
+                score -= 120 * hold_penalty_scale
 
         elif future["has_better_future_dice"]:
             if has_big_roll_scaling:
-                score -= 65
+                score -= 65 * hold_penalty_scale
             if has_burst_tag or has_late_tag:
-                score -= 75
+                score -= 75 * hold_penalty_scale
 
-        if future["current_dice"] <= 1 and has_big_roll_scaling:
+        if combo_shape["dice"] <= 1 and has_big_roll_scaling:
             score -= 90
-        elif future["current_dice"] == 2 and has_big_roll_scaling:
+        elif combo_shape["dice"] == 2 and has_big_roll_scaling:
             score -= 35
 
         if total_velocity > 0 and future_gain >= BIG_FUTURE_GAIN_TO_HOLD:
