@@ -134,8 +134,8 @@ MOB_PRESETS = {
             "speed": 4,
             "stamina": 4,
             "power": 5,
-            "gut": 2,
-            "wit": 2,
+            "gut": 1,
+            "wit": 3,
         },
         "skills": {
             1: 'acc_018',  # Slick Surge
@@ -149,9 +149,9 @@ MOB_PRESETS = {
             "points": 0,
             "build": {
                 "flat": 2,
-                "modify_current_speed": 3,
+                "modify_current_speed": 0,
             
-                         'add_dkh': 0,
+                         'add_dkh': 3,
                          'cap_floor': 0,
                          'self_heal_stamina': 0,
                          'race_speed': 0,

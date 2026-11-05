@@ -7,8 +7,8 @@ from utils.race.race_weather import is_wet_lane
 ACCELERATION_SCALE = {
     "Front": (0.12, 0.1, 0.08, 0.08),
     "Pace": (0.10, 0.10, 0.10, 0.10),
-    "Late": (0.08, 0.08, 0.12, 0.10),
-    "End": (0.08, 0.08, 0.11, 0.11),
+    "Late": (0.08, 0.08, 0.12, 0.11),
+    "End": (0.08, 0.08, 0.11, 0.12),
 }
 
 
