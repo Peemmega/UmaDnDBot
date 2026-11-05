@@ -33,6 +33,7 @@ from utils.database import (
     set_player_profile_image,
     update_player_stat_pool,
     update_trainer_aptitudes,
+    update_trainer_stats,
     get_available_trainees,
     get_trainer_team,
     get_trainee_trainer,
@@ -933,6 +934,15 @@ async def admin_data(request: Request):
 
 @app.post("/internal/trainer-aptitudes")
 async def api_update_trainer_aptitudes(request: Request):
+    return await _update_trainer_profile_values(request, "aptitudes", update_trainer_aptitudes)
+
+
+@app.post("/internal/trainer-stats")
+async def api_update_trainer_stats(request: Request):
+    return await _update_trainer_profile_values(request, "stats", update_trainer_stats)
+
+
+async def _update_trainer_profile_values(request: Request, field: str, update_values):
     secret = os.getenv("APTITUDE_SYNC_SECRET", "")
     if not secret:
         raise HTTPException(status_code=503, detail="บริการบอตยังไม่ได้ตั้งค่า APTITUDE_SYNC_SECRET")
@@ -948,9 +958,9 @@ async def api_update_trainer_aptitudes(request: Request):
         raise HTTPException(status_code=403, detail="Invalid authorization")
     try:
         payload = json.loads(body)
-        if not isinstance(payload, dict) or not isinstance(payload.get("user_id"), str) or not isinstance(payload.get("aptitudes"), dict):
+        if not isinstance(payload, dict) or not isinstance(payload.get("user_id"), str) or not isinstance(payload.get(field), dict):
             raise ValueError("Invalid payload")
-        player = update_trainer_aptitudes(payload["user_id"], payload["aptitudes"])
+        player = update_values(payload["user_id"], payload[field])
     except (ValueError, TypeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except PermissionError as exc:

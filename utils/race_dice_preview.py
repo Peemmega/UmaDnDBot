@@ -42,6 +42,7 @@ def _font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     except OSError:
         return ImageFont.load_default()
 
+
 async def load_image_url(path_or_url):
     try:
         if not path_or_url:
@@ -89,7 +90,10 @@ async def load_image_url(path_or_url):
         # fallback สุดท้าย: สร้างรูปโปร่งใส กัน crash
         return Image.new("RGBA", (512, 512), (0, 0, 0, 0))
 
-def draw_text_with_underline(draw, xy, text, font, fill, underline_offset=5, thickness=3):
+
+def draw_text_with_underline(
+    draw, xy, text, font, fill, underline_offset=5, thickness=3
+):
     x, y = xy
 
     # วาดข้อความ
@@ -103,11 +107,8 @@ def draw_text_with_underline(draw, xy, text, font, fill, underline_offset=5, thi
     # วาดเส้นใต้
     underline_y = y + text_height + underline_offset
 
-    draw.line(
-        (x, underline_y, x + text_width, underline_y),
-        fill=fill,
-        width=thickness
-    )
+    draw.line((x, underline_y, x + text_width, underline_y), fill=fill, width=thickness)
+
 
 def crop_cover(img: Image.Image, size: tuple[int, int]) -> Image.Image:
     img = img.convert("RGBA")
@@ -125,18 +126,23 @@ def crop_cover(img: Image.Image, size: tuple[int, int]) -> Image.Image:
     return img.crop((left, top, left + tw, top + th))
 
 
-def draw_text_outline(draw, xy, text, font, fill, outline=(255, 255, 255), width=3, anchor="la"):
+def draw_text_outline(
+    draw, xy, text, font, fill, outline=(255, 255, 255), width=3, anchor="la"
+):
     x, y = xy
     for dx in range(-width, width + 1):
         for dy in range(-width, width + 1):
             if dx or dy:
-                draw.text((x + dx, y + dy), text, font=font, fill=outline, anchor=anchor)
+                draw.text(
+                    (x + dx, y + dy), text, font=font, fill=outline, anchor=anchor
+                )
     draw.text((x, y), text, font=font, fill=fill, anchor=anchor)
 
 
 def paste_icon(card: Image.Image, path: Path, pos, size):
     icon = _load_local_rgba(str(path.resolve())).resize(size, Image.LANCZOS)
     card.paste(icon, pos, icon)
+
 
 def draw_debug_grid(draw):
     for x in range(0, 1500, 50):
@@ -146,7 +152,6 @@ def draw_debug_grid(draw):
     for y in range(0, 800, 50):
         draw.line((0, y, 1500, y), fill=(0, 0, 255, 90), width=1)
         draw.text((2, y + 2), str(y), fill=(0, 0, 255))
-
 
 
 def parse_display_text(text: str):
@@ -185,15 +190,18 @@ def combine_race_velocity_bonus(text: str) -> str:
     if not any(match.group(2) == "RACE" for match in matches):
         return text
     total = sum(int(match.group(1)) for match in matches)
-    icon = next((match.group(2) for match in matches if match.group(2) != "RACE"), "Velocity")
+    icon = next(
+        (match.group(2) for match in matches if match.group(2) != "RACE"), "Velocity"
+    )
     first = matches[0]
-    parts = [text[:first.start()], f"{total:+d}{icon}"]
+    parts = [text[: first.start()], f"{total:+d}{icon}"]
     last_end = first.end()
     for match in matches[1:]:
-        parts.append(text[last_end:match.start()])
+        parts.append(text[last_end : match.start()])
         last_end = match.end()
     parts.append(text[last_end:])
     return " ".join("".join(parts).split())
+
 
 def draw_rich_text(card, draw, base_pos, tokens, font, color):
     x, y = base_pos
@@ -210,18 +218,18 @@ def draw_rich_text(card, draw, base_pos, tokens, font, color):
             bbox = draw.textbbox((x, y), value, font=font)
             w = bbox[2] - bbox[0]
 
-            draw.line(
-                (x, y + 50, x + w, y + 50),
-                fill=color,
-                width=4
-            )
+            draw.line((x, y + 50, x + w, y + 50), fill=color, width=4)
             x += w
 
         elif t_type == "icon":
             icon_path = ICON_MAP.get(value)
 
             if icon_path and icon_path.exists():
-                icon = Image.open(icon_path).convert("RGBA").resize((42, 42), Image.LANCZOS)
+                icon = (
+                    Image.open(icon_path)
+                    .convert("RGBA")
+                    .resize((42, 42), Image.LANCZOS)
+                )
                 card.paste(icon, (x + 4, y + 6), icon)
                 x += 52
             else:
@@ -253,6 +261,7 @@ def draw_sun_icon(draw, center_x: int, center_y: int):
         width=2,
     )
 
+
 async def create_race_dice_preview(
     *,
     game_player: dict,
@@ -263,10 +272,9 @@ async def create_race_dice_preview(
     sunny_overlay: bool | None = None,
 ):
     if sunny_overlay is None:
-        sunny_overlay = (
-            (payload.get("game") or {}).get("weather") == "sunny"
-            or int(result.get("weather_stamina_cost", 0) or 0) > 0
-        )
+        sunny_overlay = (payload.get("game") or {}).get("weather") == "sunny" or int(
+            result.get("weather_stamina_cost", 0) or 0
+        ) > 0
     card = _load_local_rgba(str(BG_PATH.resolve())).copy()
     draw = ImageDraw.Draw(card)
 
@@ -290,7 +298,9 @@ async def create_race_dice_preview(
     # ===== left text =====
     phase = result.get("phase", "?")
     turn = result.get("turn", "?")
-    distance_color = "In Pack" if result.get("distance_color", "White") == "Gold" else "Off Pack"
+    distance_color = (
+        "In Pack" if result.get("distance_color", "White") == "Gold" else "Off Pack"
+    )
     style = game_player.get("style", "-")
 
     draw_text_outline(
@@ -365,7 +375,9 @@ async def create_race_dice_preview(
         anchor="ra",
     )
 
-    current_lane = int(game_player.get("current_lane", game_player.get("entry_number", 1)) or 1)
+    current_lane = int(
+        game_player.get("current_lane", game_player.get("entry_number", 1)) or 1
+    )
     draw.text(
         (520, 100),
         f"{path_label} / {distance_color} / lane {current_lane}",
@@ -381,32 +393,23 @@ async def create_race_dice_preview(
     )
     bonus = combine_race_velocity_bonus(bonus)
 
+    draw_rich_text(card, draw, (520, 160), parse_display_text(display), font_mid, brown)
 
-    draw_rich_text(
-        card,
-        draw,
-        (520, 160),
-        parse_display_text(display),
-        font_mid,
-        brown
-    )
-
-    draw_rich_text(
-        card,
-        draw,
-        (520, 225),
-        parse_display_text(bonus),
-        font_mid,
-        brown
-    )
+    draw_rich_text(card, draw, (520, 225), parse_display_text(bonus), font_mid, brown)
 
     # stamina
     current_stamina = int(game_player.get("stamina_left", 0) or 0)
     stamina_drain = int(game_player.get("last_stamina_drain", 0) or 0)
-    sta_text = f"{current_stamina} (-{stamina_drain})" if stamina_drain > 0 else str(current_stamina)
+    sta_text = (
+        f"{current_stamina} (-{stamina_drain})"
+        if stamina_drain > 0
+        else str(current_stamina)
+    )
     sta_text = format_stamina_line(
         sta_text,
-        drafting_active=bool(result.get("drafting_active", game_player.get("drafting_active", False))),
+        drafting_active=bool(
+            result.get("drafting_active", game_player.get("drafting_active", False))
+        ),
     )
     sun_marker = f"(-{stamina_drain})" if sunny_overlay and stamina_drain > 0 else None
     if sun_marker and sun_marker in sta_text:
@@ -431,15 +434,21 @@ async def create_race_dice_preview(
     draw.text((595, 415), f"{wit_text} pt.", font=font_mid, fill=brown)
 
     # reroll
-    draw.text((1130, 400), str(game_player.get("reroll_left", 0)), font=font_mid, fill=brown)
-    draw.text((1245, 400), str(game_player.get("wit_reroll_left", 0)), font=font_mid, fill=brown)
+    draw.text(
+        (1130, 400), str(game_player.get("reroll_left", 0)), font=font_mid, fill=brown
+    )
+    draw.text(
+        (1245, 400),
+        str(game_player.get("wit_reroll_left", 0)),
+        font=font_mid,
+        fill=brown,
+    )
 
     # draw_debug_grid(draw)
 
     if sunny_overlay:
-        # Apply a bright, saturated orange tint across the full preview while
-        # keeping the artwork visible underneath.
-        overlay = Image.new("RGBA", card.size, (255, 119, 0, 115))
+        # Add a light orange tint while keeping the artwork visible.
+        overlay = Image.new("RGBA", card.size, (255, 119, 0, 50))
         card = Image.alpha_composite(card, overlay)
 
     return card

@@ -3077,6 +3077,35 @@ def update_player_username(user_id: str, username: str):
 CORE_STAT_FIELDS = ("speed", "stamina", "power", "gut", "wit")
 
 
+def update_trainer_stats(user_id: str, stats: dict) -> dict:
+    """Update a Trainer's core stats without changing their stat points."""
+    if set(stats) != set(CORE_STAT_FIELDS) or any(
+        type(stats[field]) is not int or not 1 <= stats[field] <= 12
+        for field in CORE_STAT_FIELDS
+    ):
+        raise ValueError("All core stats must be integers between 1 and 12")
+    with database_connection() as conn:
+        role = conn.execute(
+            "SELECT role FROM account_roles WHERE user_id = ?", (str(user_id),)
+        ).fetchone()
+        if not role or role["role"] != "trainer":
+            raise PermissionError("Trainer role required")
+        row = conn.execute(
+            f"SELECT {', '.join(CORE_STAT_FIELDS)} FROM player_stats_aptitude WHERE CAST(user_id AS TEXT) = ?",
+            (str(user_id),),
+        ).fetchone()
+        if row is None:
+            raise LookupError("Player not found")
+        if any(stats[field] > MAX_CORE_STAT and stats[field] != row[field] for field in CORE_STAT_FIELDS):
+            raise ValueError(f"Core stat cannot exceed {MAX_CORE_STAT}")
+        assignments = ", ".join(f"{field} = ?" for field in CORE_STAT_FIELDS)
+        conn.execute(
+            f"UPDATE player_stats_aptitude SET {assignments} WHERE CAST(user_id AS TEXT) = ?",
+            (*[stats[field] for field in CORE_STAT_FIELDS], str(user_id)),
+        )
+    return get_player(user_id)
+
+
 # The main community uses the established S cap, while Test is where the
 # extended grade ladder (Sp through UG) is available for balancing.
 def update_player_stat_pool(
