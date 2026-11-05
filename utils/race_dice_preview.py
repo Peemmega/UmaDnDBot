@@ -237,6 +237,7 @@ async def create_race_dice_preview(
     payload: dict,
     path_label: str,
     character_image_url: str,
+    sunny_overlay: bool = False,
 ):
     card = _load_local_rgba(str(BG_PATH.resolve())).copy()
     draw = ImageDraw.Draw(card)
@@ -391,5 +392,11 @@ async def create_race_dice_preview(
     draw.text((1245, 400), str(game_player.get("wit_reroll_left", 0)), font=font_mid, fill=brown)
 
     # draw_debug_grid(draw)
+
+    if sunny_overlay:
+        # Apply a bright, saturated orange tint across the full preview while
+        # keeping the artwork visible underneath.
+        overlay = Image.new("RGBA", card.size, (255, 119, 0, 115))
+        card = Image.alpha_composite(card, overlay)
 
     return card
