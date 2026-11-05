@@ -230,6 +230,29 @@ def draw_rich_text(card, draw, base_pos, tokens, font, color):
                 bbox = draw.textbbox((x, y), fallback, font=font)
                 x += bbox[2] - bbox[0]
 
+
+def draw_sun_icon(draw, center_x: int, center_y: int):
+    """Draw a small emoji-style sun using Pillow shapes for font portability."""
+    ray_color = (232, 142, 22)
+    center_color = (255, 207, 64)
+    for start, end in (
+        ((center_x, center_y - 14), (center_x, center_y - 10)),
+        ((center_x, center_y + 10), (center_x, center_y + 14)),
+        ((center_x - 14, center_y), (center_x - 10, center_y)),
+        ((center_x + 10, center_y), (center_x + 14, center_y)),
+        ((center_x - 10, center_y - 10), (center_x - 7, center_y - 7)),
+        ((center_x + 10, center_y - 10), (center_x + 7, center_y - 7)),
+        ((center_x - 10, center_y + 10), (center_x - 7, center_y + 7)),
+        ((center_x + 10, center_y + 10), (center_x + 7, center_y + 7)),
+    ):
+        draw.line((start, end), fill=ray_color, width=4)
+    draw.ellipse(
+        (center_x - 9, center_y - 9, center_x + 9, center_y + 9),
+        fill=center_color,
+        outline=ray_color,
+        width=2,
+    )
+
 async def create_race_dice_preview(
     *,
     game_player: dict,
@@ -380,7 +403,22 @@ async def create_race_dice_preview(
         sta_text,
         drafting_active=bool(result.get("drafting_active", game_player.get("drafting_active", False))),
     )
-    draw.text((595, 340), sta_text, font=font_mid, fill=brown)
+    sun_marker = f"(-{stamina_drain})" if sunny_overlay and stamina_drain > 0 else None
+    if sun_marker and sun_marker in sta_text:
+        prefix, suffix = sta_text.split(sun_marker, 1)
+        draw.text((595, 340), prefix, font=font_mid, fill=brown)
+        prefix_width = draw.textlength(prefix, font=font_mid)
+        drain_text = f"(-{stamina_drain}"
+        drain_x = 595 + prefix_width
+        draw.text((drain_x, 340), drain_text, font=font_mid, fill=brown)
+        sun_x = int(drain_x + draw.textlength(drain_text, font=font_mid) + 17)
+        draw_sun_icon(draw, sun_x, 362)
+        closing_x = sun_x + 18
+        draw.text((closing_x, 340), ")", font=font_mid, fill=brown)
+        suffix_x = closing_x + draw.textlength(")", font=font_mid)
+        draw.text((suffix_x, 340), suffix, font=font_mid, fill=brown)
+    else:
+        draw.text((595, 340), sta_text, font=font_mid, fill=brown)
 
     # wit mana
     wit_text = build_single_wit_regen_text(game_player)
