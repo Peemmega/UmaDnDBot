@@ -17,13 +17,13 @@ VELOCITY_SKILLS = {
             },
             {
                 "type": "cap_floor",
-                "value": 6,
+                "value": 5,
                 "duration": "this_roll",
                 "condition": {"phase_min": 4, "phase_max": 4},
             },
             {
                 "type": "add_race_velocity_bonus",
-                "value": 6,
+                "value": 5,
                 "condition": {"phase_min": 1, "phase_max": 3},
             },
         ],
@@ -125,13 +125,13 @@ VELOCITY_SKILLS = {
         "effects": [
             {
                 "type": "cap_floor",
-                "value": 6,
+                "value": 5,
                 "duration": "this_roll",
                 "condition": {"phase_min": 4, "phase_max": 4},
             },
             {
                 "type": "add_race_velocity_bonus",
-                "value": 6,
+                "value": 5,
                 "condition": {"phase_min": 1, "phase_max": 3},
             },
             {
@@ -416,13 +416,13 @@ VELOCITY_SKILLS = {
             },
             {
                 "type": "cap_floor",
-                "value": 6,
+                "value": 3,
                 "duration": "this_roll",
                 "condition": {"phase_min": 4, "phase_max": 4},
             },
             {
                 "type": "add_race_velocity_bonus",
-                "value": 6,
+                "value": 3,
                 "condition": {"phase_min": 1, "phase_max": 3},
             },
         ],
@@ -438,13 +438,13 @@ VELOCITY_SKILLS = {
         "effects": [
             {
                 "type": "cap_floor",
-                "value": 4,
+                "value": 3,
                 "duration": "this_roll",
                 "condition": {"phase_min": 4, "phase_max": 4},
             },
             {
                 "type": "add_race_velocity_bonus",
-                "value": 4,
+                "value": 3,
                 "condition": {"phase_min": 1, "phase_max": 3},
             },
             {

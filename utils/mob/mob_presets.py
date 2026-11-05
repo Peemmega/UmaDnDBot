@@ -331,30 +331,37 @@ MOB_PRESETS = {
     },
     # Test
     "test_Front": {
-        "name": "Front Monster",
+        "name": 'Front Monster 9',
         "avatar": CHARACTER_DIR / "tamamo_cross.webp",
         "thumnail": thumnails["TamamoCross"],
-        "style": "Front",
+        "style": 'Front',
         "race_profile": {
-            "speed": 3,
-            "stamina": 4,
-            "power": 8,
+            "speed": 4,
+            "stamina": 3,
+            "power": 6,
             "gut": 1,
-            "wit": 1,
+            "wit": 3,
         },
         "skills": {
-            1: "acc_013",  # Early Lead
-            2: "acc_019",  # Final Push
-            3: "vel_016",  # Homestretch Haste
-            4: "rec_015",  # Moxie
+            1: 'acc_013',  # Early Lead
+            2: 'acc_019',  # Final Push
+            3: 'vel_024',  # Homestretch Haste
+            4: 'rec_015',  # Moxie
         },
         "zone": {
             "name": "Now That's White Lightning!",
             "image_url": "https://cdn.discordapp.com/attachments/1562167495920455773/1564578103546617876/tamamo-cross-umamusume_1.gif?ex=6ae1c668&is=6ae074e8&hm=eb70be3ba7a2014de7b621857021d712234ab0635136dc5ab021ac12aa8add0d",
             "points": 0,
             "build": {
-                "race_speed": 5,
-            },
+                "race_speed": 0,
+            
+                         'flat': 5,
+                         'add_dkh': 0,
+                         'cap_floor': 0,
+                         'self_heal_stamina': 0,
+                         'modify_current_speed': 0,
+                         'reduce_block_penalty': 0,
+                     },
         },
     },
     "test_Front2": {
@@ -464,22 +471,22 @@ MOB_PRESETS = {
     },
     # LEVEL 2
     "fujimasa_march": {
-        "name": "Fujimasa March",
+        "name": 'Fujimasa March',
         "avatar": CHARACTER_DIR / "fujimasa_march.png",
         "thumnail": thumnails["FujimasaMarch"],
-        "style": "Pace",
+        "style": 'Pace',
         "race_profile": {
             "speed": 4,
-            "stamina": 4,
-            "power": 5,
+            "stamina": 3,
+            "power": 6,
             "gut": 2,
             "wit": 3,
         },
         "skills": {
-            1: "vel_024",  # Straightaway Adept
-            2: "vel_011",  # In Body and Mind
-            3: "acc_007",  # Neck and Neck
-            4: "rec_005",  # Radiant Star
+            1: 'vel_024',  # Straightaway Adept
+            2: 'vel_011',  # In Body and Mind
+            3: 'acc_007',  # Neck and Neck
+            4: 'rec_005',  # Radiant Star
         },
         "zone": {
             "name": "Abyssal Lament",

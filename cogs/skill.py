@@ -3,14 +3,8 @@ from discord.ext import commands
 from discord import app_commands
 
 from utils.skill.skill_manager import (
-    get_all_skills,
-    get_skills_by_icon,
-    build_skill_description,
-    build_skill_list_text,
-    find_skill_by_name,
     get_skill_display,
     build_skill_card_text,
-    build_skill_list_embed
 )
 
 from views.skill_fillter import SkillListView
@@ -44,32 +38,23 @@ class SkillCog(commands.Cog):
         skill_id = skill_id.strip().lower()
 
         if skill_id not in SKILLS:
-            await interaction.followup.send(
-                f"ไม่พบสกิล `{skill_id}`",
-                ephemeral=True
-            )
+            await interaction.followup.send(f"ไม่พบสกิล `{skill_id}`", ephemeral=True)
             return
 
-        if (
-            get_skill_rarity(SKILLS[skill_id]) != "common"
-            and skill_id not in get_player_acquired_skills(interaction.user.id)
+        if get_skill_rarity(
+            SKILLS[skill_id]
+        ) != "common" and skill_id not in get_player_acquired_skills(
+            interaction.user.id
         ):
             await interaction.followup.send("คุณยังไม่ได้รับสกิลนี้", ephemeral=True)
             return
 
         slots = get_player_skill_slots(interaction.user.id)
         if skill_id in slots.values():
-            await interaction.followup.send(
-                "คุณติดตั้งสกิลนี้ไว้แล้ว",
-                ephemeral=True
-            )
+            await interaction.followup.send("คุณติดตั้งสกิลนี้ไว้แล้ว", ephemeral=True)
             return
 
-        success, message = set_player_skill_slot(
-            interaction.user.id,
-            slot,
-            skill_id
-        )
+        success, message = set_player_skill_slot(interaction.user.id, slot, skill_id)
 
         if not success:
             await interaction.followup.send(message, ephemeral=True)
@@ -80,14 +65,10 @@ class SkillCog(commands.Cog):
         embed = discord.Embed(
             title="ติดตั้งสกิลสำเร็จ",
             color=discord.Color.green(),
-            description=(
-                f"ช่อง: **{slot}**\n"
-                f"{skill_text}"
-            )
+            description=(f"ช่อง: **{slot}**\n" f"{skill_text}"),
         )
 
         await interaction.followup.send(embed=embed, ephemeral=True)
-        
 
     # @skill_group.command(name="check", description="ตรวจสอบข้อมูลสกิล")
     # @app_commands.describe(
@@ -119,7 +100,7 @@ class SkillCog(commands.Cog):
     #             ephemeral=True
     #         )
     #         return
-        
+
     #     if mode_value == "info":
     #         if not info:
     #             await interaction.response.send_message(
@@ -185,32 +166,25 @@ class SkillCog(commands.Cog):
 
         embed = discord.Embed(
             title=f"📘 Skill presets: {interaction.user.display_name}",
-            color=discord.Color.red()
+            color=discord.Color.red(),
         )
 
         embed.add_field(
-            name="Skill 1",
-            value=build_skill_card_text(slots["slot_1"]),
-            inline=False
+            name="Skill 1", value=build_skill_card_text(slots["slot_1"]), inline=False
         )
         embed.add_field(
-            name="Skill 2",
-            value=build_skill_card_text(slots["slot_2"]),
-            inline=False
+            name="Skill 2", value=build_skill_card_text(slots["slot_2"]), inline=False
         )
         embed.add_field(
-            name="Skill 3",
-            value=build_skill_card_text(slots["slot_3"]),
-            inline=False
+            name="Skill 3", value=build_skill_card_text(slots["slot_3"]), inline=False
         )
         embed.add_field(
-            name="Skill 4",
-            value=build_skill_card_text(slots["slot_4"]),
-            inline=False
+            name="Skill 4", value=build_skill_card_text(slots["slot_4"]), inline=False
         )
-        
+
         embed.set_footer(text="ดูสกิลเพิ่มเติมได้บน website")
         await interaction.followup.send(embed=embed, ephemeral=True)
-        
+
+
 async def setup(bot):
     await bot.add_cog(SkillCog(bot))

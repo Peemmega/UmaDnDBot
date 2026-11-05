@@ -1112,6 +1112,14 @@ def start_game(channel_id: int):
         player["wit_mana"] = 100 + (player["race_profile"]["wit"] * 10)
 
     activate_passive_skills(channel_id)
+    from utils.mob.mob_race_plan import build_race_plan
+    from utils.mob.mob_stamina import forecast_stamina
+
+    for user_id, player in game["players"].items():
+        if player.get("is_mob") or player.get("bot_auto"):
+            player["mob_stamina_forecast"] = forecast_stamina(game, user_id, 2)
+            usable = get_mob_usable_skills(channel_id, game, user_id)
+            player["mob_race_plan"] = build_race_plan(game, user_id, usable)
     return True, "เริ่มเกมเรียบร้อยแล้ว"
 
 
@@ -2922,16 +2930,13 @@ def process_mob_turn(channel_id: int, user_id: str):
     used_skill_payloads = []
     skill_embeds = []
 
-    phase = get_phase_from_turn(game["turn"], game["max_turn"])
-
     usable_skills = get_mob_usable_skills(channel_id=channel_id, game=game, user_id=user_id)
-    turn_trigger = (
-        game["turn"] == game["max_turn"]
-        or (game["turn"] == 1 and player.get("style", "Front") == "Front")
-        or should_mob_use_endgame_zone(game, user_id, player, phase, usable_skills)
-    )
+    from utils.mob.mob_race_plan import build_race_plan
 
-    if turn_trigger and player.get("zone_left", 0) > 0:
+    player["mob_race_plan"] = build_race_plan(game, user_id, usable_skills)
+    action = player["mob_race_plan"].get(game["turn"], {})
+
+    if action.get("zone") and player.get("zone_left", 0) > 0:
         zone_success, _zone_message = apply_zone_in_game(game, player)
 
     usable_skills = get_mob_usable_skills(
@@ -2940,12 +2945,8 @@ def process_mob_turn(channel_id: int, user_id: str):
         user_id=user_id,
     )
 
-    skill_ids_to_use = decide_mob_skill_combo(
-        game=game,
-        user_id=user_id,
-        usable_skills=usable_skills,
-        debug=False,
-    )
+    usable_ids = {skill_id for skill_id, _ in usable_skills}
+    skill_ids_to_use = [skill_id for skill_id in action.get("skills", []) if skill_id in usable_ids]
 
     for skill_id in skill_ids_to_use:
         success, skill_payload = execute_skill_core(

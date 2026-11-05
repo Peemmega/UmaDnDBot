@@ -6,7 +6,8 @@ import random
 
 from utils.mob.mob_board_state import get_current_path_type
 from utils.mob.mob_profiles import get_ai_profile
-from utils.race.race_dice import get_phase_from_turn
+from utils.mob.mob_stamina import forecast_stamina
+from utils.race.race_dice import get_distance_color, get_dice_rule, get_phase_from_turn
 from utils.race.rank_display import get_gold_range_value
 from utils.race.race_weather import is_raining
 
@@ -105,6 +106,20 @@ def decide_mob_target_lane(game, user_id) -> int | None:
     } if is_raining(game) else set()
 
     lane_scores: list[tuple[int, int]] = []
+    # Predict the next turn's distance color with each runner's queued lane.
+    # Position is uncertain, so retain the latest available score snapshot.
+    scores = game.get("turn_snapshot_scores") or {pid: info.get("score", 0) for pid, info in players.items()}
+    predicted_players = {pid: {**info, "current_lane": _planned_lane(info)} for pid, info in players.items()}
+    from utils.mob.mob_race_plan import expected_roll
+
+    # Include the current roll only if it has not already happened; lane
+    # changes take effect next turn. Store the full inner-lane forecast for
+    # later inspection and recompute it as stamina and positions change.
+    forecast_by_lane = {lane: forecast_stamina(game, user_id, lane) for lane in range(1, 7)}
+    baseline_cost = min(
+        next((step["cost"] for step in forecast["turns"] if step["turn"] == next_turn), 0)
+        for forecast in forecast_by_lane.values()
+    )
 
     for target_lane in range(1, 7):
         gold_count = _gold_count_for_lane(player, players, target_lane, user_id=user_id)
@@ -120,6 +135,22 @@ def decide_mob_target_lane(game, user_id) -> int | None:
         nearest_front_gap = front_gaps[0] if front_gaps else None
 
         score = 0
+        predicted_players[user_id] = {**player, "current_lane": target_lane}
+        color, _ = get_distance_color(user_id, scores, player.get("active_effects") or [], predicted_players)
+        rule = get_dice_rule(style, color, phase)
+        speed = max(1, float(player.get("current_max_speed", 1) or 1))
+        score += expected_roll(rule, speed, int(speed * .25)) * 2
+        forecast = forecast_by_lane[target_lane]
+        next_cost = next((step["cost"] for step in forecast["turns"] if step["turn"] == next_turn), baseline_cost)
+        turns_left = max(1, game.get("max_turn", 20) - game.get("turn", 1) + 1)
+        shortage_ratio = forecast["shortfall"] / max(1, forecast["estimated_cost"])
+        early_weight = max(0, 1 - (game.get("turn", 1) - 1) / max(1, game.get("max_turn", 20)))
+        # Stamina is more valuable when the conservative forecast predicts a
+        # deficit, especially early. Keep the penalty bounded so escaping a
+        # serious Block can still justify a more expensive lane.
+        stamina_weight = 0.35 + 0.5 * early_weight + min(1.5, shortage_ratio * 4)
+        score -= (next_cost - baseline_cost) * stamina_weight
+        score -= min(60, len(forecast["shortage_turns"]) * 20 / turns_left)
         blocker_relief = current_likely_blockers - likely_blockers
         lane_shift = abs(target_lane - current_lane)
         downhill = path_type == 4
@@ -232,7 +263,9 @@ def decide_mob_target_lane(game, user_id) -> int | None:
     candidate_count = min(profile["lane_candidates"], len(lane_scores))
     # Lower levels deliberately pick among good-enough lanes, while high levels
     # always take the best evaluated lane.
-    return random.choice(lane_scores[:candidate_count])[1]
+    chosen_lane = random.choice(lane_scores[:candidate_count])[1]
+    player["mob_stamina_forecast"] = forecast_by_lane[chosen_lane]
+    return chosen_lane
 
 # =========================================================
 # FUTURE DICE EVALUATION
