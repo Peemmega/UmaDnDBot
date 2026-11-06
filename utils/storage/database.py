@@ -1566,6 +1566,32 @@ def clear_race_records(record_type: str = "all") -> dict[str, int]:
     return deleted_counts
 
 
+def delete_race_record(race_id: str) -> dict[str, int] | None:
+    """Delete one completed race and its participants, turns, and actions."""
+    target_id = str(race_id).strip()
+    if not target_id or len(target_id) > 128:
+        raise ValueError("Race ID must contain 1 to 128 characters")
+
+    with database_connection() as conn:
+        if not conn.execute(
+            "SELECT 1 FROM race_history WHERE race_id = ?", (target_id,)
+        ).fetchone():
+            return None
+
+        counts: dict[str, int] = {}
+        for table_name in (
+            "race_participant_actions",
+            "race_participant_turns",
+            "race_participants",
+            "race_history",
+        ):
+            cursor = conn.execute(
+                f"DELETE FROM {table_name} WHERE race_id = ?", (target_id,)
+            )
+            counts[table_name] = cursor.rowcount
+    return counts
+
+
 def clear_legacy_profile_data(user_id: str) -> dict[str, int]:
     """Remove deprecated role/profile records so the account can choose a new role.
 

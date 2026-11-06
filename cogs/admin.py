@@ -11,6 +11,7 @@ from utils.database import (
     add_player_stats_point,
     add_player_skill_point,
     clear_race_records,
+    delete_race_record,
     clear_race_rankings,
     clear_legacy_profile_data,
     reset_all_data,
@@ -302,6 +303,7 @@ class Admin(commands.Cog):
             value=(
                 "`!clear_race_ranking [stage_key|all]` — ลบอันดับสนามที่เลือก\n"
                 "`!clear_race_records <all|official|practice> CONFIRM` — ลบประวัติการแข่งขันตามประเภท\n"
+                "`!delete_race <raceID> CONFIRM` — ลบประวัติการแข่งขันรายการเดียวตาม ID\n"
                 "`!resetzoneall` — รีเซ็ต Zone Build และ Zone Point ของทุกคน\n"
                 "`!clear_legacy_profile @member CONFIRM` — ล้าง role/profile เก่าของผู้เล่น\n"
                 "`!resetall CONFIRM` — ลบข้อมูลผู้เล่นและการเล่นทั้งหมดอย่างถาวร"
@@ -342,6 +344,7 @@ class Admin(commands.Cog):
                 "`!close_registration` — close registration from its forum post thread\n"
                 f"`!add_att <aptitude> [@member]` — add one aptitude level; `!set_all_att <1-{MAX_APTITUDE_LEVEL}> [@member]` — set all aptitudes\n"
                 "`!clear_race_records <all|official|practice> CONFIRM` — clear race records\n"
+                "`!delete_race <raceID> CONFIRM` — delete one race and its details by ID\n"
                 "`!clear_legacy_profile @member CONFIRM` — clear legacy profile data"
             ),
             inline=False,
@@ -1093,6 +1096,68 @@ class Admin(commands.Cog):
             action_name="clear_race_records",
             result_text=result_text,
             color=discord.Color.green(),
+        )
+
+    @commands.command(name="delete_race", aliases=["delete_race_record", "race_delete"])
+    async def delete_race_record_command(
+        self, ctx: commands.Context, race_id: str, confirmation: str = ""
+    ):
+        """Permanently delete one completed race and all attached details."""
+        if not await self.require_data_cleanup_admin(ctx, "delete_race"):
+            return
+
+        normalized_id = race_id.strip()
+        if confirmation != "CONFIRM":
+            await self.send_result_embed(
+                ctx,
+                title="ยืนยันการลบการแข่งขัน",
+                description=(
+                    f"คำสั่งนี้จะลบการแข่งขัน `{normalized_id}` พร้อมผู้เข้าแข่งขัน ผลรายเทิร์น และ Action Log อย่างถาวร\n"
+                    f"ยืนยันด้วย `!delete_race {normalized_id} CONFIRM`"
+                ),
+                color=discord.Color.orange(),
+            )
+            return
+
+        await self.silent_delete(ctx.message)
+        try:
+            deleted_counts = delete_race_record(normalized_id)
+        except ValueError as exc:
+            result_text = str(exc)
+            await self.send_result_embed(
+                ctx,
+                title="ลบการแข่งขันไม่สำเร็จ",
+                description=result_text,
+                color=discord.Color.red(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="delete_race",
+                result_text=f"Failed for {normalized_id}: {result_text}",
+                color=discord.Color.red(),
+            )
+            return
+
+        if deleted_counts is None:
+            result_text = f"ไม่พบการแข่งขัน ID `{normalized_id}`"
+            color = discord.Color.orange()
+            title = "ไม่พบการแข่งขัน"
+        else:
+            result_text = (
+                f"ลบการแข่งขัน `{normalized_id}` แล้ว พร้อมข้อมูลที่เกี่ยวข้อง "
+                f"({sum(deleted_counts.values())} รายการ)"
+            )
+            color = discord.Color.green()
+            title = "ลบการแข่งขันสำเร็จ"
+
+        await self.send_result_embed(
+            ctx, title=title, description=result_text, color=color
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="delete_race",
+            result_text=result_text,
+            color=color,
         )
 
     @commands.command(name="resetall")
