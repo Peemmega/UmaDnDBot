@@ -11,7 +11,7 @@ TEST_MAX_CORE_STAT = 12
 MAIN_MAX_APTITUDE_LEVEL = 3
 TEST_MAX_APTITUDE_LEVEL = 8
 ROOKIE_AI_LEVEL = 8
-AUTO_TURN_SKIP_COOLDOWN_SECONDS = 60
+AUTO_TURN_SKIP_COOLDOWN_SECONDS = 90
 
 # Stamina shortage reduces the run result by base percent minus Guts relief.
 # Each Guts point lowers the penalty by the configured percentage points.
