@@ -68,6 +68,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
 from utils.game_config import (
+    AUTO_TURN_SKIP_COOLDOWN_SECONDS,
     MAX_APTITUDE_LEVEL,
     MAX_CORE_STAT,
     STAMINA_PENALTY_BASE_PERCENT,
@@ -819,6 +820,7 @@ def update_player_stats(payload: UpdateStatsPayload):
 @app.get("/game-config")
 def api_game_config():
     return {
+        "auto_turn_skip_cooldown_seconds": AUTO_TURN_SKIP_COOLDOWN_SECONDS,
         "max_core_stat": MAX_CORE_STAT,
         "max_aptitude_level": MAX_APTITUDE_LEVEL,
         "stamina_penalty_base_percent": STAMINA_PENALTY_BASE_PERCENT,

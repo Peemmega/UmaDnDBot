@@ -1,4 +1,7 @@
+import asyncio
+
 import discord
+from utils.game_config import AUTO_TURN_SKIP_COOLDOWN_SECONDS
 from utils.game_manager import (
     get_game,
     confirm_turn,
@@ -11,15 +14,40 @@ from utils.game_manager import (
 
 class TurnConfirmView(discord.ui.View):
     def __init__(self, cog, channel_id: int):
-        super().__init__(timeout=30)
+        # discord.py resets View.timeout after every component interaction. Use
+        # a separate deadline so Rush, Block, and confirmation clicks cannot
+        # extend the automatic turn-skip delay.
+        super().__init__(timeout=None)
         self.cog = cog
         self.channel_id = channel_id
         self.message = None
+        self._auto_skip_task: asyncio.Task | None = None
         game = get_game(channel_id)
         self.turn = game.get("turn") if game else None
         self.confirmation_token = (
             game.get("turn_confirmation_token") if game else None
         )
+
+    def start_auto_skip_deadline(self):
+        if self._auto_skip_task is not None:
+            self._auto_skip_task.cancel()
+        self._auto_skip_task = asyncio.create_task(self._wait_for_auto_skip_deadline())
+
+    async def _wait_for_auto_skip_deadline(self):
+        try:
+            await asyncio.sleep(AUTO_TURN_SKIP_COOLDOWN_SECONDS)
+        except asyncio.CancelledError:
+            return
+
+        self._auto_skip_task = None
+        self.stop()
+        await self.on_timeout()
+
+    def cancel_auto_skip_deadline(self):
+        task = self._auto_skip_task
+        self._auto_skip_task = None
+        if task is not None and not task.done():
+            task.cancel()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         game = get_game(self.channel_id)
@@ -138,8 +166,10 @@ class TurnConfirmView(discord.ui.View):
             for item in self.children:
                 item.disabled = True
 
-            # Stop the timeout before the Discord edit yields control.
+            # Stop accepting interactions and cancel the fixed deadline before
+            # the Discord edit yields control.
             self.stop()
+            self.cancel_auto_skip_deadline()
 
             await interaction.response.edit_message(
                 content=f"✅ ยืนยันครบแล้ว ({confirmed_count}/{total_players})",

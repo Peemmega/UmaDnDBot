@@ -582,6 +582,7 @@ class GameCog(commands.GroupCog, name="game"):
 
                 msg = await interaction.followup.send(**send_kwargs)
                 view.message = msg
+                view.start_auto_skip_deadline()
 
     @app_commands.command(name="create", description="สร้างเกมใหม่")
     async def create(self, interaction: discord.Interaction):

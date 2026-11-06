@@ -11,6 +11,7 @@ TEST_MAX_CORE_STAT = 12
 MAIN_MAX_APTITUDE_LEVEL = 3
 TEST_MAX_APTITUDE_LEVEL = 8
 ROOKIE_AI_LEVEL = 8
+AUTO_TURN_SKIP_COOLDOWN_SECONDS = 60
 
 # Stamina shortage reduces the run result by base percent minus Guts relief.
 # Each Guts point lowers the penalty by the configured percentage points.
@@ -38,5 +39,7 @@ if not 1 <= MAX_APTITUDE_LEVEL <= 8:
     raise ValueError("Aptitude level limit must be between 1 (G) and 8 (S)")
 if not 1 <= ROOKIE_AI_LEVEL <= 8:
     raise ValueError("Rookie AI level must be between 1 and 8")
+if AUTO_TURN_SKIP_COOLDOWN_SECONDS < 0:
+    raise ValueError("Automatic turn skip cooldown cannot be negative")
 if not 1 <= MAX_CORE_STAT <= 12:
     raise ValueError("Core stat limit must be between 1 and 12")
