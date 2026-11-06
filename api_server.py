@@ -103,6 +103,7 @@ from utils.race.race_web import race_web_manager
 from utils.race.race_history import (
     OFFICIAL,
     PRACTICE,
+    count_race_history,
     get_course_leaderboard,
     get_participant_history,
     get_race_by_id,
@@ -1328,7 +1329,12 @@ def api_list_race_history(
     limit: int = 20,
     offset: int = 0,
 ):
-    return {"races": list_race_history(stage_key=stage_key, record_type=record_type, limit=limit, offset=offset)}
+    return {
+        "races": list_race_history(
+            stage_key=stage_key, record_type=record_type, limit=limit, offset=offset
+        ),
+        "total": count_race_history(stage_key=stage_key, record_type=record_type),
+    }
 
 
 @app.get("/race-events")

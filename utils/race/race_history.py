@@ -600,6 +600,24 @@ def list_race_history(
     return [dict(row) for row in rows]
 
 
+def count_race_history(
+    *, stage_key: str | None = None, record_type: str | None = None
+) -> int:
+    clauses, params = ["source != 'legacy_race_rankings'"], []
+    if stage_key:
+        clauses.append("stage_key = ?")
+        params.append(stage_key)
+    if record_type in {OFFICIAL, PRACTICE}:
+        clauses.append("record_type = ?")
+        params.append(record_type)
+    where = " AND ".join(clauses)
+    with database_connection() as conn:
+        row = conn.execute(
+            f"SELECT COUNT(*) FROM race_history WHERE {where}", params
+        ).fetchone()
+    return int(row[0])
+
+
 def get_participant_history(
     *,
     column: str,
