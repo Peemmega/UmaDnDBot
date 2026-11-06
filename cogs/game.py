@@ -74,6 +74,7 @@ from utils.mob.mob_presets import (MOB_PRESETS)
 from utils.game_manager import (
     get_game,
     get_unconfirmed_turn_players,
+    get_unrolled_turn_players,
     is_owner,
     claim_turn_advance,
     next_turn,
@@ -781,45 +782,64 @@ class GameCog(commands.GroupCog, name="game"):
 
     @app_commands.command(
         name="unconfirmed",
-        description="ดูว่าใครยังไม่ยืนยันเทิร์นปัจจุบัน",
+        description="List players who still need to roll or confirm the current turn",
     )
     async def unconfirmed(self, interaction: discord.Interaction):
         game = get_game(interaction.channel_id)
         if game is None:
             await interaction.response.send_message(
-                "ห้องนี้ยังไม่มีเกม",
+                "\u0e2b\u0e49\u0e2d\u0e07\u0e19\u0e35\u0e49\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e21\u0e35\u0e40\u0e01\u0e21",
                 ephemeral=True,
             )
             return
-        if (
-            not game.get("awaiting_turn_confirm")
-            or game.get("turn_confirmation_turn") != game.get("turn")
-        ):
+        if not game.get("started"):
             await interaction.response.send_message(
-                "ตอนนี้ยังไม่อยู่ในช่วงยืนยันเทิร์น",
+                "\u0e40\u0e01\u0e21\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e40\u0e23\u0e34\u0e48\u0e21",
                 ephemeral=True,
             )
             return
 
-        pending_players = get_unconfirmed_turn_players(interaction.channel_id) or []
-        if not pending_players:
+        current_turn = game.get("turn")
+        confirming = (
+            game.get("awaiting_turn_confirm")
+            and game.get("turn_confirmation_turn") == current_turn
+        )
+
+        if confirming:
+            pending_players = get_unconfirmed_turn_players(interaction.channel_id) or []
+            if not pending_players:
+                await interaction.response.send_message(
+                    f"\u2705 \u0e1c\u0e39\u0e49\u0e40\u0e25\u0e48\u0e19\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19\u0e04\u0e23\u0e1a\u0e41\u0e25\u0e49\u0e27\u0e2a\u0e33\u0e2b\u0e23\u0e31\u0e1a\u0e40\u0e17\u0e34\u0e23\u0e4c\u0e19 {current_turn}",
+                    allowed_mentions=discord.AllowedMentions.none(),
+                )
+                return
+
+            lines = []
+            for user_id, player in pending_players:
+                roll_status = (
+                    "\u0e17\u0e2d\u0e22\u0e41\u0e25\u0e49\u0e27 \u00b7 \u0e23\u0e2d\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19"
+                    if player.get("last_roll_turn") == current_turn
+                    else "\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e17\u0e2d\u0e22"
+                )
+                lines.append(f"- <@{user_id}> \u2014 {roll_status}")
+
             await interaction.response.send_message(
-                f"✅ ผู้เล่นยืนยันครบแล้วสำหรับเทิร์น {game.get('turn')}",
+                f"**\u0e1c\u0e39\u0e49\u0e40\u0e25\u0e48\u0e19\u0e17\u0e35\u0e48\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19\u0e40\u0e17\u0e34\u0e23\u0e4c\u0e19 {current_turn}**\n" + "\n".join(lines),
                 allowed_mentions=discord.AllowedMentions.none(),
             )
             return
 
-        lines = []
-        for user_id, player in pending_players:
-            roll_status = (
-                "ทอยแล้ว · รอยืนยัน"
-                if player.get("last_roll_turn") == game.get("turn")
-                else "ยังไม่ทอย"
+        pending_players = get_unrolled_turn_players(interaction.channel_id) or []
+        if not pending_players:
+            await interaction.response.send_message(
+                f"\u2705 \u0e1c\u0e39\u0e49\u0e40\u0e25\u0e48\u0e19\u0e17\u0e35\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e17\u0e2d\u0e22\u0e17\u0e2d\u0e22\u0e04\u0e23\u0e1a\u0e41\u0e25\u0e49\u0e27\u0e2a\u0e33\u0e2b\u0e23\u0e31\u0e1a\u0e40\u0e17\u0e34\u0e23\u0e4c\u0e19 {current_turn}",
+                allowed_mentions=discord.AllowedMentions.none(),
             )
-            lines.append(f"• <@{user_id}> — {roll_status}")
+            return
 
+        lines = [f"- <@{user_id}>" for user_id, _player in pending_players]
         await interaction.response.send_message(
-            f"**ผู้เล่นที่ยังไม่ยืนยันเทิร์น {game.get('turn')}**\n"
+            f"**\u0e1c\u0e39\u0e49\u0e40\u0e25\u0e48\u0e19\u0e17\u0e35\u0e48\u0e22\u0e31\u0e07\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49\u0e43\u0e0a\u0e49 /game run \u0e43\u0e19\u0e40\u0e17\u0e34\u0e23\u0e4c\u0e19 {current_turn}**\n"
             + "\n".join(lines),
             allowed_mentions=discord.AllowedMentions.none(),
         )

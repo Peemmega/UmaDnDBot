@@ -2120,6 +2120,38 @@ def add_player_skill_point(user_id: int, amount: int):
     return True, f"เพิ่ม skill_point +{amount} สำเร็จ"
 
 
+def add_player_fans(user_id: int | str, amount: int) -> int:
+    """Adjust a player's Fans and return the resulting total."""
+    if not isinstance(amount, int) or isinstance(amount, bool):
+        raise ValueError("Fans amount must be an integer")
+
+    user_key = str(user_id)
+    with database_connection() as conn:
+        cursor = conn.execute(
+            """
+            UPDATE player_skill_zone
+            SET fans = COALESCE(fans, 0) + ?
+            WHERE CAST(user_id AS TEXT) = ?
+              AND COALESCE(fans, 0) + ? >= 0
+            """,
+            (amount, user_key, amount),
+        )
+        if cursor.rowcount == 0:
+            exists = conn.execute(
+                "SELECT 1 FROM player_skill_zone WHERE CAST(user_id AS TEXT) = ?",
+                (user_key,),
+            ).fetchone()
+            if exists is None:
+                raise LookupError("Player not found")
+            raise ValueError("Fans cannot be negative")
+
+        row = conn.execute(
+            "SELECT fans FROM player_skill_zone WHERE CAST(user_id AS TEXT) = ?",
+            (user_key,),
+        ).fetchone()
+        return int(row["fans"])
+
+
 def set_player_zone_build(user_id: int, build: dict) -> None:
     conn = get_connection()
     cursor = conn.cursor()

@@ -22,6 +22,7 @@ from utils.database import (
     remove_player_from_team,
     reset_player_data_section,
     set_admin_player_value,
+    add_player_fans,
     create_community_event,
     close_race_registration_forum_post,
 )
@@ -291,6 +292,7 @@ class Admin(commands.Cog):
                 "`!add_att <aptitude> [@member]` — เพิ่ม aptitude 1 ระดับ\n"
                 f"`!set_all_att <1-{MAX_APTITUDE_LEVEL}> [@member]` — ตั้ง aptitude ทุกค่า\n"
                 "`!add_stats_pt <amount> [@member]` — เพิ่ม/ลด Stats Point\n"
+                "`!add_fan <amount> [@member]` — เพิ่ม/ลด Fans (ใส่จำนวนติดลบเพื่อลด)\n"
                 "`!add_skill_pt <amount> [@member]` — เพิ่ม/ลด Event Point"
             ),
             inline=False,
@@ -1391,6 +1393,54 @@ class Admin(commands.Cog):
                 target=target,
                 color=discord.Color.red(),
             )
+
+    @commands.command(name="add_fan")
+    async def add_fan(
+        self,
+        ctx: commands.Context,
+        amount: int,
+        member: Optional[discord.Member] = None,
+    ):
+        if not await self.require_admin(ctx, "add_fan", member):
+            return
+
+        await self.silent_delete(ctx.message)
+        target = self.resolve_target(ctx, member)
+        ensure_player(target.id, target.name)
+
+        try:
+            new_total = add_player_fans(target.id, amount)
+        except (LookupError, ValueError) as error:
+            result_text = str(error)
+            await self.send_result_embed(
+                ctx,
+                title="เพิ่ม Fans ไม่สำเร็จ",
+                description=result_text,
+                color=discord.Color.red(),
+            )
+            await self.send_log_embed(
+                ctx,
+                action_name="add_fan",
+                result_text=result_text,
+                target=target,
+                color=discord.Color.red(),
+            )
+            return
+
+        result_text = f"Adjusted Fans by {amount:+,}; new total: {new_total:,}"
+        await self.send_result_embed(
+            ctx,
+            title="ปรับ Fans สำเร็จ",
+            description=f"{target.mention}\nเปลี่ยน {amount:+,} Fans · ยอดรวม {new_total:,}",
+            color=discord.Color.green(),
+        )
+        await self.send_log_embed(
+            ctx,
+            action_name="add_fan",
+            result_text=result_text,
+            target=target,
+            color=discord.Color.green(),
+        )
 
     @commands.command(name="add_skill_pt")
     async def add_skill_pt(

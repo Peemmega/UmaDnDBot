@@ -787,6 +787,21 @@ def get_unconfirmed_turn_players(channel_id: int):
     ]
 
 
+def get_unrolled_turn_players(channel_id: int):
+    game = get_game(channel_id)
+    if game is None:
+        return None
+
+    turn = game.get("turn")
+    return [
+        (user_id, player)
+        for user_id, player in game.get("players", {}).items()
+        if not player.get("is_mob")
+        and not player.get("bot_auto")
+        and player.get("last_roll_turn") != turn
+    ]
+
+
 def confirm_turn(
     channel_id: int,
     user_id: int,
