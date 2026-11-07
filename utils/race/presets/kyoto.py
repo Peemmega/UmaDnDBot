@@ -350,8 +350,8 @@ RACES = {
         "fans": {"required": None, "reward_first": None},
         "story": "รายการ Kyoto Shimbun Hai (GII) ที่สนาม Kyoto",
     },
-    "DailyHaiNisaiStakes": {
-        "name": "Daily Hai Nisai Stakes (GII)",
+    "DailyHaiJuniorStakes": {
+        "name": "Daily Hai Junior Stakes (GII)",
         "thumnail": G2_RACE_THUMBNAIL,
         "image": G2_RACE_THUMBNAIL,
         "track": "turf",
@@ -363,7 +363,7 @@ RACES = {
         },
         "path": TRACK_PATHS["KYOTO_1600"],
         "fans": {"required": None, "reward_first": None},
-        "story": "รายการ Daily Hai Nisai Stakes (GII) ที่สนาม Kyoto",
+        "story": "รายการ Daily Hai Junior Stakes (GII) ที่สนาม Kyoto",
     },
     "ManyoStakes": {
         "name": "Manyo Stakes (OP)",

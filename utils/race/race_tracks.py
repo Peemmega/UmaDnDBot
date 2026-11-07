@@ -392,7 +392,12 @@ RACE_SCHEDULE = [
             ("ChukyoKinen", "Chukyo Kinen (GIII)", "Chukyo", "2026-08-16"),
             ("KeenelandCup", "Keeneland Cup (GIII)", "Sapporo", "2026-08-23"),
             ("NiigataKinen", "Niigata Kinen (GIII)", "Niigata", "2026-08-30"),
-            ("ChukyoNisaiStakes", "Chukyo Nisai Stakes (GIII)", "Chukyo", "2026-08-30"),
+            (
+                "ChukyoJuniorStakes",
+                "Chukyo Junior Stakes (GIII)",
+                "Chukyo",
+                "2026-08-30",
+            ),
             # September
             (
                 "KeiseiHaiAutumnHandicap",
@@ -432,8 +437,8 @@ RACE_SCHEDULE = [
             ),
             # November
             (
-                "KeioHaiNisaiStakes",
-                "Keio Hai Nisai Stakes (GII)",
+                "KeioHaiJuniorStakes",
+                "Keio Hai Junior Stakes (GII)",
                 "Tokyo",
                 "2026-11-07",
             ),
@@ -446,15 +451,15 @@ RACE_SCHEDULE = [
             ("MiyakoStakes", "Miyako Stakes (GIII)", "Kyoto", "2026-11-08"),
             ("MusashinoStakes", "Musashino Stakes (GIII)", "Tokyo", "2026-11-14"),
             (
-                "DailyHaiNisaiStakes",
-                "Daily Hai Nisai Stakes (GII)",
+                "DailyHaiJuniorStakes",
+                "Daily Hai Junior Stakes (GII)",
                 "Kyoto",
                 "2026-11-14",
             ),
             ("FukushimaKinen", "Fukushima Kinen (GIII)", "Fukushima", "2026-11-21"),
             (
-                "TokyoSportsHaiNisaiStakes",
-                "Tokyo Sports Hai Nisai Stakes (GII)",
+                "TokyoSportsHaiJuniorStakes",
+                "Tokyo Sports Hai Junior Stakes (GII)",
                 "Tokyo",
                 "2026-11-23",
             ),
