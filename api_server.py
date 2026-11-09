@@ -475,6 +475,7 @@ def _verify_room_booking_proxy(request: Request, body: bytes) -> None:
 
 def _room_booking_options():
     from utils.race.race_presets import RACE_PRESET
+    from utils.race.race_aptitude import get_aptitude_values
 
     stages = [
         {"key": key, "name": value.get("name", key)}
@@ -484,11 +485,45 @@ def _room_booking_options():
     for key, preset in LEGEND_RACE_PRESETS.items():
         legend = MOB_PRESETS.get(preset.get("legend_key"), {})
         stage = RACE_PRESET.get(preset.get("stage_key"), {})
+        legend_level = int(preset.get("legend_level", 1))
+        leveled_profile = apply_mob_level(copy.deepcopy(legend.get("race_profile", {})), legend_level)
+        try:
+            avatar_path = Path(legend.get("avatar", "")).resolve().relative_to(ASSETS_DIR.resolve()).as_posix()
+            image_url = f"/app/assets/{avatar_path}"
+        except (ValueError, OSError):
+            image_url = legend.get("thumnail", "")
+        aptitude_values = get_aptitude_values(
+            leveled_profile,
+            stage.get("track"),
+            get_race_distance_type(stage),
+            legend.get("style"),
+        )
+        aptitude_labels = {
+            "track": "turf" if stage.get("track") != "dirt" else "dirt",
+            "distance": aptitude_values["distance_field"],
+            "style": aptitude_values["style_field"],
+        }
+        skills = [
+            {
+                "id": skill_id,
+                "name": SKILLS.get(skill_id, {}).get("name", skill_id),
+                "icon": SKILLS.get(skill_id, {}).get("icon", ""),
+            }
+            for _, skill_id in sorted(legend.get("skills", {}).items(), key=lambda item: int(item[0]))
+        ]
         legend_presets.append({
             "key": key,
             "name": legend.get("name", preset.get("legend_key", key)),
             "legend_key": preset.get("legend_key"),
-            "legend_level": preset.get("legend_level", 1),
+            "legend_level": legend_level,
+            "image_url": image_url,
+            "style": legend.get("style", ""),
+            "stats": {key: leveled_profile.get(key, 0) for key in ("speed", "stamina", "power", "gut", "wit")},
+            "skills": skills,
+            "aptitudes": [
+                {"key": key, "label": aptitude_labels[key], "rank": aptitude_values[f"{key}_rank"]}
+                for key in ("track", "distance", "style")
+            ],
             "stage_key": preset.get("stage_key"),
             "stage_name": stage.get("name", preset.get("stage_key", "")),
             "mobs": [
