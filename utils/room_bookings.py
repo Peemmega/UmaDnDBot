@@ -197,12 +197,13 @@ def create_booking(
             raise ValueError("Legend preset อ้างถึงสนามที่ไม่มีใน RACE_PRESET")
         if not 1 <= int(preset.get("legend_level", 1)) <= 8:
             raise ValueError("ระดับ Legend ใน preset ต้องอยู่ระหว่าง 1 ถึง 8")
-        preset_mobs = list(preset.get("mobs", []))
-        if len(preset_mobs) > 8:
-            raise ValueError("Legend preset เพิ่ม Mob ได้ไม่เกิน 8 ตัว")
-        for mob in preset_mobs:
-            if mob.get("key") not in MOB_PRESETS or not 1 <= int(mob.get("level", 1)) <= 8:
-                raise ValueError("Mob ใน Legend preset ต้องใช้ key ที่มีอยู่และ level 1–8")
+        mob_settings = preset.get("mobs") or {}
+        mob_level = int(mob_settings.get("level", 2))
+        debut_mob_keys = RACE_PRESET.get("Debut", {}).get("auto_mobs", [])
+        if len(debut_mob_keys) != 8 or any(mob_key not in MOB_PRESETS for mob_key in debut_mob_keys):
+            raise ValueError("Debut preset ต้องมี Mob ที่ถูกต้องครบ 8 ตัว")
+        if not 1 <= mob_level <= 8:
+            raise ValueError("ระดับ Mob ใน Legend preset ต้องอยู่ระหว่าง 1–8")
         if preset.get("weather", "none") not in {"none", "random", "warm", "sunny", "rainy"}:
             raise ValueError("สภาพอากาศใน Legend preset ไม่ถูกต้อง")
         if preset.get("record_type", "official") not in {"official", "practice"}:
@@ -211,9 +212,10 @@ def create_booking(
             "legend_preset_key": preset_key,
             "legend_key": str(preset["legend_key"]),
             "legend_level": int(preset.get("legend_level", 1)),
+            "mob_level": mob_level,
             "mobs": [
-                {**mob, "name": MOB_PRESETS[mob["key"]].get("name", mob["key"])}
-                for mob in preset_mobs
+                {"key": mob_key, "level": mob_level, "name": MOB_PRESETS[mob_key].get("name", mob_key)}
+                for mob_key in debut_mob_keys
             ],
             "weather": preset.get("weather", "none"),
             "record_type": preset.get("record_type", "official"),

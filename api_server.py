@@ -486,6 +486,8 @@ def _room_booking_options():
         legend = MOB_PRESETS.get(preset.get("legend_key"), {})
         stage = RACE_PRESET.get(preset.get("stage_key"), {})
         legend_level = int(preset.get("legend_level", 1))
+        mob_level = int((preset.get("mobs") or {}).get("level", 2))
+        debut_mob_keys = RACE_PRESET.get("Debut", {}).get("auto_mobs", [])
         leveled_profile = apply_mob_level(copy.deepcopy(legend.get("race_profile", {})), legend_level)
         try:
             avatar_path = Path(legend.get("avatar", "")).resolve().relative_to(ASSETS_DIR.resolve()).as_posix()
@@ -508,6 +510,14 @@ def _room_booking_options():
                 "id": skill_id,
                 "name": SKILLS.get(skill_id, {}).get("name", skill_id),
                 "icon": SKILLS.get(skill_id, {}).get("icon", ""),
+                "cooldown": SKILLS.get(skill_id, {}).get("cooldown", 0),
+                "cost": SKILLS.get(skill_id, {}).get("cost", 0),
+                "target": describe_target(SKILLS.get(skill_id, {}).get("target", {})),
+                "trigger": describe_trigger(SKILLS.get(skill_id, {}).get("trigger", {})),
+                "effects": [
+                    describe_effect(effect)
+                    for effect in SKILLS.get(skill_id, {}).get("effects", [])
+                ],
             }
             for _, skill_id in sorted(legend.get("skills", {}).items(), key=lambda item: int(item[0]))
         ]
@@ -516,6 +526,8 @@ def _room_booking_options():
             "name": legend.get("name", preset.get("legend_key", key)),
             "legend_key": preset.get("legend_key"),
             "legend_level": legend_level,
+            "mob_level": mob_level,
+            "mob_count": len(debut_mob_keys),
             "image_url": image_url,
             "style": legend.get("style", ""),
             "stats": {key: leveled_profile.get(key, 0) for key in ("speed", "stamina", "power", "gut", "wit")},
@@ -527,11 +539,8 @@ def _room_booking_options():
             "stage_key": preset.get("stage_key"),
             "stage_name": stage.get("name", preset.get("stage_key", "")),
             "mobs": [
-                {
-                    **mob,
-                    "name": MOB_PRESETS.get(mob.get("key"), {}).get("name", mob.get("key", "Mob")),
-                }
-                for mob in preset.get("mobs", [])
+                {"key": mob_key, "level": mob_level, "name": MOB_PRESETS.get(mob_key, {}).get("name", mob_key)}
+                for mob_key in debut_mob_keys
             ],
             "weather": preset.get("weather", "none"),
             "record_type": preset.get("record_type", "official"),
@@ -729,9 +738,10 @@ async def _deliver_room_booking(booking: dict):
             game["record_type"] = "official" if booking["booking_type"] == "debut" else "practice"
         set_game_rule(room_id, WEATHER_RULE, booking["settings"].get("weather", "none"))
         if booking["booking_type"] == "legend":
+            for player_id, player in list(game["players"].items()):
+                if player.get("is_mob"):
+                    del game["players"][player_id]
             add_mob_from_preset(room_id, booking["settings"]["legend_key"], int(booking["settings"].get("legend_level", 1)))
-        if booking["booking_type"] == "debut":
-            add_mob_from_preset(room_id, "rookie_pace", 2)
         for mob in booking["settings"].get("mobs", []):
             add_mob_from_preset(room_id, mob["key"], int(mob.get("level", 1)))
         if booking["booking_type"] == "debut":
