@@ -125,12 +125,16 @@ def init_db():
             user_id INTEGER PRIMARY KEY,
             username TEXT NOT NULL,
             profile_image_url TEXT,
-            profile_image_updated_at INTEGER
+            profile_image_updated_at INTEGER,
+            debut_attempted_week TEXT,
+            debut_won INTEGER NOT NULL DEFAULT 0
         )
     """)
     for column, column_type in (
         ("profile_image_url", "TEXT"),
         ("profile_image_updated_at", "INTEGER"),
+        ("debut_attempted_week", "TEXT"),
+        ("debut_won", "INTEGER NOT NULL DEFAULT 0"),
     ):
         if column not in existing_player_columns and existing_player_columns:
             cursor.execute(f"ALTER TABLE players ADD COLUMN {column} {column_type}")

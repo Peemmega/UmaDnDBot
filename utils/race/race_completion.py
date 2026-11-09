@@ -79,4 +79,10 @@ def finalize_race(
     ranked, result = complete_race(
         game, ranked_players=ranked_players, winner_id=winner_id
     )
-    return ranked, result, save_completed_race(game, ranked)
+    race_id = save_completed_race(game, ranked)
+    if game.get("booking_type") in {"legend", "debut"}:
+        from utils.room_bookings import record_scheduled_winner, mark_bookings_completed_for_thread
+
+        record_scheduled_winner(game)
+        mark_bookings_completed_for_thread(game.get("channel_id"))
+    return ranked, result, race_id

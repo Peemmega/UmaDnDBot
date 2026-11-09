@@ -1883,6 +1883,18 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
     if db_player is None:
         return False, "Unable to prepare the player profile. Please try again."
 
+    if game.get("booking_id"):
+        from utils.storage.database import get_account_role
+
+        if get_account_role(str(user_id)) != "trainee":
+            return False, "ห้องที่จองผ่านเว็บเปิดให้ Umamusume ลงทะเบียนเท่านั้น"
+    if game.get("booking_type") in {"legend", "debut"} and not game.get("restoring_booking"):
+        from utils.room_bookings import consume_scheduled_entry
+
+        allowed, reason = consume_scheduled_entry(user_id, game)
+        if not allowed:
+            return False, reason
+
     entry_number = len(game["players"]) + 1
     default_lane = get_default_lane(entry_number)
     game["players"][user_id] = {
@@ -1953,6 +1965,11 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
     )
     set_runtime_stamina(game["players"][user_id], db_player.get("stamina", 1))
     apply_web_timing_player_defaults(game["players"][user_id])
+
+    if game.get("booking_id"):
+        from utils.room_bookings import record_room_booking_signup
+
+        record_room_booking_signup(game["booking_id"], str(user_id), display_name)
 
     return True, "เข้าร่วมเกมสำเร็จ"
 

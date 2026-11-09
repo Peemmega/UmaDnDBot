@@ -9,6 +9,7 @@ import asyncio
 import base64
 import io
 import time
+import copy
 import discord
 from pathlib import Path
 import os
@@ -20,6 +21,7 @@ from utils.database import (
     get_player_summary,
     list_player_summaries,
     get_connection, 
+    database_connection,
     ensure_player, 
     update_player_username,
     set_player_skill_slot,
@@ -63,7 +65,7 @@ from utils.database import (
     clear_race_registration_forum_entries,
     list_unposted_race_registration_forum_groups,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps, UnidentifiedImageError
 from utils.zone.zone_preset import ZONE_POINT_COST, normalize_zone_build
@@ -96,7 +98,18 @@ from utils.skill.skill_evolution import (
     find_incompatible_skill_pair,
     skill_conflict_message,
 )
-from utils.game_manager import get_game, create_game, delete_game, run_bot_race_test
+from utils.game_manager import (
+    get_game, create_game, delete_game, run_bot_race_test,
+    add_mob_from_preset, add_player, set_game_rule, apply_mob_level,
+)
+from utils.mob.mob_presets import MOB_PRESETS
+from utils.room_bookings import (
+    ROOM_TYPES, claim_due_bookings, create_booking, get_booking,
+    init_room_booking_tables, list_bookings, list_booking_members,
+    list_open_bookings,
+    mark_booking_failed, mark_booking_open, register_for_booking,
+    retry_failed_bookings,
+)
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
 from utils.channel_config import RACE_REGISTRATION_FORUM_CHANNEL_ID
 from utils.race.race_web import race_web_manager
@@ -423,6 +436,329 @@ async def flush_pending_race_registration_forum_posts():
             )
 
 
+class RoomBookingCreatePayload(BaseModel):
+    user_id: str
+    booking_type: str
+    stage_key: str
+    date: str
+    time: str
+    visibility: str = "public"
+    invited_ids: list[str] = Field(default_factory=list)
+    settings: dict = Field(default_factory=dict)
+
+
+class RoomBookingJoinPayload(BaseModel):
+    user_id: str
+
+
+def _verify_room_booking_proxy(request: Request, body: bytes) -> None:
+    secret = os.getenv("ADMIN_DATA_SECRET", "")
+    if not secret:
+        raise HTTPException(status_code=503, detail="Room booking proxy is not configured")
+    timestamp = request.headers.get("X-Room-Booking-Timestamp", "")
+    signature = request.headers.get("X-Room-Booking-Signature", "")
+    try:
+        timestamp_value = int(timestamp)
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail="Invalid room booking authorization") from exc
+    if abs(time.time() - timestamp_value) > 300:
+        raise HTTPException(status_code=403, detail="Expired room booking authorization")
+    message = b".".join((
+        timestamp.encode(), request.method.encode(), request.url.path.encode(),
+        request.url.query.encode(), body,
+    ))
+    expected = hmac.new(secret.encode(), message, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(signature, expected):
+        raise HTTPException(status_code=403, detail="Invalid room booking authorization")
+
+
+def _room_booking_options():
+    from utils.race.race_presets import RACE_PRESET
+
+    stages = [
+        {"key": key, "name": value.get("name", key)}
+        for key, value in RACE_PRESET.items()
+    ]
+    legends = [
+        {"key": key, "name": value.get("name", key)}
+        for key, value in MOB_PRESETS.items()
+        if not key.startswith("rookie_")
+    ]
+    mobs = [
+        {"key": key, "name": value.get("name", key)}
+        for key, value in MOB_PRESETS.items()
+    ]
+    return {"stages": stages, "legends": legends, "mobs": mobs, "players": list_player_summaries()}
+
+
+@app.get("/room-bookings/options")
+async def api_room_booking_options(request: Request):
+    _verify_room_booking_proxy(request, await request.body())
+    return _room_booking_options()
+
+
+@app.get("/room-bookings")
+async def api_list_room_bookings(request: Request, user_id: str = ""):
+    _verify_room_booking_proxy(request, await request.body())
+    return {"rooms": list_bookings(user_id or None)}
+
+
+@app.post("/room-bookings")
+async def api_create_room_booking(request: Request, payload: RoomBookingCreatePayload):
+    _verify_room_booking_proxy(request, await request.body())
+    if not str(payload.user_id).isdigit() or get_account_role(payload.user_id) != "trainer":
+        raise HTTPException(status_code=403, detail="เฉพาะ Trainer เท่านั้นที่สร้างห้องได้")
+    options = _room_booking_options()
+    if payload.stage_key not in {item["key"] for item in options["stages"]}:
+        raise HTTPException(status_code=400, detail="ไม่พบสนามที่เลือก")
+    if payload.booking_type not in ROOM_TYPES:
+        raise HTTPException(status_code=400, detail="ประเภทห้องไม่ถูกต้อง")
+    if payload.booking_type == "legend" and payload.settings.get("legend_key") not in {item["key"] for item in options["legends"]}:
+        raise HTTPException(status_code=400, detail="ไม่พบ Legend ที่เลือก")
+    allowed_mobs = {item["key"] for item in options["mobs"]}
+    for mob in payload.settings.get("mobs", []):
+        if mob.get("key") not in allowed_mobs:
+            raise HTTPException(status_code=400, detail="ไม่พบ Mob ที่เลือก")
+    known_players = {item["id"] for item in options["players"]}
+    invited_ids = list(dict.fromkeys(str(value) for value in payload.invited_ids))
+    if any(value not in known_players for value in invited_ids):
+        raise HTTPException(status_code=400, detail="มีสมาชิกที่เลือกไม่ถูกต้อง")
+    creator = get_profile_preset(payload.user_id, "trainer") or get_player_summary(payload.user_id) or {}
+    creator_name = creator.get("name") or "Trainer"
+    try:
+        booking = create_booking(
+            booking_type=payload.booking_type,
+            creator_id=payload.user_id,
+            creator_name=creator_name,
+            stage_key=payload.stage_key,
+            local_date=payload.date,
+            local_time=payload.time,
+            visibility=payload.visibility,
+            invited_ids=invited_ids,
+            settings=payload.settings,
+        )
+        # Replace raw IDs with directory names in the initial invite roster.
+        names = {item["id"]: item["name"] for item in options["players"]}
+        for user_id in invited_ids:
+            with database_connection() as conn:
+                conn.execute(
+                    "UPDATE room_booking_signups SET username=? WHERE booking_id=? AND user_id=?",
+                    (names.get(user_id, user_id), booking["booking_id"], user_id),
+                )
+        return get_booking(booking["booking_id"])
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/room-bookings/{booking_id}/join")
+async def api_join_room_booking(booking_id: str, request: Request, payload: RoomBookingJoinPayload):
+    _verify_room_booking_proxy(request, await request.body())
+    if not str(payload.user_id).isdigit() or get_account_role(payload.user_id) != "trainee":
+        raise HTTPException(status_code=403, detail="เฉพาะ Umamusume เท่านั้นที่ลงทะเบียนได้")
+    player = get_player_summary(payload.user_id)
+    if not player:
+        raise HTTPException(status_code=404, detail="ไม่พบข้อมูล Umamusume")
+    try:
+        booking = get_booking(booking_id)
+        if not booking:
+            raise ValueError("ไม่พบห้องที่เลือก")
+        if any(str(member["user_id"]) == str(payload.user_id) for member in booking.get("members", [])):
+            return booking
+        if booking["status"] == "open":
+            if booking.get("thread_id") is None:
+                raise ValueError("ห้องยังไม่พร้อมรับสมาชิก")
+            from utils.game.manager import add_player
+
+            allowed, message = add_player(
+                int(booking["thread_id"]), int(payload.user_id), player["name"],
+                player.get("image_url", ""), "Pace",
+            )
+            if not allowed:
+                raise ValueError(message)
+        updated = register_for_booking(booking_id, payload.user_id, player["name"])
+        if booking["status"] == "open" and booking.get("thread_id"):
+            bot = bot_instance.bot
+            if bot and bot.is_ready():
+                thread = bot.get_channel(int(booking["thread_id"]))
+                if thread is None:
+                    thread = await bot.fetch_channel(int(booking["thread_id"]))
+                await thread.send(f"<@{payload.user_id}> เข้าร่วมห้องแล้ว")
+        return updated
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+async def _deliver_room_booking(booking: dict):
+    bot = bot_instance.bot
+    if bot is None or not bot.is_ready():
+        raise RuntimeError("Discord bot is not ready")
+
+    from utils.game.manager import games
+    from utils.race.race_weather import WEATHER_RULE
+    from views.create_game_view import build_lobby_message_payload
+    from views.lobby_management_views import LobbyView
+
+    marker = f"[RB:{booking['booking_id']}]"
+    parent = None
+    existing_thread = None
+    if booking.get("thread_id"):
+        try:
+            existing_thread = bot.get_channel(int(booking["thread_id"])) or await bot.fetch_channel(int(booking["thread_id"]))
+            parent_id = int(booking.get("parent_channel_id") or 0)
+            parent = bot.get_channel(parent_id) or await bot.fetch_channel(parent_id)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException, ValueError):
+            existing_thread = None
+            parent = None
+    for candidate_id in RACE_ROOM_CHANNEL_IDS:
+        if existing_thread is not None:
+            break
+        candidate = bot.get_channel(candidate_id)
+        if candidate is None:
+            try:
+                candidate = await bot.fetch_channel(candidate_id)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                continue
+        match = next((thread for thread in getattr(candidate, "threads", []) if marker in thread.name), None)
+        if match is None and booking.get("status") == "creating":
+            try:
+                async for archived_thread in candidate.archived_threads(limit=100):
+                    if marker in archived_thread.name:
+                        match = archived_thread
+                        break
+            except (discord.Forbidden, discord.HTTPException, AttributeError):
+                match = None
+        if match is not None:
+            parent, existing_thread = candidate, match
+            break
+    if parent is None:
+        usage = {channel_id: 0 for channel_id in RACE_ROOM_CHANNEL_IDS}
+        for room in list_bookings(include_past=True):
+            parent_id = room.get("parent_channel_id")
+            if parent_id and int(parent_id) in usage and room.get("status") == "open":
+                usage[int(parent_id)] += 1
+        for channel_id in RACE_ROOM_CHANNEL_IDS:
+            if get_game(channel_id) is not None:
+                usage[channel_id] += 1
+        parent_id = min(RACE_ROOM_CHANNEL_IDS, key=lambda value: usage[value])
+        parent = bot.get_channel(parent_id) or await bot.fetch_channel(parent_id)
+    parent_id = int(parent.id)
+    title = "Practice" if booking["booking_type"] == "practice" else ("Debut" if booking["booking_type"] == "debut" else f"Legend {booking['settings'].get('legend_key', '')}")
+    if booking["booking_type"] == "legend":
+        title = MOB_PRESETS.get(booking["settings"].get("legend_key"), {}).get("name", title)
+    stage_name = RACE_PRESET[booking["stage_key"]]["name"]
+    thread_prefix = f"{booking['creator_name']} {stage_name} {title}"[:82].rstrip()
+    thread_name = f"{thread_prefix} {marker}"
+    if existing_thread is None:
+        is_private = booking["visibility"] == "private"
+        existing_thread = await parent.create_thread(
+            name=thread_name,
+            type=discord.ChannelType.private_thread if is_private else discord.ChannelType.public_thread,
+            invitable=False if is_private else True,
+            auto_archive_duration=10080,
+        )
+    thread = existing_thread
+    if getattr(thread, "archived", False):
+        await thread.edit(archived=False)
+    room_id = int(thread.id)
+    if get_game(room_id) is None:
+        is_legend = booking["booking_type"] == "legend"
+        if not create_game(room_id, booking["stage_key"], int(booking["creator_id"]), is_legend=is_legend):
+            raise RuntimeError("Could not initialize the race room")
+        game = get_game(room_id)
+        game["booking_type"] = booking["booking_type"]
+        game["booking_id"] = booking["booking_id"]
+        game["booking_starts_at"] = booking["starts_at"]
+        game["room_parent_channel_id"] = parent_id
+        game["legend_key"] = booking["settings"].get("legend_key")
+        game["record_type"] = "official" if booking["booking_type"] in {"legend", "debut"} else "practice"
+        set_game_rule(room_id, WEATHER_RULE, booking["settings"].get("weather", "none"))
+        if booking["booking_type"] == "legend":
+            add_mob_from_preset(room_id, booking["settings"]["legend_key"], int(booking["settings"].get("legend_level", 1)))
+            add_mob_from_preset(room_id, "rookie_pace", int(booking["settings"].get("mob_level", 1)))
+        if booking["booking_type"] == "debut":
+            add_mob_from_preset(room_id, "rookie_pace", 2)
+        for mob in booking["settings"].get("mobs", []):
+            add_mob_from_preset(room_id, mob["key"], int(mob.get("level", 1)))
+        if booking["booking_type"] == "debut":
+            for player in game["players"].values():
+                if not player.get("is_mob"):
+                    continue
+                preset = MOB_PRESETS.get(player.get("mob_preset_key"))
+                if preset:
+                    player["race_profile"] = apply_mob_level(copy.deepcopy(preset["race_profile"]), 2)
+                    player["mob_level"] = 2
+                    player["ai_level"] = 2
+        for member in booking.get("members", []):
+            member_id = str(member["user_id"])
+            if get_account_role(member_id) != "trainee":
+                continue
+            if booking["visibility"] == "private" and member_id not in booking["invited_ids"]:
+                continue
+            avatar = get_player_summary(member_id) or {}
+            add_player(room_id, int(member_id), member["username"], avatar.get("image_url", ""), "Pace")
+
+    if booking["visibility"] == "private":
+        for user_id in dict.fromkeys([booking["creator_id"], *booking["invited_ids"]]):
+            member = parent.guild.get_member(int(user_id))
+            if member is None:
+                try:
+                    member = await parent.guild.fetch_member(int(user_id))
+                except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                    continue
+            try:
+                await thread.add_user(member)
+            except (discord.Forbidden, discord.HTTPException):
+                continue
+
+    if booking.get("status") == "open":
+        await thread.send("ห้องถูกกู้คืนหลังบอตเริ่มทำงานใหม่ รายชื่อผู้ลงทะเบียนถูกโหลดกลับแล้ว")
+    else:
+        mentions = [f"<@{booking['creator_id']}>"] + [f"<@{member['user_id']}>" for member in booking.get("members", []) if str(member["user_id"]) != booking["creator_id"]]
+        await thread.send(
+            content=f"ห้อง {title} พร้อมเปิดแล้ว {', '.join(dict.fromkeys(mentions))}",
+            allowed_mentions=discord.AllowedMentions(users=True, roles=False, everyone=False),
+        )
+    embed, file = build_lobby_message_payload(room_id)
+    if file:
+        await thread.send(file=file, view=LobbyView(room_id))
+    else:
+        await thread.send(embed=embed, view=LobbyView(room_id))
+    mark_booking_open(booking["booking_id"], str(thread.id), str(parent_id), str(parent.guild.id))
+
+
+async def _room_booking_worker():
+    while True:
+        try:
+            retry_failed_bookings()
+            for booking in claim_due_bookings():
+                try:
+                    bot = bot_instance.bot
+                    if bot is None or not bot.is_ready():
+                        mark_booking_failed(booking["booking_id"], "Discord bot is not ready")
+                        continue
+                    future = asyncio.run_coroutine_threadsafe(_deliver_room_booking(booking), bot.loop)
+                    await asyncio.wrap_future(future)
+                except Exception as exc:
+                    mark_booking_failed(booking["booking_id"], str(exc))
+                    print(f"[room-booking] Could not open {booking['booking_id']}: {exc}", flush=True)
+            bot = bot_instance.bot
+            if bot is not None and bot.is_ready():
+                from utils.game.manager import get_game
+
+                for booking in list_open_bookings():
+                    if not booking.get("thread_id") or get_game(int(booking["thread_id"])) is not None:
+                        continue
+                    try:
+                        future = asyncio.run_coroutine_threadsafe(_deliver_room_booking(booking), bot.loop)
+                        await asyncio.wrap_future(future)
+                    except Exception as exc:
+                        mark_booking_failed(booking["booking_id"], str(exc))
+                        print(f"[room-booking] Could not restore {booking['booking_id']}: {exc}", flush=True)
+        except Exception as exc:
+            print(f"[room-booking] Worker error: {exc}", flush=True)
+        await asyncio.sleep(60)
+
+
 async def _registration_report_worker():
     while True:
         delete_expired_pending_race_registrations()
@@ -434,9 +770,11 @@ async def _registration_report_worker():
 @app.on_event("startup")
 async def api_startup():
     init_db()
+    init_room_booking_tables()
     ensure_upload_dirs()
     migrate_embedded_preset_profile_images()
     asyncio.create_task(_registration_report_worker())
+    asyncio.create_task(_room_booking_worker())
 
 
 def _save_profile_image(file_bytes: bytes, output_path: Path) -> None:

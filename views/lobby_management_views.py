@@ -57,6 +57,13 @@ def _room_open(channel_id: int):
 
 
 def can_manage_room(interaction: discord.Interaction, game: dict) -> bool:
+    if game.get("booking_id"):
+        from utils.storage.database import get_account_role
+
+        return bool(
+            interaction.user.id == game["owner_id"]
+            and get_account_role(str(interaction.user.id)) == "trainer"
+        )
     return bool(
         interaction.user.id == game["owner_id"]
         or (interaction.guild and interaction.user.guild_permissions.administrator)
@@ -113,9 +120,12 @@ class SettingsView(discord.ui.View):
 class RuleSelect(discord.ui.Select):
     def __init__(self, parent_view: SettingsView):
         self.parent_view = parent_view
+        game = get_game(parent_view.channel_id) or {}
+        locked_rules = {"Weather", "RaceType"} if game.get("booking_type") == "debut" else set()
         options = [
             discord.SelectOption(label=label, value=key, default=key == parent_view.selected_rule)
             for key, label in RULE_LABELS.items()
+            if key not in locked_rules
         ]
         super().__init__(placeholder="เลือก Setting ที่ต้องการแก้", options=options, row=0)
 
@@ -152,6 +162,9 @@ class RuleValueSelect(discord.ui.Select):
             await interaction.response.send_message(error, ephemeral=True)
             return
         rule = self.parent_view.selected_rule
+        if game.get("booking_type") == "debut" and rule in {"Weather", "RaceType"}:
+            await interaction.response.send_message("ห้อง Debut ล็อกสภาพอากาศและประเภทการแข่งขันไว้", ephemeral=True)
+            return
         value = self.values[0]
         if rule == "FastMode":
             game["mob_render_mode"] = value
@@ -186,9 +199,12 @@ class AddBotView(discord.ui.View):
         self.channel_id = channel_id
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        _, error = _room_open(self.channel_id)
+        game, error = _room_open(self.channel_id)
         if error:
             await interaction.response.send_message(error, ephemeral=True)
+            return False
+        if game.get("booking_type") == "debut":
+            await interaction.response.send_message("ห้อง Debut ล็อก Mob ไว้ที่ Lv.2", ephemeral=True)
             return False
         return True
 
