@@ -108,7 +108,7 @@ def list_bookings(viewer_id: str | None = None, *, include_past: bool = False) -
     clauses = ["status IN ('scheduled','creating','open','failed')"]
     params: list[object] = []
     if not include_past:
-        clauses.append("(starts_at >= ? OR status='open')")
+        clauses.append("(starts_at >= ? OR status IN ('scheduled','open','creating','failed'))")
         params.append(now_iso)
     with database_connection() as conn:
         rows = conn.execute(
@@ -326,13 +326,22 @@ def mark_booking_failed(booking_id: str, error: str) -> None:
         )
 
 
+def release_booking_claim(booking_id: str) -> None:
+    """Put a due booking back in the queue when Discord is temporarily unavailable."""
+    with database_connection() as conn:
+        conn.execute(
+            "UPDATE room_bookings SET status='scheduled',updated_at=CURRENT_TIMESTAMP WHERE booking_id=? AND status='creating'",
+            (str(booking_id),),
+        )
+
+
 def retry_failed_bookings() -> int:
     with database_connection() as conn:
         conn.execute(
             "UPDATE room_bookings SET status='scheduled',updated_at=CURRENT_TIMESTAMP WHERE status='creating' AND updated_at <= datetime('now','-5 minutes')"
         )
         cursor = conn.execute(
-            "UPDATE room_bookings SET status='scheduled',updated_at=CURRENT_TIMESTAMP WHERE status='failed' AND updated_at <= datetime('now','-5 minutes') AND starts_at >= ?",
+            "UPDATE room_bookings SET status='scheduled',updated_at=CURRENT_TIMESTAMP WHERE status='failed' AND updated_at <= datetime('now','-1 minute') AND starts_at >= ?",
             ((datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),),
         )
     return cursor.rowcount

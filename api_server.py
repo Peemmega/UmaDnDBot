@@ -108,7 +108,7 @@ from utils.room_bookings import (
     ROOM_TYPES, claim_due_bookings, create_booking, get_booking,
     init_room_booking_tables, list_bookings, list_booking_members,
     list_open_bookings,
-    mark_booking_failed, mark_booking_open, register_for_booking,
+    mark_booking_failed, mark_booking_open, register_for_booking, release_booking_claim,
     retry_failed_bookings,
 )
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
@@ -701,8 +701,20 @@ async def _deliver_room_booking(booking: dict):
         for channel_id in RACE_ROOM_CHANNEL_IDS:
             if get_game(channel_id) is not None:
                 usage[channel_id] += 1
-        parent_id = min(RACE_ROOM_CHANNEL_IDS, key=lambda value: usage[value])
-        parent = bot.get_channel(parent_id) or await bot.fetch_channel(parent_id)
+        ordered_channels = sorted(RACE_ROOM_CHANNEL_IDS, key=lambda value: usage[value])
+        for candidate_id in ordered_channels:
+            candidate = bot.get_channel(candidate_id)
+            if candidate is None:
+                try:
+                    candidate = await bot.fetch_channel(candidate_id)
+                except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                    continue
+            if booking["visibility"] == "private" and isinstance(candidate, discord.ForumChannel):
+                continue
+            parent = candidate
+            break
+        if parent is None:
+            raise RuntimeError("No accessible race channel supports this room visibility")
     parent_id = int(parent.id)
     title = "Practice" if booking["booking_type"] == "practice" else ("Debut" if booking["booking_type"] == "debut" else f"Legend {booking['settings'].get('legend_key', '')}")
     if booking["booking_type"] == "legend":
@@ -712,12 +724,23 @@ async def _deliver_room_booking(booking: dict):
     thread_name = f"{thread_prefix} {marker}"
     if existing_thread is None:
         is_private = booking["visibility"] == "private"
-        existing_thread = await parent.create_thread(
-            name=thread_name,
-            type=discord.ChannelType.private_thread if is_private else discord.ChannelType.public_thread,
-            invitable=False if is_private else True,
-            auto_archive_duration=10080,
-        )
+        if isinstance(parent, discord.ForumChannel):
+            if is_private:
+                raise RuntimeError("Private scheduled rooms require a text channel")
+            created_post = await parent.create_thread(
+                name=thread_name,
+                content=f"Race room for {title} at {booking['starts_at']}",
+                auto_archive_duration=10080,
+                reason=f"Scheduled room booking {booking['booking_id']}",
+            )
+            existing_thread = created_post.thread
+        else:
+            existing_thread = await parent.create_thread(
+                name=thread_name,
+                type=discord.ChannelType.private_thread if is_private else discord.ChannelType.public_thread,
+                invitable=False if is_private else True,
+                auto_archive_duration=10080,
+            )
     thread = existing_thread
     if getattr(thread, "archived", False):
         await thread.edit(archived=False)
@@ -799,7 +822,7 @@ async def _room_booking_worker():
                 try:
                     bot = bot_instance.bot
                     if bot is None or not bot.is_ready():
-                        mark_booking_failed(booking["booking_id"], "Discord bot is not ready")
+                        release_booking_claim(booking["booking_id"])
                         continue
                     future = asyncio.run_coroutine_threadsafe(_deliver_room_booking(booking), bot.loop)
                     await asyncio.wrap_future(future)
