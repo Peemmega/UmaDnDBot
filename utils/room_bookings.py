@@ -12,7 +12,7 @@ from utils.storage.database import DB_PATH, database_connection
 
 THAI_TZ = ZoneInfo("Asia/Bangkok")
 ROOM_TYPES = {"practice", "legend", "debut"}
-ROOM_STATUSES = {"scheduled", "creating", "open", "failed", "completed", "cancelled"}
+ROOM_STATUSES = {"scheduled", "creating", "restoring", "open", "failed", "completed", "cancelled"}
 
 
 def init_room_booking_tables() -> None:
@@ -105,10 +105,10 @@ def record_room_booking_signup(booking_id: str, user_id: str, username: str) -> 
 
 def list_bookings(viewer_id: str | None = None, *, include_past: bool = False) -> list[dict]:
     now_iso = datetime.now(timezone.utc).isoformat()
-    clauses = ["status IN ('scheduled','creating','open','failed')"]
+    clauses = ["status IN ('scheduled','creating','restoring','open','failed')"]
     params: list[object] = []
     if not include_past:
-        clauses.append("(starts_at >= ? OR status IN ('scheduled','open','creating','failed'))")
+        clauses.append("(starts_at >= ? OR status IN ('scheduled','open','creating','restoring','failed'))")
         params.append(now_iso)
     with database_connection() as conn:
         rows = conn.execute(
@@ -318,6 +318,25 @@ def mark_booking_open(booking_id: str, thread_id: str, parent_channel_id: str, g
         )
 
 
+def save_booking_thread(booking_id: str, thread_id: str, parent_channel_id: str, guild_id: str | None = None) -> None:
+    """Persist the Discord thread as soon as it exists so retries reuse it."""
+    with database_connection() as conn:
+        conn.execute(
+            "UPDATE room_bookings SET thread_id=?,parent_channel_id=?,guild_id=? WHERE booking_id=?",
+            (str(thread_id), str(parent_channel_id), str(guild_id or ""), str(booking_id)),
+        )
+
+
+def claim_open_booking_for_restore(booking_id: str) -> bool:
+    """Ensure only one worker at a time rebuilds the in-memory lobby for a booking."""
+    with database_connection() as conn:
+        cursor = conn.execute(
+            "UPDATE room_bookings SET status='restoring',updated_at=CURRENT_TIMESTAMP WHERE booking_id=? AND status='open'",
+            (str(booking_id),),
+        )
+    return cursor.rowcount == 1
+
+
 def mark_booking_failed(booking_id: str, error: str) -> None:
     with database_connection() as conn:
         conn.execute(
@@ -337,6 +356,9 @@ def release_booking_claim(booking_id: str) -> None:
 
 def retry_failed_bookings() -> int:
     with database_connection() as conn:
+        conn.execute(
+            "UPDATE room_bookings SET status='open',updated_at=CURRENT_TIMESTAMP WHERE status='restoring' AND updated_at <= datetime('now','-5 minutes')"
+        )
         conn.execute(
             "UPDATE room_bookings SET status='scheduled',updated_at=CURRENT_TIMESTAMP WHERE status='creating' AND updated_at <= datetime('now','-5 minutes')"
         )

@@ -106,9 +106,11 @@ from utils.mob.mob_presets import MOB_PRESETS
 from utils.race.legend_race_presets import LEGEND_RACE_PRESETS
 from utils.room_bookings import (
     ROOM_TYPES, claim_due_bookings, create_booking, get_booking,
+    claim_open_booking_for_restore,
     init_room_booking_tables, list_bookings, list_booking_members,
     list_open_bookings,
     mark_booking_failed, mark_booking_open, register_for_booking, release_booking_claim,
+    save_booking_thread,
     retry_failed_bookings,
 )
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
@@ -744,6 +746,7 @@ async def _deliver_room_booking(booking: dict):
     if getattr(thread, "archived", False):
         await thread.edit(archived=False)
     room_id = int(thread.id)
+    save_booking_thread(booking["booking_id"], str(room_id), str(parent_id), str(parent.guild.id))
     if get_game(room_id) is None:
         is_legend = booking["booking_type"] == "legend"
         if not create_game(room_id, booking["stage_key"], int(booking["creator_id"]), is_legend=is_legend):
@@ -834,6 +837,8 @@ async def _room_booking_worker():
 
                 for booking in list_open_bookings():
                     if not booking.get("thread_id") or get_game(int(booking["thread_id"])) is not None:
+                        continue
+                    if not claim_open_booking_for_restore(booking["booking_id"]):
                         continue
                     try:
                         future = asyncio.run_coroutine_threadsafe(_deliver_room_booking(booking), bot.loop)
