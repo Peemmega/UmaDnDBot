@@ -107,6 +107,7 @@ from utils.race.legend_race_presets import LEGEND_RACE_PRESETS
 from utils.room_bookings import (
     ROOM_TYPES, claim_due_bookings, create_booking, get_booking,
     claim_open_booking_for_restore,
+    has_completed_race_for_room,
     init_room_booking_tables, list_bookings, list_booking_members,
     list_open_bookings,
     mark_booking_failed, mark_booking_open, register_for_booking, release_booking_claim,
@@ -836,7 +837,14 @@ async def _room_booking_worker():
                 from utils.game.manager import get_game
 
                 for booking in list_open_bookings():
-                    if not booking.get("thread_id") or get_game(int(booking["thread_id"])) is not None:
+                    if not booking.get("thread_id"):
+                        continue
+                    if has_completed_race_for_room(booking["thread_id"]):
+                        from utils.room_bookings import mark_bookings_completed_for_thread
+
+                        mark_bookings_completed_for_thread(booking["thread_id"])
+                        continue
+                    if get_game(int(booking["thread_id"])) is not None:
                         continue
                     if not claim_open_booking_for_restore(booking["booking_id"]):
                         continue

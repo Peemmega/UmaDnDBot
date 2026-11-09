@@ -454,3 +454,16 @@ def mark_bookings_completed_for_thread(thread_id: str) -> None:
             "UPDATE room_bookings SET status='completed',updated_at=CURRENT_TIMESTAMP WHERE thread_id=? AND status='open'",
             (str(thread_id),),
         )
+
+
+def has_completed_race_for_room(thread_id: str) -> bool:
+    """Detect a previously finished race before rebuilding an old open booking."""
+    try:
+        with database_connection() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM race_history WHERE CAST(room_id AS TEXT)=? LIMIT 1",
+                (str(thread_id),),
+            ).fetchone()
+    except sqlite3.OperationalError:
+        return False
+    return row is not None

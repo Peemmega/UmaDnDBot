@@ -79,10 +79,13 @@ def finalize_race(
     ranked, result = complete_race(
         game, ranked_players=ranked_players, winner_id=winner_id
     )
-    race_id = save_completed_race(game, ranked)
     if game.get("booking_type") in {"legend", "debut"}:
         from utils.room_bookings import record_scheduled_winner, mark_bookings_completed_for_thread
 
-        record_scheduled_winner(game)
+        # Close the scheduled room before optional history persistence. If
+        # saving history fails, the room worker must not mistake this finished
+        # race for a lobby lost during a bot restart and recreate it.
         mark_bookings_completed_for_thread(game.get("channel_id"))
+        record_scheduled_winner(game)
+    race_id = save_completed_race(game, ranked)
     return ranked, result, race_id
