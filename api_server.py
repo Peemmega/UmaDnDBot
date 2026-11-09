@@ -658,7 +658,6 @@ async def _deliver_room_booking(booking: dict):
     from utils.game.manager import games
     from utils.race.race_weather import WEATHER_RULE
     from views.create_game_view import build_lobby_message_payload
-    from views.lobby_management_views import LobbyView
 
     marker = f"[RB:{booking['booking_id']}]"
     parent = None
