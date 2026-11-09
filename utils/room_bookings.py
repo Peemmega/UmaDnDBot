@@ -183,12 +183,42 @@ def create_booking(
         if settings.get("weather", "none") not in {"none", "random", "sunny", "rainy"}:
             raise ValueError("สภาพอากาศไม่ถูกต้อง")
     if booking_type == "legend":
-        if not settings.get("legend_key"):
-            raise ValueError("กรุณาเลือก Legend")
-        if not 1 <= int(settings.get("legend_level", 1)) <= 8:
-            raise ValueError("ระดับ Legend ต้องอยู่ระหว่าง 1 ถึง 8")
-        if not 1 <= int(settings.get("mob_level", 1)) <= 8:
-            raise ValueError("ระดับ Mob ต้องอยู่ระหว่าง 1 ถึง 8")
+        from utils.race.legend_race_presets import LEGEND_RACE_PRESETS
+        from utils.race.race_presets import RACE_PRESET
+        from utils.mob.mob_presets import MOB_PRESETS
+
+        preset_key = str(settings.get("legend_preset_key") or "")
+        preset = LEGEND_RACE_PRESETS.get(preset_key)
+        if not preset:
+            raise ValueError("กรุณาเลือก Legend preset")
+        if preset.get("legend_key") not in MOB_PRESETS:
+            raise ValueError("Legend preset อ้างถึงตัวละครที่ไม่มีใน MOB_PRESETS")
+        if preset.get("stage_key") not in RACE_PRESET:
+            raise ValueError("Legend preset อ้างถึงสนามที่ไม่มีใน RACE_PRESET")
+        if not 1 <= int(preset.get("legend_level", 1)) <= 8:
+            raise ValueError("ระดับ Legend ใน preset ต้องอยู่ระหว่าง 1 ถึง 8")
+        preset_mobs = list(preset.get("mobs", []))
+        if len(preset_mobs) > 8:
+            raise ValueError("Legend preset เพิ่ม Mob ได้ไม่เกิน 8 ตัว")
+        for mob in preset_mobs:
+            if mob.get("key") not in MOB_PRESETS or not 1 <= int(mob.get("level", 1)) <= 8:
+                raise ValueError("Mob ใน Legend preset ต้องใช้ key ที่มีอยู่และ level 1–8")
+        if preset.get("weather", "none") not in {"none", "random", "warm", "sunny", "rainy"}:
+            raise ValueError("สภาพอากาศใน Legend preset ไม่ถูกต้อง")
+        if preset.get("record_type", "official") not in {"official", "practice"}:
+            raise ValueError("record_type ใน Legend preset ต้องเป็น official หรือ practice")
+        settings = {
+            "legend_preset_key": preset_key,
+            "legend_key": str(preset["legend_key"]),
+            "legend_level": int(preset.get("legend_level", 1)),
+            "mobs": [
+                {**mob, "name": MOB_PRESETS[mob["key"]].get("name", mob["key"])}
+                for mob in preset_mobs
+            ],
+            "weather": preset.get("weather", "none"),
+            "record_type": preset.get("record_type", "official"),
+        }
+        stage_key = str(preset["stage_key"])
     if booking_type == "debut":
         settings = {"weather": "random", "record_type": "official", "mob_level": 2}
 

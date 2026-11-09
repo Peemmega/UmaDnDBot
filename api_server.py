@@ -103,6 +103,7 @@ from utils.game_manager import (
     add_mob_from_preset, add_player, set_game_rule, apply_mob_level,
 )
 from utils.mob.mob_presets import MOB_PRESETS
+from utils.race.legend_race_presets import LEGEND_RACE_PRESETS
 from utils.room_bookings import (
     ROOM_TYPES, claim_due_bookings, create_booking, get_booking,
     init_room_booking_tables, list_bookings, list_booking_members,
@@ -479,16 +480,32 @@ def _room_booking_options():
         {"key": key, "name": value.get("name", key)}
         for key, value in RACE_PRESET.items()
     ]
-    legends = [
-        {"key": key, "name": value.get("name", key)}
-        for key, value in MOB_PRESETS.items()
-        if not key.startswith("rookie_")
-    ]
+    legend_presets = []
+    for key, preset in LEGEND_RACE_PRESETS.items():
+        legend = MOB_PRESETS.get(preset.get("legend_key"), {})
+        stage = RACE_PRESET.get(preset.get("stage_key"), {})
+        legend_presets.append({
+            "key": key,
+            "name": legend.get("name", preset.get("legend_key", key)),
+            "legend_key": preset.get("legend_key"),
+            "legend_level": preset.get("legend_level", 1),
+            "stage_key": preset.get("stage_key"),
+            "stage_name": stage.get("name", preset.get("stage_key", "")),
+            "mobs": [
+                {
+                    **mob,
+                    "name": MOB_PRESETS.get(mob.get("key"), {}).get("name", mob.get("key", "Mob")),
+                }
+                for mob in preset.get("mobs", [])
+            ],
+            "weather": preset.get("weather", "none"),
+            "record_type": preset.get("record_type", "official"),
+        })
     mobs = [
         {"key": key, "name": value.get("name", key)}
         for key, value in MOB_PRESETS.items()
     ]
-    return {"stages": stages, "legends": legends, "mobs": mobs, "players": list_player_summaries()}
+    return {"stages": stages, "legend_presets": legend_presets, "mobs": mobs, "players": list_player_summaries()}
 
 
 @app.get("/room-bookings/options")
@@ -506,15 +523,16 @@ async def api_list_room_bookings(request: Request, user_id: str = ""):
 @app.post("/room-bookings")
 async def api_create_room_booking(request: Request, payload: RoomBookingCreatePayload):
     _verify_room_booking_proxy(request, await request.body())
-    if not str(payload.user_id).isdigit() or get_account_role(payload.user_id) != "trainer":
-        raise HTTPException(status_code=403, detail="เฉพาะ Trainer เท่านั้นที่สร้างห้องได้")
+    role = get_account_role(payload.user_id) if str(payload.user_id).isdigit() else None
+    if role != "trainer" and not (role == "trainee" and payload.booking_type == "legend"):
+        raise HTTPException(status_code=403, detail="Trainer สร้างได้ทุกประเภท ส่วน Umamusume สร้างได้เฉพาะ Legend Race")
     options = _room_booking_options()
-    if payload.stage_key not in {item["key"] for item in options["stages"]}:
+    if payload.booking_type != "legend" and payload.stage_key not in {item["key"] for item in options["stages"]}:
         raise HTTPException(status_code=400, detail="ไม่พบสนามที่เลือก")
     if payload.booking_type not in ROOM_TYPES:
         raise HTTPException(status_code=400, detail="ประเภทห้องไม่ถูกต้อง")
-    if payload.booking_type == "legend" and payload.settings.get("legend_key") not in {item["key"] for item in options["legends"]}:
-        raise HTTPException(status_code=400, detail="ไม่พบ Legend ที่เลือก")
+    if payload.booking_type == "legend" and payload.settings.get("legend_preset_key") not in {item["key"] for item in options["legend_presets"]}:
+        raise HTTPException(status_code=400, detail="ไม่พบ Legend preset ที่เลือก")
     allowed_mobs = {item["key"] for item in options["mobs"]}
     for mob in payload.settings.get("mobs", []):
         if mob.get("key") not in allowed_mobs:
@@ -523,8 +541,8 @@ async def api_create_room_booking(request: Request, payload: RoomBookingCreatePa
     invited_ids = list(dict.fromkeys(str(value) for value in payload.invited_ids))
     if any(value not in known_players for value in invited_ids):
         raise HTTPException(status_code=400, detail="มีสมาชิกที่เลือกไม่ถูกต้อง")
-    creator = get_profile_preset(payload.user_id, "trainer") or get_player_summary(payload.user_id) or {}
-    creator_name = creator.get("name") or "Trainer"
+    creator = (get_profile_preset(payload.user_id, "trainer") if role == "trainer" else None) or get_player_summary(payload.user_id) or {}
+    creator_name = creator.get("name") or ("Trainer" if role == "trainer" else "Umamusume")
     try:
         booking = create_booking(
             booking_type=payload.booking_type,
@@ -670,11 +688,13 @@ async def _deliver_room_booking(booking: dict):
         game["booking_starts_at"] = booking["starts_at"]
         game["room_parent_channel_id"] = parent_id
         game["legend_key"] = booking["settings"].get("legend_key")
-        game["record_type"] = "official" if booking["booking_type"] in {"legend", "debut"} else "practice"
+        if booking["booking_type"] == "legend":
+            game["record_type"] = booking["settings"].get("record_type", "official")
+        else:
+            game["record_type"] = "official" if booking["booking_type"] == "debut" else "practice"
         set_game_rule(room_id, WEATHER_RULE, booking["settings"].get("weather", "none"))
         if booking["booking_type"] == "legend":
             add_mob_from_preset(room_id, booking["settings"]["legend_key"], int(booking["settings"].get("legend_level", 1)))
-            add_mob_from_preset(room_id, "rookie_pace", int(booking["settings"].get("mob_level", 1)))
         if booking["booking_type"] == "debut":
             add_mob_from_preset(room_id, "rookie_pace", 2)
         for mob in booking["settings"].get("mobs", []):

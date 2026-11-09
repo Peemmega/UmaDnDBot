@@ -62,7 +62,13 @@ def can_manage_room(interaction: discord.Interaction, game: dict) -> bool:
 
         return bool(
             interaction.user.id == game["owner_id"]
-            and get_account_role(str(interaction.user.id)) == "trainer"
+            and (
+                get_account_role(str(interaction.user.id)) == "trainer"
+                or (
+                    game.get("booking_type") == "legend"
+                    and get_account_role(str(interaction.user.id)) == "trainee"
+                )
+            )
         )
     return bool(
         interaction.user.id == game["owner_id"]
@@ -121,7 +127,7 @@ class RuleSelect(discord.ui.Select):
     def __init__(self, parent_view: SettingsView):
         self.parent_view = parent_view
         game = get_game(parent_view.channel_id) or {}
-        locked_rules = {"Weather", "RaceType"} if game.get("booking_type") == "debut" else set()
+        locked_rules = {"Weather", "RaceType"} if game.get("booking_type") in {"debut", "legend"} else set()
         options = [
             discord.SelectOption(label=label, value=key, default=key == parent_view.selected_rule)
             for key, label in RULE_LABELS.items()
@@ -162,8 +168,8 @@ class RuleValueSelect(discord.ui.Select):
             await interaction.response.send_message(error, ephemeral=True)
             return
         rule = self.parent_view.selected_rule
-        if game.get("booking_type") == "debut" and rule in {"Weather", "RaceType"}:
-            await interaction.response.send_message("ห้อง Debut ล็อกสภาพอากาศและประเภทการแข่งขันไว้", ephemeral=True)
+        if game.get("booking_type") in {"debut", "legend"} and rule in {"Weather", "RaceType"}:
+            await interaction.response.send_message("ห้อง Debut และ Legend ล็อกสภาพอากาศและประเภทการแข่งขันไว้ตาม preset", ephemeral=True)
             return
         value = self.values[0]
         if rule == "FastMode":
