@@ -14,14 +14,14 @@ MAX_SPEED_PHASE = {
     "Late": {
         "start": 14,
         "mid": 18,
-        "late": 26,
-        "last_spurt": 26,
+        "late": 23,
+        "last_spurt": 23,
     },
     "End": {
         "start": 14,
         "mid": 18,
-        "late": 23,
-        "last_spurt": 28,
+        "late": 20,
+        "last_spurt": 25,
     },
 }
 
