@@ -115,7 +115,7 @@ from utils.room_bookings import (
     retry_failed_bookings,
 )
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
-from utils.channel_config import RACE_REGISTRATION_FORUM_CHANNEL_ID
+from utils.channel_config import RACE_REGISTRATION_FORUM_CHANNEL_ID, RACE_ROOM_CHANNEL_IDS
 from utils.race.race_web import race_web_manager
 from utils.race.race_history import (
     OFFICIAL,
@@ -1800,14 +1800,6 @@ def api_get_course_leaderboard(stage_key: str, limit: int = 10, include_practice
     return {"stage_key": stage_key, "rankings": get_course_leaderboard(stage_key, limit=limit, record_type=record_type)}
 
 
-RACE_ROOM_CHANNEL_IDS = [
-    1496059539085201529,
-    1496124234240622673,
-    1496124268352639007,
-    1502236301074763787,
-    1502236315544977539,
-    1502236327918174381,
-]
 
 class CreateRaceRoomPayload(BaseModel):
     user_id: str
