@@ -11,16 +11,21 @@ SKILL_UPGRADES_FROM = {
     "acc_007": "acc_017",  # Neck and Neck replaces Head-On.
     "acc_009": "acc_019",  # Unrestrained replaces Final Push.
     "acc_014": "acc_013",  # Taking the Lead replaces Early Lead.
+    "acc_022": "acc_021",  # Razor-Sharp Steps replaces Sharp Steps.
+    "acc_023": "acc_024",  # Reignition replaces Second Wind.
     "debuff_002": "debuff_011",  # Stamina Siphon replaces Stamina Eater.
     "debuff_003": "debuff_008",  # Dominator replaces Tether.
     "debuff_009": "debuff_010",  # Adored by All replaces Intimidate.
+    "debuff_006": "debuff_013",  # All-Seeing Eyes replaces Sharp Gaze.
     "rec_001": "rec_010",  # Swinging Maestro replaces Corner Recovery.
     "rec_002": "rec_014",  # Go-Home Specialist replaces After-School Stroll.
     "rec_005": "rec_011",  # Breath of Fresh Air replaces Straightaway Recovery.
     "rec_008": "rec_015",  # Restless replaces Moxie.
+    "rec_009": "rec_016",  # Relax replaces A Small Breather.
     "rec_012": "rec_013",  # Gourmand replaces Hydrate.
     "utl_004": "utl_003",  # Lane Legerdemain replaces Go with the Flow.
     "vel_001": "vel_023",  # Professor of Curvature replaces Corner Adept.
+    "vel_003": "vel_038",  # Lightning Step replaces Thunderbolt Step.
     "vel_005": "vel_028",  # Killer Tunes replaces Up-Tempo.
     "vel_006": "vel_030",  # Speed Star replaces Prepared to Pass.
     "vel_007": "vel_024",  # Beeline Burst replaces Straightaway Adept.
@@ -32,6 +37,8 @@ SKILL_UPGRADES_FROM = {
     "vel_019": "vel_034",  # 15,000,000 CC replaces 1,500,000 CC.
     "vel_021": "vel_033",  # Unstoppable replaces On the Attack.
     "vel_037": "vel_036",  # Dauntless replaces Fearless.
+    "vel_040": "vel_039",  # Solid Strike replaces Steady Gait.
+    "vel_041": "vel_042",  # Keep Going! replaces Full Throttle.
 }
 
 
