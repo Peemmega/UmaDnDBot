@@ -602,15 +602,7 @@ async def api_create_room_booking(request: Request, payload: RoomBookingCreatePa
             invited_ids=invited_ids,
             settings=payload.settings,
         )
-        # Replace raw IDs with directory names in the initial invite roster.
-        names = {item["id"]: item["name"] for item in options["players"]}
-        for user_id in invited_ids:
-            with database_connection() as conn:
-                conn.execute(
-                    "UPDATE room_booking_signups SET username=? WHERE booking_id=? AND user_id=?",
-                    (names.get(user_id, user_id), booking["booking_id"], user_id),
-                )
-        return get_booking(booking["booking_id"])
+        return booking
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -804,7 +796,12 @@ async def _deliver_room_booking(booking: dict):
     if booking.get("status") == "open":
         await thread.send("ห้องถูกกู้คืนหลังบอตเริ่มทำงานใหม่ รายชื่อผู้ลงทะเบียนถูกโหลดกลับแล้ว")
     else:
-        mentions = [f"<@{booking['creator_id']}>"] + [f"<@{member['user_id']}>" for member in booking.get("members", []) if str(member["user_id"]) != booking["creator_id"]]
+        mention_ids = [
+            booking["creator_id"],
+            *(str(member["user_id"]) for member in booking.get("members", [])),
+            *booking.get("invited_ids", []),
+        ]
+        mentions = [f"<@{user_id}>" for user_id in mention_ids]
         await thread.send(
             content=f"ห้อง {title} พร้อมเปิดแล้ว {', '.join(dict.fromkeys(mentions))}",
             allowed_mentions=discord.AllowedMentions(users=True, roles=False, everyone=False),

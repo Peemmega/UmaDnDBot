@@ -248,12 +248,7 @@ def create_booking(
             "INSERT INTO room_booking_signups (booking_id,user_id,username) VALUES (?,?,?)",
             (booking_id, creator_id, creator_name.strip() or "Trainer"),
         )
-        for user_id in invited_ids:
-            # Names are refreshed from the server-side player directory by the API before use.
-            conn.execute(
-                "INSERT OR IGNORE INTO room_booking_signups (booking_id,user_id,username) VALUES (?,?,?)",
-                (booking_id, user_id, user_id),
-            )
+        # Invited players are only pinged when the room opens; they join the roster themselves.
     return get_booking(booking_id)
 
 
@@ -268,8 +263,6 @@ def register_for_booking(booking_id: str, user_id: str, username: str) -> dict:
             raise ValueError("ห้องนี้ปิดรับลงทะเบียนแล้ว")
         if booking["visibility"] == "private" and user_id not in {booking["creator_id"], *booking["invited_ids"]}:
             raise ValueError("ห้องนี้เป็น private และคุณไม่ได้รับเชิญ")
-        if booking["booking_type"] == "practice" and booking["visibility"] != "public":
-            raise ValueError("ห้องฝึกซ้อมนี้ไม่เปิด free-join")
         if booking["booking_type"] == "legend":
             progress = conn.execute("SELECT attempts,won FROM legend_progress WHERE user_id=? AND legend_key=?", (user_id, booking["settings"].get("legend_key", ""))).fetchone()
             if progress and progress["won"]:
