@@ -20,6 +20,7 @@ from utils.database import (
     save_character_basic_profile,
     get_player_summary,
     list_player_summaries,
+    list_trainer_summaries,
     get_connection, 
     database_connection,
     ensure_player, 
@@ -552,7 +553,13 @@ def _room_booking_options():
         {"key": key, "name": value.get("name", key)}
         for key, value in MOB_PRESETS.items()
     ]
-    return {"stages": stages, "legend_presets": legend_presets, "mobs": mobs, "players": list_player_summaries()}
+    return {
+        "stages": stages,
+        "legend_presets": legend_presets,
+        "mobs": mobs,
+        "players": list_player_summaries(),
+        "trainers": list_trainer_summaries(),
+    }
 
 
 @app.get("/room-bookings/options")
@@ -571,8 +578,8 @@ async def api_list_room_bookings(request: Request, user_id: str = ""):
 async def api_create_room_booking(request: Request, payload: RoomBookingCreatePayload):
     _verify_room_booking_proxy(request, await request.body())
     role = get_account_role(payload.user_id) if str(payload.user_id).isdigit() else None
-    if role != "trainer" and not (role == "trainee" and payload.booking_type == "legend"):
-        raise HTTPException(status_code=403, detail="Trainer สร้างได้ทุกประเภท ส่วน Umamusume สร้างได้เฉพาะ Legend Race")
+    if not ((role == "trainer" and payload.booking_type == "practice") or (role == "trainee" and payload.booking_type == "legend")):
+        raise HTTPException(status_code=403, detail="Trainer สร้างได้เฉพาะห้องฝึกซ้อม ส่วน Umamusume สร้างได้เฉพาะ Legend Race")
     options = _room_booking_options()
     if payload.booking_type != "legend" and payload.stage_key not in {item["key"] for item in options["stages"]}:
         raise HTTPException(status_code=400, detail="ไม่พบสนามที่เลือก")
@@ -584,7 +591,7 @@ async def api_create_room_booking(request: Request, payload: RoomBookingCreatePa
     for mob in payload.settings.get("mobs", []):
         if mob.get("key") not in allowed_mobs:
             raise HTTPException(status_code=400, detail="ไม่พบ Mob ที่เลือก")
-    known_players = {item["id"] for item in options["players"]}
+    known_players = {item["id"] for item in [*options["players"], *options["trainers"]]}
     invited_ids = list(dict.fromkeys(str(value) for value in payload.invited_ids))
     if any(value not in known_players for value in invited_ids):
         raise HTTPException(status_code=400, detail="มีสมาชิกที่เลือกไม่ถูกต้อง")

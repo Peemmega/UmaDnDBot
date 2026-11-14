@@ -13,6 +13,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from utils.dice.dice_presets import DICE_PRESET
 from utils.database import database_connection, get_trainee_trainer
 from utils.skill.skill_presets import SKILLS
 
@@ -321,6 +322,9 @@ def _turn_rows(game: dict) -> list[dict]:
             continue
         key = (player_id, turn)
         roll = copy.deepcopy(log.get("roll") or {})
+        # Keep the actual faces and speed for replay, but derive the dice rule
+        # from style, pack state, and activated skills when the history is read.
+        roll.pop("rule", None)
         lane_change = roll.get("lane_change")
         existing = rows_by_key.get(key)
         if existing is None or not lane_change:
@@ -495,6 +499,73 @@ def _decode(row: dict, key: str) -> dict:
     return row
 
 
+def _derive_dice_rule(participant: dict, turn: dict, actions: list[dict]) -> dict | None:
+    data = turn.get("turn_data") or {}
+    roll = data.get("roll") or {}
+    try:
+        phase = int(roll.get("phase"))
+    except (TypeError, ValueError):
+        return None
+
+    style = str(participant.get("running_style") or "").strip().title()
+    color = str(roll.get("distance_color") or "").strip().title()
+    base_rule = (DICE_PRESET.get(style) or {}).get(color, {}).get(phase)
+    if not base_rule:
+        return None
+
+    used_skills = data.get("skills") or []
+    skill_ids = []
+    for skill in used_skills:
+        if isinstance(skill, dict):
+            skill_id = skill.get("id") or skill.get("skill_id")
+        else:
+            skill_id = skill
+        if skill_id:
+            skill_ids.append(str(skill_id))
+
+    # Some older turn snapshots lack a skill list; structured actions remain
+    # an authoritative fallback for the skills used in that turn.
+    if not skill_ids:
+        skill_ids = [
+            str((action.get("action_data") or {}).get("skill_id") or "")
+            for action in actions
+            if str(action.get("participant_id")) == str(turn.get("participant_id"))
+            and int(action.get("turn_number", 0) or 0) == int(turn.get("turn_number", 0) or 0)
+            and str(action.get("action_type") or "").lower() == "skill"
+        ]
+
+    extra_d = 0
+    extra_kh = 0
+    for skill_id in skill_ids:
+        for effect in (SKILLS.get(skill_id) or {}).get("effects", []):
+            effect_type = effect.get("type")
+            value = int(effect.get("value", 0) or 0)
+            if effect_type in {"add_d", "add_dkh"}:
+                extra_d += value
+            if effect_type in {"add_kh", "add_dkh"}:
+                extra_kh += value
+
+    # Zone bonuses are logged as structured actions and affect the next roll
+    # just like skill bonuses.
+    for action in actions:
+        if (
+            str(action.get("participant_id")) != str(turn.get("participant_id"))
+            or int(action.get("turn_number", 0) or 0) != int(turn.get("turn_number", 0) or 0)
+            or str(action.get("action_type") or "").lower() != "zone"
+        ):
+            continue
+        effects = (action.get("action_data") or {}).get("effects") or {}
+        zone_dkh = int(effects.get("add_dkh", 0) or 0)
+        extra_d += zone_dkh
+        extra_kh += zone_dkh
+
+    dice_count = max(1, int(base_rule.get("d", 1) or 1) + extra_d)
+    keep_count = base_rule.get("kh")
+    if keep_count is not None:
+        keep_count = min(dice_count, int(keep_count) + extra_kh)
+    return {"d": dice_count, "kh": keep_count}
+
+
 def get_race_by_id(race_id: str) -> dict | None:
     with database_connection() as conn:
         cursor = conn.cursor()
@@ -536,6 +607,20 @@ def get_race_by_id(race_id: str) -> dict | None:
         _decode(row, "turn_data_json")
     for row in actions:
         _decode(row, "action_data_json")
+    participants_by_id = {str(row.get("participant_id")): row for row in participants}
+    for turn in turns:
+        turn_data = turn.get("turn_data") or {}
+        roll = turn_data.get("roll") or {}
+        # Older records may contain a saved rule. Never expose that stored
+        # value; reconstruct it from the race context and turn actions instead.
+        roll.pop("rule", None)
+        derived_rule = _derive_dice_rule(
+            participants_by_id.get(str(turn.get("participant_id")), {}),
+            turn,
+            actions,
+        )
+        if derived_rule:
+            roll["derived_rule"] = derived_rule
     total_turns = max(
         int((dict(race) if race else {}).get("total_turns") or 0),
         max((int(row.get("turn_number") or 0) for row in turns), default=0),

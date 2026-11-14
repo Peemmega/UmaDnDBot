@@ -1,6 +1,7 @@
 import discord
 from utils.game_manager import (
-    get_game,execute_skill_core,build_skill_use_embed,get_ranked_players
+    get_game,execute_skill_core,build_skill_use_embed,get_ranked_players,
+    has_player_rolled_this_turn,ROLLED_ACTION_LOCK_MESSAGE,
 )
 from utils.turn_result_image import create_turn_result_card
 from utils.image_encoding import encode_png
@@ -34,6 +35,10 @@ class UseSkillView(discord.ui.View):
         player = game["players"].get(interaction.user.id)
         if player is None:
             await interaction.response.send_message("ไม่พบผู้เล่น", ephemeral=True)
+            return
+
+        if has_player_rolled_this_turn(game, player):
+            await interaction.response.send_message(ROLLED_ACTION_LOCK_MESSAGE, ephemeral=True)
             return
 
         skills = player.get("skills")
@@ -115,6 +120,10 @@ class UseSkillView(discord.ui.View):
         player = game["players"].get(interaction.user.id)
         if player is None:
             await interaction.response.send_message("ไม่พบผู้เล่น", ephemeral=True)
+            return
+
+        if has_player_rolled_this_turn(game, player):
+            await interaction.response.send_message(ROLLED_ACTION_LOCK_MESSAGE, ephemeral=True)
             return
 
         if player.get("zone_left", 0) <= 0:

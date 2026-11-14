@@ -270,9 +270,7 @@ ACCELERATION_SKILLS = {
         "cost": 60,
         "trigger": {"path_type": 3},
         "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {"type": "modify_current_speed", "value": 2, "duration": "this_roll"}
-        ],
+        "effects": [{"type": "modify_current_speed", "value": 2}],
         "tags": ["uphill", "acceleration"],
     },
     "acc_021": {

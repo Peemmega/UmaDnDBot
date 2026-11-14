@@ -140,6 +140,8 @@ async def execute_reroll(
         "phase": result.get("phase"),
         "distance_color": result.get("distance_color"),
         "rule": rule_text,
+        "dice_values": list(result.get("rolls") or []),
+        "current_max_speed": float(game_player.get("current_max_speed", 0) or 0),
         "total": result.get("total"),
         "base_total": result.get("base_total"),
         "bonus_display": result.get("bonus_display"),

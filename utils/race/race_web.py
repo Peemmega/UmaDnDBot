@@ -21,6 +21,8 @@ from utils.game_manager import (
     create_game,
     execute_roll_core,
     execute_skill_core,
+    has_player_rolled_this_turn,
+    ROLLED_ACTION_LOCK_MESSAGE,
     games,
     apply_wit_reroll_minimum,
     get_game,
@@ -609,6 +611,9 @@ class RaceWebManager:
         if not skill_id:
             return serialize_room(game, room_id, str(user_id))
 
+        if has_player_rolled_this_turn(game, player):
+            raise ValueError(ROLLED_ACTION_LOCK_MESSAGE)
+
         success, payload = execute_skill_core(
             room_id, str(user_id), skill_id, consume_cost=True
         )
@@ -629,6 +634,9 @@ class RaceWebManager:
         player = game.get("players", {}).get(str(user_id))
         if player is None:
             raise ValueError("Player is not in this race room")
+
+        if has_player_rolled_this_turn(game, player):
+            raise ValueError(ROLLED_ACTION_LOCK_MESSAGE)
 
         success, result_text = apply_zone_in_game(game, player)
         if not success:
@@ -1103,6 +1111,8 @@ class RaceWebManager:
             "phase": result.get("phase"),
             "distance_color": result.get("distance_color"),
             "rule": rule_text,
+            "dice_values": list(result.get("rolls") or []),
+            "current_max_speed": float(player.get("current_max_speed", 0) or 0),
             "total": result.get("total"),
             "base_total": result.get("base_total"),
             "bonus_display": result.get("bonus_display"),

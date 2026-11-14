@@ -3062,6 +3062,29 @@ def list_player_summaries() -> list[dict]:
     ]
 
 
+def list_trainer_summaries() -> list[dict]:
+    """Return accounts whose current role is trainer, using their trainer preset."""
+    with database_connection() as conn:
+        rows = conn.execute("""
+            SELECT account_role.user_id, preset.name, preset.image_url
+            FROM account_roles AS account_role
+            JOIN profile_presets AS preset
+              ON preset.user_id = account_role.user_id AND preset.profile_type = 'trainer'
+            WHERE account_role.role = 'trainer'
+              AND preset.name IS NOT NULL AND TRIM(preset.name) <> ''
+            ORDER BY preset.name COLLATE NOCASE ASC, account_role.user_id ASC
+            """).fetchall()
+    return [
+        {
+            "id": str(row["user_id"]),
+            "name": row["name"],
+            "image_url": resolve_public_url(row["image_url"]),
+            "type": "Trainer",
+        }
+        for row in rows
+    ]
+
+
 def set_all_aptitude(user_id: int, value: int):
     if type(value) is not int or not 1 <= value <= MAX_APTITUDE_LEVEL:
         raise ValueError(f"Aptitude must be between 1 and {MAX_APTITUDE_LEVEL}")

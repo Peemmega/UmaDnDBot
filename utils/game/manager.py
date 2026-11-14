@@ -635,6 +635,8 @@ def execute_roll_core(
         "phase": result.get("phase"),
         "distance_color": result.get("distance_color"),
         "rule": rule_text,
+        "dice_values": list(result.get("rolls") or []),
+        "current_max_speed": float(game_player.get("current_max_speed", 0) or 0),
         "total": result.get("total"),
         "bonus_display": result.get("bonus_display"),
         "gut_bonus": result.get("gut_bonus", 0),
@@ -2385,6 +2387,14 @@ def can_player_roll(channel_id: int, user_id: int):
         return False, "คุณทอยไปแล้วในเทิร์นนี้"
 
     return True, "สามารถทอยได้"
+
+
+ROLLED_ACTION_LOCK_MESSAGE = "ทอยเต๋าไปแล้วในเทิร์นนี้ ไม่สามารถใช้สกิลหรือ Zone ได้"
+
+
+def has_player_rolled_this_turn(game: dict, player: dict) -> bool:
+    """Return whether the player already rolled in the game's current turn."""
+    return player.get("last_roll_turn") == game.get("turn")
 
 
 def mark_player_rolled(channel_id: int, user_id: int):

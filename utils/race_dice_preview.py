@@ -203,7 +203,20 @@ def combine_race_velocity_bonus(text: str) -> str:
     return " ".join("".join(parts).split())
 
 
-def draw_rich_text(card, draw, base_pos, tokens, font, color):
+def sort_dice_display(display: str) -> str:
+    """Sort the dice preview from highest to lowest while keeping keep marks."""
+    dice = [part.strip() for part in str(display or "").split(",") if part.strip()]
+
+    def dice_value(part: str) -> int:
+        try:
+            return int(part.strip("_"))
+        except ValueError:
+            return -1
+
+    return " , ".join(sorted(dice, key=dice_value, reverse=True))
+
+
+def draw_rich_text(card, draw, base_pos, tokens, font, color, icon_size=42):
     x, y = base_pos
 
     for t_type, value in tokens:
@@ -218,7 +231,8 @@ def draw_rich_text(card, draw, base_pos, tokens, font, color):
             bbox = draw.textbbox((x, y), value, font=font)
             w = bbox[2] - bbox[0]
 
-            draw.line((x, y + 50, x + w, y + 50), fill=color, width=4)
+            underline_y = y + icon_size + 8
+            draw.line((x, underline_y, x + w, underline_y), fill=color, width=3)
             x += w
 
         elif t_type == "icon":
@@ -228,10 +242,11 @@ def draw_rich_text(card, draw, base_pos, tokens, font, color):
                 icon = (
                     Image.open(icon_path)
                     .convert("RGBA")
-                    .resize((42, 42), Image.LANCZOS)
+                    .resize((icon_size, icon_size), Image.LANCZOS)
                 )
-                card.paste(icon, (x + 4, y + 6), icon)
-                x += 52
+                icon_offset = max(2, icon_size // 10)
+                card.paste(icon, (x + icon_offset, y + icon_offset), icon)
+                x += icon_size + icon_offset * 2
             else:
                 fallback = value
                 draw.text((x, y), fallback, font=font, fill=color)
@@ -280,6 +295,7 @@ async def create_race_dice_preview(
 
     font_big = _font(58)
     font_mid = _font(42)
+    font_dice = _font(36)
     font_small = _font(30)
     font_score = _font(92)
 
@@ -386,16 +402,32 @@ async def create_race_dice_preview(
     )
 
     # dice breakdown
-    display = result.get("display", "")
+    display = sort_dice_display(result.get("display", ""))
     bonus = format_bonus_display(
         result.get("dice_preview_bonus_display", result.get("bonus_display", "")),
         block_label="Block",
     )
     bonus = combine_race_velocity_bonus(bonus)
 
-    draw_rich_text(card, draw, (520, 160), parse_display_text(display), font_mid, brown)
+    draw_rich_text(
+        card,
+        draw,
+        (520, 160),
+        parse_display_text(display),
+        font_dice,
+        brown,
+        icon_size=36,
+    )
 
-    draw_rich_text(card, draw, (520, 225), parse_display_text(bonus), font_mid, brown)
+    draw_rich_text(
+        card,
+        draw,
+        (520, 225),
+        parse_display_text(bonus),
+        font_dice,
+        brown,
+        icon_size=36,
+    )
 
     # stamina
     current_stamina = int(game_player.get("stamina_left", 0) or 0)
