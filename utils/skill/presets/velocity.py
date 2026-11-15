@@ -192,7 +192,7 @@ VELOCITY_SKILLS = {
         "icon": "Velocity_rare",
         "cooldown": 8,
         "cost": 80,
-        "trigger": {"phase_min": 3, "phase_max": 4, "position_group": "back"},
+        "trigger": {"style": "End", "lastspurt": True, "position_group": "back"},
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_velocity", "value": 20, "duration": "this_roll"},
