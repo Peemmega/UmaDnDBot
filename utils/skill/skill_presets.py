@@ -266,6 +266,7 @@ TRIGGER_SCHEMA = {
     "last_corner": None,
     "distance_color": None,
     "position_group": None,
+    "not_front": None,
     "distance_type": None,
     "track": None,
     "target_distance_min": None,

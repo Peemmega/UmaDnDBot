@@ -18,7 +18,7 @@ from utils.zone.zone_manager import get_zone_effects_from_build
 
 BEAM_WIDTH = 12
 _DYNAMIC_CONDITIONS = {
-    "position_group", "distance_color", "target_distance_min", "target_distance_max",
+    "position_group", "not_front", "distance_color", "target_distance_min", "target_distance_max",
     "front_blocked", "nearby_uma_count", "used_rush", "skill_use_count_min",
 }
 

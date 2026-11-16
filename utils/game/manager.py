@@ -2677,6 +2677,11 @@ def check_skill_trigger(
         if required_position_group not in position_group:
             return False, f"ตำแหน่งกลุ่มไม่ตรงเงื่อนไข {required_position_group}"
 
+    if trigger.get("not_front") is True:
+        position_group = get_position_groups(channel_id, user_id)
+        if "front" in position_group:
+            return False, "ต้องไม่อยู่ในกลุ่มนำ"
+
     # distance type
     required_distance_type = trigger.get("distance_type")
     if required_distance_type is not None:

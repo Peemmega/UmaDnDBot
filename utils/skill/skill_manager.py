@@ -251,6 +251,9 @@ def describe_trigger(trigger: dict) -> str:
             f"เมื่ออยู่ใน{POSITION_GROUP_TEXT.get(trigger['position_group'], trigger['position_group'])}"
         )
 
+    if trigger.get("not_front") is True:
+        parts.append("เมื่อไม่ได้อยู่ในกลุ่มนำ")
+
     if labels:
         parts.append(f"({','.join(labels)})")
 

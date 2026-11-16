@@ -37,7 +37,7 @@ ACCELERATION_SKILLS = {
         "icon": "Acceleration_rare",
         "cooldown": 8,
         "cost": 80,
-        "trigger": {"style": "Late", "phase_min": 3, "phase_max": 4},
+        "trigger": {"style": "Late", "phase_min": 3, "phase_max": 4, "not_front": True},
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_current_speed", "value": 1},
@@ -47,7 +47,7 @@ ACCELERATION_SKILLS = {
                 "condition": {"phase_min": 3, "phase_max": 3},
             },
             {
-                "type": "add_d",
+                "type": "add_dkh",
                 "value": 2,
                 "duration": "this_roll",
                 "condition": {"phase_min": 4, "phase_max": 4},
@@ -263,7 +263,7 @@ ACCELERATION_SKILLS = {
         "icon": "acceleration",
         "cooldown": 8,
         "cost": 60,
-        "trigger": {"style": "Late", "phase_min": 3, "phase_max": 4},
+        "trigger": {"style": "Late", "phase_min": 3, "phase_max": 4, "not_front": True},
         "target": {"scope": "self", "limit": 1},
         "effects": [{"type": "modify_current_speed", "value": 2}],
         "tags": ["late", "late_race", "acceleration"],
