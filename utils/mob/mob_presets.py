@@ -462,10 +462,10 @@ MOB_PRESETS = {
             "build": {"add_dkh": 3, "cap_floor": 2},
         },
     },
-    "tokai_teio": {
-        "name": "Tokai Teio",
-        "avatar": CHARACTER_DIR / "tokai_teio.png",
-        "thumnail": thumnails["TokaiTeio"],
+    "mejiro_ramonu": {
+        "name": "Mejiro Ramonu",
+        "avatar": CHARACTER_DIR / "mejiro_ramonu.png",
+        "thumnail": thumnails["MejiroRamonu"],
         "style": "Pace",
         "race_profile": {
             "speed": 3,
