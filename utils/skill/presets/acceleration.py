@@ -22,11 +22,11 @@ ACCELERATION_SKILLS = {
         "trigger": {"style": "Pace", "path_type": 4},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 1.5},
+            {"type": "modify_current_speed", "value": 2},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",
-                "value": 40,
+                "value": 30,
                 "duration": "this_roll",
             },
         ],
@@ -40,8 +40,18 @@ ACCELERATION_SKILLS = {
         "trigger": {"style": "Late", "phase_min": 3, "phase_max": 4},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_current_speed", "value": 2},
-            {"type": "add_dkh", "value": 1, "duration": "this_roll"},
+            {"type": "modify_current_speed", "value": 1},
+            {
+                "type": "modify_current_speed",
+                "value": 2,
+                "condition": {"phase_min": 3, "phase_max": 3},
+            },
+            {
+                "type": "add_d",
+                "value": 2,
+                "duration": "this_roll",
+                "condition": {"phase_min": 4, "phase_max": 4},
+            },
         ],
         "tags": ["late", "acceleration", "late_race"],
     },

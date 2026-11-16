@@ -332,7 +332,7 @@ def describe_effect(effect: dict) -> str:
         return f"ฟื้นฟู {Status_Icon_Type['STA']} +{percentage:g}%{condition_text}"
 
     if effect_type in ["modify_current_speed"]:
-        return f"เร่งความเร็วปัจจุบัน {value} ระดับ"
+        return f"เร่งความเร็วปัจจุบัน {value} ระดับ" + condition_text
 
     if effect_type == "modify_current_speed_delta":
         amount = abs(float(value or 0))
