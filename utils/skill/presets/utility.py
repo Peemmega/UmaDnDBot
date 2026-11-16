@@ -9,7 +9,7 @@ UTILITY_SKILLS = {
         "trigger": {"turn_min": 1, "turn_max": 1},
         "target": {"scope": "self", "limit": 1},
         "effects": [
-            {"type": "modify_roll_floor", "value": 6, "duration": "this_roll"},
+            {"type": "add_race_velocity_bonus", "value": 6},
             {
                 "type": "modify_velocity",
                 "mode": "flat_total",

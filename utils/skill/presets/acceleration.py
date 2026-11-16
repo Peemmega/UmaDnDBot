@@ -93,7 +93,12 @@ ACCELERATION_SKILLS = {
         "icon": "Acceleration_rare",
         "cooldown": 8,
         "cost": 80,
-        "trigger": {"style": "Pace", "phase_min": 3, "phase_max": 4},
+        "trigger": {
+            "style": "Pace",
+            "phase_min": 3,
+            "phase_max": 4,
+            "position_group": "front",
+        },
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_current_speed", "value": 1},
