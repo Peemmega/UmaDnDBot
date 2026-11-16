@@ -182,6 +182,23 @@ def create_booking(
             raise ValueError("ห้องฝึกซ้อมเพิ่ม Mob ได้ไม่เกิน 8 ตัว")
         if settings.get("weather", "none") not in {"none", "random", "sunny", "rainy"}:
             raise ValueError("สภาพอากาศไม่ถูกต้อง")
+        if mobs:
+            from utils.race.race_presets import RACE_PRESET
+
+            submitted_mob_keys = [mob.get("key") for mob in mobs if isinstance(mob, dict)]
+            if len(submitted_mob_keys) != len(mobs):
+                raise ValueError("Mob list must contain preset entries")
+            fixed_mob_keys = RACE_PRESET.get("Debut", {}).get("auto_mobs", [])
+            if submitted_mob_keys != fixed_mob_keys:
+                raise ValueError("Only the fixed eight Rookie mobs can be selected")
+            raw_mob_level = settings.get("mob_level")
+            if raw_mob_level is None:
+                raw_mob_level = mobs[0].get("level", 1)
+            mob_level = int(raw_mob_level)
+            if not 1 <= mob_level <= 8:
+                raise ValueError("Mob level must be between 1 and 8")
+            settings["mob_level"] = mob_level
+            settings["mobs"] = [{"key": key, "level": mob_level} for key in fixed_mob_keys]
     if booking_type == "legend":
         from utils.race.legend_race_presets import LEGEND_RACE_PRESETS
         from utils.race.race_presets import RACE_PRESET
