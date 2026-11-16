@@ -206,7 +206,7 @@ def describe_trigger(trigger: dict) -> str:
             parts.append(f"ในช่วง Phase {trigger['phase_min']}-{trigger['phase_max']}")
 
     if trigger.get("lastspurt") is True:
-        parts.append("ในช่วง Last Spurt")
+        parts.append("ใน Phase 4")
 
     if trigger.get("last_corner") is True:
         parts.append("ในโค้งสุดท้าย")
@@ -324,7 +324,7 @@ def describe_effect(effect: dict) -> str:
     if effect_type == "add_dkh":
         return f"เพิ่มจำนวนลูกเต๋าและจำนวนลูกที่เลือก +{value}" + (
             f" ({dur})" if dur else ""
-        )
+        ) + condition_text
     if effect_type == "add_d":
         return f"เพิ่มจำนวนลูกเต๋า +{value}" + (f" ({dur})" if dur else "")
     if effect_type == "add_kh":
