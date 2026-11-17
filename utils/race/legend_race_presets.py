@@ -18,7 +18,7 @@ LEGEND_RACE_PRESETS = {
         "legend_key": "tokai_teio",
         "stage_key": "JapanCup",
         "legend_level": 2,
-        "mobs": {"level": 2},
+        "mobs": {"level": 3},
         "weather": "random",
         "record_type": "practice",
     },
