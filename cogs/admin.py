@@ -32,10 +32,7 @@ from utils.skill.skill_presets import SKILLS, get_skill_rarity
 from utils.channel_config import COMMAND_LOG_CHANNEL_ID, RACE_REGISTRATION_FORUM_CHANNEL_ID
 from utils.icon_presets import USING_MAIN_EMOJIS
 from utils.game_config import MAX_APTITUDE_LEVEL, MAX_CORE_STAT
-
-ADMIN_IDS = {
-    464058883556769793,
-}
+from utils.admin_config import ADMIN_IDS
 
 # Beta testers may use the aptitude shortcut only on the test deployment.
 BETA_TESTER_ROLE_ID = 1561300248461181040

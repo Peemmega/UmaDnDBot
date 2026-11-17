@@ -1,11 +1,17 @@
 import discord
 from utils.game_manager import delete_game, get_game
+from utils.room_bookings import close_booking_for_room
 
 
 class ConfirmDeleteView(discord.ui.View):
-    def __init__(self, channel_id: int):
+    """Confirm closing a game. ``refund=True`` also returns the booking quota."""
+
+    def __init__(self, channel_id: int, *, refund: bool = False):
         super().__init__(timeout=30)
         self.channel_id = channel_id
+        self.refund = refund
+        if refund:
+            self.confirm.label = "ยืนยันปิดและคืนโควต้า"
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         game = get_game(self.channel_id)
@@ -32,6 +38,32 @@ class ConfirmDeleteView(discord.ui.View):
 
     @discord.ui.button(label="ยืนยันลบ", style=discord.ButtonStyle.danger)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        game = get_game(self.channel_id) or {}
+
+        # Remove the booking first so the restore worker cannot rebuild the room.
+        try:
+            booking = close_booking_for_room(
+                str(self.channel_id),
+                game.get("booking_id"),
+                refund=self.refund,
+            )
+        except ValueError as exc:
+            for item in self.children:
+                item.disabled = True
+            await interaction.response.edit_message(content=f"❌ {exc}", view=self)
+            self.stop()
+            return
+
+        if self.refund and booking is None:
+            for item in self.children:
+                item.disabled = True
+            await interaction.response.edit_message(
+                content="❌ ห้องนี้ไม่ได้สร้างจากระบบจองห้อง จึงไม่มีโควต้าให้คืน",
+                view=self
+            )
+            self.stop()
+            return
+
         success = delete_game(self.channel_id)
 
         for item in self.children:
@@ -43,12 +75,17 @@ class ConfirmDeleteView(discord.ui.View):
         )
 
         if success:
+            lines = [
+                f"เกมในห้องนี้ถูกปิดโดย {interaction.user.mention}",
+                "ห้องถูกรีเซ็ตเรียบร้อยแล้ว",
+            ]
+            if booking is not None:
+                lines.append("ลบห้องออกจากระบบจองแล้ว")
+            if self.refund:
+                lines.append("↩️ คืนโควต้า 1 ครั้งเรียบร้อยแล้ว")
             embed = discord.Embed(
                 title="🛑 Game Closed",
-                description=(
-                    f"เกมในห้องนี้ถูกปิดโดย {interaction.user.mention}\n"
-                    f"ห้องถูกรีเซ็ตเรียบร้อยแล้ว"
-                ),
+                description="\n".join(lines),
                 color=discord.Color.red()
             )
             await interaction.followup.send(embed=embed)

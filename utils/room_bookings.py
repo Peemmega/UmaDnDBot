@@ -12,7 +12,9 @@ from utils.storage.database import DB_PATH, database_connection
 
 THAI_TZ = ZoneInfo("Asia/Bangkok")
 ROOM_TYPES = {"practice", "legend", "debut"}
-ROOM_STATUSES = {"scheduled", "creating", "restoring", "open", "failed", "completed", "cancelled"}
+ROOM_STATUSES = {"scheduled", "creating", "restoring", "open", "failed", "completed", "cancelled", "closed", "refunded"}
+# Statuses that no longer use up the creator's daily practice quota.
+QUOTA_FREE_STATUSES = ("cancelled", "refunded")
 
 
 def init_room_booking_tables() -> None:
@@ -68,6 +70,8 @@ def init_room_booking_tables() -> None:
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(room_bookings)").fetchall()}
         if "guild_id" not in columns:
             conn.execute("ALTER TABLE room_bookings ADD COLUMN guild_id TEXT")
+        if "announce_message_id" not in columns:
+            conn.execute("ALTER TABLE room_bookings ADD COLUMN announce_message_id TEXT")
 
 
 def _decode_booking(row: sqlite3.Row, *, include_members: bool = True) -> dict:
@@ -103,7 +107,15 @@ def record_room_booking_signup(booking_id: str, user_id: str, username: str) -> 
         )
 
 
-def list_bookings(viewer_id: str | None = None, *, include_past: bool = False) -> list[dict]:
+def save_booking_announce_message(booking_id: str, message_id: str) -> None:
+    with database_connection() as conn:
+        conn.execute(
+            "UPDATE room_bookings SET announce_message_id=? WHERE booking_id=?",
+            (str(message_id), str(booking_id)),
+        )
+
+
+def list_bookings(viewer_id: str | None = None, *, include_past: bool = False, see_all_private: bool = False) -> list[dict]:
     now_iso = datetime.now(timezone.utc).isoformat()
     clauses = ["status IN ('scheduled','creating','restoring','open','failed')"]
     params: list[object] = []
@@ -118,7 +130,11 @@ def list_bookings(viewer_id: str | None = None, *, include_past: bool = False) -
     result = []
     for row in rows:
         item = _decode_booking(row)
-        if item["visibility"] == "private" and viewer_id not in {item["creator_id"], *item["invited_ids"]}:
+        if (
+            item["visibility"] == "private"
+            and not see_all_private
+            and viewer_id not in {item["creator_id"], *item["invited_ids"]}
+        ):
             continue
         result.append(item)
     return result
@@ -248,8 +264,8 @@ def create_booking(
             local_day_start = datetime.combine(local_start.date(), time.min, tzinfo=THAI_TZ).astimezone(timezone.utc).isoformat()
             local_day_end = (datetime.combine(local_start.date() + timedelta(days=1), time.min, tzinfo=THAI_TZ)).astimezone(timezone.utc).isoformat()
             count = conn.execute(
-                "SELECT COUNT(*) FROM room_bookings WHERE creator_id=? AND booking_type='practice' AND starts_at>=? AND starts_at<? AND status!='cancelled'",
-                (creator_id, local_day_start, local_day_end),
+                "SELECT COUNT(*) FROM room_bookings WHERE creator_id=? AND booking_type='practice' AND starts_at>=? AND starts_at<? AND status NOT IN (?,?)",
+                (creator_id, local_day_start, local_day_end, *QUOTA_FREE_STATUSES),
             ).fetchone()[0]
             if count >= 2:
                 raise ValueError("สร้างห้องฝึกซ้อมได้ไม่เกิน 2 รอบต่อวัน")
@@ -464,6 +480,72 @@ def mark_bookings_completed_for_thread(thread_id: str) -> None:
             "UPDATE room_bookings SET status='completed',updated_at=CURRENT_TIMESTAMP WHERE thread_id=? AND status='open'",
             (str(thread_id),),
         )
+
+
+def close_booking_for_room(thread_id: str, booking_id: str | None = None, *, refund: bool = False) -> dict | None:
+    """Remove a booked room from the booking system right away.
+
+    ``refund=False`` marks it ``closed``: the room is gone but the quota stays used.
+    ``refund=True`` marks it ``refunded`` and gives the quota back: the creator's
+    practice slot for that day, and each entrant's Legend/Debut attempt for this room.
+    Returns the booking as it was before closing, or None when the room has no booking.
+    Raises ValueError when a refund is asked for a race that already finished.
+    """
+    with database_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        row = None
+        if booking_id:
+            row = conn.execute("SELECT * FROM room_bookings WHERE booking_id=?", (str(booking_id),)).fetchone()
+        if row is None and thread_id:
+            row = conn.execute(
+                "SELECT * FROM room_bookings WHERE thread_id=? ORDER BY starts_at DESC LIMIT 1",
+                (str(thread_id),),
+            ).fetchone()
+        if row is None:
+            return None
+        booking = _decode_booking(row, include_members=False)
+        if booking["status"] in {"closed", "refunded", "cancelled"}:
+            return booking
+        if refund and booking["status"] == "completed":
+            raise ValueError("ห้องนี้แข่งจบแล้ว จึงคืนโควต้าไม่ได้")
+        new_status = "refunded" if refund else "closed"
+        conn.execute(
+            "UPDATE room_bookings SET status=?,updated_at=CURRENT_TIMESTAMP WHERE booking_id=?",
+            (new_status, booking["booking_id"]),
+        )
+        if refund:
+            _refund_room_entries(conn, booking)
+    return booking
+
+
+def _refund_room_entries(conn: sqlite3.Connection, booking: dict) -> None:
+    """Give back the one Legend/Debut attempt each entrant used on this room."""
+    booking_type = booking["booking_type"]
+    if booking_type not in {"legend", "debut"}:
+        return
+    entrants = [
+        row["user_id"]
+        for row in conn.execute(
+            "SELECT user_id FROM room_booking_entries WHERE booking_id=?",
+            (booking["booking_id"],),
+        ).fetchall()
+    ]
+    if booking_type == "legend":
+        legend_key = str(booking["settings"].get("legend_key") or "")
+        for user_id in entrants:
+            conn.execute(
+                "UPDATE legend_progress SET attempts=MAX(attempts-1,0) WHERE user_id=? AND legend_key=? AND won=0",
+                (user_id, legend_key),
+            )
+    else:
+        local_date = datetime.fromisoformat(booking["starts_at"]).astimezone(THAI_TZ).date()
+        week_sunday = (local_date - timedelta(days=(local_date.weekday() + 1) % 7)).isoformat()
+        for user_id in entrants:
+            conn.execute(
+                "UPDATE players SET debut_attempted_week=NULL WHERE CAST(user_id AS TEXT)=? AND debut_attempted_week=?",
+                (user_id, week_sunday),
+            )
+    conn.execute("DELETE FROM room_booking_entries WHERE booking_id=?", (booking["booking_id"],))
 
 
 def has_completed_race_for_room(thread_id: str) -> bool:

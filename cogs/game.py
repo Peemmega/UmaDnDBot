@@ -1208,8 +1208,35 @@ class GameCog(commands.GroupCog, name="game"):
             return
 
         await interaction.response.send_message(
-            "คุณแน่ใจหรือไม่ว่าจะลบเกมนี้?",
+            "คุณแน่ใจหรือไม่ว่าจะลบเกมนี้? ห้องจะถูกลบออกจากระบบจองทันที (ไม่คืนโควต้า)",
             view=ConfirmDeleteView(interaction.channel_id),
+            ephemeral=True
+        )
+
+    @app_commands.command(name="refund", description="ปิดห้องที่จองไว้และคืนโควต้า 1 ครั้ง")
+    async def refund(self, interaction: discord.Interaction):
+        game = get_game(interaction.channel_id)
+
+        if game is None:
+            await interaction.response.send_message(
+                "ยังไม่มีเกมในห้องนี้",
+                ephemeral=True
+            )
+            return
+
+        is_game_owner = is_owner(interaction.channel_id, interaction.user.id)
+        is_admin = interaction.user.guild_permissions.administrator
+
+        if not (is_game_owner or is_admin):
+            await interaction.response.send_message(
+                "มีแค่ผู้สร้างเกมหรือผู้ดูแลเซิร์ฟเวอร์เท่านั้นที่ปิดห้องและคืนโควต้าได้",
+                ephemeral=True
+            )
+            return
+
+        await interaction.response.send_message(
+            "ปิดห้องที่จองไว้และคืนโควต้า 1 ครั้งใช่หรือไม่?",
+            view=ConfirmDeleteView(interaction.channel_id, refund=True),
             ephemeral=True
         )
 

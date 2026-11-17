@@ -112,11 +112,17 @@ from utils.room_bookings import (
     init_room_booking_tables, list_bookings, list_booking_members,
     list_open_bookings,
     mark_booking_failed, mark_booking_open, register_for_booking, release_booking_claim,
-    save_booking_thread,
-    retry_failed_bookings,
+    save_booking_thread, save_booking_announce_message,
+    retry_failed_bookings, THAI_TZ,
 )
+from datetime import datetime
+from utils.admin_config import is_bot_admin
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
-from utils.channel_config import RACE_REGISTRATION_FORUM_CHANNEL_ID, RACE_ROOM_CHANNEL_IDS
+from utils.channel_config import (
+    RACE_REGISTRATION_FORUM_CHANNEL_ID,
+    RACE_ROOM_CHANNEL_IDS,
+    ROOM_BOOKING_ANNOUNCE_CHANNEL_ID,
+)
 from utils.race.race_web import race_web_manager
 from utils.race.race_history import (
     OFFICIAL,
@@ -571,7 +577,92 @@ async def api_room_booking_options(request: Request):
 @app.get("/room-bookings")
 async def api_list_room_bookings(request: Request, user_id: str = ""):
     _verify_room_booking_proxy(request, await request.body())
-    return {"rooms": list_bookings(user_id or None)}
+    return {"rooms": list_bookings(user_id or None, see_all_private=is_bot_admin(user_id))}
+
+
+BOOKING_WEATHER_TEXT = {
+    "none": "อากาศปกติ",
+    "random": "สุ่มอากาศ",
+    "warm": "อากาศอบอุ่น",
+    "sunny": "แดดร้อน",
+    "rainy": "ฝนตก",
+}
+
+
+def _build_booking_announcement(booking: dict) -> str:
+    """Plain-text notice for the booking channel, following the community's template."""
+    start_local = datetime.fromisoformat(booking["starts_at"]).astimezone(THAI_TZ)
+    settings = booking.get("settings") or {}
+    creator_id = str(booking["creator_id"])
+    creator_is_trainer = get_account_role(creator_id) == "trainer"
+
+    # Umamusume = invited trainees + everyone who signed up, minus a trainer creator.
+    candidate_ids = list(dict.fromkeys([
+        *([] if creator_is_trainer else [creator_id]),
+        *(str(value) for value in booking.get("invited_ids") or []),
+        *(str(member["user_id"]) for member in list_booking_members(booking["booking_id"])),
+    ]))
+    umamusume = []
+    for user_id in candidate_ids:
+        if user_id == creator_id and creator_is_trainer:
+            continue
+        if get_account_role(user_id) != "trainee":
+            continue
+        summary = get_player_summary(user_id) or {}
+        umamusume.append(summary.get("name") or user_id)
+
+    extras = []
+    if booking["booking_type"] == "legend":
+        extras.append(f"Legend {booking.get('legend_name') or settings.get('legend_key', '')} Lv.{settings.get('legend_level', 1)}")
+    elif booking["booking_type"] == "debut":
+        extras.append("Debut")
+    if settings.get("mob_level") and (settings.get("mobs") or booking["booking_type"] != "practice"):
+        extras.append(f"บอทเวล{settings['mob_level']}")
+    elif booking["booking_type"] == "practice":
+        extras.append("ไม่มีบอท")
+    weather = settings.get("weather", "none")
+    extras.append(BOOKING_WEATHER_TEXT.get(weather, weather))
+    if booking["visibility"] == "private":
+        extras.append("🔒 Private (เฉพาะผู้ได้รับเชิญ)")
+
+    return "\n".join([
+        f"ชื่อเทรนเนอร์: {booking['creator_name'] if creator_is_trainer else '-'}",
+        f"สาวม้าที่เข้าร่วมสนาม: {'、'.join(umamusume) if umamusume else '-'}",
+        f"วันและเวลา: {start_local:%d/%m/%Y} {start_local:%H:%M}",
+        f"สนาม: {booking.get('stage_name') or booking['stage_key']}",
+        f"เพิ่มเติม: {' '.join(extras)}",
+    ])
+
+
+async def _sync_booking_announcement(booking_id: str) -> None:
+    """Post the booking notice once, then edit that same message on later calls."""
+    bot = bot_instance.bot
+    if bot is None or not bot.is_ready():
+        return
+    booking = get_booking(booking_id)
+    if not booking:
+        return
+    content = _build_booking_announcement(booking)
+    no_pings = discord.AllowedMentions.none()
+
+    async def run():
+        channel = bot.get_channel(ROOM_BOOKING_ANNOUNCE_CHANNEL_ID) or await bot.fetch_channel(ROOM_BOOKING_ANNOUNCE_CHANNEL_ID)
+        message_id = booking.get("announce_message_id")
+        if message_id:
+            try:
+                message = await channel.fetch_message(int(message_id))
+                await message.edit(content=content, allowed_mentions=no_pings)
+                return
+            except discord.NotFound:
+                pass
+        message = await channel.send(content, allowed_mentions=no_pings)
+        save_booking_announce_message(booking["booking_id"], str(message.id))
+
+    try:
+        future = asyncio.run_coroutine_threadsafe(run(), bot.loop)
+        await asyncio.wait_for(asyncio.wrap_future(future), timeout=15)
+    except Exception as exc:  # The booking itself must not fail because of the notice.
+        print(f"[room-booking] Could not announce {booking_id}: {exc}", flush=True)
 
 
 @app.post("/room-bookings")
@@ -609,7 +700,8 @@ async def api_create_room_booking(request: Request, payload: RoomBookingCreatePa
             invited_ids=invited_ids,
             settings=payload.settings,
         )
-        return booking
+        await _sync_booking_announcement(booking["booking_id"])
+        return get_booking(booking["booking_id"]) or booking
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -640,6 +732,7 @@ async def api_join_room_booking(booking_id: str, request: Request, payload: Room
             if not allowed:
                 raise ValueError(message)
         updated = register_for_booking(booking_id, payload.user_id, player["name"])
+        await _sync_booking_announcement(booking_id)
         if booking["status"] == "open" and booking.get("thread_id"):
             bot = bot_instance.bot
             if bot and bot.is_ready():
