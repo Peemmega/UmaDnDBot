@@ -17,6 +17,7 @@ from views.create_game_view import (
     build_legend_create_menu_embed,
     build_training_track_menu_embed,
 )
+from views.legend_preset_view import LegendPresetSelectView, build_legend_preset_menu_embed
 
 from utils.icon_presets import Status_Icon_Type
 from utils.channel_config import RACE_LOG_CHANNEL_ID
@@ -638,7 +639,7 @@ class GameCog(commands.GroupCog, name="game"):
         game["owner_id"] = member.id
         await interaction.response.send_message(f"👑 โอนสิทธิ์เจ้าของห้องให้ {member.mention} แล้ว")
 
-    @app_commands.command(name="legend_race", description="สร้าง Legend Race โดยเลือกสนามปกติ (Admin เท่านั้น)")
+    @app_commands.command(name="legend_race", description="สร้าง Legend Race จาก Legend preset (Admin เท่านั้น)")
     async def legend_race(self, interaction: discord.Interaction):
         if not interaction.guild or not interaction.user.guild_permissions.administrator:
             await interaction.response.send_message("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์", ephemeral=True)
@@ -649,8 +650,8 @@ class GameCog(commands.GroupCog, name="game"):
             return
 
         await interaction.response.send_message(
-            embed=build_legend_create_menu_embed(),
-            view=CreateGameView(interaction.channel_id, interaction.user.id, is_legend=True),
+            embed=build_legend_preset_menu_embed(),
+            view=LegendPresetSelectView(interaction.channel_id, interaction.user.id),
             ephemeral=True,
         )
 
