@@ -27,6 +27,13 @@ class ConfirmDeleteView(discord.ui.View):
             interaction.guild
             and interaction.user.guild_permissions.administrator
         )
+        if self.refund and not is_admin:
+            await interaction.response.send_message(
+                "มีแค่ Admin เท่านั้นที่คืนโควต้าได้",
+                ephemeral=True
+            )
+            return False
+
         if not (is_game_owner or is_admin):
             await interaction.response.send_message(
                 "มีแค่ผู้สร้างเกมเท่านั้นที่ลบเกมได้",
