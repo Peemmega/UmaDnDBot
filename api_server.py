@@ -460,6 +460,7 @@ class RoomBookingCreatePayload(BaseModel):
 
 class RoomBookingJoinPayload(BaseModel):
     user_id: str
+    username: str = ""
 
 
 def _verify_room_booking_proxy(request: Request, body: bytes) -> None:
@@ -569,15 +570,24 @@ def _room_booking_options():
 
 
 @app.get("/room-bookings/options")
-async def api_room_booking_options(request: Request):
+async def api_room_booking_options(request: Request, user_id: str = ""):
     _verify_room_booking_proxy(request, await request.body())
-    return _room_booking_options()
+    options = _room_booking_options()
+    options["viewer"] = {
+        "is_admin": is_bot_admin(user_id),
+        "role": get_account_role(user_id) if str(user_id).isdigit() else None,
+    }
+    return options
 
 
 @app.get("/room-bookings")
 async def api_list_room_bookings(request: Request, user_id: str = ""):
     _verify_room_booking_proxy(request, await request.body())
-    return {"rooms": list_bookings(user_id or None, see_all_private=is_bot_admin(user_id))}
+    is_admin = is_bot_admin(user_id)
+    return {
+        "rooms": list_bookings(user_id or None, see_all_private=is_admin),
+        "viewer": {"is_admin": is_admin},
+    }
 
 
 BOOKING_WEATHER_TEXT = {
@@ -622,6 +632,8 @@ def _build_booking_announcement(booking: dict) -> str:
         extras.append("ไม่มีบอท")
     weather = settings.get("weather", "none")
     extras.append(BOOKING_WEATHER_TEXT.get(weather, weather))
+    if settings.get("fast_mode"):
+        extras.append("Fast Mode")
     if booking["visibility"] == "private":
         extras.append("🔒 Private (เฉพาะผู้ได้รับเชิญ)")
 
@@ -669,7 +681,8 @@ async def _sync_booking_announcement(booking_id: str) -> None:
 async def api_create_room_booking(request: Request, payload: RoomBookingCreatePayload):
     _verify_room_booking_proxy(request, await request.body())
     role = get_account_role(payload.user_id) if str(payload.user_id).isdigit() else None
-    if not ((role == "trainer" and payload.booking_type == "practice") or (role == "trainee" and payload.booking_type == "legend")):
+    is_admin = is_bot_admin(payload.user_id)
+    if not is_admin and not ((role == "trainer" and payload.booking_type == "practice") or (role == "trainee" and payload.booking_type == "legend")):
         raise HTTPException(status_code=403, detail="Trainer สร้างได้เฉพาะห้องฝึกซ้อม ส่วน Umamusume สร้างได้เฉพาะ Legend Race")
     options = _room_booking_options()
     if payload.booking_type != "legend" and payload.stage_key not in {item["key"] for item in options["stages"]}:
@@ -679,15 +692,15 @@ async def api_create_room_booking(request: Request, payload: RoomBookingCreatePa
     if payload.booking_type == "legend" and payload.settings.get("legend_preset_key") not in {item["key"] for item in options["legend_presets"]}:
         raise HTTPException(status_code=400, detail="ไม่พบ Legend preset ที่เลือก")
     allowed_mobs = {item["key"] for item in options["mobs"]}
-    for mob in payload.settings.get("mobs", []):
-        if mob.get("key") not in allowed_mobs:
+    for mob in payload.settings.get("mobs") or []:
+        if not isinstance(mob, dict) or mob.get("key") not in allowed_mobs:
             raise HTTPException(status_code=400, detail="ไม่พบ Mob ที่เลือก")
     known_players = {item["id"] for item in [*options["players"], *options["trainers"]]}
     invited_ids = list(dict.fromkeys(str(value) for value in payload.invited_ids))
     if any(value not in known_players for value in invited_ids):
         raise HTTPException(status_code=400, detail="มีสมาชิกที่เลือกไม่ถูกต้อง")
     creator = (get_profile_preset(payload.user_id, "trainer") if role == "trainer" else None) or get_player_summary(payload.user_id) or {}
-    creator_name = creator.get("name") or ("Trainer" if role == "trainer" else "Umamusume")
+    creator_name = creator.get("name") or ("Trainer" if role == "trainer" else ("Admin" if is_admin else "Umamusume"))
     try:
         booking = create_booking(
             booking_type=payload.booking_type,
@@ -699,6 +712,7 @@ async def api_create_room_booking(request: Request, payload: RoomBookingCreatePa
             visibility=payload.visibility,
             invited_ids=invited_ids,
             settings=payload.settings,
+            is_admin=is_admin,
         )
         await _sync_booking_announcement(booking["booking_id"])
         return get_booking(booking["booking_id"]) or booking
@@ -709,18 +723,28 @@ async def api_create_room_booking(request: Request, payload: RoomBookingCreatePa
 @app.post("/room-bookings/{booking_id}/join")
 async def api_join_room_booking(booking_id: str, request: Request, payload: RoomBookingJoinPayload):
     _verify_room_booking_proxy(request, await request.body())
-    if not str(payload.user_id).isdigit() or get_account_role(payload.user_id) != "trainee":
-        raise HTTPException(status_code=403, detail="เฉพาะ Umamusume เท่านั้นที่ลงทะเบียนได้")
-    player = get_player_summary(payload.user_id)
-    if not player:
+    if not str(payload.user_id).isdigit():
+        raise HTTPException(status_code=403, detail="ไม่พบผู้ใช้")
+    is_admin = is_bot_admin(payload.user_id)
+    role = get_account_role(payload.user_id)
+    # Only Umamusume race; other accounts (Trainer, Admin, ...) register as room members.
+    is_racer = role == "trainee"
+    player = get_player_summary(payload.user_id) if is_racer else None
+    if is_racer and not player:
         raise HTTPException(status_code=404, detail="ไม่พบข้อมูล Umamusume")
+    if player:
+        display_name = player["name"]
+    else:
+        display_name = (
+            (get_profile_preset(payload.user_id, "trainer") or {}).get("name") if role == "trainer" else None
+        ) or payload.username.strip() or str(payload.user_id)
     try:
         booking = get_booking(booking_id)
         if not booking:
             raise ValueError("ไม่พบห้องที่เลือก")
         if any(str(member["user_id"]) == str(payload.user_id) for member in booking.get("members", [])):
             return booking
-        if booking["status"] == "open":
+        if booking["status"] == "open" and is_racer:
             if booking.get("thread_id") is None:
                 raise ValueError("ห้องยังไม่พร้อมรับสมาชิก")
             from utils.game.manager import add_player
@@ -731,7 +755,7 @@ async def api_join_room_booking(booking_id: str, request: Request, payload: Room
             )
             if not allowed:
                 raise ValueError(message)
-        updated = register_for_booking(booking_id, payload.user_id, player["name"])
+        updated = register_for_booking(booking_id, payload.user_id, display_name, is_admin=is_admin)
         await _sync_booking_announcement(booking_id)
         if booking["status"] == "open" and booking.get("thread_id"):
             bot = bot_instance.bot
@@ -739,6 +763,11 @@ async def api_join_room_booking(booking_id: str, request: Request, payload: Room
                 thread = bot.get_channel(int(booking["thread_id"]))
                 if thread is None:
                     thread = await bot.fetch_channel(int(booking["thread_id"]))
+                if booking["visibility"] == "private":
+                    try:
+                        await thread.add_user(discord.Object(id=int(payload.user_id)))
+                    except (discord.Forbidden, discord.HTTPException):
+                        pass
                 await thread.send(f"<@{payload.user_id}> เข้าร่วมห้องแล้ว")
         return updated
     except ValueError as exc:
@@ -855,6 +884,10 @@ async def _deliver_room_booking(booking: dict):
         else:
             game["record_type"] = "official" if booking["booking_type"] == "debut" else "practice"
         set_game_rule(room_id, WEATHER_RULE, booking["settings"].get("weather", "none"))
+        if booking["settings"].get("fast_mode"):
+            game["mob_render_mode"] = "compact"
+        if booking["booking_type"] == "practice" and booking["settings"].get("record_type") in {"official", "practice"}:
+            game["record_type"] = booking["settings"]["record_type"]
         if booking["booking_type"] == "legend":
             for player_id, player in list(game["players"].items()):
                 if player.get("is_mob"):
@@ -873,15 +906,15 @@ async def _deliver_room_booking(booking: dict):
                     player["ai_level"] = 2
         for member in booking.get("members", []):
             member_id = str(member["user_id"])
+            # Signup rules (private invites, admin overrides) were enforced at registration.
             if get_account_role(member_id) != "trainee":
-                continue
-            if booking["visibility"] == "private" and member_id not in booking["invited_ids"]:
                 continue
             avatar = get_player_summary(member_id) or {}
             add_player(room_id, int(member_id), member["username"], avatar.get("image_url", ""), "Pace")
 
     if booking["visibility"] == "private":
-        for user_id in dict.fromkeys([booking["creator_id"], *booking["invited_ids"]]):
+        member_ids = [str(member["user_id"]) for member in booking.get("members", [])]
+        for user_id in dict.fromkeys([booking["creator_id"], *booking["invited_ids"], *member_ids]):
             member = parent.guild.get_member(int(user_id))
             if member is None:
                 try:

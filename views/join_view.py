@@ -25,7 +25,14 @@ from utils.race.race_weather import weather_label
 import math
 from utils.profile_images import resolve_player_avatar_url, resolve_player_render_image
 from utils.image_encoding import encode_png
-from views.lobby_management_views import AddBotView, SettingsView, can_manage_room
+from views.lobby_management_views import (
+    AddBotView,
+    SettingsView,
+    allowed_rules,
+    can_manage_room,
+    check_add_bot,
+    is_restricted_trainer,
+)
 
 def build_phase_text(max_turn: int) -> str:
     phase_size = max_turn / 4
@@ -194,7 +201,7 @@ class LobbyView(discord.ui.View):
         if not can_manage_room(interaction, game):
             await interaction.response.send_message("เปิดดูและแก้ Settings ได้เฉพาะเจ้าของห้องหรือ Admin", ephemeral=True)
             return
-        view = SettingsView(self.channel_id, interaction.user.id)
+        view = SettingsView(self.channel_id, interaction.user.id, rules=allowed_rules(interaction, game))
         await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
 
     @discord.ui.button(label="Add bot", style=discord.ButtonStyle.secondary, emoji="🤖", row=1)
@@ -203,12 +210,11 @@ class LobbyView(discord.ui.View):
         if game is None:
             await interaction.response.send_message("ไม่พบเกมในห้องนี้", ephemeral=True)
             return
-        if game.get("started"):
-            await interaction.response.send_message("เริ่มแข่งแล้ว จึงเพิ่ม Bot ไม่ได้", ephemeral=True)
+        if not await check_add_bot(interaction, self.channel_id):
             return
         await interaction.response.send_message(
             f"เพิ่ม Bot ลงสนาม: {game.get('stage_name', 'สนาม')}",
-            view=AddBotView(self.channel_id),
+            view=AddBotView(self.channel_id, allow_uma=not is_restricted_trainer(interaction)),
             ephemeral=True,
         )
 

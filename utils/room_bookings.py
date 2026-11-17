@@ -152,7 +152,7 @@ def get_booking(booking_id: str) -> dict | None:
     return _decode_booking(row) if row else None
 
 
-def _parse_start(date_text: str, time_text: str) -> tuple[datetime, datetime]:
+def _parse_start(date_text: str, time_text: str, *, is_admin: bool = False) -> tuple[datetime, datetime]:
     try:
         local_date = date.fromisoformat(date_text)
         normalized_time = "00:00" if time_text == "24:00" else time_text
@@ -162,59 +162,95 @@ def _parse_start(date_text: str, time_text: str) -> tuple[datetime, datetime]:
     if time_text == "24:00":
         local_date += timedelta(days=1)
         local_time = time(0, 0)
-    elif not (time(10, 0) <= local_time <= time(23, 59)):
+    elif not is_admin and not (time(10, 0) <= local_time <= time(23, 59)):
         raise ValueError("เวลาเริ่มห้องต้องอยู่ระหว่าง 10:00 ถึง 24:00 น.")
     local_start = datetime.combine(local_date, local_time, tzinfo=THAI_TZ)
     now_local = datetime.now(THAI_TZ)
     if local_start <= now_local:
         raise ValueError("เวลาเริ่มห้องต้องเป็นเวลาในอนาคต")
-    if local_start.date() > now_local.date() + timedelta(days=7):
+    if not is_admin and local_start.date() > now_local.date() + timedelta(days=7):
         raise ValueError("จองล่วงหน้าได้ไม่เกิน 7 วัน")
     return local_start, local_start.astimezone(timezone.utc)
+
+
+PRACTICE_WEATHERS = {"none", "random", "sunny", "rainy"}
+ADMIN_WEATHERS = PRACTICE_WEATHERS | {"warm"}
+
+
+def _practice_settings(raw: dict, *, is_admin: bool) -> dict:
+    """Normalize practice-room settings.
+
+    Trainers may only choose the weather, Fast Mode, and the fixed eight Rookie
+    mobs (one shared level). Admins may pick any mob preset at any level and
+    may also set the record type.
+    """
+    from utils.race.race_presets import RACE_PRESET
+    from utils.mob.mob_presets import MOB_PRESETS
+
+    weather = raw.get("weather", "none")
+    if weather not in (ADMIN_WEATHERS if is_admin else PRACTICE_WEATHERS):
+        raise ValueError("สภาพอากาศไม่ถูกต้อง")
+    settings = {"weather": weather}
+    mobs = raw.get("mobs") or []
+    if not isinstance(mobs, list) or any(not isinstance(mob, dict) for mob in mobs):
+        raise ValueError("Mob list must contain preset entries")
+    if is_admin:
+        cleaned = []
+        for mob in mobs:
+            key = mob.get("key")
+            if key not in MOB_PRESETS:
+                raise ValueError(f"ไม่พบ Mob {key}")
+            level = int(mob.get("level", raw.get("mob_level", 1)))
+            if not 1 <= level <= 8:
+                raise ValueError("Mob level must be between 1 and 8")
+            cleaned.append({"key": key, "level": level})
+        if cleaned:
+            settings["mobs"] = cleaned
+            if len({mob["level"] for mob in cleaned}) == 1:
+                settings["mob_level"] = cleaned[0]["level"]
+        if raw.get("record_type") in {"official", "practice"}:
+            settings["record_type"] = raw["record_type"]
+        return settings
+    if mobs:
+        fixed_mob_keys = RACE_PRESET.get("Debut", {}).get("auto_mobs", [])
+        if [mob.get("key") for mob in mobs] != fixed_mob_keys:
+            raise ValueError("Trainer เพิ่มได้เฉพาะ Mob Rookie มาตรฐาน 8 ตัว")
+        raw_mob_level = raw.get("mob_level")
+        if raw_mob_level is None:
+            raw_mob_level = mobs[0].get("level", 1)
+        mob_level = int(raw_mob_level)
+        if not 1 <= mob_level <= 8:
+            raise ValueError("Mob level must be between 1 and 8")
+        settings["mob_level"] = mob_level
+        settings["mobs"] = [{"key": key, "level": mob_level} for key in fixed_mob_keys]
+    return settings
 
 
 def create_booking(
     *, booking_type: str, creator_id: str, creator_name: str, stage_key: str,
     local_date: str, local_time: str, visibility: str = "public",
     invited_ids: list[str] | None = None, settings: dict | None = None,
+    is_admin: bool = False,
 ) -> dict:
+    """Create a scheduled room. Bot admins bypass every booking rule except basic validity."""
     booking_type = str(booking_type).strip().lower()
     visibility = str(visibility).strip().lower()
     if booking_type not in ROOM_TYPES:
         raise ValueError("ประเภทห้องไม่ถูกต้อง")
     if visibility not in {"public", "private"}:
         raise ValueError("ประเภทห้องต้องเป็น free-join หรือ private")
-    if booking_type != "practice" and visibility != "public":
+    if not is_admin and booking_type != "practice" and visibility != "public":
         raise ValueError("Legend Race และ Debut ต้องเปิดให้ลงทะเบียนแบบสาธารณะ")
-    local_start, start_utc = _parse_start(local_date, local_time)
-    settings = dict(settings or {})
+    local_start, start_utc = _parse_start(local_date, local_time, is_admin=is_admin)
+    raw_settings = dict(settings or {})
+    fast_mode = bool(raw_settings.get("fast_mode"))
+    settings = raw_settings
     invited_ids = list(dict.fromkeys(str(value) for value in (invited_ids or []) if str(value).isdigit()))
     creator_id = str(creator_id)
     if creator_id in invited_ids:
         invited_ids.remove(creator_id)
     if booking_type == "practice":
-        mobs = settings.get("mobs") or []
-        if len(mobs) > 8:
-            raise ValueError("ห้องฝึกซ้อมเพิ่ม Mob ได้ไม่เกิน 8 ตัว")
-        if settings.get("weather", "none") not in {"none", "random", "sunny", "rainy"}:
-            raise ValueError("สภาพอากาศไม่ถูกต้อง")
-        if mobs:
-            from utils.race.race_presets import RACE_PRESET
-
-            submitted_mob_keys = [mob.get("key") for mob in mobs if isinstance(mob, dict)]
-            if len(submitted_mob_keys) != len(mobs):
-                raise ValueError("Mob list must contain preset entries")
-            fixed_mob_keys = RACE_PRESET.get("Debut", {}).get("auto_mobs", [])
-            if submitted_mob_keys != fixed_mob_keys:
-                raise ValueError("Only the fixed eight Rookie mobs can be selected")
-            raw_mob_level = settings.get("mob_level")
-            if raw_mob_level is None:
-                raw_mob_level = mobs[0].get("level", 1)
-            mob_level = int(raw_mob_level)
-            if not 1 <= mob_level <= 8:
-                raise ValueError("Mob level must be between 1 and 8")
-            settings["mob_level"] = mob_level
-            settings["mobs"] = [{"key": key, "level": mob_level} for key in fixed_mob_keys]
+        settings = _practice_settings(raw_settings, is_admin=is_admin)
     if booking_type == "legend":
         from utils.race.legend_race_presets import LEGEND_RACE_PRESETS
         from utils.race.race_presets import RACE_PRESET
@@ -256,11 +292,12 @@ def create_booking(
         stage_key = str(preset["stage_key"])
     if booking_type == "debut":
         settings = {"weather": "random", "record_type": "official", "mob_level": 2}
+    settings["fast_mode"] = fast_mode
 
     booking_id = uuid.uuid4().hex[:12]
     with database_connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
-        if booking_type == "practice":
+        if booking_type == "practice" and not is_admin:
             local_day_start = datetime.combine(local_start.date(), time.min, tzinfo=THAI_TZ).astimezone(timezone.utc).isoformat()
             local_day_end = (datetime.combine(local_start.date() + timedelta(days=1), time.min, tzinfo=THAI_TZ)).astimezone(timezone.utc).isoformat()
             count = conn.execute(
@@ -285,7 +322,7 @@ def create_booking(
     return get_booking(booking_id)
 
 
-def register_for_booking(booking_id: str, user_id: str, username: str) -> dict:
+def register_for_booking(booking_id: str, user_id: str, username: str, *, is_admin: bool = False) -> dict:
     user_id = str(user_id)
     with database_connection() as conn:
         row = conn.execute("SELECT * FROM room_bookings WHERE booking_id=?", (booking_id,)).fetchone()
@@ -294,15 +331,17 @@ def register_for_booking(booking_id: str, user_id: str, username: str) -> dict:
         booking = _decode_booking(row, include_members=False)
         if booking["status"] not in {"scheduled", "open"}:
             raise ValueError("ห้องนี้ปิดรับลงทะเบียนแล้ว")
-        if booking["visibility"] == "private" and user_id not in {booking["creator_id"], *booking["invited_ids"]}:
+        if is_admin:
+            pass
+        elif booking["visibility"] == "private" and user_id not in {booking["creator_id"], *booking["invited_ids"]}:
             raise ValueError("ห้องนี้เป็น private และคุณไม่ได้รับเชิญ")
-        if booking["booking_type"] == "legend":
+        elif booking["booking_type"] == "legend":
             progress = conn.execute("SELECT attempts,won FROM legend_progress WHERE user_id=? AND legend_key=?", (user_id, booking["settings"].get("legend_key", ""))).fetchone()
             if progress and progress["won"]:
                 raise ValueError("คุณชนะ Legend นี้แล้ว จึงลงซ้ำไม่ได้")
             if progress and progress["attempts"] >= 2:
                 raise ValueError("คุณใช้สิทธิ์ลง Legend นี้ครบ 2 ครั้งแล้ว")
-        if booking["booking_type"] == "debut":
+        elif booking["booking_type"] == "debut":
             player = conn.execute("SELECT debut_attempted_week,debut_won FROM players WHERE CAST(user_id AS TEXT)=?", (user_id,)).fetchone()
             scheduled_date = datetime.fromisoformat(booking["starts_at"]).astimezone(THAI_TZ).date()
             sunday = (scheduled_date - timedelta(days=(scheduled_date.weekday() + 1) % 7)).isoformat()

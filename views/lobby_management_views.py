@@ -56,7 +56,41 @@ def _room_open(channel_id: int):
     return game, None
 
 
+TRAINER_RULES = ("Weather", "FastMode")
+
+
+def is_room_admin(interaction: discord.Interaction) -> bool:
+    """Bot admins and server administrators override every room rule."""
+    from utils.admin_config import is_bot_admin
+
+    permissions = getattr(interaction.user, "guild_permissions", None)
+    return bool(
+        is_bot_admin(interaction.user.id)
+        or (interaction.guild and permissions and permissions.administrator)
+    )
+
+
+def is_restricted_trainer(interaction: discord.Interaction) -> bool:
+    """Non-admin Trainers may only add Rookie mobs and change Weather / Fast Mode."""
+    if is_room_admin(interaction):
+        return False
+    from utils.storage.database import get_account_role
+
+    return get_account_role(str(interaction.user.id)) == "trainer"
+
+
+def allowed_rules(interaction: discord.Interaction, game: dict) -> list[str]:
+    if is_room_admin(interaction):
+        return list(RULE_LABELS)
+    rules = list(TRAINER_RULES) if is_restricted_trainer(interaction) else list(RULE_LABELS)
+    if game.get("booking_type") in {"debut", "legend"}:
+        rules = [rule for rule in rules if rule not in {"Weather", "RaceType"}]
+    return rules
+
+
 def can_manage_room(interaction: discord.Interaction, game: dict) -> bool:
+    if is_room_admin(interaction):
+        return True
     if game.get("booking_id"):
         from utils.storage.database import get_account_role
 
@@ -70,18 +104,16 @@ def can_manage_room(interaction: discord.Interaction, game: dict) -> bool:
                 )
             )
         )
-    return bool(
-        interaction.user.id == game["owner_id"]
-        or (interaction.guild and interaction.user.guild_permissions.administrator)
-    )
+    return bool(interaction.user.id == game["owner_id"])
 
 
 class SettingsView(discord.ui.View):
-    def __init__(self, channel_id: int, owner_id: int, selected_rule: str = "AllowSkill"):
+    def __init__(self, channel_id: int, owner_id: int, selected_rule: str | None = None, *, rules: list[str] | None = None):
         super().__init__(timeout=300)
         self.channel_id = channel_id
         self.owner_id = owner_id
-        self.selected_rule = selected_rule
+        self.rules = list(rules) if rules is not None else list(RULE_LABELS)
+        self.selected_rule = selected_rule if selected_rule in self.rules else (self.rules[0] if self.rules else None)
         self.refresh_components()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -96,8 +128,9 @@ class SettingsView(discord.ui.View):
 
     def refresh_components(self):
         self.clear_items()
-        self.add_item(RuleSelect(self))
-        self.add_item(RuleValueSelect(self))
+        if self.selected_rule:
+            self.add_item(RuleSelect(self))
+            self.add_item(RuleValueSelect(self))
         self.add_item(CloseSettingsButton())
 
     def build_embed(self) -> discord.Embed:
@@ -126,12 +159,9 @@ class SettingsView(discord.ui.View):
 class RuleSelect(discord.ui.Select):
     def __init__(self, parent_view: SettingsView):
         self.parent_view = parent_view
-        game = get_game(parent_view.channel_id) or {}
-        locked_rules = {"Weather", "RaceType"} if game.get("booking_type") in {"debut", "legend"} else set()
         options = [
-            discord.SelectOption(label=label, value=key, default=key == parent_view.selected_rule)
-            for key, label in RULE_LABELS.items()
-            if key not in locked_rules
+            discord.SelectOption(label=RULE_LABELS[key], value=key, default=key == parent_view.selected_rule)
+            for key in parent_view.rules
         ]
         super().__init__(placeholder="เลือก Setting ที่ต้องการแก้", options=options, row=0)
 
@@ -168,8 +198,12 @@ class RuleValueSelect(discord.ui.Select):
             await interaction.response.send_message(error, ephemeral=True)
             return
         rule = self.parent_view.selected_rule
-        if game.get("booking_type") in {"debut", "legend"} and rule in {"Weather", "RaceType"}:
-            await interaction.response.send_message("ห้อง Debut และ Legend ล็อกสภาพอากาศและประเภทการแข่งขันไว้ตาม preset", ephemeral=True)
+        if rule not in allowed_rules(interaction, game):
+            if is_restricted_trainer(interaction):
+                message = "Trainer ปรับได้เฉพาะสภาพอากาศและ Fast Mode"
+            else:
+                message = "ห้อง Debut และ Legend ล็อกสภาพอากาศและประเภทการแข่งขันไว้ตาม preset"
+            await interaction.response.send_message(message, ephemeral=True)
             return
         value = self.values[0]
         if rule == "FastMode":
@@ -199,20 +233,35 @@ class CloseSettingsButton(discord.ui.Button):
         await interaction.response.edit_message(content="ปิด Settings แล้ว", embed=None, view=None)
 
 
+async def check_add_bot(interaction: discord.Interaction, channel_id: int, *, uma: bool = False) -> bool:
+    """Shared permission check for every Add bot step. Sends the rejection itself."""
+    game, error = _room_open(channel_id)
+    if error:
+        await interaction.response.send_message(error, ephemeral=True)
+        return False
+    if is_room_admin(interaction):
+        return True
+    if game.get("booking_id") and not can_manage_room(interaction, game):
+        await interaction.response.send_message("เพิ่ม Bot ในห้องที่จองไว้ได้เฉพาะเจ้าของห้องหรือ Admin", ephemeral=True)
+        return False
+    if game.get("booking_type") == "debut":
+        await interaction.response.send_message("ห้อง Debut ล็อก Mob ไว้ที่ Lv.2", ephemeral=True)
+        return False
+    if uma and is_restricted_trainer(interaction):
+        await interaction.response.send_message("Trainer เพิ่มได้เฉพาะ Mob Rookie เท่านั้น", ephemeral=True)
+        return False
+    return True
+
+
 class AddBotView(discord.ui.View):
-    def __init__(self, channel_id: int):
+    def __init__(self, channel_id: int, *, allow_uma: bool = True):
         super().__init__(timeout=180)
         self.channel_id = channel_id
+        if not allow_uma:
+            self.remove_item(self.add_uma)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        game, error = _room_open(self.channel_id)
-        if error:
-            await interaction.response.send_message(error, ephemeral=True)
-            return False
-        if game.get("booking_type") == "debut":
-            await interaction.response.send_message("ห้อง Debut ล็อก Mob ไว้ที่ Lv.2", ephemeral=True)
-            return False
-        return True
+        return await check_add_bot(interaction, self.channel_id)
 
     @discord.ui.button(label="Add Rookie", style=discord.ButtonStyle.primary, emoji="🤖")
     async def add_rookie(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -224,6 +273,8 @@ class AddBotView(discord.ui.View):
 
     @discord.ui.button(label="Add Uma", style=discord.ButtonStyle.success, emoji="🏇")
     async def add_uma(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await check_add_bot(interaction, self.channel_id, uma=True):
+            return
         await interaction.response.edit_message(
             content=f"เลือกหน้า 1/{uma_page_count()} และตัวละคร Uma ที่ต้องการเพิ่ม:",
             embed=None,
@@ -252,9 +303,7 @@ class RookieLevelSelect(discord.ui.Select):
         super().__init__(placeholder="เลือกระดับ Rookie 1–8", options=level_options())
 
     async def callback(self, interaction: discord.Interaction):
-        _, error = _room_open(self.channel_id)
-        if error:
-            await interaction.response.send_message(error, ephemeral=True)
+        if not await check_add_bot(interaction, self.channel_id):
             return
         level = int(self.values[0])
         game = get_game(self.channel_id)
@@ -312,9 +361,7 @@ class UmaPresetSelect(discord.ui.Select):
         super().__init__(placeholder="เลือกตัวละคร Uma", options=options or [discord.SelectOption(label="ไม่มีตัวละคร", value="__none__")], disabled=not options)
 
     async def callback(self, interaction: discord.Interaction):
-        _, error = _room_open(self.channel_id)
-        if error:
-            await interaction.response.send_message(error, ephemeral=True)
+        if not await check_add_bot(interaction, self.channel_id, uma=True):
             return
         preset_key = self.values[0]
         if preset_key == "__none__":
@@ -365,9 +412,7 @@ class UmaLevelSelect(discord.ui.Select):
         super().__init__(placeholder="เลือกระดับ 1–8", options=level_options())
 
     async def callback(self, interaction: discord.Interaction):
-        _, error = _room_open(self.channel_id)
-        if error:
-            await interaction.response.send_message(error, ephemeral=True)
+        if not await check_add_bot(interaction, self.channel_id, uma=True):
             return
         success, message = add_mob_from_preset(self.channel_id, self.preset_key, int(self.values[0]))
         if not success:
