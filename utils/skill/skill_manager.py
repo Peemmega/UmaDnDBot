@@ -326,7 +326,7 @@ def describe_effect(effect: dict) -> str:
             f" ({dur})" if dur else ""
         ) + condition_text
     if effect_type == "add_d":
-        return f"เพิ่มจำนวนลูกเต๋า +{value}" + (f" ({dur})" if dur else "")
+        return f"เพิ่มจำนวนลูกเต๋า +{value}" + (f" ({dur})" if dur else "") + condition_text
     if effect_type == "add_kh":
         return f"เพิ่มจำนวนลูกที่เลือก +{value}" + (f" ({dur})" if dur else "")
 
