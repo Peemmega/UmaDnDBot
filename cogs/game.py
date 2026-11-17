@@ -1216,21 +1216,18 @@ class GameCog(commands.GroupCog, name="game"):
 
     @app_commands.command(name="refund", description="ปิดห้องที่จองไว้และคืนโควต้า 1 ครั้ง")
     async def refund(self, interaction: discord.Interaction):
+        if not interaction.guild or not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message(
+                "คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์",
+                ephemeral=True
+            )
+            return
+
         game = get_game(interaction.channel_id)
 
         if game is None:
             await interaction.response.send_message(
                 "ยังไม่มีเกมในห้องนี้",
-                ephemeral=True
-            )
-            return
-
-        is_game_owner = is_owner(interaction.channel_id, interaction.user.id)
-        is_admin = interaction.user.guild_permissions.administrator
-
-        if not (is_game_owner or is_admin):
-            await interaction.response.send_message(
-                "มีแค่ผู้สร้างเกมหรือผู้ดูแลเซิร์ฟเวอร์เท่านั้นที่ปิดห้องและคืนโควต้าได้",
                 ephemeral=True
             )
             return
