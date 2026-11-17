@@ -60,12 +60,12 @@ TRAINER_RULES = ("Weather", "FastMode")
 
 
 def is_room_admin(interaction: discord.Interaction) -> bool:
-    """Bot admins and server administrators override every room rule."""
-    from utils.admin_config import is_bot_admin
+    """Bot admins (ID or admin role) and server administrators override every room rule."""
+    from utils.admin_config import is_admin_member
 
     permissions = getattr(interaction.user, "guild_permissions", None)
     return bool(
-        is_bot_admin(interaction.user.id)
+        is_admin_member(interaction.user)
         or (interaction.guild and permissions and permissions.administrator)
     )
 

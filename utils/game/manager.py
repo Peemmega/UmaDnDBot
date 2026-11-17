@@ -1865,7 +1865,7 @@ def get_ranked_players(channel_id: int):
     )
 
 
-def add_player(channel_id, user_id, display_name: str, display_avatar: str, style):
+def add_player(channel_id, user_id, display_name: str, display_avatar: str, style, *, is_admin: bool = False):
     game = get_game(channel_id)
     if game is None:
         return False, "ยังไม่มีเกมในห้องนี้"
@@ -1885,12 +1885,8 @@ def add_player(channel_id, user_id, display_name: str, display_avatar: str, styl
     if db_player is None:
         return False, "Unable to prepare the player profile. Please try again."
 
-    if game.get("booking_id"):
-        from utils.storage.database import get_account_role
-
-        if get_account_role(str(user_id)) != "trainee":
-            return False, "ห้องที่จองผ่านเว็บเปิดให้ Umamusume ลงทะเบียนเท่านั้น"
-    if game.get("booking_type") in {"legend", "debut"} and not game.get("restoring_booking"):
+    # Booked rooms are open to every account; admins also skip Legend/Debut entry limits.
+    if not is_admin and game.get("booking_type") in {"legend", "debut"} and not game.get("restoring_booking"):
         from utils.room_bookings import consume_scheduled_entry
 
         allowed, reason = consume_scheduled_entry(user_id, game)

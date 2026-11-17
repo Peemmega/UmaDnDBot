@@ -31,6 +31,7 @@ from views.lobby_management_views import (
     allowed_rules,
     can_manage_room,
     check_add_bot,
+    is_room_admin,
     is_restricted_trainer,
 )
 
@@ -112,7 +113,8 @@ class StyleSelectView(discord.ui.View):
             interaction.user.id,
             interaction.user.display_name,
             interaction.user.display_avatar.url,
-            style
+            style,
+            is_admin=is_room_admin(interaction),
         )
 
         if not success:

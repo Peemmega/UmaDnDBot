@@ -677,7 +677,9 @@ class GameCog(commands.GroupCog, name="game"):
         )
 
     def _is_server_admin(self, ctx: commands.Context) -> bool:
-        return bool(ctx.guild and ctx.author.guild_permissions.administrator)
+        from utils.admin_config import is_admin_member
+
+        return bool(ctx.guild and (ctx.author.guild_permissions.administrator or is_admin_member(ctx.author)))
 
     def _prefix_interaction_adapter(self, ctx: commands.Context):
         return SimpleNamespace(
@@ -694,7 +696,7 @@ class GameCog(commands.GroupCog, name="game"):
         if style not in {"Front", "Pace", "Late", "End"}:
             await ctx.send("ระบุสายวิ่งเป็น Front, Pace, Late หรือ End เช่น `!race_add @สมาชิก Pace`")
             return
-        success, message = add_player(ctx.channel.id, target.id, target.display_name, target.display_avatar.url, style)
+        success, message = add_player(ctx.channel.id, target.id, target.display_name, target.display_avatar.url, style, is_admin=True)
         if not success:
             await ctx.send(message)
             return

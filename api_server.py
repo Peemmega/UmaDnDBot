@@ -116,7 +116,7 @@ from utils.room_bookings import (
     retry_failed_bookings, THAI_TZ,
 )
 from datetime import datetime
-from utils.admin_config import is_bot_admin
+from utils.admin_config import ADMIN_ROLE_IDS, cached_admin_role, is_bot_admin, remember_admin_role
 from utils.race.race_log_embed import build_race_log_embed, build_race_log_file
 from utils.channel_config import (
     RACE_REGISTRATION_FORUM_CHANNEL_ID,
@@ -569,12 +569,56 @@ def _room_booking_options():
     }
 
 
+async def _is_admin(user_id) -> bool:
+    """Admin by ID in ADMIN_IDS, or by holding an admin role in the Discord guild.
+
+    Web requests carry no member object, so the role is fetched from Discord
+    (cached for a few minutes in utils.admin_config).
+    """
+    if not str(user_id).isdigit():
+        return False
+    if is_bot_admin(user_id):
+        return True
+    cached = cached_admin_role(user_id)
+    if cached is not None:
+        return cached
+    bot = bot_instance.bot
+    if bot is None or not bot.is_ready():
+        return False
+
+    async def check_roles() -> bool:
+        guild_env = os.getenv("DISCORD_GUILD_ID", "")
+        guilds = [bot.get_guild(int(guild_env))] if guild_env.isdigit() else list(bot.guilds)
+        for guild in guilds:
+            if guild is None:
+                continue
+            member = guild.get_member(int(user_id))
+            if member is None:
+                try:
+                    member = await guild.fetch_member(int(user_id))
+                except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                    continue
+            if any(role.id in ADMIN_ROLE_IDS for role in member.roles):
+                return True
+        return False
+
+    try:
+        result = await asyncio.wait_for(
+            asyncio.wrap_future(asyncio.run_coroutine_threadsafe(check_roles(), bot.loop)),
+            timeout=10,
+        )
+    except (asyncio.TimeoutError, discord.HTTPException):
+        return False
+    remember_admin_role(user_id, result)
+    return result
+
+
 @app.get("/room-bookings/options")
 async def api_room_booking_options(request: Request, user_id: str = ""):
     _verify_room_booking_proxy(request, await request.body())
     options = _room_booking_options()
     options["viewer"] = {
-        "is_admin": is_bot_admin(user_id),
+        "is_admin": await _is_admin(user_id),
         "role": get_account_role(user_id) if str(user_id).isdigit() else None,
     }
     return options
@@ -583,7 +627,7 @@ async def api_room_booking_options(request: Request, user_id: str = ""):
 @app.get("/room-bookings")
 async def api_list_room_bookings(request: Request, user_id: str = ""):
     _verify_room_booking_proxy(request, await request.body())
-    is_admin = is_bot_admin(user_id)
+    is_admin = await _is_admin(user_id)
     return {
         "rooms": list_bookings(user_id or None, see_all_private=is_admin),
         "viewer": {"is_admin": is_admin},
@@ -606,20 +650,20 @@ def _build_booking_announcement(booking: dict) -> str:
     creator_id = str(booking["creator_id"])
     creator_is_trainer = get_account_role(creator_id) == "trainer"
 
-    # Umamusume = invited trainees + everyone who signed up, minus a trainer creator.
+    # Participants = invited Umamusume + everyone who signed up (any role), minus a trainer creator.
+    members = list_booking_members(booking["booking_id"])
+    member_names = {str(member["user_id"]): member["username"] for member in members}
     candidate_ids = list(dict.fromkeys([
         *([] if creator_is_trainer else [creator_id]),
-        *(str(value) for value in booking.get("invited_ids") or []),
-        *(str(member["user_id"]) for member in list_booking_members(booking["booking_id"])),
+        *(str(value) for value in booking.get("invited_ids") or [] if get_account_role(str(value)) == "trainee"),
+        *member_names,
     ]))
     umamusume = []
     for user_id in candidate_ids:
         if user_id == creator_id and creator_is_trainer:
             continue
-        if get_account_role(user_id) != "trainee":
-            continue
         summary = get_player_summary(user_id) or {}
-        umamusume.append(summary.get("name") or user_id)
+        umamusume.append(summary.get("name") or member_names.get(user_id) or user_id)
 
     extras = []
     if booking["booking_type"] == "legend":
@@ -681,7 +725,7 @@ async def _sync_booking_announcement(booking_id: str) -> None:
 async def api_create_room_booking(request: Request, payload: RoomBookingCreatePayload):
     _verify_room_booking_proxy(request, await request.body())
     role = get_account_role(payload.user_id) if str(payload.user_id).isdigit() else None
-    is_admin = is_bot_admin(payload.user_id)
+    is_admin = await _is_admin(payload.user_id)
     if not is_admin and not ((role == "trainer" and payload.booking_type == "practice") or (role == "trainee" and payload.booking_type == "legend")):
         raise HTTPException(status_code=403, detail="Trainer สร้างได้เฉพาะห้องฝึกซ้อม ส่วน Umamusume สร้างได้เฉพาะ Legend Race")
     options = _room_booking_options()
@@ -725,33 +769,30 @@ async def api_join_room_booking(booking_id: str, request: Request, payload: Room
     _verify_room_booking_proxy(request, await request.body())
     if not str(payload.user_id).isdigit():
         raise HTTPException(status_code=403, detail="ไม่พบผู้ใช้")
-    is_admin = is_bot_admin(payload.user_id)
+    is_admin = await _is_admin(payload.user_id)
     role = get_account_role(payload.user_id)
-    # Only Umamusume race; other accounts (Trainer, Admin, ...) register as room members.
-    is_racer = role == "trainee"
-    player = get_player_summary(payload.user_id) if is_racer else None
-    if is_racer and not player:
-        raise HTTPException(status_code=404, detail="ไม่พบข้อมูล Umamusume")
-    if player:
-        display_name = player["name"]
-    else:
-        display_name = (
-            (get_profile_preset(payload.user_id, "trainer") or {}).get("name") if role == "trainer" else None
-        ) or payload.username.strip() or str(payload.user_id)
+    # Booked rooms are open to everyone (Umamusume, Trainer, Admin, accounts without a role).
+    player = get_player_summary(payload.user_id) or {}
+    display_name = (
+        player.get("name")
+        or ((get_profile_preset(payload.user_id, "trainer") or {}).get("name") if role == "trainer" else None)
+        or payload.username.strip()
+        or str(payload.user_id)
+    )
     try:
         booking = get_booking(booking_id)
         if not booking:
             raise ValueError("ไม่พบห้องที่เลือก")
         if any(str(member["user_id"]) == str(payload.user_id) for member in booking.get("members", [])):
             return booking
-        if booking["status"] == "open" and is_racer:
+        if booking["status"] == "open":
             if booking.get("thread_id") is None:
                 raise ValueError("ห้องยังไม่พร้อมรับสมาชิก")
             from utils.game.manager import add_player
 
             allowed, message = add_player(
-                int(booking["thread_id"]), int(payload.user_id), player["name"],
-                player.get("image_url", ""), "Pace",
+                int(booking["thread_id"]), int(payload.user_id), display_name,
+                player.get("image_url", ""), "Pace", is_admin=is_admin,
             )
             if not allowed:
                 raise ValueError(message)
@@ -907,10 +948,14 @@ async def _deliver_room_booking(booking: dict):
         for member in booking.get("members", []):
             member_id = str(member["user_id"])
             # Signup rules (private invites, admin overrides) were enforced at registration.
-            if get_account_role(member_id) != "trainee":
+            # Everyone who registered races, except a Trainer creator (auto-registered as host).
+            if member_id == str(booking["creator_id"]) and get_account_role(member_id) == "trainer":
                 continue
             avatar = get_player_summary(member_id) or {}
-            add_player(room_id, int(member_id), member["username"], avatar.get("image_url", ""), "Pace")
+            add_player(
+                room_id, int(member_id), member["username"], avatar.get("image_url", ""), "Pace",
+                is_admin=await _is_admin(member_id),
+            )
 
     if booking["visibility"] == "private":
         member_ids = [str(member["user_id"]) for member in booking.get("members", [])]
