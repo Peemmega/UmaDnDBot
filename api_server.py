@@ -726,8 +726,9 @@ async def api_create_room_booking(request: Request, payload: RoomBookingCreatePa
     _verify_room_booking_proxy(request, await request.body())
     role = get_account_role(payload.user_id) if str(payload.user_id).isdigit() else None
     is_admin = await _is_admin(payload.user_id)
-    if not is_admin and not ((role == "trainer" and payload.booking_type == "practice") or (role == "trainee" and payload.booking_type == "legend")):
-        raise HTTPException(status_code=403, detail="Trainer สร้างได้เฉพาะห้องฝึกซ้อม ส่วน Umamusume สร้างได้เฉพาะ Legend Race")
+    # Legend Race and Debut bookings are admin-only; Trainers may book practice rooms.
+    if not is_admin and not (role == "trainer" and payload.booking_type == "practice"):
+        raise HTTPException(status_code=403, detail="Trainer สร้างได้เฉพาะห้องฝึกซ้อม (Legend Race และ Debut สร้างได้เฉพาะ Admin)")
     options = _room_booking_options()
     if payload.booking_type != "legend" and payload.stage_key not in {item["key"] for item in options["stages"]}:
         raise HTTPException(status_code=400, detail="ไม่พบสนามที่เลือก")

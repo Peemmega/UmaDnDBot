@@ -656,6 +656,43 @@ class GameCog(commands.GroupCog, name="game"):
         )
 
     @app_commands.command(
+        name="create_debut",
+        description="สร้าง Debut Race (สภาพอากาศสุ่ม, Official) (Admin เท่านั้น)",
+    )
+    async def create_debut(self, interaction: discord.Interaction):
+        if not interaction.guild or not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("คำสั่งนี้ใช้ได้เฉพาะ Admin ของเซิร์ฟเวอร์", ephemeral=True)
+            return
+
+        from utils.game_manager import create_game, set_game_rule, set_race_record_type
+        from utils.race.race_weather import WEATHER_RULE, WEATHER_RANDOM
+        from views.create_game_view import build_lobby_message_payload
+        from views.join_view import LobbyView
+
+        channel_id = interaction.channel_id
+        if get_game(channel_id) is not None:
+            await interaction.response.send_message("ห้องนี้มีเกมอยู่แล้ว", ephemeral=True)
+            return
+
+        # The Debut stage preset auto-adds its rookie mobs at their configured level.
+        if not create_game(channel_id, "Debut", interaction.user.id):
+            await interaction.response.send_message("สร้าง Debut Race ไม่สำเร็จ", ephemeral=True)
+            return
+
+        set_game_rule(channel_id, WEATHER_RULE, WEATHER_RANDOM)
+        set_race_record_type(channel_id, "official")
+
+        embed, file = build_lobby_message_payload(channel_id)
+        await interaction.response.send_message(
+            "🏁 สร้าง Debut Race แล้ว (สภาพอากาศ: สุ่ม · ประเภท: Official)",
+            ephemeral=True,
+        )
+        if file:
+            await interaction.channel.send(file=file, view=LobbyView(channel_id))
+        else:
+            await interaction.channel.send(embed=embed, view=LobbyView(channel_id))
+
+    @app_commands.command(
         name="create_training_track",
         description="สร้างเกมด้วยสนาม Training Track",
     )
