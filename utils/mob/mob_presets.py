@@ -1121,32 +1121,4 @@ MOB_PRESETS = {
             },
         },
     },
-    "mejiro_ramonu": {
-        "name": "Mejiro Ramonu",
-        "avatar": CHARACTER_DIR / "mejiro_ramonu.webp",
-        "thumnail": thumnails["MejiroRamonu"],
-        "style": "Pace",
-        "race_profile": {
-            "speed": 5,
-            "stamina": 4,
-            "power": 4,
-            "gut": 2,
-            "wit": 4,
-        },
-        "skills": {
-            1: "unique_002",
-            2: "vel_011",
-            3: "acc_007",
-            4: "rec_005",
-        },
-        "zone": {
-            "name": "Default Zone",
-            "image_url": "",
-            "points": 0,
-            "build": {
-                "flat": 1,
-                "modify_current_speed": 1,
-            },
-        },
-    },
 }
