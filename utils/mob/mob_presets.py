@@ -464,7 +464,7 @@ MOB_PRESETS = {
     },
     "mejiro_ramonu": {
         "name": "Mejiro Ramonu",
-        "avatar": CHARACTER_DIR / "mejiro_ramonu.png",
+        "avatar": CHARACTER_DIR / "mejiro_ramonu.webp",
         "thumnail": thumnails["MejiroRamonu"],
         "style": "Pace",
         "race_profile": {
