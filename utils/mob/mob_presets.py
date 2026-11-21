@@ -479,7 +479,7 @@ MOB_PRESETS = {
             "name": "Melt in Love's Embrace",
             "image_url": "https://cdn.discordapp.com/attachments/1496027229308583986/1570531230108356819/uma-uma-musume_2_1.gif?ex=6b02a370&is=6b0151f0&hm=38833c967370f26033fe7581b0c2da95f2f073cd411846e12f867fb3fa8bc1ea",
             "points": 0,
-            "build": {"add_dkh": 3, "cap_floor": 2},
+            "build": {"add_dkh": 4, "self_heal_stamina": 1},
         },
     },
     # LEVEL 2
