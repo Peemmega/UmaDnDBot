@@ -127,17 +127,9 @@ def list_bookings(viewer_id: str | None = None, *, include_past: bool = False, s
             f"SELECT * FROM room_bookings WHERE {' AND '.join(clauses)} ORDER BY starts_at",
             params,
         ).fetchall()
-    result = []
-    for row in rows:
-        item = _decode_booking(row)
-        if (
-            item["visibility"] == "private"
-            and not see_all_private
-            and viewer_id not in {item["creator_id"], *item["invited_ids"]}
-        ):
-            continue
-        result.append(item)
-    return result
+    # Private rooms stay listed for everyone (visible schedule); joining is
+    # still restricted in register_booking_member to creator/invited/admin.
+    return [_decode_booking(row) for row in rows]
 
 
 def list_open_bookings() -> list[dict]:
