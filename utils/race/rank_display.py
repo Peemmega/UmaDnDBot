@@ -3,6 +3,30 @@ GOLD_RANGE_MARKER = "✨"
 GOLD_LANE_TOLERANCE = 1
 
 
+def get_position_group_rank_ranges(total: int) -> dict[str, tuple[int, int] | None]:
+    """Rank range (inclusive) of each position group for ``total`` racers.
+
+    Mirrors the ratio rules in ``get_position_groups`` (rank / total):
+    front <= 0.55, middle 0.25..0.80, back >= 0.45.
+    """
+    total = int(total or 0)
+    if total <= 0:
+        return {"front": None, "middle": None, "back": None}
+    if total == 1:
+        return {"front": (1, 1), "middle": None, "back": None}
+
+    rules = {
+        "front": lambda r: r <= 0.55,
+        "middle": lambda r: 0.25 <= r <= 0.80,
+        "back": lambda r: r >= 0.45,
+    }
+    ranges: dict[str, tuple[int, int] | None] = {}
+    for name, rule in rules.items():
+        ranks = [rank for rank in range(1, total + 1) if rule(rank / total)]
+        ranges[name] = (ranks[0], ranks[-1]) if ranks else None
+    return ranges
+
+
 def get_player_lane(info: dict) -> int:
     try:
         return int(info.get("current_lane", info.get("entry_number", 1)) or 1)

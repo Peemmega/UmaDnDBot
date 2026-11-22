@@ -15,7 +15,7 @@ from utils.race.race_presets import (
     build_path_effect_text,
     get_current_path_type,
 )
-from utils.race.rank_display import is_in_gold_range
+from utils.race.rank_display import get_position_group_rank_ranges, is_in_gold_range
 from utils.race.race_weather import display_wet_lanes, is_raining, weather_label
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -318,6 +318,50 @@ def _position_x(score: int, min_score: int, max_score: int) -> int:
     return int(round(TRACK_LEFT + (TRACK_RIGHT - TRACK_LEFT) * ratio))
 
 
+GROUP_BOX_LEFT = 500
+GROUP_BOX_RIGHT = 1040
+GROUP_BOX_TOP = 36
+GROUP_BOX_BOTTOM = 132
+GROUP_LABELS = (("front", "หน้า"), ("middle", "กลาง"), ("back", "หลัง"))
+GROUP_RED = (214, 40, 40, 255)
+
+
+def _draw_position_groups(draw: ImageDraw.ImageDraw, total: int) -> None:
+    """Header strip: rank range of the front/middle/back groups for this race."""
+    ranges = get_position_group_rank_ranges(total)
+    cell_w = (GROUP_BOX_RIGHT - GROUP_BOX_LEFT) / len(GROUP_LABELS)
+    title_font = _font(30, bold=True)
+    range_font = _font(34, bold=True)
+    mid_y = (GROUP_BOX_TOP + GROUP_BOX_BOTTOM) // 2
+
+    draw.rounded_rectangle(
+        (GROUP_BOX_LEFT, GROUP_BOX_TOP, GROUP_BOX_RIGHT, GROUP_BOX_BOTTOM),
+        radius=14,
+        fill=(255, 255, 255, 235),
+        outline=GROUP_RED,
+        width=3,
+    )
+    for idx, (key, label) in enumerate(GROUP_LABELS):
+        x0 = GROUP_BOX_LEFT + idx * cell_w
+        if idx:
+            draw.line(
+                (x0, GROUP_BOX_TOP + 6, x0, GROUP_BOX_BOTTOM - 6),
+                fill=GROUP_RED,
+                width=2,
+            )
+        center_x = x0 + cell_w / 2
+        rng = ranges.get(key)
+        text = "-" if rng is None else (
+            str(rng[0]) if rng[0] == rng[1] else f"{rng[0]}-{rng[1]}"
+        )
+        draw.text(
+            (center_x, mid_y - 22), label, font=title_font, fill=GROUP_RED, anchor="mm"
+        )
+        draw.text(
+            (center_x, mid_y + 20), text, font=range_font, fill=BLACK, anchor="mm"
+        )
+
+
 def _draw_weather_lanes(canvas: Image.Image, game: dict) -> None:
     if not is_raining(game):
         return
@@ -411,6 +455,7 @@ async def create_turn_result_card(
         return canvas
 
     _draw_weather_lanes(canvas, game)
+    _draw_position_groups(draw, len(rows))
 
     scores = [row["score"] for row in rows]
     min_score = min(scores)
