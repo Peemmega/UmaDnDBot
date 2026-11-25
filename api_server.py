@@ -109,7 +109,8 @@ from utils.room_bookings import (
     ROOM_TYPES, claim_due_bookings, create_booking, get_booking,
     claim_open_booking_for_restore,
     has_completed_race_for_room,
-    init_room_booking_tables, list_bookings, list_booking_members,
+    init_room_booking_tables, list_bookings, list_booking_members, list_booking_entrant_ids,
+    update_booking, cancel_booking, withdraw_from_booking,
     list_open_bookings,
     mark_booking_failed, mark_booking_open, register_for_booking, release_booking_claim,
     save_booking_thread, save_booking_announce_message,
@@ -458,6 +459,16 @@ class RoomBookingCreatePayload(BaseModel):
     settings: dict = Field(default_factory=dict)
 
 
+class RoomBookingUpdatePayload(BaseModel):
+    user_id: str
+    stage_key: str
+    date: str
+    time: str
+    visibility: str = "public"
+    invited_ids: list[str] = Field(default_factory=list)
+    settings: dict = Field(default_factory=dict)
+
+
 class RoomBookingJoinPayload(BaseModel):
     user_id: str
     username: str = ""
@@ -682,6 +693,7 @@ def _build_booking_announcement(booking: dict) -> str:
         extras.append("🔒 Private (เฉพาะผู้ได้รับเชิญ)")
 
     return "\n".join([
+        *(["❌ ยกเลิกการจองแล้ว"] if booking.get("status") == "cancelled" else []),
         f"ชื่อเทรนเนอร์: {booking['creator_name'] if creator_is_trainer else '-'}",
         f"สาวม้าที่เข้าร่วมสนาม: {'、'.join(umamusume) if umamusume else '-'}",
         f"วันและเวลา: {start_local:%d/%m/%Y} {start_local:%H:%M}",
@@ -721,6 +733,26 @@ async def _sync_booking_announcement(booking_id: str) -> None:
         print(f"[room-booking] Could not announce {booking_id}: {exc}", flush=True)
 
 
+def _validate_booking_payload(booking_type: str, stage_key: str, settings: dict, invited_ids: list[str]) -> list[str]:
+    """Check choices against the live option lists; returns the de-duplicated invite list."""
+    options = _room_booking_options()
+    if booking_type != "legend" and stage_key not in {item["key"] for item in options["stages"]}:
+        raise HTTPException(status_code=400, detail="ไม่พบสนามที่เลือก")
+    if booking_type not in ROOM_TYPES:
+        raise HTTPException(status_code=400, detail="ประเภทห้องไม่ถูกต้อง")
+    if booking_type == "legend" and settings.get("legend_preset_key") not in {item["key"] for item in options["legend_presets"]}:
+        raise HTTPException(status_code=400, detail="ไม่พบ Legend preset ที่เลือก")
+    allowed_mobs = {item["key"] for item in options["mobs"]}
+    for mob in settings.get("mobs") or []:
+        if not isinstance(mob, dict) or mob.get("key") not in allowed_mobs:
+            raise HTTPException(status_code=400, detail="ไม่พบ Mob ที่เลือก")
+    known_players = {item["id"] for item in [*options["players"], *options["trainers"]]}
+    invited = list(dict.fromkeys(str(value) for value in invited_ids))
+    if any(value not in known_players for value in invited):
+        raise HTTPException(status_code=400, detail="มีสมาชิกที่เลือกไม่ถูกต้อง")
+    return invited
+
+
 @app.post("/room-bookings")
 async def api_create_room_booking(request: Request, payload: RoomBookingCreatePayload):
     _verify_room_booking_proxy(request, await request.body())
@@ -729,21 +761,7 @@ async def api_create_room_booking(request: Request, payload: RoomBookingCreatePa
     # Legend Race and Debut bookings are admin-only; Trainers may book practice rooms.
     if not is_admin and not (role == "trainer" and payload.booking_type == "practice"):
         raise HTTPException(status_code=403, detail="Trainer สร้างได้เฉพาะห้องฝึกซ้อม (Legend Race และ Debut สร้างได้เฉพาะ Admin)")
-    options = _room_booking_options()
-    if payload.booking_type != "legend" and payload.stage_key not in {item["key"] for item in options["stages"]}:
-        raise HTTPException(status_code=400, detail="ไม่พบสนามที่เลือก")
-    if payload.booking_type not in ROOM_TYPES:
-        raise HTTPException(status_code=400, detail="ประเภทห้องไม่ถูกต้อง")
-    if payload.booking_type == "legend" and payload.settings.get("legend_preset_key") not in {item["key"] for item in options["legend_presets"]}:
-        raise HTTPException(status_code=400, detail="ไม่พบ Legend preset ที่เลือก")
-    allowed_mobs = {item["key"] for item in options["mobs"]}
-    for mob in payload.settings.get("mobs") or []:
-        if not isinstance(mob, dict) or mob.get("key") not in allowed_mobs:
-            raise HTTPException(status_code=400, detail="ไม่พบ Mob ที่เลือก")
-    known_players = {item["id"] for item in [*options["players"], *options["trainers"]]}
-    invited_ids = list(dict.fromkeys(str(value) for value in payload.invited_ids))
-    if any(value not in known_players for value in invited_ids):
-        raise HTTPException(status_code=400, detail="มีสมาชิกที่เลือกไม่ถูกต้อง")
+    invited_ids = _validate_booking_payload(payload.booking_type, payload.stage_key, payload.settings, payload.invited_ids)
     creator = (get_profile_preset(payload.user_id, "trainer") if role == "trainer" else None) or get_player_summary(payload.user_id) or {}
     creator_name = creator.get("name") or ("Trainer" if role == "trainer" else ("Admin" if is_admin else "Umamusume"))
     try:
@@ -763,6 +781,70 @@ async def api_create_room_booking(request: Request, payload: RoomBookingCreatePa
         return get_booking(booking["booking_id"]) or booking
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/room-bookings/{booking_id}/update")
+async def api_update_room_booking(booking_id: str, request: Request, payload: RoomBookingUpdatePayload):
+    """Let the creator (or an admin) change time, stage and settings before the room is created."""
+    _verify_room_booking_proxy(request, await request.body())
+    if not str(payload.user_id).isdigit():
+        raise HTTPException(status_code=403, detail="ไม่พบผู้ใช้")
+    is_admin = await _is_admin(payload.user_id)
+    booking = get_booking(booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="ไม่พบห้องที่เลือก")
+    if not is_admin and str(booking["creator_id"]) != str(payload.user_id):
+        raise HTTPException(status_code=403, detail="เฉพาะผู้สร้างห้องเท่านั้นที่แก้ไขได้")
+    invited_ids = _validate_booking_payload(booking["booking_type"], payload.stage_key, payload.settings, payload.invited_ids)
+    try:
+        updated = update_booking(
+            booking_id,
+            editor_id=payload.user_id,
+            stage_key=payload.stage_key,
+            local_date=payload.date,
+            local_time=payload.time,
+            visibility=payload.visibility,
+            invited_ids=invited_ids,
+            settings=payload.settings,
+            is_admin=is_admin,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    await _sync_booking_announcement(booking_id)
+    return get_booking(booking_id) or updated
+
+
+@app.post("/room-bookings/{booking_id}/cancel")
+async def api_cancel_room_booking(booking_id: str, request: Request, payload: RoomBookingJoinPayload):
+    """Creator (or admin) cancels a booking before its Discord room is created."""
+    _verify_room_booking_proxy(request, await request.body())
+    if not str(payload.user_id).isdigit():
+        raise HTTPException(status_code=403, detail="ไม่พบผู้ใช้")
+    is_admin = await _is_admin(payload.user_id)
+    try:
+        cancelled = cancel_booking(booking_id, editor_id=payload.user_id, is_admin=is_admin)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    await _sync_booking_announcement(booking_id)
+    return cancelled
+
+
+@app.post("/room-bookings/{booking_id}/withdraw")
+async def api_withdraw_room_booking(booking_id: str, request: Request, payload: RoomBookingJoinPayload):
+    """A signed-up player removes their name before the room opens."""
+    _verify_room_booking_proxy(request, await request.body())
+    if not str(payload.user_id).isdigit():
+        raise HTTPException(status_code=403, detail="ไม่พบผู้ใช้")
+    try:
+        updated = withdraw_from_booking(booking_id, payload.user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    await _sync_booking_announcement(booking_id)
+    return updated
 
 
 @app.post("/room-bookings/{booking_id}/join")
@@ -786,17 +868,10 @@ async def api_join_room_booking(booking_id: str, request: Request, payload: Room
             raise ValueError("ไม่พบห้องที่เลือก")
         if any(str(member["user_id"]) == str(payload.user_id) for member in booking.get("members", [])):
             return booking
-        if booking["status"] == "open":
-            if booking.get("thread_id") is None:
-                raise ValueError("ห้องยังไม่พร้อมรับสมาชิก")
-            from utils.game.manager import add_player
-
-            allowed, message = add_player(
-                int(booking["thread_id"]), int(payload.user_id), display_name,
-                player.get("image_url", ""), "Pace", is_admin=is_admin,
-            )
-            if not allowed:
-                raise ValueError(message)
+        if booking["status"] == "open" and booking.get("thread_id") is None:
+            raise ValueError("ห้องยังไม่พร้อมรับสมาชิก")
+        # Signing up only reserves a spot and pings the player; they enter the
+        # race themselves from the lobby in the Discord thread.
         updated = register_for_booking(booking_id, payload.user_id, display_name, is_admin=is_admin)
         await _sync_booking_announcement(booking_id)
         if booking["status"] == "open" and booking.get("thread_id"):
@@ -810,7 +885,10 @@ async def api_join_room_booking(booking_id: str, request: Request, payload: Room
                         await thread.add_user(discord.Object(id=int(payload.user_id)))
                     except (discord.Forbidden, discord.HTTPException):
                         pass
-                await thread.send(f"<@{payload.user_id}> เข้าร่วมห้องแล้ว")
+                await thread.send(
+                    f"<@{payload.user_id}> ลงชื่อเข้าร่วมแล้ว กดเข้าร่วมใน Lobby เพื่อเข้าสนาม",
+                    allowed_mentions=discord.AllowedMentions(users=True, roles=False, everyone=False),
+                )
         return updated
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -946,11 +1024,12 @@ async def _deliver_room_booking(booking: dict):
                     player["race_profile"] = apply_mob_level(copy.deepcopy(preset["race_profile"]), 2)
                     player["mob_level"] = 2
                     player["ai_level"] = 2
+        # Signups are only pinged when the room opens; they enter from the lobby.
+        # A restored room re-adds just the players who had already entered it.
+        entrant_ids = list_booking_entrant_ids(booking["booking_id"]) if booking.get("status") == "open" else set()
         for member in booking.get("members", []):
             member_id = str(member["user_id"])
-            # Signup rules (private invites, admin overrides) were enforced at registration.
-            # Everyone who registered races, except a Trainer creator (auto-registered as host).
-            if member_id == str(booking["creator_id"]) and get_account_role(member_id) == "trainer":
+            if member_id not in entrant_ids:
                 continue
             avatar = get_player_summary(member_id) or {}
             add_player(
@@ -982,7 +1061,10 @@ async def _deliver_room_booking(booking: dict):
         ]
         mentions = [f"<@{user_id}>" for user_id in mention_ids]
         await thread.send(
-            content=f"ห้อง {title} พร้อมเปิดแล้ว {', '.join(dict.fromkeys(mentions))}",
+            content=(
+                f"ห้อง {title} พร้อมเปิดแล้ว {', '.join(dict.fromkeys(mentions))}\n"
+                "กดเข้าร่วมใน Lobby ด้านล่างเพื่อเข้าสนาม"
+            ),
             allowed_mentions=discord.AllowedMentions(users=True, roles=False, everyone=False),
         )
     embed, file = build_lobby_message_payload(room_id)

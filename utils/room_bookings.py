@@ -65,6 +65,14 @@ def init_room_booking_tables() -> None:
                 PRIMARY KEY (booking_id, user_id)
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS room_booking_lobby_entries (
+                booking_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                entered_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (booking_id, user_id)
+            )
+        """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_room_bookings_due ON room_bookings(status, starts_at)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_room_bookings_creator ON room_bookings(creator_id, starts_at)")
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(room_bookings)").fetchall()}
@@ -98,6 +106,7 @@ def list_booking_members(booking_id: str) -> list[dict]:
 
 
 def record_room_booking_signup(booking_id: str, user_id: str, username: str) -> None:
+    """Record a player who actually entered the race lobby of a booked room."""
     if not booking_id:
         return
     with database_connection() as conn:
@@ -105,6 +114,22 @@ def record_room_booking_signup(booking_id: str, user_id: str, username: str) -> 
             "INSERT OR IGNORE INTO room_booking_signups(booking_id,user_id,username) VALUES(?,?,?)",
             (str(booking_id), str(user_id), str(username or user_id)),
         )
+        # Lobby entries mark who is in the race, so a restored room only re-adds them
+        # (web signups are pinged but never auto-entered). Kept apart from
+        # room_booking_entries, which tracks consumed Legend/Debut attempts.
+        conn.execute(
+            "INSERT OR IGNORE INTO room_booking_lobby_entries(booking_id,user_id) VALUES(?,?)",
+            (str(booking_id), str(user_id)),
+        )
+
+
+def list_booking_entrant_ids(booking_id: str) -> set[str]:
+    with database_connection() as conn:
+        rows = conn.execute(
+            "SELECT user_id FROM room_booking_lobby_entries WHERE booking_id=?",
+            (str(booking_id),),
+        ).fetchall()
+    return {str(row["user_id"]) for row in rows}
 
 
 def save_booking_announce_message(booking_id: str, message_id: str) -> None:
@@ -218,13 +243,11 @@ def _practice_settings(raw: dict, *, is_admin: bool) -> dict:
     return settings
 
 
-def create_booking(
-    *, booking_type: str, creator_id: str, creator_name: str, stage_key: str,
-    local_date: str, local_time: str, visibility: str = "public",
-    invited_ids: list[str] | None = None, settings: dict | None = None,
-    is_admin: bool = False,
+def _normalize_booking(
+    *, booking_type: str, creator_id: str, stage_key: str, local_date: str, local_time: str,
+    visibility: str, invited_ids: list[str] | None, settings: dict | None, is_admin: bool,
 ) -> dict:
-    """Create a scheduled room. Bot admins bypass every booking rule except basic validity."""
+    """Validate booking fields shared by create and edit; returns the values to store."""
     booking_type = str(booking_type).strip().lower()
     visibility = str(visibility).strip().lower()
     if booking_type not in ROOM_TYPES:
@@ -285,26 +308,53 @@ def create_booking(
     if booking_type == "debut":
         settings = {"weather": "random", "record_type": "official", "mob_level": 2}
     settings["fast_mode"] = fast_mode
+    return {
+        "booking_type": booking_type,
+        "visibility": visibility,
+        "stage_key": stage_key,
+        "settings": settings,
+        "invited_ids": invited_ids,
+        "local_start": local_start,
+        "start_utc": start_utc,
+    }
 
+
+def _check_practice_quota(conn: sqlite3.Connection, creator_id: str, local_start: datetime, *, exclude_booking_id: str | None = None) -> None:
+    local_day_start = datetime.combine(local_start.date(), time.min, tzinfo=THAI_TZ).astimezone(timezone.utc).isoformat()
+    local_day_end = (datetime.combine(local_start.date() + timedelta(days=1), time.min, tzinfo=THAI_TZ)).astimezone(timezone.utc).isoformat()
+    count = conn.execute(
+        "SELECT COUNT(*) FROM room_bookings WHERE creator_id=? AND booking_type='practice' AND starts_at>=? AND starts_at<? AND status NOT IN (?,?) AND booking_id<>?",
+        (str(creator_id), local_day_start, local_day_end, *QUOTA_FREE_STATUSES, str(exclude_booking_id or "")),
+    ).fetchone()[0]
+    if count >= 2:
+        raise ValueError("สร้างห้องฝึกซ้อมได้ไม่เกิน 2 รอบต่อวัน")
+
+
+def create_booking(
+    *, booking_type: str, creator_id: str, creator_name: str, stage_key: str,
+    local_date: str, local_time: str, visibility: str = "public",
+    invited_ids: list[str] | None = None, settings: dict | None = None,
+    is_admin: bool = False,
+) -> dict:
+    """Create a scheduled room. Bot admins bypass every booking rule except basic validity."""
+    creator_id = str(creator_id)
+    fields = _normalize_booking(
+        booking_type=booking_type, creator_id=creator_id, stage_key=stage_key,
+        local_date=local_date, local_time=local_time, visibility=visibility,
+        invited_ids=invited_ids, settings=settings, is_admin=is_admin,
+    )
     booking_id = uuid.uuid4().hex[:12]
     with database_connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
-        if booking_type == "practice" and not is_admin:
-            local_day_start = datetime.combine(local_start.date(), time.min, tzinfo=THAI_TZ).astimezone(timezone.utc).isoformat()
-            local_day_end = (datetime.combine(local_start.date() + timedelta(days=1), time.min, tzinfo=THAI_TZ)).astimezone(timezone.utc).isoformat()
-            count = conn.execute(
-                "SELECT COUNT(*) FROM room_bookings WHERE creator_id=? AND booking_type='practice' AND starts_at>=? AND starts_at<? AND status NOT IN (?,?)",
-                (creator_id, local_day_start, local_day_end, *QUOTA_FREE_STATUSES),
-            ).fetchone()[0]
-            if count >= 2:
-                raise ValueError("สร้างห้องฝึกซ้อมได้ไม่เกิน 2 รอบต่อวัน")
+        if fields["booking_type"] == "practice" and not is_admin:
+            _check_practice_quota(conn, creator_id, fields["local_start"])
         conn.execute(
             """INSERT INTO room_bookings
             (booking_id, booking_type, creator_id, creator_name, stage_key, starts_at, visibility, settings_json, invited_ids_json)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (booking_id, booking_type, creator_id, creator_name.strip() or "Trainer", stage_key,
-             start_utc.isoformat(), visibility, json.dumps(settings, ensure_ascii=False),
-             json.dumps(invited_ids)),
+            (booking_id, fields["booking_type"], creator_id, creator_name.strip() or "Trainer", fields["stage_key"],
+             fields["start_utc"].isoformat(), fields["visibility"], json.dumps(fields["settings"], ensure_ascii=False),
+             json.dumps(fields["invited_ids"])),
         )
         conn.execute(
             "INSERT INTO room_booking_signups (booking_id,user_id,username) VALUES (?,?,?)",
@@ -312,6 +362,93 @@ def create_booking(
         )
         # Invited players are only pinged when the room opens; they join the roster themselves.
     return get_booking(booking_id)
+
+
+def update_booking(
+    booking_id: str, *, editor_id: str, stage_key: str, local_date: str, local_time: str,
+    visibility: str = "public", invited_ids: list[str] | None = None,
+    settings: dict | None = None, is_admin: bool = False,
+) -> dict:
+    """Edit a booking while its Discord room has not been created yet.
+
+    Only the creator (or an admin) may edit, and only while the status is still
+    ``scheduled``. The room type stays fixed; everything else is revalidated
+    with the same rules as creation.
+    """
+    booking = get_booking(booking_id)
+    if not booking:
+        raise ValueError("ไม่พบห้องที่เลือก")
+    if not is_admin and str(booking["creator_id"]) != str(editor_id):
+        raise PermissionError("เฉพาะผู้สร้างห้องเท่านั้นที่แก้ไขได้")
+    if booking["status"] != "scheduled":
+        raise ValueError("ห้องถูกสร้างแล้ว จึงแก้ไขไม่ได้")
+    creator_id = str(booking["creator_id"])
+    fields = _normalize_booking(
+        booking_type=booking["booking_type"], creator_id=creator_id, stage_key=stage_key,
+        local_date=local_date, local_time=local_time, visibility=visibility,
+        invited_ids=invited_ids, settings=settings, is_admin=is_admin,
+    )
+    with database_connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        if fields["booking_type"] == "practice" and not is_admin:
+            _check_practice_quota(conn, creator_id, fields["local_start"], exclude_booking_id=booking["booking_id"])
+        # Guard on status so an edit never races the worker that is opening the room.
+        cursor = conn.execute(
+            """UPDATE room_bookings
+            SET stage_key=?, starts_at=?, visibility=?, settings_json=?, invited_ids_json=?, error=NULL, updated_at=CURRENT_TIMESTAMP
+            WHERE booking_id=? AND status='scheduled'""",
+            (fields["stage_key"], fields["start_utc"].isoformat(), fields["visibility"],
+             json.dumps(fields["settings"], ensure_ascii=False), json.dumps(fields["invited_ids"]),
+             booking["booking_id"]),
+        )
+        if cursor.rowcount != 1:
+            raise ValueError("ห้องถูกสร้างแล้ว จึงแก้ไขไม่ได้")
+    return get_booking(booking["booking_id"])
+
+
+# Statuses where the Discord room does not exist yet, so the booking can still change.
+PRE_OPEN_STATUSES = ("scheduled", "failed")
+
+
+def cancel_booking(booking_id: str, *, editor_id: str, is_admin: bool = False) -> dict:
+    """Cancel a booking before its room is created; ``cancelled`` frees the creator's quota."""
+    booking = get_booking(booking_id)
+    if not booking:
+        raise ValueError("ไม่พบห้องที่เลือก")
+    if not is_admin and str(booking["creator_id"]) != str(editor_id):
+        raise PermissionError("เฉพาะผู้สร้างห้องเท่านั้นที่ยกเลิกได้")
+    if booking["status"] not in PRE_OPEN_STATUSES:
+        raise ValueError("ห้องถูกสร้างแล้ว จึงยกเลิกการจองไม่ได้ ให้ปิดห้องใน Discord แทน")
+    with database_connection() as conn:
+        # Guard on status so a cancel never races the worker that is opening the room.
+        cursor = conn.execute(
+            f"UPDATE room_bookings SET status='cancelled',updated_at=CURRENT_TIMESTAMP WHERE booking_id=? AND status IN ({','.join('?' * len(PRE_OPEN_STATUSES))})",
+            (booking["booking_id"], *PRE_OPEN_STATUSES),
+        )
+        if cursor.rowcount != 1:
+            raise ValueError("ห้องถูกสร้างแล้ว จึงยกเลิกการจองไม่ได้ ให้ปิดห้องใน Discord แทน")
+    return get_booking(booking["booking_id"])
+
+
+def withdraw_from_booking(booking_id: str, user_id: str) -> dict:
+    """Remove a player's signup before the room opens. The creator cancels instead."""
+    user_id = str(user_id)
+    booking = get_booking(booking_id)
+    if not booking:
+        raise ValueError("ไม่พบห้องที่เลือก")
+    if str(booking["creator_id"]) == user_id:
+        raise ValueError("ผู้สร้างห้องถอนชื่อไม่ได้ ให้ยกเลิกการจองแทน")
+    if booking["status"] not in PRE_OPEN_STATUSES:
+        raise ValueError("ห้องเปิดแล้ว จึงถอนชื่อไม่ได้")
+    with database_connection() as conn:
+        cursor = conn.execute(
+            f"""DELETE FROM room_booking_signups WHERE booking_id=? AND user_id=?
+            AND EXISTS (SELECT 1 FROM room_bookings WHERE booking_id=? AND status IN ({','.join('?' * len(PRE_OPEN_STATUSES))}))""",
+            (booking["booking_id"], user_id, booking["booking_id"], *PRE_OPEN_STATUSES),
+        )
+        if cursor.rowcount != 1:
+            raise ValueError("คุณไม่ได้ลงชื่อในห้องนี้ หรือห้องเปิดแล้ว")
+    return get_booking(booking["booking_id"])
 
 
 def register_for_booking(booking_id: str, user_id: str, username: str, *, is_admin: bool = False) -> dict:
