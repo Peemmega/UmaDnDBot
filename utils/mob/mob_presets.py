@@ -861,7 +861,7 @@ MOB_PRESETS = {
             1: "acc_008",  # Runaway
             2: "utl_001",  # Concentration
             3: "vel_013",  # Tail Nine
-            4: "vel_011",  # Breath of Fresh Air
+            4: "rec_005",  # Breath of Fresh Air
         },
         "zone": {
             "name": "I'm Not Giving up the Lead!",
@@ -970,7 +970,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "pas_003",  # Singularity
-            2: "vel_006",  # Speed Star
+            2: "vel_002",  # Technician
             3: "rec_012",  # Gourmand
             4: "vel_001",  # Professor of Curvature
         },
