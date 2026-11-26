@@ -20,7 +20,7 @@ thumnails = {
     "Verxina": "https://media.discordapp.net/attachments/697810514448744448/1501877410662977638/verxina.png?ex=69fdabd6&is=69fc5a56&hm=fb13acd113f2a020aac967c8b83d7297188e70552c2943c8ae2f326716bed5c3&=&format=webp&quality=lossless&width=695&height=699",
     "StillInLove": "https://cdn.discordapp.com/attachments/697810514448744448/1543154074973900800/still_in_love.png?ex=6a93d5b9&is=6a928439&hm=d10e58dc96467422475038481a00f533ab82dff21b6e504491cd097856a5150a&",
     "SpecialWeek": "https://media.discordapp.net/attachments/697810514448744448/1501877410948186222/special_week_2.png?ex=69fdabd6&is=69fc5a56&hm=80e639767f44a85c7855d9a6fa30dd7954b17198dd986e7f111803e5f8c3a163&=&format=webp&quality=lossless&width=560&height=545",
-    "SilecneSusuka": "https://media.discordapp.net/attachments/697810514448744448/1501877411267219559/silent_susuka.png?ex=69fdabd6&is=69fc5a56&hm=ea687d3b478824505cf91f4ed30b6ef8cabbcfc702766f355f6986843fb54555&=&format=webp&quality=lossless&width=734&height=749",
+    "SilentSuzuka": "https://media.discordapp.net/attachments/697810514448744448/1501877411267219559/silent_susuka.png?ex=69fdabd6&is=69fc5a56&hm=ea687d3b478824505cf91f4ed30b6ef8cabbcfc702766f355f6986843fb54555&=&format=webp&quality=lossless&width=734&height=749",
     "NaritaTopRoad": "https://media.discordapp.net/attachments/697810514448744448/1522305958670499941/narita_top_road.png?ex=6a47fd67&is=6a46abe7&hm=3cb1f25e33a3dc24998ca890082f5f318316f014592df62b6b0222c310468426&=&format=webp&quality=lossless&width=681&height=681",
     "TMOperaO": "https://media.discordapp.net/attachments/697810514448744448/1522305957273796691/tm_opera_o.png?ex=6a47fd67&is=6a46abe7&hm=c3b17823dad2baf8e02bfc83648ca009c751ce38649d589791057618cbcb1c75&=&format=webp&quality=lossless&width=492&height=515",
     "AdmireVega": "https://media.discordapp.net/attachments/697810514448744448/1522305957722325244/admire_vega.png?ex=6a47fd67&is=6a46abe7&hm=d4e64cde381980479b1391603f6dc1f9cdf5b3c93da1c68e7121d23278e0d813&=&format=webp&quality=lossless&width=690&height=707",
@@ -578,24 +578,23 @@ MOB_PRESETS = {
         "thumnail": thumnails["NaritaTopRoad"],
         "style": "Pace",
         "race_profile": {
-            "speed": 6,
-            "stamina": 4,
-            "power": 6,
+            "speed": 4,
+            "stamina": 7,
+            "power": 4,
             "gut": 3,
-            "wit": 1,
+            "wit": 4,
         },
         "skills": {
-            1: "vel_007",  # Beeline Burst
-            2: "acc_007",  # Neck and Neck
-            3: "pas_002",  # Track Demon
-            4: "rec_005",  # Breath of Fresh Air
+            1: "pas_002",  # Track Demon
+            2: "vel_002",  # Technician
+            3: "rec_001",  # Swinging Maestro
+            4: "vel_013",  # Tail Nine
         },
         "zone": {
             "name": "Road to Glory",
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1522307526694011030/umamusume-uma-musume_1.gif?ex=6a47fedd&is=6a46ad5d&hm=4ca9d411409282d4476bc5806fe9b80e350e1e878940e996bb7306b5e3670eff&",
             "build": {
-                "add_dkh": 3,
-                "cap_floor": 2,
+                "add_dkh": 5,
             },
         },
     },
@@ -846,31 +845,30 @@ MOB_PRESETS = {
             },
         },
     },
-    "silecne_susuka": {
-        "name": "Silecnt Susuka",
-        "avatar": CHARACTER_DIR / "silecne_susuka.png",
-        "thumnail": thumnails["SilecneSusuka"],
+    "silent_suzuka": {
+        "name": "Silent Suzuka",
+        "avatar": CHARACTER_DIR / "silent_suzuka.png",
+        "thumnail": thumnails["SilentSuzuka"],
         "style": "Front",
         "race_profile": {
-            "speed": 8,
-            "stamina": 5,
-            "power": 5,
+            "speed": 5,
+            "stamina": 6,
+            "power": 8,
             "gut": 1,
             "wit": 2,
         },
         "skills": {
             1: "acc_008",  # Runaway
-            2: "acc_009",  # Unrestrained
-            3: "unique_002",  # Red Shift/LP1211-M
-            4: "unique_005",  # Angling and Scheming
+            2: "utl_001",  # Concentration
+            3: "vel_013",  # Tail Nine
+            4: "vel_011",  # In Body and Mind
         },
         "zone": {
             "name": "I'm Not Giving up the Lead!",
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1501860045019680828/umamusume-.gif?ex=69fd9ba9&is=69fc4a29&hm=95851edc8c16f46af7011011ccc5e5b2094f800284a9f0ca0c01937cb175409a&",
             "build": {
-                "flat": 2,
-                "self_heal_stamina": 1,
-                "modify_current_speed": 2,
+                "race_speed": 2,
+                "modify_current_speed": 3,
             },
         },
     },
@@ -937,24 +935,24 @@ MOB_PRESETS = {
         "thumnail": thumnails["StillInLove"],
         "style": "Late",
         "race_profile": {
-            "speed": 6,
-            "stamina": 5,
-            "power": 7,
-            "gut": 1,
-            "wit": 3,
+            "speed": 4,
+            "stamina": 4,
+            "power": 6,
+            "gut": 3,
+            "wit": 5,
         },
         "skills": {
-            1: "unique_004",  # Moving Past, and Beyond
-            2: "pas_001",  # Impulse
-            3: "vel_011",  # In Body and Mind
-            4: "vel_007",  # Beeline Burst
+            1: "pas_001",  # Impulse
+            2: "acc_003",  # On Your Left!
+            3: "vel_037",  # Dauntless
+            4: "vel_011",  # In Body and Mind
         },
         "zone": {
             "name": "Scarlet Lily's Elation",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1501860044105322657/still-in-love-umamusume.gif?ex=69fd9ba9&is=69fc4a29&hm=55cc976721949bfe47c4c5caa70a4100a65148fd4ccc034d0fc949573268140e&=&width=747&height=422",
             "build": {
-                "add_dkh": 4,
-                "modify_current_speed": 1,
+                "add_dkh": 3,
+                "cap_floor": 2,
             },
         },
     },
@@ -964,24 +962,23 @@ MOB_PRESETS = {
         "thumnail": thumnails["AlmondEye"],
         "style": "Pace",
         "race_profile": {
-            "speed": 5,
-            "stamina": 5,
-            "power": 6,
-            "gut": 2,
-            "wit": 4,
+            "speed": 4,
+            "stamina": 4,
+            "power": 7,
+            "gut": 1,
+            "wit": 5,
         },
         "skills": {
-            1: "vel_007",  # Beeline Burst
-            2: "pas_003",  # Singularity
-            3: "vel_011",  # In Body and Mind
-            4: "unique_002",  # Red Shift/LP1211-M
+            1: "pas_003",  # Singularity
+            2: "vel_006",  # Speed Star
+            3: "rec_012",  # Gourmand
+            4: "vel_001",  # Professor of Curvature
         },
         "zone": {
             "name": "Peerless Heroine",
             "image_url": "https://media.discordapp.net/attachments/697810514448744448/1521266934841348117/almond-eye-umamusume.gif?ex=6a4435bd&is=6a42e43d&hm=c58f901c38d17e9078c8fbdd0c8cf357432814b33ddd2aeedc3bc47545ed27e6&=&width=747&height=422",
             "build": {
-                "add_dkh": 4,
-                "modify_current_speed": 1,
+                "add_dkh": 5,
             },
         },
     },
