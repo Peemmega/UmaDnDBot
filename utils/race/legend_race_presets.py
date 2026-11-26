@@ -30,8 +30,8 @@ LEGEND_RACE_PRESETS = {
         "weather": "random",
         "record_type": "practice",
     },
-    "StillInLove": {
-        "legend_key": "StillInLove",
+    "still_in_love": {
+        "legend_key": "still_in_love",
         "stage_key": "ShukaSho",
         "legend_level": 3,
         "mobs": {"level": 4},
