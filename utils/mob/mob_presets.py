@@ -531,7 +531,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "vel_007",  # Beeline Burst
-            2: "acc_010",  # Radiant Star
+            2: "acc_010",  # Nimble Navigator
             3: "vel_013",  # Tail Nine
             4: "acc_007",  # Neck and Neck
         },
@@ -611,7 +611,7 @@ MOB_PRESETS = {
             "wit": 2,
         },
         "skills": {
-            1: "acc_010",  # Radiant Star!
+            1: "acc_010",  # Nimble Navigator!
             2: "acc_001",  # Encroaching Shadow
             3: "vel_011",  # In Body and Mind
             4: "vel_010",  # Sturm und Drang
@@ -640,7 +640,7 @@ MOB_PRESETS = {
         "skills": {
             1: "vel_014",  # Ramp Up
             2: "acc_007",  # Neck and Neck
-            3: "acc_010",  # Radiant Star
+            3: "acc_010",  # Nimble Navigator
             4: "vel_007",  # Beeline Burst
         },
         "zone": {
@@ -749,7 +749,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "acc_007",  # Neck and Neck
-            2: "acc_010",  # Radiant Star
+            2: "acc_010",  # Nimble Navigator
             3: "vel_007",  # Beeline Burst
             4: "vel_011",  # In Body and Mind
         },
@@ -832,7 +832,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "acc_007",  # Neck and Neck
-            2: "acc_010",  # Radiant Star
+            2: "acc_010",  # Nimble Navigator
             3: "vel_001",  # Professor of Curvature
             4: "vel_007",  # Beeline Burst
         },
@@ -888,7 +888,7 @@ MOB_PRESETS = {
             1: "acc_001",  # Encroaching Shadow
             2: "vel_010",  # Sturm und Drang
             3: "vel_011",  # In Body and Mind
-            4: "acc_010",  # Radiant Star
+            4: "acc_010",  # Nimble Navigator
         },
         "zone": {
             "name": "Scarlet Ascension of the Rakshasa",
@@ -917,7 +917,7 @@ MOB_PRESETS = {
             1: "acc_008",  # Runaway
             2: "acc_009",  # Unrestrained
             3: "unique_005",  # Angling and Scheming
-            4: "acc_010",  # Radiant Star
+            4: "acc_010",  # Nimble Navigator
         },
         "zone": {
             "name": "Shout of Victory",
@@ -1049,7 +1049,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "acc_007",  # Neck and Neck
-            2: "acc_010",  # Radiant Star
+            2: "acc_010",  # Nimble Navigator
             3: "vel_007",  # Beeline Burst
             4: "unique_006",  # Cacao Operation Cacao
         },
@@ -1105,7 +1105,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "vel_006",  # Speed Star
-            2: "acc_010",  # Radiant Star
+            2: "acc_010",  # Nimble Navigator
             3: "acc_007",  # Neck and Neck
             4: "unique_002",  # Red Shift/LP1211-M
         },

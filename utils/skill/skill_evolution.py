@@ -13,18 +13,27 @@ SKILL_UPGRADES_FROM = {
     "acc_014": "acc_013",  # Taking the Lead replaces Early Lead.
     "acc_022": "acc_021",  # Razor-Sharp Steps replaces Sharp Steps.
     "acc_023": "acc_024",  # Reignition replaces Second Wind.
+    "acc_002": "acc_025",  # Determined Descent replaces Straight Descent.
     "debuff_002": "debuff_011",  # Stamina Siphon replaces Stamina Eater.
     "debuff_003": "debuff_008",  # Dominator replaces Tether.
     "debuff_009": "debuff_010",  # Adored by All replaces Intimidate.
     "debuff_006": "debuff_013",  # All-Seeing Eyes replaces Sharp Gaze.
     "rec_001": "rec_010",  # Swinging Maestro replaces Corner Recovery.
     "rec_002": "rec_014",  # Go-Home Specialist replaces After-School Stroll.
+    "rec_004": "rec_017",  # Calm and Collected replaces Stamina to Spare.
     "rec_005": "rec_011",  # Breath of Fresh Air replaces Straightaway Recovery.
+    "rec_007": "rec_018",  # Trackblazer replaces Rosy Outlook.
     "rec_008": "rec_015",  # Restless replaces Moxie.
     "rec_009": "rec_016",  # Relax replaces A Small Breather.
     "rec_012": "rec_013",  # Gourmand replaces Hydrate.
     "utl_004": "utl_003",  # Lane Legerdemain replaces Go with the Flow.
     "vel_001": "vel_023",  # Professor of Curvature replaces Corner Adept.
+    "vel_002": "vel_047",  # Technician replaces Shrewd Step.
+    "vel_008": "vel_043",  # Flash Forward replaces Medium Straightaways.
+    "vel_009": "vel_044",  # Blast Forward replaces Long Straightaways.
+    "vel_013": "vel_045",  # Tail Nine replaces Tail Held High.
+    "vel_020": "vel_048",  # Top Runner replaces Leader's Pride.
+    "vel_022": "vel_046",  # Fast & Furious replaces Position Pilfer.
     "vel_003": "vel_038",  # Lightning Step replaces Thunderbolt Step.
     "vel_005": "vel_028",  # Killer Tunes replaces Up-Tempo.
     "vel_006": "vel_030",  # Speed Star replaces Prepared to Pass.

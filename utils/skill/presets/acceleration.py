@@ -72,7 +72,9 @@ ACCELERATION_SKILLS = {
         "cost": 30,
         "trigger": {"phase_min": 1, "phase_max": 1, "skill_use_count_min": 2},
         "target": {"scope": "self", "limit": 1},
-        "effects": [{"type": "modify_current_speed", "value": 1.5}],
+        "effects": [
+            {"type": "modify_current_speed", "value": 2},
+        ],
         "tags": ["start", "acceleration"],
     },
     "acc_006": {
@@ -130,21 +132,6 @@ ACCELERATION_SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [{"type": "add_dkh", "value": 3, "duration": "this_roll"}],
         "tags": ["front", "final_corner", "acceleration", "burst"],
-    },
-    "acc_010": {
-        "name": "Radiant Star",
-        "icon": "Acceleration_rare",
-        "cooldown": 6,
-        "cost": 120,
-        "trigger": {"phase_min": 3, "phase_max": 4},
-        "target": {"scope": "self", "limit": 1},
-        "effects": [
-            {"type": "modify_current_speed", "value": 1},
-            {"type": "cap_floor", "value": 6, "duration": "this_roll"},
-            {"type": "add_dkh", "value": 2, "duration": "this_roll"},
-            {"type": "recover_stamina", "value": 1},
-        ],
-        "tags": ["mid_late", "acceleration", "sustain"],
     },
     "acc_010": {
         "name": "Nimble Navigator",
@@ -320,7 +307,7 @@ ACCELERATION_SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_current_speed", "value": 2},
-            {"type": "cap_floor", "value": 3, "duration": "this_roll"},
+            {"type": "cap_floor", "value": 4, "duration": "this_roll"},
         ],
         "tags": ["end", "back", "late_race", "acceleration", "rare"],
     },
@@ -351,5 +338,15 @@ ACCELERATION_SKILLS = {
             {"type": "cap_floor", "value": 5, "duration": "this_roll"},
         ],
         "tags": ["front", "late_race", "acceleration", "stamina_cost"],
+    },
+    "acc_025": {
+        "name": "Straight Descent",
+        "icon": "acceleration",
+        "cooldown": 8,
+        "cost": 60,
+        "trigger": {"style": "Pace", "path_type": 4},
+        "target": {"scope": "self", "limit": 1},
+        "effects": [{"type": "modify_current_speed", "value": 2}],
+        "tags": ["pace", "downhill", "acceleration"],
     },
 }
