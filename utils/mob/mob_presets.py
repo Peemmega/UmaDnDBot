@@ -861,14 +861,14 @@ MOB_PRESETS = {
             1: "acc_008",  # Runaway
             2: "utl_001",  # Concentration
             3: "vel_013",  # Tail Nine
-            4: "vel_011",  # In Body and Mind
+            4: "vel_011",  # Breath of Fresh Air
         },
         "zone": {
             "name": "I'm Not Giving up the Lead!",
             "image_url": "https://cdn.discordapp.com/attachments/697810514448744448/1501860045019680828/umamusume-.gif?ex=69fd9ba9&is=69fc4a29&hm=95851edc8c16f46af7011011ccc5e5b2094f800284a9f0ca0c01937cb175409a&",
             "build": {
-                "race_speed": 2,
-                "modify_current_speed": 3,
+                "race_speed": 3,
+                "modify_current_speed": 2,
             },
         },
     },
@@ -943,7 +943,7 @@ MOB_PRESETS = {
         },
         "skills": {
             1: "pas_001",  # Impulse
-            2: "acc_003",  # On Your Left!
+            2: "vel_001",  # Professor of Curvature
             3: "vel_037",  # Dauntless
             4: "vel_011",  # In Body and Mind
         },
