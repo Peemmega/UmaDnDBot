@@ -90,6 +90,7 @@ GAME_RULE_DEFAULTS = {
     "AllowSkill": True,
     "DreamMode": False,
     "NoDebuff": False,
+    "testNewBalance": False,
     WEATHER_RULE: "none",
 }
 games = {}

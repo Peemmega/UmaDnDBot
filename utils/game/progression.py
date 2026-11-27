@@ -12,6 +12,15 @@ ACCELERATION_SCALE = {
 }
 
 
+ACCELERATION_BASE = 0.5
+
+
+def acceleration_power_factor(game) -> float:
+    """Power multiplier for acceleration; testNewBalance room rule doubles it."""
+    rules = (game or {}).get("game_rules") or {}
+    return 3.0 if rules.get("testNewBalance") else 1.5
+
+
 def incrase_speed_by_acceleration(game, player: dict, multiple):
     race_profile = player.get("race_profile", {})
     effective_stats = player.get("effective_race_stats") or {}
@@ -19,7 +28,8 @@ def incrase_speed_by_acceleration(game, player: dict, multiple):
     current_max_speed = player.get("current_max_speed", 0)
 
     power_stat = (
-        effective_stats.get("effective_power", race_profile.get("power", 1)) * 1.5
+        effective_stats.get("effective_power", race_profile.get("power", 1))
+        * acceleration_power_factor(game)
     )
 
     speed_cap_base = 0
@@ -41,7 +51,7 @@ def incrase_speed_by_acceleration(game, player: dict, multiple):
         + max(0, int(player.get("zone_speed_cap_bonus", 0) or 0))
     )
 
-    increase_speed = 0.3 + (scale_up * power_stat * multiple)
+    increase_speed = ACCELERATION_BASE + (scale_up * power_stat * multiple)
     if is_wet_lane(game, player.get("current_lane")):
         # Wet lanes affect only this turn's acceleration.  They never reduce
         # the dice result or the score that was already gained.

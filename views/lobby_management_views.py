@@ -34,6 +34,7 @@ RULE_LABELS = {
     "AllowSkill": "AllowSkill · Skill / Zone",
     "DreamMode": "DreamMode · ค่าสเตตัสเริ่มต้น 8",
     "NoDebuff": "NoDebuff · ปิด Debuff",
+    "testNewBalance": "testNewBalance · ความเร่ง Power x3",
     "Weather": "Weather · สภาพอากาศ",
     "FastMode": "Fast Mode · รูปแบบผลทอยบอท",
     "RaceType": "ประเภทการแข่งขัน · Official / Practice",
@@ -148,6 +149,7 @@ class SettingsView(discord.ui.View):
         embed.add_field(name="AllowSkill", value="เปิด" if get_game_rule(game, "AllowSkill") else "ปิด", inline=True)
         embed.add_field(name="DreamMode", value="เปิด" if get_game_rule(game, "DreamMode") else "ปิด", inline=True)
         embed.add_field(name="NoDebuff", value="เปิด" if get_game_rule(game, "NoDebuff") else "ปิด", inline=True)
+        embed.add_field(name="testNewBalance", value="เปิด" if get_game_rule(game, "testNewBalance") else "ปิด", inline=True)
         embed.add_field(name="Weather", value=WEATHER_LABELS.get(weather, weather), inline=True)
         embed.add_field(name="Fast Mode", value="เปิด · แสดงผลแบบข้อความ" if fast_mode else "ปิด · แสดงภาพผลทอย", inline=True)
         record_type = str(game.get("record_type", "practice")).lower()

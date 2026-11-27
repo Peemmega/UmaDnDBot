@@ -7,7 +7,7 @@ the current pack color and is rebuilt from the actual state every turn.
 from itertools import combinations
 
 from utils.dice.dice_presets import MAX_SPEED_PHASE
-from utils.game.progression import ACCELERATION_SCALE
+from utils.game.progression import ACCELERATION_BASE, ACCELERATION_SCALE, acceleration_power_factor
 from utils.mob.mob_profiles import get_ai_profile
 from utils.mob.mob_stamina import forecast_stamina
 from utils.race.race_dice import get_distance_color, get_dice_rule, get_phase_from_turn
@@ -74,13 +74,13 @@ def _projected_speed(game, player, turn):
     style = player.get("style", "Pace")
     stats = player.get("effective_race_stats") or {}
     race_stats = player.get("race_profile") or {}
-    power = float(stats.get("effective_power", race_stats.get("power", 1))) * 1.5
-    speed = float(player.get("current_max_speed", 20) or 20)
+    power = float(stats.get("effective_power", race_stats.get("power", 1))) * acceleration_power_factor(game)
+    speed =float(player.get("current_max_speed", 20) or 20)
     for future_turn in range(int(game.get("turn", 1)) + 1, turn + 1):
         phase = get_phase_from_turn(future_turn, int(game.get("max_turn", 1)))
         phase_key = "last_spurt" if phase == 4 else "late" if phase == 3 else "mid"
         limit = MAX_SPEED_PHASE[style][phase_key] + float(stats.get("effective_speed", race_stats.get("speed", 0))) + float(player.get("zone_speed_cap_bonus", 0) or 0)
-        speed = min(limit, speed + .3 + ACCELERATION_SCALE[style][phase - 1] * power)
+        speed = min(limit, speed + ACCELERATION_BASE + ACCELERATION_SCALE[style][phase - 1] * power)
     return speed
 
 
@@ -150,7 +150,7 @@ def _action_value(game, player, turn, rule, effects, zone, stamina_by_turn=None)
     race_stats = player.get("race_profile") or {}
     phase_key = "last_spurt" if phase == 4 else "late" if phase == 3 else "mid"
     speed_limit = MAX_SPEED_PHASE[style][phase_key] + float(stats.get("effective_speed", race_stats.get("speed", 0))) + float(player.get("zone_speed_cap_bonus", 0) or 0) + (zone["race_speed"] if zone else 0)
-    acceleration = min(max(0, speed_limit - speed), 0.3 + ACCELERATION_SCALE[style][phase - 1] * float(power) * 1.5 * accel) if accel else 0
+    acceleration = min(max(0, speed_limit - speed), ACCELERATION_BASE + ACCELERATION_SCALE[style][phase - 1] * float(power) * acceleration_power_factor(game) * accel) if accel else 0
     if turn == game.get("turn") and player.get("current_lane") in (game.get("wet_lanes") or []):
         acceleration *= .5
     projected_stamina = (stamina_by_turn or {}).get(turn, player.get("stamina_left", 0))
