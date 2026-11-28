@@ -691,7 +691,8 @@ VELOCITY_SKILLS = {
         "effects": [
             {"type": "modify_current_speed", "value": 1},
             {
-                "type": "flat_total",
+                "type": "modify_velocity",
+                "mode": "flat_total",
                 "value": 20,
                 "duration": "this_roll",
             },
@@ -714,7 +715,8 @@ VELOCITY_SKILLS = {
         "effects": [
             {"type": "modify_current_speed", "value": 1.5},
             {
-                "type": "flat_total",
+                "type": "modify_velocity",
+                "mode": "flat_total",
                 "value": 30,
                 "duration": "this_roll",
             },
@@ -731,7 +733,8 @@ VELOCITY_SKILLS = {
         "effects": [
             {"type": "reduce_stamina", "value": 0.5},
             {
-                "type": "flat_total",
+                "type": "modify_velocity",
+                "mode": "flat_total",
                 "value": 20,
                 "duration": "this_roll",
             },
@@ -749,7 +752,8 @@ VELOCITY_SKILLS = {
         "effects": [
             {"type": "reduce_stamina", "value": 0.5},
             {
-                "type": "flat_total",
+                "type": "modify_velocity",
+                "mode": "flat_total",
                 "value": 20,
                 "duration": "this_roll",
             },
