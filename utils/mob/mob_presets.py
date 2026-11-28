@@ -935,10 +935,10 @@ MOB_PRESETS = {
         "thumnail": thumnails["StillInLove"],
         "style": "Late",
         "race_profile": {
-            "speed": 4,
+            "speed": 8,
             "stamina": 4,
-            "power": 6,
-            "gut": 3,
+            "power": 4,
+            "gut": 1,
             "wit": 5,
         },
         "skills": {
