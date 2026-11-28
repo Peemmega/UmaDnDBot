@@ -690,7 +690,11 @@ VELOCITY_SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_current_speed", "value": 1},
-            {"type": "flat_total", "value": 20},
+            {
+                "type": "flat_total",
+                "value": 20,
+                "duration": "this_roll",
+            },
         ],
         "tags": ["pace", "medium", "velocity", "acceleration"],
     },
@@ -709,7 +713,11 @@ VELOCITY_SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "modify_current_speed", "value": 1.5},
-            {"type": "flat_total", "value": 30},
+            {
+                "type": "flat_total",
+                "value": 30,
+                "duration": "this_roll",
+            },
         ],
         "tags": ["pace", "medium", "velocity", "acceleration", "rare"],
     },
@@ -722,7 +730,11 @@ VELOCITY_SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "reduce_stamina", "value": 0.5},
-            {"type": "flat_total", "value": 20},
+            {
+                "type": "flat_total",
+                "value": 20,
+                "duration": "this_roll",
+            },
             {"type": "add_race_velocity_bonus", "value": 8},
         ],
         "tags": ["velocity", "stamina_cost", "rare"],
@@ -736,7 +748,11 @@ VELOCITY_SKILLS = {
         "target": {"scope": "self", "limit": 1},
         "effects": [
             {"type": "reduce_stamina", "value": 0.5},
-            {"type": "flat_total", "value": 20},
+            {
+                "type": "flat_total",
+                "value": 20,
+                "duration": "this_roll",
+            },
             {"type": "add_race_velocity_bonus", "value": 6},
         ],
         "tags": ["velocity", "stamina_cost"],

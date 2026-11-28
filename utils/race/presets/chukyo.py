@@ -5,7 +5,6 @@ from utils.race.race_preset_constants import G2_RACE_THUMBNAIL, G3_RACE_THUMBNAI
 TRACK_PATHS = {
     "CHUKYO_1800": [1, 2, 4, 2, 2, 3, 3, 1],
     "CHUKYO_1200": [4, 1, 2, 2, 2, 3, 1, 1],
-    "CUSTOM_CHUNICHISHIMBUNHAI": [3, 1, 2, 2, 2, 2, 1, 1, 4, 4, 2, 2],
     "CHUKYO_2000": [3, 1, 2, 2, 1, 3, 1, 2, 2, 3, 3, 1],
     "CHUKYO_1400": [1, 4, 1, 2, 2, 3, 1, 1],
     "CHUKYO_1600": [1, 2, 1, 3, 2, 2, 3, 1],
@@ -57,12 +56,12 @@ RACES = {
             "course_id": 1,
             "direction": "left",
         },
-        "path": TRACK_PATHS["CUSTOM_CHUNICHISHIMBUNHAI"],
+        "path": TRACK_PATHS["CHUKYO_2000"],
         "fans": {"required": 1500, "reward_first": 4100},
         "story": "GIII ระยะ 2,000 เมตรของ Chukyo ในฤดูหนาว สำหรับสาวม้ารุ่น Senior สายระยะกลาง.",
     },
     "KinkoSho": {
-        "name": "Tokai TV Hai Kinko Sho (GII)",
+        "name": "Kinko Sho (GII)",
         "thumnail": G2_RACE_THUMBNAIL,
         "image": G2_RACE_THUMBNAIL,
         "track": "turf",
@@ -74,7 +73,7 @@ RACES = {
         },
         "path": TRACK_PATHS["CHUKYO_2000"],
         "fans": {"required": None, "reward_first": None},
-        "story": "รายการ Tokai TV Hai Kinko Sho (GII) ที่สนาม Chukyo",
+        "story": "รายการ Kinko Sho (GII) ที่สนาม Chukyo",
     },
     "FalconStakes": {
         "name": "Chunichi Sports Sho Falcon Stakes (GIII)",

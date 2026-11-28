@@ -307,7 +307,7 @@ RACE_SCHEDULE = [
                 "Nakayama",
                 "2026-03-15",
             ),
-            ("KinkoSho", "Tokai TV Hai Kinko Sho (GII)", "Chukyo", "2026-03-15"),
+            ("KinkoSho", "Kinko Sho (GII)", "Chukyo", "2026-03-15"),
             ("FlowerCup", "Flower Cup (GIII)", "Nakayama", "2026-03-21"),
             (
                 "FalconStakes",
